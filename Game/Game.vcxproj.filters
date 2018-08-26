@@ -1,0 +1,498 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sound">
+      <UniqueIdentifier>{604cc4f6-45e3-44da-9c8b-b19cc48c6180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{30b714e8-3868-4ef0-bcaf-e5f8c871e372}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{b6ec05c4-b1df-442d-ae54-fdf622881649}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tool">
+      <UniqueIdentifier>{1bfe99d0-8049-4be1-8359-e0b9c209f7e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{11260d69-9cca-4bd0-940f-60b4e1de8b77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="public">
+      <UniqueIdentifier>{07a24866-a754-4b7b-8bd9-d9ca208934ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK">
+      <UniqueIdentifier>{46eec7a7-e521-4b76-b0f6-b1cf5fb86220}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\rapid">
+      <UniqueIdentifier>{84727fb5-9da7-46fb-a191-6a569b78cd52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\coredefine">
+      <UniqueIdentifier>{799b0596-484d-4133-b6dc-d7227fa12d27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Entity">
+      <UniqueIdentifier>{66a45043-318c-4df9-abcb-805d2b894197}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Game">
+      <UniqueIdentifier>{37d20658-c066-4053-b54e-d8c60f748ce9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Game\Effect">
+      <UniqueIdentifier>{d330e554-1da6-447e-9df0-6653dd3f2b36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Game\Action">
+      <UniqueIdentifier>{8812ad98-377c-4fd5-a683-df1dc99cdef7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Game\AI">
+      <UniqueIdentifier>{9c33eef1-2806-48bd-a27c-c9ed7ace58a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Game\Modle">
+      <UniqueIdentifier>{9f62bc6a-d867-4534-a109-3eb49b173c5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\define">
+      <UniqueIdentifier>{f0872337-eb2f-4d35-96e1-dd6ceb2a5441}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Modle">
+      <UniqueIdentifier>{29dd9471-2cb2-4c58-ab3f-48ec2955f04b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Base">
+      <UniqueIdentifier>{a319619e-0bda-4d3e-aeae-f81b4a362b92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{6d16aae2-43d4-431b-88f0-4bc051364ab8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\stc">
+      <UniqueIdentifier>{28cadd0b-71d5-4d29-8e9a-91abdc0ae306}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\png">
+      <UniqueIdentifier>{5c638b1b-c340-4139-9b17-e24129c544c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\png\include">
+      <UniqueIdentifier>{a75e7a79-4c25-4127-886f-cd639655ceb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\png\include\win32">
+      <UniqueIdentifier>{89f72f6a-1531-46b2-9263-559cfdbc19f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\zlib">
+      <UniqueIdentifier>{9a8a4a1e-fb76-4054-a8bd-ee9f4bd2ad14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\zlib\include">
+      <UniqueIdentifier>{1298ef39-f6c9-4e42-a90d-76db93fdeb01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Visible">
+      <UniqueIdentifier>{f0d1106c-b007-4f03-8009-ee13277dee12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="public\C++17">
+      <UniqueIdentifier>{41eeb02a-edc1-4ca3-bfbe-4de5ad6eb136}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="System\App.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ICore.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\CHelper.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="System\net_work.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\DxGraphDevice.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\DxIntPut.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\DxTextPrintWindows.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\entity\EntityMgr.cpp">
+      <Filter>Core\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\game_lib.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\entity\Entity.cpp">
+      <Filter>Core\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\LogModle.cpp">
+      <Filter>Core\Modle</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Base\Timer.cpp">
+      <Filter>Core\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Matrix.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Math.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\ImageSource.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\stc\s3tc.cpp">
+      <Filter>SDK\stc</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\IActor.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\ICamera.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\IGameObject.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\IVisBase.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\ILight.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="Util\UtilTool.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\ITexture.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="public\DataBuffer.cpp">
+      <Filter>public</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\Scene.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="public\Thread.cpp">
+      <Filter>public</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\ResLoader.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\Package.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\XMLDocument.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\UtilString.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Color.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\Mesh.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+    <ClCompile Include="public\RenderVariable.cpp">
+      <Filter>public</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Quaternion.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Visible\SceneObject.cpp">
+      <Filter>Core\Visible</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="System\App.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ICore.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="public\array_pod.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\CBlock.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\char_traits.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\data.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\hash_list.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\inline.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\list_pod.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\macro.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\momery.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\octree.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\persistid.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\var_type.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\xtree.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\CHelper.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="System\system_table.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\windows_file.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\windows_socket.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\windows_string.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\windows_thread.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\rapid\rapidxml.hpp">
+      <Filter>SDK\rapid</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\rapid\rapidxml_iterators.hpp">
+      <Filter>SDK\rapid</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\rapid\rapidxml_print.hpp">
+      <Filter>SDK\rapid</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\rapid\rapidxml_utils.hpp">
+      <Filter>SDK\rapid</Filter>
+    </ClInclude>
+    <ClInclude Include="System\DxGraphDevice.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\DxIntPut.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\coredefine\GlobalDefine.h">
+      <Filter>Core\coredefine</Filter>
+    </ClInclude>
+    <ClInclude Include="System\DxTextPrintWindows.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\entity\CreateEntity.h">
+      <Filter>Core\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\entity\Entity.h">
+      <Filter>Core\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\entity\EntityMgr.h">
+      <Filter>Core\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\entity\Method.h">
+      <Filter>Core\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\tool_string.h" />
+    <ClInclude Include="Tool\tool_string.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\util_string.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\AI\AIBase.h">
+      <Filter>Core\Game\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\AI\AIManager.h">
+      <Filter>Core\Game\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\AI\FightState.h">
+      <Filter>Core\Game\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\AI\PreFightState.h">
+      <Filter>Core\Game\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\AI\WarnState.h">
+      <Filter>Core\Game\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectBase.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectContainer.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectDrop.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectItem.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectLink.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game\Effect\EffectManager.h">
+      <Filter>Core\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\LogModle.h">
+      <Filter>Core\Modle</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Base\Timer.h">
+      <Filter>Core\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\define\definename.h">
+      <Filter>Core\define</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\math_helper.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\MathDefine.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Matrix.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Rect.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Sphere.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Vector.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\AABBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\ImageSource.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\stc\s3tc.h">
+      <Filter>SDK\stc</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\png\include\win32\png.h">
+      <Filter>SDK\png\include\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\png\include\win32\pngconf.h">
+      <Filter>SDK\png\include\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\png\include\win32\pnglibconf.h">
+      <Filter>SDK\png\include\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\zlib\include\zconf.h">
+      <Filter>SDK\zlib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\zlib\include\zlib.h">
+      <Filter>SDK\zlib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Color.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\IActor.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\ICamera.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\IGameObject.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\IVisBase.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\Material.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\ILight.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\UtilTool.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\define\define_render.h">
+      <Filter>Core\define</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\define\definetemporary.h">
+      <Filter>Core\define</Filter>
+    </ClInclude>
+    <ClInclude Include="public\DataBuffer.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\predefine.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Base\CPropData.h">
+      <Filter>Core\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="mathdefine.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="public\tchar.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\ITexture.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="public\ArrayRef.hpp">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\Hash.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\Scene.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\ResLoader.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="public\Thread.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="public\C++17\string_view.h">
+      <Filter>public\C++17</Filter>
+    </ClInclude>
+    <ClInclude Include="public\C++17\option.h">
+      <Filter>public\C++17</Filter>
+    </ClInclude>
+    <ClInclude Include="public\C++17\filesystem.h">
+      <Filter>public\C++17</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\Package.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\XMLDocument.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\UtilString.h">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\OBBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\Mesh.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+    <ClInclude Include="public\RenderVariable.h">
+      <Filter>public</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Quaternion.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Visible\SceneObject.h">
+      <Filter>Core\Visible</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="SDK\rapid\license.txt">
+      <Filter>SDK\rapid</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SDK\rapid\manual.html">
+      <Filter>SDK\rapid</Filter>
+    </None>
+  </ItemGroup>
+</Project>

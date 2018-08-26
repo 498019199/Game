@@ -1,0 +1,7 @@
+<!--xml version = '1.0' encoding = 'utf-8'-->	
+<Object>
+  <Propety ID="102" Type="share" Name="test1" Resource="222.xml"/>
+  <Propety ID="102" Type="client" Name="test1" Resource="333.xml"/>
+  <Propety ID="102" Type="server" Name="test1" Resource="444.xml"/>
+</Object>
+

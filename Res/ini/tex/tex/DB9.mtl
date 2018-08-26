@@ -1,0 +1,762 @@
+# 
+# Wavefront material file
+# Converted by the DEEP Exploration  Deep Exploration 5.5 5.5.3.2642 Release
+# Right Hemisphere, LTD
+# http://www.righthemisphere.com/
+# 
+
+newmtl Material__602
+Ka 0.588 0.588 0.588
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 48.5029
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 HEADLIGHT.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 73.5167
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 HEADLIGHT.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl HeadLights
+Ka 0.588 0.588 0.588
+Kd 0.588 0.588 0.588
+Ks 0.9 0.9 0.9
+illum 2
+Ns 48.5029
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Interior
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 18.3792
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 INTERIOR.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Driver
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DRIVER.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl HL_glass
+Ka 0.176471 0.176471 0.176471
+Kd 0.176471 0.176471 0.176471
+Ks 0.9 0.9 0.9
+illum 2
+Ns 25.9921
+d 0.37
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Material__605
+Ka 0.588 0.588 0.588
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 55.7152
+map_Kd DB9 BRAKELIGHT.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl glass
+Ka 0.152941 0.152941 0.152941
+Kd 0.152941 0.152941 0.152941
+Ks 0.9 0.9 0.9
+illum 2
+Ns 111.43
+d 0.55
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl glass_rear
+Ka 0.152941 0.152941 0.152941
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 111.43
+d 0.38
+map_Kd WDEFROST.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Material__607
+Ka 0.0862745 0.0862745 0.0862745
+Kd 0.0862745 0.0862745 0.0862745
+Ks 0.9 0.9 0.9
+illum 2
+Ns 36.7583
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body_paint
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl License
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\LICENSE.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 21.1121
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Chrome
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Base
+Ka 0.152941 0.152941 0.152941
+Kd 0.152941 0.152941 0.152941
+Ks 0.9 0.9 0.9
+illum 2
+Ns 111.43
+d 0.55
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body_paint0
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc2
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Hood
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body_paint1
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc3
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 39.3966
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Material__613
+Ka 0.184314 0.184314 0.184314
+Kd 0.184314 0.184314 0.184314
+Ks 0.9 0.9 0.9
+illum 2
+Ns 18.3792
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Mirror
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl DoorLine
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DOORLINE.tga
+map_bump 
+bump 
+map_opacity D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DOORLINE MASK.tga
+map_d D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DOORLINE MASK.tga
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Badging_Chrome
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING.tga
+map_bump D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING NORMAL.tga
+bump D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING NORMAL.tga
+map_opacity D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING MASK.tga
+map_d D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING MASK.tga
+refl D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 BADGING MASK.tga
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Black
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body_paint2
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Bottom
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\BOTTOM.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc4
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Chrome0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Chrome1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Body_paint3
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Misc5
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 4
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Hood_Carbon
+Ka 0.309804 0.380392 0.458824
+Kd 0.309804 0.380392 0.458824
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brake_Disc
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 51.9842
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\BRAKDISC.tga
+map_bump 
+bump 
+map_opacity D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+map_d D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brake_Pads
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 25.9921
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brakes_Right
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.9 0.9 0.9
+illum 2
+Ns 51.9842
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Chrome2
+Ka 0.588 0.588 0.588
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 25.9921
+map_Kd DB9 TIRE.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Tire_Back
+Ka 0.192157 0.192157 0.192157
+Kd 0.192157 0.192157 0.192157
+Ks 1 1 1
+illum 2
+Ns 5.65685
+map_Kd 
+map_bump 
+bump 
+map_opacity D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+map_d D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Tire_Tread
+Ka 0.192157 0.192157 0.192157
+Kd 1 1 1
+Ks 1 1 1
+illum 2
+Ns 19.6983
+map_Kd tread_tm.tga
+map_bump tread_tm_nm.tga
+bump tread_tm_nm.tga
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Tire_Sidewall
+Ka 0.192157 0.192157 0.192157
+Kd 1 1 1
+Ks 1 1 1
+illum 2
+Ns 27.8576
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIRE.tga
+map_bump D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIRE BUMP.tga
+bump D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIRE BUMP.tga
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Tire
+Ka 0.588 0.588 0.588
+Kd 0.588 0.588 0.588
+Ks 0.9 0.9 0.9
+illum 2
+Ns 25.9921
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brake_Disc0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 32
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\BRAKDISC.tga
+map_bump 
+bump 
+map_opacity D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+map_d D:\\upload\\CONVER~1\\cars\\ASTONM~1\\TIREBACK.tga
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brake_Pads0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 24.2515
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\DB9 MISC MIRROR.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl Brakes_Left
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.9 0.9 0.9
+illum 2
+Ns 32
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl License0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.9 0.9 0.9
+illum 2
+Ns 64
+map_Kd D:\\upload\\CONVER~1\\cars\\ASTONM~1\\LICENSE.tga
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
