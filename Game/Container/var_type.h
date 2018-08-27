@@ -13,7 +13,7 @@ typedef int     zint32_t;
 typedef unsigned char      uint8_t;
 typedef unsigned short     uint16_t;
 typedef unsigned int       uint32_t;
-#if STX_PLATFORM_WIN64
+#if defined STX_PLATFORM_WIN64
     typedef unsigned  __int64 uint64_t;
     typedef uint64_t  zsize_t;
 #else

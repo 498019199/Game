@@ -13,7 +13,7 @@ Renderable::Renderable(Context* pContext)
 	auto cvList = SyncLoadRenderEffects(MakeArrayRef(&strPath, 1));
 	BindDeferredData(cvList);
 
-	SetPosition(0, 0, 0);
+	SetPosition(0, 2, -1);
 }
 
 void Renderable::RegisterObject(Context* pContext)

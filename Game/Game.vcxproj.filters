@@ -46,15 +46,6 @@
     <Filter Include="Render">
       <UniqueIdentifier>{30ccc136-b157-48de-9d86-4262a0ada446}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{11260d69-9cca-4bd0-940f-60b4e1de8b77}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Entity">
-      <UniqueIdentifier>{ec67e0f2-9585-470d-9d23-28631a818679}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Compenent">
-      <UniqueIdentifier>{42d6ce64-3d9e-4cec-9948-30072c81d4e4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Container">
       <UniqueIdentifier>{07a24866-a754-4b7b-8bd9-d9ca208934ba}</UniqueIdentifier>
     </Filter>
@@ -64,15 +55,24 @@
     <Filter Include="Render\Action">
       <UniqueIdentifier>{2cd9ce3d-addc-40d4-9f8e-08da50c95084}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{93886fa4-255c-4f2d-9f80-4f0b394c8a6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Compenent">
+      <UniqueIdentifier>{24de3fd0-bec0-4be2-a799-29f0932cd90d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Entity">
+      <UniqueIdentifier>{ad21acc6-9a6d-4f93-a6bb-1ca6807dd6ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\tinyobj">
+      <UniqueIdentifier>{48cdb47a-5a3e-47f7-a762-a02cadb2b910}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\LZMA">
+      <UniqueIdentifier>{bf472941-55cd-4550-aef7-384df85426f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Core\CHelper.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\game_lib.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Math\Matrix.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -99,15 +99,6 @@
     </ClCompile>
     <ClCompile Include="Tool\ImageSource.cpp">
       <Filter>Tool</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Context.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Entity\Entity.cpp">
-      <Filter>Core\Entity</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\ContextRegister.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="System\Log.cpp">
       <Filter>System</Filter>
@@ -184,11 +175,53 @@
     <ClCompile Include="Render\Renderable.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Entity\Entity.cpp">
+      <Filter>Core\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\CHelper.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Context.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ContextRegister.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\game_lib.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\Alloc.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\LzFind.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\LzFindMt.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\LzmaDec.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\LzmaEnc.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\LzmaLib.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\LZMA\Threads.c">
+      <Filter>SDK\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\LZMACodec.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Util\ErrorHandle.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Tool\DllLoader.cpp">
+      <Filter>Tool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\CHelper.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="SDK\rapid\rapidxml.hpp">
       <Filter>SDK\rapid</Filter>
     </ClInclude>
@@ -282,12 +315,6 @@
     <ClInclude Include="Tool\ImageSource.h">
       <Filter>Tool</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Context.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Entity\Entity.h">
-      <Filter>Core\Entity</Filter>
-    </ClInclude>
     <ClInclude Include="System\Log.h">
       <Filter>System</Filter>
     </ClInclude>
@@ -338,9 +365,6 @@
     </ClInclude>
     <ClInclude Include="Render\SceneObject.h">
       <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Compenent\CPropData.h">
-      <Filter>Core\Compenent</Filter>
     </ClInclude>
     <ClInclude Include="Container\array_pod.h">
       <Filter>Container</Filter>
@@ -411,9 +435,6 @@
     <ClInclude Include="Container\String.h">
       <Filter>Container</Filter>
     </ClInclude>
-    <ClInclude Include="Core\predefine.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Render\SceneManager.h">
       <Filter>Render</Filter>
     </ClInclude>
@@ -428,6 +449,63 @@
     </ClInclude>
     <ClInclude Include="Render\Renderable.h">
       <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Compenent\CPropData.h">
+      <Filter>Core\Compenent</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Entity\Entity.h">
+      <Filter>Core\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\CHelper.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Context.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\predefine.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\Alloc.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\LzFind.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\LzFindMt.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\LzmaDec.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\LzmaEnc.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\LzmaLib.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\Threads.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\LZMACodec.hpp">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\7zTypes.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="Tool\DllLoader.hpp">
+      <Filter>Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\ErrorHandle.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\tinyobj\tiny_obj_loader.h">
+      <Filter>SDK\tinyobj</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\Compiler.h">
+      <Filter>SDK\LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\LZMA\Precomp.h">
+      <Filter>SDK\LZMA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

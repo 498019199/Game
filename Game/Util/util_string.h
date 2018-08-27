@@ -3,13 +3,14 @@
 #include "../Container/var_type.h"
 #include "../Container/persistid.h"
 #include "../Platform/system_table.h"
+#include "../Tool/UtilString.h"
 #include<tchar.h>
 #include <time.h>
 
 #pragma once
 
 // 去前后空白符
-inline void trim_string1(char* szNew, const char* szOld, int nMaxSize)
+inline void trim_string1(char* szNew, const char* szOld, size_t nMaxSize)
 {
 	char* p = const_cast<char*>(szOld);
 	char* q = const_cast<char*>(szOld);
@@ -19,7 +20,7 @@ inline void trim_string1(char* szNew, const char* szOld, int nMaxSize)
 	while (' ' == *q || '\t' == *q) --q;
 
 
-	int nCount = q - szOld;
+	size_t nCount = q - szOld;
 	if (nCount < nMaxSize)
 	{
 		memcpy(szNew, szOld, nCount);
@@ -33,7 +34,7 @@ inline void trim_string1(char* szNew, const char* szOld, int nMaxSize)
 // 去前后空白符
 inline void trim_string(char* szNew, const char* szOld)
 {
-	return trim_string1(szNew, szOld, strlen(szOld));
+	return trim_string1(szNew, szOld, UtilString::length(szOld));
 }
 
 inline int64_t GetUniqueID()

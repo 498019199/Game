@@ -280,7 +280,7 @@ public:
 
 		propety_data_t* pData = NEW propety_data_t;
 		pData->nType = CType_widestring;
-		uint32_t nLen = (UtilString::length(value) + 1) * sizeof(wchar_t);
+		uint32_t nLen = static_cast<uint32_t>((UtilString::length(value) + 1) * sizeof(wchar_t));
 		wchar_t *temp = NEW wchar_t[nLen];
 		memcpy(temp, value, nLen);
 		pData->pValue = reinterpret_cast<void*>(temp);
@@ -454,7 +454,7 @@ public:
 			delete pTmp->pValue;
 			pTmp->pValue = nullptr;
 
-			uint32_t nLen = (UtilString::length(value) + 1) * sizeof(wchar_t);
+			uint32_t nLen = static_cast<uint32_t>((UtilString::length(value) + 1) * sizeof(wchar_t));
 			wchar_t *temp = NEW wchar_t[nLen];
 			memcpy(temp, value, nLen);
 			pTmp->pValue = reinterpret_cast<void*>(temp);

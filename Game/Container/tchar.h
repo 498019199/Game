@@ -20,7 +20,7 @@ struct Trains <char>
 
     static uint32_t length(const char* src)
     {
-        return strlen(src);
+        return static_cast<uint32_t>(strlen(src));
     }
 
     static uint32_t hash_value(const char* szKey)
@@ -76,7 +76,7 @@ struct Trains<wchar_t>
 
     static uint32_t length(const wchar_t* src)
     {
-        return wcslen(src);
+        return static_cast<uint32_t>(wcslen(src));
     }
 
     static void copy(wchar_t* des, const wchar_t* src)

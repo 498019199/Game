@@ -72,7 +72,7 @@ bool UtilString::compare(const wchar_t* s1, const wchar_t* s2)
     return false;
 }
 
-std::size_t UtilString::length(const char* buf)
+uint32_t UtilString::length(const char* buf)
 {
     return PlatformStringLength(buf);
 }
@@ -100,7 +100,7 @@ void UtilString::string_splic(STD string buf, IVarList& args, STD string ch /*= 
 	std::string tt;
 	auto splitchar = ch[0];
 
-	for (std::size_t i = 0; i < len; i++)
+	for (size_t i = 0; i < len; i++)
 	{
 		if (buf[i] == splitchar && i == 0)
 			start++;

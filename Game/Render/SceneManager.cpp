@@ -29,7 +29,7 @@ void SceneManager::AddVisBase(VisBasePtr vis)
 	m_VisBaseList.push_back(vis);
 }
 
-void SceneManager::RefreshRender(DxGraphDevice* pDevice)
+void SceneManager::Render()
 {
 	for (auto it : m_Lights)
 	{

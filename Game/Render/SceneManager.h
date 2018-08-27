@@ -22,7 +22,7 @@ public:
 	CameraPtr ActiveCamera() { return m_Camera; }
 
 	void AddVisBase(VisBasePtr vis);
-	void RefreshRender(DxGraphDevice* pDevice);
+	void Render();
 private:
 	int m_nAttr;												//  Ù–‘
 

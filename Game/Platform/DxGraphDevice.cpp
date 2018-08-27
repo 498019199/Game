@@ -314,13 +314,112 @@ void DxGraphDevice::ClipPolys(const RenderCVarlistPtr& cvList, const zbVertex4D&
 	// 剔除三角形
 	int encodes[3] = {};
 	auto nInVertNum = CullingPolys(ps, encodes);
-
-	// 只对近裁剪面和远裁剪面裁剪
-	if (2 == nInVertNum)
+	if (0 == nInVertNum)
 	{
+		return;
 	}
-	else if (1 == nInVertNum)
+
+	// 只对近裁剪面和远裁剪面裁剪,判断是否有顶点在近裁剪面外侧
+	float4 v; float t1,t2,xi,yi;
+	auto camera = Context::Instance()->ActiveScene()->ActiveCamera();
+	auto fNear = camera->NearPlane();
+	if ((encodes[0] | encodes[1] | encodes[2]) & CLIP_Z__MID)
 	{
+		zbVertex4D tmp;
+		if (2 == nInVertNum)
+		{
+			// 三角形有1个顶点在近裁剪面内侧，2个顶点在外侧
+			if (encodes[0] == CLIP_Z__MID)
+			{
+			}
+			else if (encodes[1] == CLIP_Z__MID)
+			{
+				tmp = ps[0];
+				ps[0] = ps[1];
+				ps[1] = ps[2];
+				ps[2] = tmp;
+			}
+			else
+			{
+				tmp = ps[0];
+				ps[0] = ps[2];
+				ps[2] = ps[1];
+				ps[1] = tmp;
+			}
+
+			// 创建参数化方程p = v0 + v01 * t
+			v = ps[1].v - ps[0].v;
+			t1 = fNear / v.z();
+
+			xi = ps[0].v.x() + v.x() * t1;
+			yi = ps[0].v.y() + v.y() * t1;
+			// 用交点覆盖原来的顶点
+			ps[1].v.x() = xi;
+			ps[1].v.y() = yi;
+			ps[1].v.z() = fNear;
+
+			// 对三角形边v0->v2进行裁剪
+			v = ps[2].v - ps[0].v;
+			t2 = (fNear - ps[0].v.z()) / v.z();
+
+			xi = ps[0].v.x() + v.x() * t2;
+			yi = ps[0].v.y() + v.y() * t2;
+
+			// 用交点覆盖原来的顶点
+			ps[2].v.x() = xi;
+			ps[2].v.y() = yi;
+			ps[2].v.z() = fNear;
+		}
+		else if (1 == nInVertNum)
+		{
+			// 三角形有2个顶点在近裁剪面内侧，1个顶点在外侧
+			if (encodes[0] == CLIP_Z__MIN)
+			{
+			}
+			else if (encodes[1] == CLIP_Z__MIN)
+			{
+				tmp = ps[0];
+				ps[0] = ps[1];
+				ps[1] = ps[2];
+				ps[2] = tmp;
+			}
+			else
+			{
+				tmp = ps[0];
+				ps[0] = ps[2];
+				ps[2] = ps[1];
+				ps[1] = tmp;
+			}
+
+			zbVertex4D np1 = ps[0], np2 = ps[1], np3 = ps[2];
+			float x01i, y01i, x02i, y02i;
+			// 对每条边进行裁剪
+			// 创建参数化方程p = v0 + v01 * t
+			v = ps[1].v - ps[0].v;
+			t1 = (fNear - ps[0].v.z()) / v.z();
+
+			x01i = ps[0].v.x() + v.x()* t1;
+			y01i = ps[0].v.y() + v.y() * t1;
+
+			// 对三角形边v0->v2进行裁剪
+			v = ps[2].v, - ps[0].v;
+			t2 = (fNear - ps[0].v.z()) / v.z();
+
+			x02i = ps[0].v.x() + v.x() * t2;
+			y02i = ps[0].v.y() + v.y() * t2;
+			// 用交点覆盖原来的顶点
+			ps[0].v.x() = x01i;
+			ps[0].v.y() = y01i;
+			ps[0].v.z() = fNear;
+
+			np2.v.x() = x01i;
+			np2.v.y() = y01i;
+			np2.v.z() = fNear;
+
+			np1.v.x() = x02i;
+			np1.v.y() = y02i;
+			np1.v.z() = fNear;
+		}
 	}
 
 	float4x4 mvp;
@@ -602,10 +701,10 @@ bool DxGraphDevice::CullFace(int fType, const float4& p1, const float4& p2, cons
 
 	switch (fType)
 	{
-	case CULL_FACE_FRONT:
+	case CULL_FACE_BACK:
 		if (fA >= 0.0f) return false;
 		break;
-	case CULL_FACE_BACK:
+	case CULL_FACE_FRONT:
 		if (fA <= 0.0f) return false;
 		break;
 	}

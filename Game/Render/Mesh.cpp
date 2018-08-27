@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "../System/ResLoader.h"
+#include "../System/Log.h"
 #include "../Platform/DxGraphDevice.h"
 #include "../Util/UtilTool.h"
 #include "../Container/Hash.h"
@@ -7,8 +8,8 @@
 #include "../Render/ICamera.h"
 #include "../Render/Material.h"
 #include "../Render/ITexture.h"
-#include "../Tool/XMLDocument.h"
-
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "../SDK/tinyobj/tiny_obj_loader.h"
 typedef struct { float4 pos; float2 tc; Color color; float4 normal; } vertex_t;
 vertex_t box_mesh[36] = {
 	// Positions                  // Texture Coords  //color           //rhw // Normals
@@ -365,6 +366,105 @@ void StaticMesh::AddIndexStream(uint32_t nLod, const std::vector<int3>& Indices)
 	m_LayoutPtr->BindIndexStream(nLod, Indices);
 }
 
+std::string const jit_ext_name = ".model_bin";
+uint32_t const MODEL_BIN_VERSION = 15;
+void ModelJIT(std::string const & strFineName)
+{
+	std::string::size_type const pkt_offset(strFineName.find("//"));
+	std::string folder_name;
+	std::string path_name;
+	if (pkt_offset != std::string::npos)
+	{
+		std::string pkt_name = strFineName.substr(0, pkt_offset);
+		std::string::size_type const password_offset = pkt_name.find("|");
+		if (password_offset != std::string::npos)
+		{
+			pkt_name = pkt_name.substr(0, password_offset - 1);
+		}
+
+		std::string::size_type offset = pkt_name.rfind("/");
+		if (offset != std::string::npos)
+		{
+			folder_name = pkt_name.substr(0, offset + 1);
+		}
+
+		std::string const file_name = strFineName.substr(pkt_offset + 2);
+		path_name = folder_name + file_name;
+	}
+	else
+	{
+		path_name = strFineName;
+	}
+
+	bool jit = false;
+	if (ResLoader::Instance()->Locate(path_name + jit_ext_name).empty())
+	{
+		jit = true;
+	}
+	else
+	{
+		ResIdentifierPtr lzma_file = ResLoader::Instance()->Open(path_name + jit_ext_name);
+		uint32_t fourcc;
+		lzma_file->read(&fourcc, sizeof(fourcc));
+		fourcc = LE2Native(fourcc);
+		uint32_t ver;
+		lzma_file->read(&ver, sizeof(ver));
+		ver = LE2Native(ver);
+		if ((fourcc != MakeFourCC<'K', 'L', 'M', ' '>::value) || (ver != MODEL_BIN_VERSION))
+		{
+			jit = true;
+		}
+		else
+		{
+			ResIdentifierPtr file = ResLoader::Instance()->Open(strFineName);
+			if (file)
+			{
+				if (lzma_file->Timestamp() < file->Timestamp())
+				{
+					jit = true;
+				}
+			}
+		}
+	}
+
+#if STX_IS_DEV_PLATFORM
+	if (jit)
+	{
+		std::string meshmljit_name = "MeshMLJIT" STX_DBG_SUFFIX;
+#ifdef STX_PLATFORM_WINDOWS_DESKTOP
+		meshmljit_name += ".exe";
+#endif
+		meshmljit_name = ResLoader::Instance()->Locate(meshmljit_name);
+		bool failed = false;
+		if (meshmljit_name.empty())
+		{
+			failed = true;
+		}
+		else
+		{
+#ifndef STX_PLATFORM_WIN
+			if (std::string::npos == meshmljit_name.find("/"))
+			{
+				meshmljit_name = "./" + meshmljit_name;
+			}
+#endif
+			if (system((meshmljit_name + " -I \"" + strFineName + "\" -T \"" + folder_name + "\" -q").c_str()) != 0)
+			{
+				failed = true;
+			}
+		}
+
+		if (failed)
+		{
+			LOGER_ERROR("MeshMLJIT failed. Forgot to build Tools?");
+		}
+	}
+#else
+	BOOST_ASSERT(!jit);
+	UNUSED(jit);
+#endif
+}
+
 void LoadModel(const std::string strFineName, 
 	std::vector<MaterialPtr>& mtls,
 	std::vector<uint32_t>& mtl_ids,
@@ -373,135 +473,100 @@ void LoadModel(const std::string strFineName,
 	std::vector<zbVertex4D>& VerticeVec,
 	std::vector<int3>& Int3diceVec)
 {
-	auto lzma_file = ResLoader::Instance()->Open(strFineName);
-	XMLDocument doc;
-	auto root = doc.Parse(lzma_file);
-	if (nullptr == root)
+	ResIdentifierPtr lzma_file;
+	if (strFineName.rfind(jit_ext_name) + jit_ext_name.size() == strFineName.size())
 	{
-		return ;
+		lzma_file = ResLoader::Instance()->Open(strFineName);
 	}
-	
-	auto materials_chunk = root->FirstNode("materials_chunk");
-	if (nullptr == materials_chunk)
+	else
 	{
-		return;
+		std::string full_strFineName = ResLoader::Instance()->Locate(strFineName);
+		if (full_strFineName.empty())
+		{
+			full_strFineName = strFineName;
+		}
+		std::replace(full_strFineName.begin(), full_strFineName.end(), '\\', '/');
+		ModelJIT(full_strFineName);
+
+		std::string no_packing_name;
+		size_t offset = full_strFineName.rfind("//");
+		if (offset != std::string::npos)
+		{
+			no_packing_name = full_strFineName.substr(offset + 2);
+		}
+		else
+		{
+			no_packing_name = full_strFineName;
+		}
+		lzma_file = ResLoader::Instance()->Open(no_packing_name + jit_ext_name);
 	}
-	auto mtl = materials_chunk->FirstNode("material");
-	while (mtl)
-	{
-		XMLAttributePtr attr = mtl->Attrib("name");
-		if (nullptr == attr)
-		{
-			continue;
-		}
+	uint32_t fourcc;
+	lzma_file->read(&fourcc, sizeof(fourcc));
+	fourcc = LE2Native(fourcc);
+	BOOST_ASSERT((fourcc == MakeFourCC<'K', 'L', 'M', ' '>::value));
+ //	tinyobj::attrib_t attrib;
+ //	std::vector<tinyobj::shape_t> shapes;
+ //	std::vector<tinyobj::material_t> materials;
+ //	std::string err;
+ //	auto lzma_file = ResLoader::Instance()->Open(strFineName);
+ //	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()));
 
-		auto material = SyncLoadRenderMaterial(attr->ValueString().data(), mtl);
-		mtls.push_back(material);
-		mtl = mtl->NextSibling();
-	}
+	//for (const auto& shape : shapes)
+	//{
+	//	mesh_names.push_back(shape.name);
+	//	for (const auto& index : shape.mesh.indices)
+	//	{
+	//		zbVertex4D tmp;
+	//		memset(&tmp, 0, sizeof(zbVertex4D));
+	//		tmp.v.x() = attrib.vertices[3 * index.vertex_index + 0];
+	//		tmp.v.y() = attrib.vertices[3 * index.vertex_index + 1];
+	//		tmp.v.z() = attrib.vertices[3 * index.vertex_index + 2];
+	//		if (-1 != index.normal_index)
+	//		{
+	//			tmp.n.x() = attrib.normals[3 * index.normal_index + 0];
+	//			tmp.n.y() = attrib.normals[3 * index.normal_index + 1];
+	//			tmp.n.z() = attrib.normals[3 * index.normal_index + 2];
+	//		}
+	//		tmp.t.x() = attrib.texcoords[2 * index.texcoord_index + 0];
+	//		tmp.t.y() = attrib.texcoords[2 * index.texcoord_index + 1];
 
-	if (1)
-	{
-		mesh_names.push_back("box");
-		mesh_lods.push_back(1);
-		for (uint32_t i = 0; i < 36; ++i)
-		{
-			zbVertex4D tmp;
-			tmp.v = box_mesh[i].pos;
-			tmp.t = box_mesh[i].tc;
-			tmp.n = box_mesh[i].normal;
-			tmp.color = box_mesh[i].color;
-			VerticeVec.push_back(tmp);
-		}
-		
-		for (uint32_t i = 0; i < 36; i+=3)
-		{
-			Int3diceVec.push_back(int3(i, i+1, i+2));
-		}
-		mtl_ids.push_back(Int3diceVec.size());
-
-		std::vector<uint32_t> tmpVec;
-		tmpVec.push_back(mtl_ids.front());
-		uint32_t sum = 0;
-		for (std::size_t i = 0; i < mtl_ids.size() - 1; ++i)
-		{
-			auto tmp = mtl_ids[i + 1] - mtl_ids[i];
-			tmpVec.push_back(tmp);
-		}
-		mtl_ids.swap(tmpVec);
-		return;
-	}
-	auto meshes_chunk = root->FirstNode("meshes_chunk");
-	if (nullptr == meshes_chunk)
-	{
-		return;
-	}
-	auto mesh = meshes_chunk->FirstNode("mesh");
-	while (mesh)
-	{
-		auto attr = mesh->Attrib("name");
-		mesh_names.push_back(attr->ValueString().data());
-		attr = mesh->Attrib("mtl_id");
-		mesh_lods.push_back(attr->ValueInt());
-
-		auto vertices_chunk = mesh->FirstNode("vertices_chunk");
-		if (nullptr == vertices_chunk)
-		{
-			return;
-		}
-		auto vertex = vertices_chunk->FirstNode("vertex");
-		while (nullptr != vertex)
-		{
-			zbVertex4D tmp;
-			auto attr = vertex->Attrib("v");
-			tmp.v = attr->Valuefloat4();
-			auto normal = vertex->FirstNode("normal");
-			if (nullptr != normal)
-			{
-				auto attr = normal->Attrib("v");
-				tmp.n = attr->Valuefloat4();
-			}
-			auto tex_coord = vertex->FirstNode("tex_coord");
-			if (nullptr != tex_coord)
-			{
-				auto attr = tex_coord->Attrib("v");
-				tmp.t = attr->Valuefloat2();
-			}
-
-			VerticeVec.push_back(tmp);
-			vertex = vertex->NextSibling();
-		}
-
-		auto triangles_chunk = mesh->FirstNode("triangles_chunk");
-		if (nullptr == triangles_chunk)
-		{
-			return;
-		}
-		auto triangle = triangles_chunk->FirstNode("triangle");
-		while (nullptr != triangle)
-		{
-			auto index = triangle->Attrib("index");
-			if (nullptr != index)
-			{
-				Int3diceVec.push_back(index->ValueInt3());
-			}
-
-			triangle = triangle->NextSibling();
-		}
-
-		mtl_ids.push_back(Int3diceVec.size());
-		mesh = mesh->NextSibling();
-	}
-
-	std::vector<uint32_t> tmpVec;
-	tmpVec.push_back(mtl_ids.front());
-	uint32_t sum = 0;
-	for (std::size_t i = 0; i < mtl_ids.size() - 1; ++i)
-	{
-		auto tmp = mtl_ids[i + 1] - mtl_ids[i];
-		tmpVec.push_back(tmp);
-	}
-	mtl_ids.swap(tmpVec);
+	//		VerticeVec.push_back(tmp);
+	//	}
+	//}
+ //	// Loop over shapes
+ //	for (size_t s = 0; s < shapes.size(); s++) 
+ //	{
+ //		// Loop over faces(polygon)
+ //		size_t index_offset = 0;
+ //		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+ //		{
+ //			size_t fv = shapes[s].mesh.num_face_vertices[f];
+ //			// Loop over vertices in the face.
+ //			for (size_t v = 0; v < fv; v++) 
+ //			{
+ //				// access to vertex
+ //				zbVertex4D tmp;
+	//			memset(&tmp, 0, sizeof(zbVertex4D));
+ //				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+ //				tmp.v.x() = attrib.vertices[3 * idx.vertex_index + 0];
+ //				tmp.v.y() = attrib.vertices[3 * idx.vertex_index + 1];
+ //				tmp.v.z() = attrib.vertices[3 * idx.vertex_index + 2];
+ //				if (-1 != idx.normal_index)
+ //				{
+ //					tmp.n.x() = attrib.normals[3 * idx.normal_index + 0];
+ //					tmp.n.y() = attrib.normals[3 * idx.normal_index + 1];
+ //					tmp.n.z() = attrib.normals[3 * idx.normal_index + 2];
+ //				}
+ //				tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];
+ //				tmp.t.y() = attrib.texcoords[2 * idx.texcoord_index + 1];
+ //
+ //				VerticeVec.push_back(tmp);
+ //			}
+ //			index_offset += fv;
+ //			// per-face material
+ //			shapes[s].mesh.material_ids[f];
+ //		}
+ //	}
 }
 
 RenderModelPtr SyncLoadModel(const std::string& strFileName, uint32_t nAttr,

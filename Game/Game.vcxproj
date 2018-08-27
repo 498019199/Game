@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -23,7 +31,20 @@
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
@@ -36,7 +57,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -44,9 +71,23 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>E:\produture\projectt\C%29C++\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>E:\produture\projectt\C%29C++\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
     <SourcePath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK;C:\boost_1_67_0;$(ExecutablePath)</ExecutablePath>
+    <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK;C:\boost_1_67_0;$(ExecutablePath)</ExecutablePath>
     <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
@@ -75,7 +116,47 @@
       <AdditionalDependencies>d3d9.lib;d3dx10d.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;zlib.lib;libpng-2015.lib;libjpeg-2015.lib;libtiff-2015.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\boost_1_67_0;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\tiff\prebuilt\win32;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>
+      </LanguageStandard>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\zlib\prebuilt\win32;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\tiff\prebuilt\win32;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\jpeg\prebuilt\win32;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\png\prebuilt\win32;C:\boost_1_67_0\VC14.0\lib;E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Res\lib\DirectX9\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3d9.lib;d3dx10d.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;zlib.lib;libpng-2015.lib;libjpeg-2015.lib;libtiff-2015.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\boost_1_67_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
@@ -126,14 +207,24 @@
     <ClCompile Include="Render\RenderLayout.cpp" />
     <ClCompile Include="Render\SceneManager.cpp" />
     <ClCompile Include="Render\SceneObject.cpp" />
+    <ClCompile Include="SDK\LZMA\Alloc.c" />
+    <ClCompile Include="SDK\LZMA\LzFind.c" />
+    <ClCompile Include="SDK\LZMA\LzFindMt.c" />
+    <ClCompile Include="SDK\LZMA\LzmaDec.c" />
+    <ClCompile Include="SDK\LZMA\LzmaEnc.c" />
+    <ClCompile Include="SDK\LZMA\LzmaLib.c" />
+    <ClCompile Include="SDK\LZMA\Threads.c" />
     <ClCompile Include="SDK\stc\s3tc.cpp" />
     <ClCompile Include="System\Log.cpp" />
     <ClCompile Include="System\Package.cpp" />
     <ClCompile Include="System\ResLoader.cpp" />
     <ClCompile Include="System\Timer.cpp" />
+    <ClCompile Include="Tool\DllLoader.cpp" />
     <ClCompile Include="Tool\ImageSource.cpp" />
+    <ClCompile Include="Tool\LZMACodec.cpp" />
     <ClCompile Include="Tool\UtilString.cpp" />
     <ClCompile Include="Tool\XMLDocument.cpp" />
+    <ClCompile Include="Util\ErrorHandle.cpp" />
     <ClCompile Include="Util\UtilTool.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +290,16 @@
     <ClInclude Include="Render\RenderLayout.h" />
     <ClInclude Include="Render\SceneManager.h" />
     <ClInclude Include="Render\SceneObject.h" />
+    <ClInclude Include="SDK\LZMA\7zTypes.h" />
+    <ClInclude Include="SDK\LZMA\Alloc.h" />
+    <ClInclude Include="SDK\LZMA\Compiler.h" />
+    <ClInclude Include="SDK\LZMA\LzFind.h" />
+    <ClInclude Include="SDK\LZMA\LzFindMt.h" />
+    <ClInclude Include="SDK\LZMA\LzmaDec.h" />
+    <ClInclude Include="SDK\LZMA\LzmaEnc.h" />
+    <ClInclude Include="SDK\LZMA\LzmaLib.h" />
+    <ClInclude Include="SDK\LZMA\Precomp.h" />
+    <ClInclude Include="SDK\LZMA\Threads.h" />
     <ClInclude Include="SDK\png\include\win32\png.h" />
     <ClInclude Include="SDK\png\include\win32\pngconf.h" />
     <ClInclude Include="SDK\png\include\win32\pnglibconf.h" />
@@ -207,15 +308,19 @@
     <ClInclude Include="SDK\rapid\rapidxml_print.hpp" />
     <ClInclude Include="SDK\rapid\rapidxml_utils.hpp" />
     <ClInclude Include="SDK\stc\s3tc.h" />
+    <ClInclude Include="SDK\tinyobj\tiny_obj_loader.h" />
     <ClInclude Include="SDK\zlib\include\zconf.h" />
     <ClInclude Include="SDK\zlib\include\zlib.h" />
     <ClInclude Include="System\Log.h" />
     <ClInclude Include="System\Package.h" />
     <ClInclude Include="System\ResLoader.h" />
     <ClInclude Include="System\Timer.h" />
+    <ClInclude Include="Tool\DllLoader.hpp" />
     <ClInclude Include="Tool\ImageSource.h" />
+    <ClInclude Include="Tool\LZMACodec.hpp" />
     <ClInclude Include="Tool\UtilString.h" />
     <ClInclude Include="Tool\XMLDocument.h" />
+    <ClInclude Include="Util\ErrorHandle.h" />
     <ClInclude Include="Util\UtilTool.h" />
     <ClInclude Include="Util\util_string.h" />
   </ItemGroup>

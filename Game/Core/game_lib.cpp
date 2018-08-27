@@ -25,7 +25,7 @@ void Context::Test()
 	}
 
 	Context::Instance()->SetScene(pScene);
-	auto model = SyncLoadModel("nanosuit/nanosuit.meshml", 0);
+	auto model = SyncLoadModel("Dragon_meshml/Dragon.meshml", 0);
 	model->LoadMeshTexture();
 	model->SetPosition(0.f, 2.f, -1.f);
 	pScene->AddVisBase(model);

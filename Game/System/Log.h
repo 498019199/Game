@@ -36,37 +36,36 @@ enum PrinterType
 
 // 宏定义
 // 依靠下列预定义的可以很方便的添加或者删除日志输出,提高效率
-#define  LOGER_USING(loger) extern LogManager g_Loger;
 #define  LOGER_CLOG(loger, ll, fmt, ...) \
 do \
 { \
-    if ((ll) <= (g_Loger).GetLogLevel()) \
+    if ((ll) <= (Log::Instance()).GetLogLevel()) \
     { \
-        (g_Loger).log((ll), fmt, __VA_ARGS__);\
+        (Log::Instance()).log((ll), fmt, __VA_ARGS__);\
     } \
 } while (0)
 //c++ style
 #define LOGER_ERROR(msg) \
-    (Log::Instance()) << LogLevel::LOG_ERROR << ##msg## << (g_Loger)
+    (Log::Instance()) << LogLevel::LOG_ERROR << ##msg## << (std::endl)
 #define LOGER_WARN(msg)\
-    (Log::Instance()) << LogLevel::LOG_WARING << ##msg## << (g_Loger)
+    (Log::Instance()) << LogLevel::LOG_WARING << ##msg## << (std::endl)
 #define LOGER_INFO(msg)\
-    (Log::Instance()) << LogLevel::LOG_INFO << ##msg## << (g_Loger)
+    (Log::Instance()) << LogLevel::LOG_INFO << ##msg## << (std::endl)
 #define LOGER_DEBUG(msg)\
-    (Log::Instance()) << LogLevel::LOG_DEBUG << ##msg## << (g_Loger)
+    (Log::Instance()) << LogLevel::LOG_DEBUG << ##msg## << (std::endl)
 #define LOGER_TRACE(msg)\
-    (Log::Instance()) << LogLevel::LOG_TRACE << ##msg## << (g_Loger)
+    (Log::Instance()) << LogLevel::LOG_TRACE << ##msg## << (std::endl)
 //c style
 #define CLOGER_ERROR(fmt, ...) \
-    LOGER_CLOG((g_Loger),  LogLevel::LOG_ERROR, (fmt), __VA_ARGS__)
+    LOGER_CLOG((Log::Instance()),  LogLevel::LOG_ERROR, (fmt), __VA_ARGS__)
 #define CLOGER_WARN(fmt, ...)\
-    LOGER_CLOG((g_Loger), LogLevel::LOG_WARING, (fmt), __VA_ARGS__)
+    LOGER_CLOG((Log::Instance()), LogLevel::LOG_WARING, (fmt), __VA_ARGS__)
 #define CLOGER_INFO(fmt, ...) \
-    LOGER_CLOG((g_Loger), LogLevel::LOG_INFO, (fmt), __VA_ARGS__)
+    LOGER_CLOG((Log::Instance()), LogLevel::LOG_INFO, (fmt), __VA_ARGS__)
 #define CLOGER_DEBUG(fmt, ...) \
-    LOGER_CLOG((g_Loger), LogLevel::LOG_DEBUG, (fmt), __VA_ARGS__)
+    LOGER_CLOG((Log::Instance()), LogLevel::LOG_DEBUG, (fmt), __VA_ARGS__)
 #define CLOGER_TRACE(fmt, ...) \
-    LOGER_CLOG((g_Loger), LogLevel::LOG_TRACE, (fmt), __VA_ARGS__)
+    LOGER_CLOG((Log::Instance()), LogLevel::LOG_TRACE, (fmt), __VA_ARGS__)
 
 //
 

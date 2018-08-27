@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <windowsx.h> 
 #include "Util/util_string.h"
-#include "../Container/cvar_list.h"
+#include "Container/cvar_list.h"
 #include "Platform/Renderer.h"
 #include "Platform/DxGraphDevice.h"
 #include "Core/Context.h"
@@ -21,14 +21,14 @@ void get_work_path(char* szPath, char* szOldPath)
 
 	trim_string(szPath1, szOldPath);
 	char szPath2[1024] = { 0 };
-	int nSize = strlen(szPath1);
+	uint32_t nSize = UtilString::length(szPath1);
 	char* big2 = strrchr(szPath1, '\\');
 	if (NULL == big2)
 	{
 		memcpy(szPath, szPath1, nSize);
 		return;
 	}
-	nSize = big2 - szPath1;
+	nSize = static_cast<uint32_t>(big2 - szPath1);
 	memcpy(szPath2, szPath1, nSize);
 
 	char *big3 = strrchr(szPath2, '\\');

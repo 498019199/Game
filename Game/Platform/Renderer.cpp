@@ -63,7 +63,7 @@ void Renderer::Render()
 		ang_y = 0;
 	}
 
-	mrot = MathLib::MatrixRotateY(ang_y);
+	mrot = MathLib::MatrixRotate(float3(1, 0, 1), ang_y);
 	mrot *= MathLib::MatrixScale(float3(ang_x, ang_x, ang_x));
 	auto val = MakeSharedPtr<VariableFloat4x4>();
 	*val = mrot;
@@ -71,7 +71,7 @@ void Renderer::Render()
 
 	auto pDevice = Context::Instance()->GetSubsystem<DxGraphDevice>();
 	pDevice->BeginRender();
-	Context::Instance()->ActiveScene()->RefreshRender(pDevice);
+	Context::Instance()->ActiveScene()->Render();
 
 	pDevice->DrawTextGDI("Press ESC to exit.", 0, 0, RGB(0, 255, 0));
 	char szBuffer[1024] = { 0 };

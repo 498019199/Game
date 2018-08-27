@@ -47,7 +47,7 @@ struct TCharTrains<char>
 		return "";
 	}
 
-	static int uPos()
+	static std::size_t uPos()
 	{
 		return std::size_t(-1);
 	}
@@ -91,7 +91,7 @@ struct TCharTrains<wchar_t>
 		return L"";
 	}
 
-	static int uPos()
+	static std::size_t uPos()
 	{
 		return std::size_t(-1);
 	}

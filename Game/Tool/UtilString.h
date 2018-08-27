@@ -72,7 +72,7 @@ public:
     static bool empty(const char* buf);
 
     //字符串长度
-    static std::size_t length(const char* buf);
+    static uint32_t length(const char* buf);
 
     //获取哈希值
     static std::size_t hash_value(const char* szKey);

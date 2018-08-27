@@ -20,6 +20,7 @@
 #define ADRESS_EQUIP(v1, v2) (reinterpret_cast<void*>(v1) == reinterpret_cast<void*>(v1))
 #define ADRESS_NOEQUIP(v1, v2) (reinterpret_cast<void*>(v1) != reinterpret_cast<void*>(v1))
 #define UNUSED(x) (void)(x)
+#define STX_STRINGIZE(X) #X
 
 inline void AssertionFail(const char* szMsg, const char* szFile, const char* szFunction, unsigned int nLine);
 #define UNREACHABLE_MSG(msg) \
@@ -105,6 +106,48 @@ void trace_log(const char* szFormat, ...);
 #define STX_VSNPRINTF(buf, nsize, fmt, val) \   
 			vswprintf(buf, nsize, fmt, val)
 #endif
+
+// 产生FourCC常量
+template <unsigned char ch0, unsigned char ch1, unsigned char ch2, unsigned char ch3>
+struct MakeFourCC
+{
+	enum { value = (ch0 << 0) + (ch1 << 8) + (ch2 << 16) + (ch3 << 24) };
+};
+
+// Endian的转换
+template <int size>
+void EndianSwitch(void* p) noexcept;
+
+template <typename T>
+T Native2BE(T x) noexcept
+{
+	//if constexpr (std::endian::native == std::endian::little)
+	{
+		EndianSwitch<sizeof(T)>(&x);
+	}
+	return x;
+}
+template <typename T>
+T Native2LE(T x) noexcept
+{
+	//if constexpr (std::endian::native == std::endian::big)
+	{
+		EndianSwitch<sizeof(T)>(&x);
+	}
+	return x;
+}
+
+template <typename T>
+T BE2Native(T x) noexcept
+{
+	return Native2BE(x);
+}
+template <typename T>
+T LE2Native(T x) noexcept
+{
+	return Native2LE(x);
+}
+
 #endif//_UTIL_TOOL_
 
 
