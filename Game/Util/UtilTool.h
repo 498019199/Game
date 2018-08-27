@@ -5,6 +5,8 @@
 #include <memory>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <boost/assert.hpp>
 #define STX_MIN(a, b) (((a)<(b))? (a): (b))
 #define STX_MAX(a, b) (((a)>(b))? (a): (b))
 #define PROTEST_ZERO(v) ((0 == v)? 1: v)
@@ -72,6 +74,13 @@ inline std::unique_ptr<T> MakeUniquePtr(Args&&... args)
 	return MakeUniquePtrHelper<T>(std::is_array<T>(), std::forward<Args>(args)...);
 }
 
+template <typename To, typename From>
+inline std::shared_ptr<To>
+checked_pointer_cast(std::shared_ptr<From> const & p) noexcept
+{
+	BOOST_ASSERT(std::dynamic_pointer_cast<To>(p) == std::static_pointer_cast<To>(p));
+	return std::static_pointer_cast<To>(p);
+}
 // 打印日志
 void fm_log(const char* szFormat, ...);
 // 打印调试信息

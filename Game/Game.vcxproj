@@ -44,6 +44,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>E:\produture\projectt\C%29C++\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
+    <SourcePath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -51,6 +52,7 @@
     <LibraryPath>E:\produture\projectt\BookExercise\3D游戏编程大师技巧\Game\Game\SDK\Dx\Lib\x86;$(LibraryPath)</LibraryPath>
     <IncludePath>$(IncludePath)</IncludePath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -93,78 +95,75 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Core\Base\Timer.cpp" />
+    <ClCompile Include="Container\cvar_list.cpp" />
+    <ClCompile Include="Container\DataBuffer.cpp" />
+    <ClCompile Include="Container\RenderVariable.cpp" />
+    <ClCompile Include="Container\String.cpp" />
+    <ClCompile Include="Container\Thread.cpp" />
     <ClCompile Include="Core\CHelper.cpp" />
-    <ClCompile Include="Core\entity\Entity.cpp" />
-    <ClCompile Include="Core\entity\EntityMgr.cpp" />
+    <ClCompile Include="Core\Context.cpp" />
+    <ClCompile Include="Core\ContextRegister.cpp" />
+    <ClCompile Include="Core\Entity\Entity.cpp" />
     <ClCompile Include="Core\game_lib.cpp" />
-    <ClCompile Include="Core\ICore.cpp" />
-    <ClCompile Include="Core\LogModle.cpp" />
-    <ClCompile Include="Core\Visible\IActor.cpp" />
-    <ClCompile Include="Core\Visible\ICamera.cpp" />
-    <ClCompile Include="Core\Visible\IGameObject.cpp" />
-    <ClCompile Include="Core\Visible\IVisBase.cpp" />
-    <ClCompile Include="Core\Visible\ILight.cpp" />
-    <ClCompile Include="Core\Visible\Mesh.cpp" />
-    <ClCompile Include="Core\Visible\Scene.cpp" />
-    <ClCompile Include="Core\Visible\ITexture.cpp" />
-    <ClCompile Include="Core\Visible\SceneObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\Color.cpp" />
     <ClCompile Include="Math\Math.cpp" />
     <ClCompile Include="Math\Matrix.cpp" />
     <ClCompile Include="Math\Quaternion.cpp" />
-    <ClCompile Include="public\DataBuffer.cpp" />
-    <ClCompile Include="public\Thread.cpp" />
-    <ClCompile Include="public\RenderVariable.cpp" />
+    <ClCompile Include="Platform\Renderer.cpp" />
+    <ClCompile Include="Platform\DxGraphDevice.cpp" />
+    <ClCompile Include="Platform\DxIntPut.cpp" />
+    <ClCompile Include="Platform\DxTextPrintWindows.cpp" />
+    <ClCompile Include="Platform\net_work.cpp" />
+    <ClCompile Include="Render\Action\IActor.cpp" />
+    <ClCompile Include="Render\ICamera.cpp" />
+    <ClCompile Include="Render\IGameObject.cpp" />
+    <ClCompile Include="Render\ILight.cpp" />
+    <ClCompile Include="Render\ITexture.cpp" />
+    <ClCompile Include="Render\Renderable.cpp" />
+    <ClCompile Include="Render\Material.cpp" />
+    <ClCompile Include="Render\Mesh.cpp" />
+    <ClCompile Include="Render\RenderLayout.cpp" />
+    <ClCompile Include="Render\SceneManager.cpp" />
+    <ClCompile Include="Render\SceneObject.cpp" />
     <ClCompile Include="SDK\stc\s3tc.cpp" />
-    <ClCompile Include="System\App.cpp" />
-    <ClCompile Include="System\DxGraphDevice.cpp" />
-    <ClCompile Include="System\DxIntPut.cpp" />
-    <ClCompile Include="System\DxTextPrintWindows.cpp" />
-    <ClCompile Include="System\net_work.cpp" />
+    <ClCompile Include="System\Log.cpp" />
+    <ClCompile Include="System\Package.cpp" />
+    <ClCompile Include="System\ResLoader.cpp" />
+    <ClCompile Include="System\Timer.cpp" />
     <ClCompile Include="Tool\ImageSource.cpp" />
-    <ClCompile Include="Tool\Package.cpp" />
     <ClCompile Include="Tool\UtilString.cpp" />
     <ClCompile Include="Tool\XMLDocument.cpp" />
-    <ClCompile Include="Tool\ResLoader.cpp" />
     <ClCompile Include="Util\UtilTool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\Base\CPropData.h" />
-    <ClInclude Include="Core\Base\Timer.h" />
+    <ClInclude Include="Container\ArrayRef.hpp" />
+    <ClInclude Include="Container\array_pod.h" />
+    <ClInclude Include="Container\CBlock.h" />
+    <ClInclude Include="Container\char_traits.h" />
+    <ClInclude Include="Container\cvar_list.h" />
+    <ClInclude Include="Container\data.h" />
+    <ClInclude Include="Container\DataBuffer.h" />
+    <ClInclude Include="Container\Hash.h" />
+    <ClInclude Include="Container\hash_list.h" />
+    <ClInclude Include="Container\inline.h" />
+    <ClInclude Include="Container\i_varlist.h" />
+    <ClInclude Include="Container\list_pod.h" />
+    <ClInclude Include="Container\macro.h" />
+    <ClInclude Include="Container\momery.h" />
+    <ClInclude Include="Container\octree.h" />
+    <ClInclude Include="Container\persistid.h" />
+    <ClInclude Include="Container\RenderVariable.h" />
+    <ClInclude Include="Container\String.h" />
+    <ClInclude Include="Container\tchar.h" />
+    <ClInclude Include="Container\Thread.h" />
+    <ClInclude Include="Container\var_type.h" />
+    <ClInclude Include="Container\xtree.h" />
     <ClInclude Include="Core\CHelper.h" />
-    <ClInclude Include="Core\coredefine\GlobalDefine.h" />
-    <ClInclude Include="Core\define\definename.h" />
-    <ClInclude Include="Core\define\definetemporary.h" />
-    <ClInclude Include="Core\define\define_render.h" />
-    <ClInclude Include="Core\entity\CreateEntity.h" />
-    <ClInclude Include="Core\entity\Entity.h" />
-    <ClInclude Include="Core\entity\EntityMgr.h" />
-    <ClInclude Include="Core\entity\Method.h" />
-    <ClInclude Include="Core\Game\AI\AIBase.h" />
-    <ClInclude Include="Core\Game\AI\AIManager.h" />
-    <ClInclude Include="Core\Game\AI\FightState.h" />
-    <ClInclude Include="Core\Game\AI\PreFightState.h" />
-    <ClInclude Include="Core\Game\AI\WarnState.h" />
-    <ClInclude Include="Core\Game\Effect\EffectBase.h" />
-    <ClInclude Include="Core\Game\Effect\EffectContainer.h" />
-    <ClInclude Include="Core\Game\Effect\EffectDrop.h" />
-    <ClInclude Include="Core\Game\Effect\EffectItem.h" />
-    <ClInclude Include="Core\Game\Effect\EffectLink.h" />
-    <ClInclude Include="Core\Game\Effect\EffectManager.h" />
-    <ClInclude Include="Core\ICore.h" />
-    <ClInclude Include="Core\LogModle.h" />
-    <ClInclude Include="Core\Visible\IActor.h" />
-    <ClInclude Include="Core\Visible\ICamera.h" />
-    <ClInclude Include="Core\Visible\IGameObject.h" />
-    <ClInclude Include="Core\Visible\IVisBase.h" />
-    <ClInclude Include="Core\Visible\ILight.h" />
-    <ClInclude Include="Core\Visible\Material.h" />
-    <ClInclude Include="Core\Visible\Mesh.h" />
-    <ClInclude Include="Core\Visible\Scene.h" />
-    <ClInclude Include="Core\Visible\ITexture.h" />
-    <ClInclude Include="Core\Visible\SceneObject.h" />
+    <ClInclude Include="Core\Compenent\CPropData.h" />
+    <ClInclude Include="Core\Context.h" />
+    <ClInclude Include="Core\Entity\Entity.h" />
+    <ClInclude Include="Core\predefine.h" />
     <ClInclude Include="mathdefine.h" />
     <ClInclude Include="Math\AABBox.h" />
     <ClInclude Include="Math\Color.h" />
@@ -178,29 +177,28 @@
     <ClInclude Include="Math\Rect.h" />
     <ClInclude Include="Math\Sphere.h" />
     <ClInclude Include="Math\Vector.h" />
-    <ClInclude Include="public\ArrayRef.hpp" />
-    <ClInclude Include="public\array_pod.h" />
+    <ClInclude Include="Platform\Renderer.h" />
+    <ClInclude Include="Platform\DxGraphDevice.h" />
+    <ClInclude Include="Platform\DxIntPut.h" />
+    <ClInclude Include="Platform\DxTextPrintWindows.h" />
+    <ClInclude Include="Platform\system_table.h" />
+    <ClInclude Include="Platform\windows_socket.h" />
+    <ClInclude Include="Platform\PlatformUtil.h" />
+    <ClInclude Include="Platform\windows_thread.h" />
     <ClInclude Include="public\C++17\filesystem.h" />
     <ClInclude Include="public\C++17\option.h" />
     <ClInclude Include="public\C++17\string_view.h" />
-    <ClInclude Include="public\CBlock.h" />
-    <ClInclude Include="public\char_traits.h" />
-    <ClInclude Include="public\data.h" />
-    <ClInclude Include="public\DataBuffer.h" />
-    <ClInclude Include="public\Hash.h" />
-    <ClInclude Include="public\hash_list.h" />
-    <ClInclude Include="public\inline.h" />
-    <ClInclude Include="public\list_pod.h" />
-    <ClInclude Include="public\macro.h" />
-    <ClInclude Include="public\momery.h" />
-    <ClInclude Include="public\octree.h" />
-    <ClInclude Include="public\persistid.h" />
-    <ClInclude Include="public\predefine.h" />
-    <ClInclude Include="public\tchar.h" />
-    <ClInclude Include="public\Thread.h" />
-    <ClInclude Include="public\RenderVariable.h" />
-    <ClInclude Include="public\var_type.h" />
-    <ClInclude Include="public\xtree.h" />
+    <ClInclude Include="Render\Action\IActor.h" />
+    <ClInclude Include="Render\ICamera.h" />
+    <ClInclude Include="Render\IGameObject.h" />
+    <ClInclude Include="Render\ILight.h" />
+    <ClInclude Include="Render\ITexture.h" />
+    <ClInclude Include="Render\Renderable.h" />
+    <ClInclude Include="Render\Material.h" />
+    <ClInclude Include="Render\Mesh.h" />
+    <ClInclude Include="Render\RenderLayout.h" />
+    <ClInclude Include="Render\SceneManager.h" />
+    <ClInclude Include="Render\SceneObject.h" />
     <ClInclude Include="SDK\png\include\win32\png.h" />
     <ClInclude Include="SDK\png\include\win32\pngconf.h" />
     <ClInclude Include="SDK\png\include\win32\pnglibconf.h" />
@@ -211,20 +209,13 @@
     <ClInclude Include="SDK\stc\s3tc.h" />
     <ClInclude Include="SDK\zlib\include\zconf.h" />
     <ClInclude Include="SDK\zlib\include\zlib.h" />
-    <ClInclude Include="System\App.h" />
-    <ClInclude Include="System\DxGraphDevice.h" />
-    <ClInclude Include="System\DxIntPut.h" />
-    <ClInclude Include="System\DxTextPrintWindows.h" />
-    <ClInclude Include="System\system_table.h" />
-    <ClInclude Include="System\windows_file.h" />
-    <ClInclude Include="System\windows_socket.h" />
-    <ClInclude Include="System\windows_string.h" />
-    <ClInclude Include="System\windows_thread.h" />
+    <ClInclude Include="System\Log.h" />
+    <ClInclude Include="System\Package.h" />
+    <ClInclude Include="System\ResLoader.h" />
+    <ClInclude Include="System\Timer.h" />
     <ClInclude Include="Tool\ImageSource.h" />
-    <ClInclude Include="Tool\Package.h" />
     <ClInclude Include="Tool\UtilString.h" />
     <ClInclude Include="Tool\XMLDocument.h" />
-    <ClInclude Include="Tool\ResLoader.h" />
     <ClInclude Include="Util\UtilTool.h" />
     <ClInclude Include="Util\util_string.h" />
   </ItemGroup>

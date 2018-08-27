@@ -1,9 +1,30 @@
 #include "../Tool/XMLDocument.h"
 #include "../SDK/rapid/rapidxml.hpp"
 #include "../SDK/rapid/rapidxml_print.hpp"
-#include "../Tool/ResLoader.h"
+#include "../System/ResLoader.h"
 #include "../Util/UtilTool.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
+
+template <typename T, int N>
+void ExtractFVector(std::string_view value_str, T* v)
+{
+	std::vector<std::string> strs;
+	boost::algorithm::split(strs, value_str, boost::is_any_of(" "));
+	for (size_t i = 0; i < N; ++i)
+	{
+		if (i < strs.size())
+		{
+			boost::algorithm::trim(strs[i]);
+			v[i] = static_cast<float>(atof(strs[i].c_str()));
+		}
+		else
+		{
+			v[i] = 0;
+		}
+	}
+}
 
 XMLDocument::XMLDocument()
 	: m_doc(MakeSharedPtr<rapidxml::xml_document<char>>())
@@ -559,4 +580,25 @@ float XMLAttribute::ValueFloat() const
 std::string_view XMLAttribute::ValueString() const
 {
 	return m_szValue;
+}
+
+float2 XMLAttribute::Valuefloat2() const
+{
+	float v[2] = {};
+	ExtractFVector<float, 2>(m_szValue, v);
+	return float2(v[0], v[1]);
+}
+
+float4 XMLAttribute::Valuefloat4() const
+{
+	float v[4] = {0};
+	ExtractFVector<float, 3>(m_szValue, v);
+	return float4(v[0], v[1], v[2], v[3]);
+}
+
+int3 XMLAttribute::ValueInt3() const
+{
+	int v[3] = {};
+	ExtractFVector<int, 3>(m_szValue, v);
+	return int3(v[0], v[1], v[2]);
 }

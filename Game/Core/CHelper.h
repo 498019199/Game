@@ -1,8 +1,9 @@
 #ifndef _HELPER_H_
 #define _HELPER_H_
 #pragma once
-#include "../Core/entity/Entity.h"
-#include "../Core/ICore.h"
+#include "../Core/Entity/Entity.h"
+#include "../Container/i_varlist.h"
+#include "../Core/Context.h"
 #include <string>
 
 enum LogType
@@ -17,7 +18,6 @@ enum LogType
 	LOG_LOGIC_ALL = 7,
 };
 
-class ICore;
 class CHelper
 {
 public:
@@ -59,20 +59,13 @@ public:
 	static PERSISTID QueryGlobalObject(const char* szName);
 	static double QueryGlobalDoublet(const char* szName);
     static float QueryGlobalFloat(const char* szName);
-	static const char* QueryGlobalString(const char* szName);
-	static const wchar_t* QueryGlobalWideStr(const char* szName);
+	static const String QueryGlobalString(const char* szName);
+	static const WString  QueryGlobalWideStr(const char* szName);
 
     //获取资源路径
     static std::string GetRecource();
 
 	static void TraceLog(int nType, char* szMsg, ...);
-    //获取实体对象
-	static IEntity* GetEntity(const char *szName);
-    //创建实体对象
-	static IEntity* CreateEntity(const char *szName);
-	static IEntity* CreateEntityArgs(const char *szName);
-    //删除实体对象
-	static void RemoveEntity(const char* szName);
 };
 
 #endif//_HELPER_H_

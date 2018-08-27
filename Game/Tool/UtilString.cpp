@@ -4,8 +4,9 @@
 #include <cwchar>
 #include <cstdarg>
 #include <boost/assert.hpp>
-#include "../public/macro.h"
-#include "../System/system_table.h"
+#include "../Container/macro.h"
+#include "../Container/cvar_list.h"
+#include "../Platform/system_table.h"
 #include "../Tool/UtilString.h"
 #include "../Util/UtilTool.h"
 #define BUFFER_MAX 1024
@@ -73,12 +74,12 @@ bool UtilString::compare(const wchar_t* s1, const wchar_t* s2)
 
 std::size_t UtilString::length(const char* buf)
 {
-    return Port_StringLength(buf);
+    return PlatformStringLength(buf);
 }
 
 std::size_t UtilString::length(const wchar_t* buf)
 {
-    return Port_StrWideLength(buf);
+    return PlatformStrWideLength(buf);
 }
 
 std::string UtilString::div_space(std::string buf)
@@ -90,6 +91,70 @@ std::string UtilString::div_space(std::string buf)
     buf.erase(0, buf.find_first_not_of(" "));
     buf.erase(buf.find_last_not_of(" ") + 1);
     return buf;
+}
+
+void UtilString::string_splic(STD string buf, IVarList& args, STD string ch /*= ","*/)
+{
+	auto start = 0;
+	auto len = buf.length();
+	std::string tt;
+	auto splitchar = ch[0];
+
+	for (std::size_t i = 0; i < len; i++)
+	{
+		if (buf[i] == splitchar && i == 0)
+			start++;
+		else if (buf[i] == splitchar)
+		{
+			tt = buf.substr(start, i - start);
+			if (!tt.empty())
+			{
+				args << tt.c_str();
+			}
+			start = i + 1;
+		}
+		else if (i == len - 1)
+		{
+			tt = buf.substr(start, i - start + 1);
+			if (!tt.empty())
+			{
+				args << tt.c_str();
+			}
+			start = i + 1;
+		}
+	}
+}
+
+void UtilString::string_splic(STD wstring buf, IVarList& args, STD wstring ch /*= L","*/)
+{
+	auto start = 0;
+	auto len = buf.length();
+	std::wstring tt;
+	auto splitchar = ch[0];
+
+	for (std::size_t i = 0; i < len; i++)
+	{
+		if (buf[i] == splitchar && i == 0)
+			start++;
+		else if (buf[i] == splitchar)
+		{
+			tt = buf.substr(start, i - start);
+			if (!tt.empty())
+			{
+				args << tt.c_str();
+			}
+			start = i + 1;
+		}
+		else if (i == len - 1)
+		{
+			tt = buf.substr(start, i - start + 1);
+			if (!tt.empty())
+			{
+				args << tt.c_str();
+			}
+			start = i + 1;
+		}
+	}
 }
 
 std::size_t UtilString::hash_value(const char* szKey)
@@ -144,7 +209,7 @@ std::string UtilString::as_string(double val)
 std::string UtilString::as_string(const wchar_t* val)
 {
     char sztmp[BUFFER_MAX];
-    if (Port_StrWideToString(val, sztmp, BUFFER_MAX))
+    if (PlatformStrWideToString(val, sztmp, BUFFER_MAX))
     {
         return (sztmp);
     }
@@ -159,9 +224,9 @@ int UtilString::as_int(const char* src, std::size_t *start /*= 0*/, int base /*=
     long val = std::strtol(src, &pend, base);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_int argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_int argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_int argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_int argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -176,9 +241,9 @@ int64_t UtilString::as_int64(const char* src, std::size_t *start /*= 0*/, int ba
     int64_t val = ::_strtoi64(src, &pend, base);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_int64 argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_int64 argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_int64 argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_int64 argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -193,9 +258,9 @@ float UtilString::as_float(const char* src, std::size_t *start /*= 0*/)
     float val = (float)std::strtod(src, &pend);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_float argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_float argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_float argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_float argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -210,9 +275,9 @@ double UtilString::as_double(const char* src, std::size_t *start /*= 0*/)
     double val = std::strtod(src, &pend);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_double argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_double argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_double argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_double argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -255,7 +320,7 @@ std::wstring UtilString::as_wstring(const double val)
 std::wstring UtilString::as_wstring(const char* val)
 {
     wchar_t swctmp[BUFFER_MAX] = {};
-    if(Port_StringToStrWide(val, swctmp, BUFFER_MAX))
+    if(PlatformStringToStrWide(val, swctmp, BUFFER_MAX))
     {
         return (swctmp);
     }
@@ -270,9 +335,9 @@ int UtilString::as_int(const wchar_t* src, std::size_t *start /*= 0*/, int base 
     long val = std::wcstol(src, &pend, base);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_double argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_double argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_double argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_double argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -287,9 +352,9 @@ int64_t UtilString::as_int64(const wchar_t* src, std::size_t *start /*= 0*/, int
     int64_t val = _wcstoi64(src, &pend, base);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_double argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_double argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_double argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_double argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -304,9 +369,9 @@ float UtilString::as_float(const wchar_t* src, std::size_t *start /*= 0*/)
     double val = std::wcstod(src, &pend);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_double argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_double argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_double argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_double argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 
@@ -321,9 +386,9 @@ double UtilString::as_double(const wchar_t* src, std::size_t *start /*= 0*/)
     double val = std::wcstod(src, &pend);
 
     if (pend == pstr)
-        TRACE_ERROR("invalid as_double argument", LOG_ERROR);
+		UNREACHABLE_MSG("invalid as_double argument");
     if (ERANGE == errno)
-        TRACE_ERROR("as_double argument out of range", LOG_ERROR);
+		UNREACHABLE_MSG("as_double argument out of range");
     if (0 != start)
         *start = (std::size_t)(pend - pstr);
 

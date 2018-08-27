@@ -1,9 +1,10 @@
 #include <windows.h>
 #include <windowsx.h> 
 #include "Util/util_string.h"
-#include "System/App.h"
-#include "System/DxGraphDevice.h"
-#include "Core/ICore.h"
+#include "../Container/cvar_list.h"
+#include "Platform/Renderer.h"
+#include "Platform/DxGraphDevice.h"
+#include "Core/Context.h"
 #include "Util/UtilTool.h"
 
 const int g_height = 600;    // 显示框高
@@ -11,7 +12,6 @@ const int g_width = 800;	// 显示框宽
 const bool g_Windows = true; // 是否是窗口模式
 const char* szWinName = "Game 1.0"; // 窗口名字
 char g_szWorkPath[1024] = { 0 };
-ICore *g_pCore;
 HWND g_hwnd;
 #define BOOST_DISABLE_ASSERTS
 
@@ -43,14 +43,10 @@ void get_work_path(char* szPath, char* szOldPath)
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (g_pCore)
-	{
-		g_pCore->ProccessWinMsg(msg, wParam, lParam);
-	}
 	switch (msg)
 	{
 	case WM_DESTROY:
-		g_pCore->SetQuit();
+		Context::Instance()->SetQuit();
 		::PostQuitMessage(0);
 		break;
 
@@ -71,8 +67,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	MEMORY_CHECK_LEAKAGE
-	DxGraphDevice dxGraphDevice;
-	App app;
+	Renderer app;
 
 	//初始化窗口
 	WNDCLASS wc;
@@ -134,8 +129,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	::ShowWindow(g_hwnd, SW_SHOW);
 	::UpdateWindow(g_hwnd);
 
-	dxGraphDevice.InitDevice(g_hwnd, nRealWidth, nRealHight, sx, sy, bRealWindows);
-	app.Init().Inilize(nRealWidth, nRealHight, g_szWorkPath, hInstance, &dxGraphDevice);
+	app.Init().Inilize(nRealWidth, nRealHight, g_szWorkPath, hInstance);
+	auto pDevice = Context::Instance()->GetSubsystem<DxGraphDevice>();
+	pDevice->InitDevice(g_hwnd, nRealWidth, nRealHight, sx, sy, bRealWindows);
+	app.SetFont(pDevice);
 
 	MSG msg;
 	::ZeroMemory(&msg, sizeof(msg));
@@ -148,15 +145,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			::DispatchMessage(&msg);
 		}
 
-		app.Run(&dxGraphDevice);
+		app.Run();
 
-		if (g_pCore->GetQuit())
+		if (Context::Instance()->GetQuit())
 		{
 			break;
 		}
 	}
 
-	g_pCore->Close();
-	dxGraphDevice.ShutDown();
+	Context::Instance()->Close();
+	pDevice->ShutDown();
 	return 0;
 }

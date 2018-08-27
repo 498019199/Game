@@ -2,7 +2,6 @@
 #include "../../Game/Util/UtilTool.h"
 
 #include <boost/any.hpp>
-extern ICore *g_pCore;
 bool CHelper::FindCustom(const IEntity* obj, const char* szName)
 {
 	if (nullptr == obj)
@@ -319,181 +318,191 @@ const wchar_t* CHelper::QueryCustomWideStr(const IEntity* obj, const char* szNam
 
 bool CHelper::FindGlobal(const char* szName)
 {
-	return g_pCore->FindGlobalValue(szName);
+	return Context::Instance()->FindGlobalValue(szName);
 }
 
 bool CHelper::RemoveGlobal(const char* szName)
 {
-	return g_pCore->RemoveGlobalValue(szName);
+	return Context::Instance()->RemoveGlobalValue(szName);
 }
 
 bool CHelper::SetGlobalBool(const char* szName, bool value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableBool>();
+	val->SetType(CType_bool);
+	*val = value;
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalInt(const char* szName, int value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableInt>();
+	*val = value;
+	val->SetType(CType_int);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalInt64(const char* szName, int64_t value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableInt64>();
+	*val = value;
+	val->SetType(CType_int64);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalFloat(const char* szName, float value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableFloat>();
+	*val = value;
+	val->SetType(CType_float);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalDouble(const char* szName, double value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableDouble>();
+	*val = value;
+	val->SetType(CType_double);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalString(const char* szName, const char* value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableString>();
+	*val = String(value);
+	val->SetType(CType_string);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalWideStr(const char* szName, const wchar_t* value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariableWString>();
+	*val = WString(value);
+	val->SetType(CType_widestring);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::SetGlobalObject(const char* szName, const PERSISTID& value)
 {
-	return g_pCore->SetGlobalValue(szName, boost::any(value));
+	auto val = MakeSharedPtr<VariablePERSISTID>();
+	*val = value;
+	val->SetType(CType_object);
+	return Context::Instance()->SetGlobalValue(szName, val);
 }
 
 bool CHelper::QueryGlobalbool(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return false;
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<bool>(&var));
+	bool tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 int CHelper::QueryCGlobalInt(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return 0;
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<int>(&var));
+	int tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 int64_t CHelper::QueryGlobalInt64(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return 0;
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<int64_t>(&var));
+	int64_t tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 PERSISTID CHelper::QueryGlobalObject(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return PERSISTID();
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<PERSISTID>(&var));
+	PERSISTID tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 double CHelper::QueryGlobalDoublet(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return 0.0;
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<double>(&var));
+	double tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 float CHelper::QueryGlobalFloat(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return 0.0f;
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return *(boost::any_cast<float>(&var));
+	float tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
-const char* CHelper::QueryGlobalString(const char* szName)
+const String CHelper::QueryGlobalString(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return "";
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return boost::any_cast<const char>(&var);
+	String tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
-const wchar_t* CHelper::QueryGlobalWideStr(const char* szName)
+const WString CHelper::QueryGlobalWideStr(const char* szName)
 {
-	if (!g_pCore->FindGlobalValue(szName))
+	if (!Context::Instance()->FindGlobalValue(szName))
 	{
 		return L"";
 	}
 
-	auto var = g_pCore->GetGlobalValue(szName);
-	return boost::any_cast<const wchar_t>(&var);
+	WString tmp;
+	auto var = Context::Instance()->GetGlobalValue(szName);
+	var->Value(tmp);
+	return tmp;
 }
 
 std::string CHelper::GetRecource()
 {
-	return g_pCore->GetResource();
+	return Context::Instance()->GetResource();
 }
 
 void CHelper::TraceLog(int nType, char* szMsg, ...)
 {
-	//g_pCore->Trace_Log(nType, szMsg);
+	//Context::Instance()->Trace_Log(nType, szMsg);
 }
 
-IEntity* CHelper::GetEntity(const char *szName)
-{
-	return g_pCore->GetEntity(szName);
-}
-
-IEntity* CHelper::CreateEntityArgs(const char *szName)
-{
-	return g_pCore->CreateEntityArgs(szName);
-}
-
-void CHelper::RemoveEntity(const char* szName)
-{
-	IEntity* entity = g_pCore->GetEntity(szName);
-	if (nullptr != entity)
-	{
-		g_pCore->RemoveEntity(entity->GetID());
-	}
-}
-
-IEntity* CHelper::CreateEntity(const char *szName)
-{
-	IEntity* entity = g_pCore->CreateEntity(szName);
-	if (nullptr != entity)
-	{
-		g_pCore->SetGlobalValue(szName, entity);
-		return entity;
-	}
-
-	return nullptr;
-}
 
 

@@ -1,11 +1,12 @@
 #ifndef _RAPID_DOCUMENT_H_
 #define _RAPID_DOCUMENT_H_
 #pragma once 
-#include "../public/predefine.h"
+#include "../Core/predefine.h"
+#include "../Math/Math.h"
 
 #include <iosfwd>
 #include <vector>
-#include "../public/C++17/string_view.h"
+#include "../Container/C++17/string_view.h"
 #include <boost/noncopyable.hpp>
 
 namespace rapidxml
@@ -141,6 +142,9 @@ public:
 	uint32_t ValueUInt() const;
 	float ValueFloat() const;
 	std::string_view ValueString() const;
+	float2 Valuefloat2() const;
+	float4 Valuefloat4() const;
+	int3 ValueInt3() const;
 
 private:
 	rapidxml::xml_attribute<char>* m_pAttr;

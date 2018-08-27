@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<configure>
+	<context>
+	</context>
+	
+	<graphics>
+		<frame width="800" height="600" color_fmt="ARGB8" />
+	</graphics>
+</configure>

@@ -1,8 +1,8 @@
 #ifndef _UTIL_STRING_H
 #define _UTIL_STRING_H
-#include "../public/var_type.h"
-#include "../public/persistid.h"
-#include "../System/system_table.h"
+#include "../Container/var_type.h"
+#include "../Container/persistid.h"
+#include "../Platform/system_table.h"
 #include<tchar.h>
 #include <time.h>
 

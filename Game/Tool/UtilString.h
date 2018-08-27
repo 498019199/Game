@@ -1,7 +1,8 @@
 #ifndef _STX_UTIL_STRING_H
 #define _STX_UTIL_STRING_H
 #pragma once
-#include "../public/var_type.h"
+#include "../Container/var_type.h"
+#include "../Container/i_varlist.h"
 #include <string>
 #include <vector>
 #define STD std::
@@ -79,6 +80,8 @@ public:
     //字符串前后去空格
     static STD string div_space(STD string buf);
 
+	//字符串分割
+	static void string_splic(STD string buf, IVarList& args, STD string ch = ",");
     //字符串转宽字符
     //ansi转utf8
     //utf8转utf16
@@ -143,6 +146,9 @@ public:
 
     //是否相等
     static bool compare(const wchar_t* s1, const wchar_t* s2);
+
+	//字符串分割
+	static void string_splic(STD wstring buf, IVarList& args, STD wstring ch = L",");
 #pragma endregion
 
 // 移植代码
