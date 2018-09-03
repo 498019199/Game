@@ -9,6 +9,7 @@
 class RenderMaterial
 {
 public:
+//http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
 	enum TextureType : uint32_t
 	{
 		TS_Albedo,				// 反照率贴图；用于体现模型的纹理，颜色。

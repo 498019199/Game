@@ -10,6 +10,8 @@
 #include "../Render/ITexture.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../SDK/tinyobj/tiny_obj_loader.h"
+
+#include "../Container/C++17/filesystem.h"
 typedef struct { float4 pos; float2 tc; Color color; float4 normal; } vertex_t;
 vertex_t box_mesh[36] = {
 	// Positions                  // Texture Coords  //color           //rhw // Normals
@@ -125,7 +127,7 @@ public:
 		std::vector<uint32_t> mesh_lods;
 		std::vector<zbVertex4D> VerticeVec;
 		std::vector<int3> Int3diceVec;
-		LoadModel(model_desc_.strName, model_desc_.pModelData->MaterialVec, mesh_lods, mtl_ids, 
+		LoadModel(model_desc_.strName, model_desc_.pModelData->MaterialVec, mtl_ids, mesh_lods,
 			mesh_names, model_desc_.pModelData->VerticeVec, Int3diceVec);
 
 		model_desc_.pModelData->MeshVec.resize(mesh_names.size());
@@ -137,8 +139,8 @@ public:
 			model_desc_.pModelData->MeshVec[mesh_index].nLods = mesh_lods[mesh_index];
 
 			uint32_t const lods = model_desc_.pModelData->MeshVec[mesh_index].nLods;
-			model_desc_.pModelData->MeshVec[mesh_index].Int3diceVec.resize(lods);
-			memcpy(&model_desc_.pModelData->MeshVec[mesh_index].Int3diceVec[0], &Int3diceVec[mesh_lod_index], lods * sizeof(int3));
+			//model_desc_.pModelData->MeshVec[mesh_index].Int3diceVec.resize(lods);
+			//memcpy(&model_desc_.pModelData->MeshVec[mesh_index].Int3diceVec[0], &Int3diceVec[mesh_lod_index], lods * sizeof(int3));
 			mesh_lod_index += lods;
 		}
 	}
@@ -379,11 +381,63 @@ void LoadModel(const std::string strFineName,
  	std::vector<tinyobj::material_t> materials;
  	std::string err;
  	auto lzma_file = ResLoader::Instance()->Open(strFineName);
- 	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()));
+	std::filesystem::path last_fxml_path(lzma_file->ResName());
+	std::filesystem::path last_fxml_directory = last_fxml_path.parent_path();
+	tinyobj::MaterialFileReader readMatFn(last_fxml_directory.string() + "/");
+ 	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()), &readMatFn);
 
+	mtls.resize(materials.size());
+	for (uint32_t mtl_index = 0; mtl_index < static_cast<uint32_t>(materials.size()); ++mtl_index)
+	{
+		RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
+		mtls[mtl_index] = mtl;
+
+		mtl->m_strName = materials[mtl_index].name;
+
+		mtl->m_f4Albedo.x() = materials[mtl_index].ambient[0];
+		mtl->m_f4Albedo.y() = materials[mtl_index].ambient[1];
+		mtl->m_f4Albedo.z() = materials[mtl_index].ambient[2];
+		mtl->m_f4Albedo.w() = materials[mtl_index].ambient[3];
+
+		mtl->m_fMetalness = materials[mtl_index].metallic;
+
+		mtl->m_fGlossiness = materials[mtl_index].sheen;
+
+		mtl->m_f3Emissive.x() = materials[mtl_index].emission[0];
+		mtl->m_f3Emissive.y() = materials[mtl_index].emission[1];
+		mtl->m_f3Emissive.z() = materials[mtl_index].emission[2];
+
+		if ('\0' != materials[mtl_index].ambient_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Albedo] = materials[mtl_index].ambient_texname;
+		}
+		if ('\0' != materials[mtl_index].metallic_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Metalness] = materials[mtl_index].metallic_texname;
+		}
+		if ('\0' != materials[mtl_index].sheen_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Glossiness] = materials[mtl_index].sheen_texname;
+		}
+		if ('\0' != materials[mtl_index].emissive_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Emissive] = materials[mtl_index].emissive_texname;
+		}
+		if ('\0' != materials[mtl_index].normal_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Normal] = materials[mtl_index].normal_texname;
+		}
+		if ('\0' != materials[mtl_index].specular_highlight_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Height] = materials[mtl_index].specular_highlight_texname;
+		}
+	}
  	// Loop over shapes
- 	for (size_t s = 0; s < shapes.size(); s++) 
+ 	for (uint32_t s = 0; s < static_cast<uint32_t>(shapes.size()); s++)
  	{
+		mesh_lods.push_back(shapes[s].mesh.num_face_vertices.size());
+		mtl_ids.push_back(s);
+		mesh_names.push_back(shapes[s].name);
  		// Loop over faces(polygon)
  		size_t index_offset = 0;
  		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)

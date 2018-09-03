@@ -7,8 +7,8 @@ RenderLayout::RenderLayout()
 
 void RenderLayout::BindIndexStream(uint32_t nLods, const std::vector<int3>& Indecs)
 {
-	m_VertexsIndex.resize(nLods);
-	memcpy(&m_VertexsIndex[0], &Indecs[0], nLods * sizeof(int3));
+	//m_VertexsIndex.resize(nLods);
+	//memcpy(&m_VertexsIndex[0], &Indecs[0], nLods * sizeof(int3));
 }
 
 void RenderLayout::BindVertexStream(const VertexBuffer& vb)
