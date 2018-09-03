@@ -143,6 +143,36 @@ namespace MathHelper
             return (out[0] == rhs[0]);
 		}
 	};
+
+	template<typename T, int N>
+	struct MaxMinimizeHelper
+	{
+		static void DoMax(T out[N], T const lhs[N], T const rhs[N]) noexcept
+		{
+			out[0] = std::max<T>(lhs[0], rhs[0]);
+			MaxMinimizeHelper<T, N - 1>::DoMax(out + 1, lhs + 1, rhs + 1);
+		}
+
+		static void DoMin(T out[N], T const lhs[N], T const rhs[N]) noexcept
+		{
+			out[0] = std::min<T>(lhs[0], rhs[0]);
+			MaxMinimizeHelper<T, N - 1>::DoMin(out + 1, lhs + 1, rhs + 1);
+		}
+	};
+
+	template<typename T>
+	struct MaxMinimizeHelper<T, 1>
+	{
+		static void DoMax(T out[1], T const lhs[1], T const rhs[1]) noexcept
+		{
+			out[0] = std::max<T>(lhs[0], rhs[0]);
+		}
+
+		static void DoMin(T out[1], T const lhs[1], T const rhs[1]) noexcept
+		{
+			out[0] = std::min<T>(lhs[0], rhs[0]);
+		}
+	};
 };
 
 #endif//_MATH_HELPER_H_

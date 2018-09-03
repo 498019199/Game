@@ -110,7 +110,20 @@ namespace MathLib
 	{
 		return std::max(low, std::min(high, val));
 	}
+
+	// 线性插值
+	template <typename T>
+	T Lerp(const T& lhs, const T& rhs, float s) noexcept;
+
+	// 取出最大
+	template <typename T>
+	T Maximize(const T& lhs, const T& rhs) noexcept;
+
+	// 取出最小
+	template <typename T>
+	T Minimize(const T& lhs, const T& rhs) noexcept;
 //向量//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	// 叉积
 	template<typename T>
 	T Cross(const Vector_T<T, 2> & lhs, const Vector_T<T, 2> & rhs) noexcept;
@@ -277,7 +290,7 @@ template <typename T>
 #include "Sphere.h"
 #include "Quaternion.h"
 #include "Color.h"
-//#include "AABBox.h"
+#include "AABBox.h"
 //#include "OBBox.h"
 #endif//_STX_MATH_H_
 

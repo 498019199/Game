@@ -68,7 +68,7 @@ class ModelLoadingDesc:public ResLoadingDesc
 
 	struct ModelData
 	{
-		std::vector<MaterialPtr> MaterialVec;
+		std::vector<RenderMaterialPtr> MaterialVec;
 		std::vector<MeshData> MeshVec;
 		std::vector<zbVertex4D> VerticeVec;
 	};
@@ -184,7 +184,7 @@ public:
 		model->SetMaterialNum(rhs_model->GetMaterialNum());
 		for (uint32_t mtl_index = 0; mtl_index < model->GetMaterialNum(); ++mtl_index)
 		{
-			MaterialPtr mtl = MakeSharedPtr<Material>();
+			RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
 			*mtl = *rhs_model->GetMaterial(mtl_index);
 			model->GetMaterial(mtl_index) = mtl;
 		}
@@ -300,7 +300,7 @@ size_t RenderModel::GetMaterialNum() const
 	return m_MaterialPtrVec.size();
 }
 
-MaterialPtr& RenderModel::GetMaterial(size_t nIndex)
+RenderMaterialPtr& RenderModel::GetMaterial(size_t nIndex)
 {
 	BOOST_ASSERT(nIndex <= -1);
 	BOOST_ASSERT(nIndex < GetMaterialNum());
@@ -342,7 +342,7 @@ void StaticMesh::DoBuildMeshInfo()
 	RenderModelPtr model = m_pModel.lock();
 	m_Mtl = model->GetMaterial(this->GetMaterialID());
 
-	for (size_t i = 0; i < Material::TS_TypeCount; ++i)
+	for (size_t i = 0; i < RenderMaterial::TS_TypeCount; ++i)
 	{
 		if (!m_Mtl->m_TexNames[i].empty())
 		{
@@ -366,207 +366,57 @@ void StaticMesh::AddIndexStream(uint32_t nLod, const std::vector<int3>& Indices)
 	m_LayoutPtr->BindIndexStream(nLod, Indices);
 }
 
-std::string const jit_ext_name = ".model_bin";
-uint32_t const MODEL_BIN_VERSION = 15;
-void ModelJIT(std::string const & strFineName)
-{
-	std::string::size_type const pkt_offset(strFineName.find("//"));
-	std::string folder_name;
-	std::string path_name;
-	if (pkt_offset != std::string::npos)
-	{
-		std::string pkt_name = strFineName.substr(0, pkt_offset);
-		std::string::size_type const password_offset = pkt_name.find("|");
-		if (password_offset != std::string::npos)
-		{
-			pkt_name = pkt_name.substr(0, password_offset - 1);
-		}
-
-		std::string::size_type offset = pkt_name.rfind("/");
-		if (offset != std::string::npos)
-		{
-			folder_name = pkt_name.substr(0, offset + 1);
-		}
-
-		std::string const file_name = strFineName.substr(pkt_offset + 2);
-		path_name = folder_name + file_name;
-	}
-	else
-	{
-		path_name = strFineName;
-	}
-
-	bool jit = false;
-	if (ResLoader::Instance()->Locate(path_name + jit_ext_name).empty())
-	{
-		jit = true;
-	}
-	else
-	{
-		ResIdentifierPtr lzma_file = ResLoader::Instance()->Open(path_name + jit_ext_name);
-		uint32_t fourcc;
-		lzma_file->read(&fourcc, sizeof(fourcc));
-		fourcc = LE2Native(fourcc);
-		uint32_t ver;
-		lzma_file->read(&ver, sizeof(ver));
-		ver = LE2Native(ver);
-		if ((fourcc != MakeFourCC<'K', 'L', 'M', ' '>::value) || (ver != MODEL_BIN_VERSION))
-		{
-			jit = true;
-		}
-		else
-		{
-			ResIdentifierPtr file = ResLoader::Instance()->Open(strFineName);
-			if (file)
-			{
-				if (lzma_file->Timestamp() < file->Timestamp())
-				{
-					jit = true;
-				}
-			}
-		}
-	}
-
-#if STX_IS_DEV_PLATFORM
-	if (jit)
-	{
-		std::string meshmljit_name = "MeshMLJIT" STX_DBG_SUFFIX;
-#ifdef STX_PLATFORM_WINDOWS_DESKTOP
-		meshmljit_name += ".exe";
-#endif
-		meshmljit_name = ResLoader::Instance()->Locate(meshmljit_name);
-		bool failed = false;
-		if (meshmljit_name.empty())
-		{
-			failed = true;
-		}
-		else
-		{
-#ifndef STX_PLATFORM_WIN
-			if (std::string::npos == meshmljit_name.find("/"))
-			{
-				meshmljit_name = "./" + meshmljit_name;
-			}
-#endif
-			if (system((meshmljit_name + " -I \"" + strFineName + "\" -T \"" + folder_name + "\" -q").c_str()) != 0)
-			{
-				failed = true;
-			}
-		}
-
-		if (failed)
-		{
-			LOGER_ERROR("MeshMLJIT failed. Forgot to build Tools?");
-		}
-	}
-#else
-	BOOST_ASSERT(!jit);
-	UNUSED(jit);
-#endif
-}
-
 void LoadModel(const std::string strFineName, 
-	std::vector<MaterialPtr>& mtls,
+	std::vector<RenderMaterialPtr>& mtls,
 	std::vector<uint32_t>& mtl_ids,
 	std::vector<uint32_t>& mesh_lods,
 	std::vector<std::string>& mesh_names,
 	std::vector<zbVertex4D>& VerticeVec,
 	std::vector<int3>& Int3diceVec)
 {
-	ResIdentifierPtr lzma_file;
-	if (strFineName.rfind(jit_ext_name) + jit_ext_name.size() == strFineName.size())
-	{
-		lzma_file = ResLoader::Instance()->Open(strFineName);
-	}
-	else
-	{
-		std::string full_strFineName = ResLoader::Instance()->Locate(strFineName);
-		if (full_strFineName.empty())
-		{
-			full_strFineName = strFineName;
-		}
-		std::replace(full_strFineName.begin(), full_strFineName.end(), '\\', '/');
-		ModelJIT(full_strFineName);
+ 	tinyobj::attrib_t attrib;
+ 	std::vector<tinyobj::shape_t> shapes;
+ 	std::vector<tinyobj::material_t> materials;
+ 	std::string err;
+ 	auto lzma_file = ResLoader::Instance()->Open(strFineName);
+ 	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()));
 
-		std::string no_packing_name;
-		size_t offset = full_strFineName.rfind("//");
-		if (offset != std::string::npos)
-		{
-			no_packing_name = full_strFineName.substr(offset + 2);
-		}
-		else
-		{
-			no_packing_name = full_strFineName;
-		}
-		lzma_file = ResLoader::Instance()->Open(no_packing_name + jit_ext_name);
-	}
-	uint32_t fourcc;
-	lzma_file->read(&fourcc, sizeof(fourcc));
-	fourcc = LE2Native(fourcc);
-	BOOST_ASSERT((fourcc == MakeFourCC<'K', 'L', 'M', ' '>::value));
- //	tinyobj::attrib_t attrib;
- //	std::vector<tinyobj::shape_t> shapes;
- //	std::vector<tinyobj::material_t> materials;
- //	std::string err;
- //	auto lzma_file = ResLoader::Instance()->Open(strFineName);
- //	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()));
+ 	// Loop over shapes
+ 	for (size_t s = 0; s < shapes.size(); s++) 
+ 	{
+ 		// Loop over faces(polygon)
+ 		size_t index_offset = 0;
+ 		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+ 		{
+ 			size_t fv = shapes[s].mesh.num_face_vertices[f];
+ 			// Loop over vertices in the face.
+ 			for (size_t v = 0; v < fv; v++) 
+ 			{
+ 				// access to vertex
+ 				zbVertex4D tmp;
+				memset(&tmp, 0, sizeof(zbVertex4D));
+ 				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+ 				tmp.v.x() = attrib.vertices[3 * idx.vertex_index + 0];
+ 				tmp.v.y() = attrib.vertices[3 * idx.vertex_index + 1];
+ 				tmp.v.z() = attrib.vertices[3 * idx.vertex_index + 2];
+ 				if (-1 != idx.normal_index)
+ 				{
+ 					tmp.n.x() = attrib.normals[3 * idx.normal_index + 0];
+ 					tmp.n.y() = attrib.normals[3 * idx.normal_index + 1];
+ 					tmp.n.z() = attrib.normals[3 * idx.normal_index + 2];
+ 				}
+ 				tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];
+ 				tmp.t.y() = attrib.texcoords[2 * idx.texcoord_index + 1];
+ 
+ 				VerticeVec.push_back(tmp);
+ 			}
+ 			index_offset += fv;
+ 			// per-face material
+ 			shapes[s].mesh.material_ids[f];
+ 		}
+ 	}
 
-	//for (const auto& shape : shapes)
-	//{
-	//	mesh_names.push_back(shape.name);
-	//	for (const auto& index : shape.mesh.indices)
-	//	{
-	//		zbVertex4D tmp;
-	//		memset(&tmp, 0, sizeof(zbVertex4D));
-	//		tmp.v.x() = attrib.vertices[3 * index.vertex_index + 0];
-	//		tmp.v.y() = attrib.vertices[3 * index.vertex_index + 1];
-	//		tmp.v.z() = attrib.vertices[3 * index.vertex_index + 2];
-	//		if (-1 != index.normal_index)
-	//		{
-	//			tmp.n.x() = attrib.normals[3 * index.normal_index + 0];
-	//			tmp.n.y() = attrib.normals[3 * index.normal_index + 1];
-	//			tmp.n.z() = attrib.normals[3 * index.normal_index + 2];
-	//		}
-	//		tmp.t.x() = attrib.texcoords[2 * index.texcoord_index + 0];
-	//		tmp.t.y() = attrib.texcoords[2 * index.texcoord_index + 1];
 
-	//		VerticeVec.push_back(tmp);
-	//	}
-	//}
- //	// Loop over shapes
- //	for (size_t s = 0; s < shapes.size(); s++) 
- //	{
- //		// Loop over faces(polygon)
- //		size_t index_offset = 0;
- //		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
- //		{
- //			size_t fv = shapes[s].mesh.num_face_vertices[f];
- //			// Loop over vertices in the face.
- //			for (size_t v = 0; v < fv; v++) 
- //			{
- //				// access to vertex
- //				zbVertex4D tmp;
-	//			memset(&tmp, 0, sizeof(zbVertex4D));
- //				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
- //				tmp.v.x() = attrib.vertices[3 * idx.vertex_index + 0];
- //				tmp.v.y() = attrib.vertices[3 * idx.vertex_index + 1];
- //				tmp.v.z() = attrib.vertices[3 * idx.vertex_index + 2];
- //				if (-1 != idx.normal_index)
- //				{
- //					tmp.n.x() = attrib.normals[3 * idx.normal_index + 0];
- //					tmp.n.y() = attrib.normals[3 * idx.normal_index + 1];
- //					tmp.n.z() = attrib.normals[3 * idx.normal_index + 2];
- //				}
- //				tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];
- //				tmp.t.y() = attrib.texcoords[2 * idx.texcoord_index + 1];
- //
- //				VerticeVec.push_back(tmp);
- //			}
- //			index_offset += fv;
- //			// per-face material
- //			shapes[s].mesh.material_ids[f];
- //		}
- //	}
 }
 
 RenderModelPtr SyncLoadModel(const std::string& strFileName, uint32_t nAttr,

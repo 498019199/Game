@@ -6,7 +6,7 @@
 #include "../Math/Math.h"
 #include "../Core/predefine.h"
 #include <string>
-class Material
+class RenderMaterial
 {
 public:
 	enum TextureType : uint32_t
@@ -21,12 +21,29 @@ public:
 		TS_TypeCount
 	};
 
+	enum SurfaceDetailMode
+	{
+		SDM_Parallax = 0,
+		SDM_FlatTessellation,
+		SDM_SmoothTessellation
+	};
+
 	std::string m_strName;
 	float4 m_f4Albedo;
 	float m_fMetalness;
 	float m_fGlossiness;
 	float3 m_f3Emissive;
 	std::array<std::string, TS_TypeCount> m_TexNames;
+
+	// œ»“∆÷≤π˝¿¥
+	bool transparent;
+	float alpha_test;
+	bool sss;
+	bool two_sided;
+
+	RenderMaterial::SurfaceDetailMode detail_mode;
+	float2 height_offset_scale;
+	float4 tess_factors;
 };
 
 RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse = nullptr);

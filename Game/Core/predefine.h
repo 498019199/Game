@@ -28,8 +28,8 @@ typedef std::shared_ptr<ITexture> TexturePtr;
 
 class DxGraphDevice;
 
-class Material;
-typedef std::shared_ptr<Material> MaterialPtr;
+class RenderMaterial;
+typedef std::shared_ptr<RenderMaterial> RenderMaterialPtr;
 class Renderable;
 typedef std::shared_ptr<Renderable> VisBasePtr;
 class IActor;

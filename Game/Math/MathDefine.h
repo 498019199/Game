@@ -31,5 +31,9 @@ class Color_T;
 typedef Color_T<float> Color;
 
 template <typename T>
+class AABBox_T;
+typedef AABBox_T<float> AABBox;
+
+template <typename T>
 class OBBox_T;
 #endif//_MATHDEFINE_H_

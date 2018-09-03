@@ -5,7 +5,7 @@
 #pragma once
 #include "../../Core/Context.h"
 #include "../Core/predefine.h"
-#include "../Render/Material.h"
+#include "../Render/RenderMaterial.h"
 #include "../Math/Math.h"
 
 #include <vector>
@@ -122,8 +122,8 @@ protected:
 	RenderCVarParameter* height_tex_param;
 	RenderCVarParameter* cull_mode;
 
-	MaterialPtr m_Mtl;
-	std::array<TexturePtr, Material::TextureType::TS_TypeCount> m_Textures;
+	RenderMaterialPtr m_Mtl;
+	std::array<TexturePtr, RenderMaterial::TextureType::TS_TypeCount> m_Textures;
 
 	std::vector<VisBasePtr> m_SubVisbase;
 };

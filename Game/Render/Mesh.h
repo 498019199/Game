@@ -26,7 +26,7 @@ public:
 
 	void SetMaterialNum(int nCount);
 	size_t GetMaterialNum() const;
-	MaterialPtr& GetMaterial(size_t nIndex);
+	RenderMaterialPtr& GetMaterial(size_t nIndex);
 
 	RenderLayoutPtr GetRenderLayout() const override { return m_LayoutPtr; }
 
@@ -39,7 +39,7 @@ private:
 	// 名字
 	std::string m_strConfigID;
 	// 材质列表
-	std::vector<MaterialPtr> m_MaterialPtrVec;
+	std::vector<RenderMaterialPtr> m_MaterialPtrVec;
 	RenderLayoutPtr m_LayoutPtr;
 };
 
@@ -105,7 +105,7 @@ struct CreateSceneObjectFactory
 };
 
 void LoadModel(const std::string strFineName,
-	std::vector<MaterialPtr>& mtls,
+	std::vector<RenderMaterialPtr>& mtls,
 	std::vector<uint32_t>& mtl_ids,
 	std::vector<uint32_t>& mesh_lods,
 	std::vector<std::string>& mesh_names,

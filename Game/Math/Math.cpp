@@ -57,6 +57,57 @@ namespace MathLib
 		return fni.f;
 	}
 
+	template float Lerp(const float& lhs, const float& rhs, float s) noexcept;
+	template float2 Lerp(const float2& lhs, const float2& rhs, float s) noexcept;
+	template float3 Lerp(const float3& lhs, const float3& rhs, float s) noexcept;
+	template float4 Lerp(const float4& lhs, const float4& rhs, float s) noexcept;
+	template Color Lerp(const Color& lhs, const Color& rhs, float s) noexcept;
+	template <typename T>
+	T Lerp(const T& lhs, const T& rhs, float s) noexcept
+	{
+		return lhs + (rhs - lhs) * s;
+	}
+
+	template int1 Maximize(const int1 & lhs, const int1 & rhs) noexcept;
+	template int2 Maximize(const int2 & lhs, const int2 & rhs) noexcept;
+	template int3 Maximize(const int3 & lhs, const int3 & rhs) noexcept;
+	template int4 Maximize(const int4 & lhs, const int4 & rhs) noexcept;
+	template uint1 Maximize(const uint1 & lhs, const uint1 & rhs) noexcept;
+	template uint2 Maximize(const uint2 & lhs, const uint2 & rhs) noexcept;
+	template uint3 Maximize(const uint3 & lhs, const uint3 & rhs) noexcept;
+	template uint4 Maximize(const uint4 & lhs, const uint4 & rhs) noexcept;
+	template float1 Maximize(const float1 & lhs, const float1 & rhs) noexcept;
+	template float2 Maximize(const float2 & lhs, const float2 & rhs) noexcept;
+	template float3 Maximize(const float3 & lhs, const float3 & rhs) noexcept;
+	template float4 Maximize(const float4 & lhs, const float4 & rhs) noexcept;
+	template <typename T>
+	T Maximize(const T& lhs, const T& rhs) noexcept
+	{
+		T ret;
+		MathHelper::MaxMinimizeHelper<typename T::value_type, T::elem_num>::DoMax(&ret[0], &lhs[0], &rhs[0]);
+		return ret;
+	}
+
+	template int1 Maximize(const int1 & lhs, const int1 & rhs) noexcept;
+	template int2 Maximize(const int2 & lhs, const int2 & rhs) noexcept;
+	template int3 Maximize(const int3 & lhs, const int3 & rhs) noexcept;
+	template int4 Minimize(const int4 & lhs, const int4 & rhs) noexcept;
+	template uint1 Minimize(const uint1 & lhs, const uint1 & rhs) noexcept;
+	template uint2 Minimize(const uint2 & lhs, const uint2 & rhs) noexcept;
+	template uint3 Minimize(const uint3 & lhs, const uint3 & rhs) noexcept;
+	template uint4 Minimize(const uint4 & lhs, const uint4 & rhs) noexcept;
+	template float1 Minimize(const float1 & lhs, const float1 & rhs) noexcept;
+	template float2 Minimize(const float2 & lhs, const float2 & rhs) noexcept;
+	template float3 Minimize(const float3 & lhs, const float3 & rhs) noexcept;
+	template float4 Minimize(const float4 & lhs, const float4 & rhs) noexcept;
+	template <typename T>
+	T Minimize(const T& lhs, const T& rhs) noexcept
+	{
+		T ret;
+		MathHelper::MaxMinimizeHelper<typename T::value_type, T::elem_num>::DoMin(&ret[0], &lhs[0], &rhs[0]);
+		return ret;
+	}
+
 	template int32_t Cross(const int2 & lhs, const int2 & rhs) noexcept;
     template uint32_t Cross(const uint2 & lhs, const uint2 & rhs) noexcept;
     template float Cross(const float2 & lhs, const float2 & rhs) noexcept;

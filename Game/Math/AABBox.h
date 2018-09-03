@@ -1,89 +1,92 @@
 #ifndef _STX_MATH_AABB_
 #define _STX_MATH_AABB_
+// 轴对齐包围盒 2017年7月1日 zhangbei
+// 移植 klayGE 
 #pragma once
 #include "MathDefine.h"
 #include "Vector.h"
-
-// 轴对齐包围盒
-template<typename T>
-class AABBox
+#include "Bound.h"
+template <typename T>
+class AABBox_T final : boost::addable2<AABBox_T<T>, Vector_T<T, 3>,
+	boost::subtractable2<AABBox_T<T>, Vector_T<T, 3>,
+	boost::multipliable2<AABBox_T<T>, T,
+	boost::dividable2<AABBox_T<T>, T,
+	boost::andable<AABBox_T<T>,
+	boost::orable<AABBox_T<T>,
+	boost::equality_comparable<AABBox_T<T>>>>>>>>,
+	public Bound_T<T>
 {
 public:
-	AABBox()
-	{}
-
-	AABBox(const float3& _Pmin, const float3& _Pmax);
-
-	AABBox(const AABBox& that);
-
-	AABBox(AABBox&& that);
-
-	//运算操作符
-	AABBox& operator+(const float3& that);
-
-	AABBox operator-(const float3& that);
-
-	AABBox& operator*(T that);
-
-	AABBox& operator/(T  that);
+	constexpr AABBox_T() noexcept
+	{
+	}
+	AABBox_T(Vector_T<T, 3> const & vMin, Vector_T<T, 3> const & vMax) noexcept;
+	AABBox_T(Vector_T<T, 3>&& vMin, Vector_T<T, 3>&& vMax) noexcept;
+	AABBox_T(AABBox_T<T> const & rhs) noexcept;
+	AABBox_T(AABBox_T<T>&& rhs) noexcept;
 
 	// 赋值操作符
-	AABBox& operator+=(const float3& that);
+	AABBox_T<T>& operator+=(Vector_T<T, 3> const & rhs) noexcept;
+	AABBox_T<T>& operator-=(Vector_T<T, 3> const & rhs) noexcept;
+	AABBox_T<T>& operator*=(T rhs) noexcept;
+	AABBox_T<T>& operator/=(T rhs) noexcept;
+	AABBox_T<T>& operator&=(AABBox_T<T> const & rhs) noexcept;
+	AABBox_T<T>& operator|=(AABBox_T<T> const & rhs) noexcept;
 
-	AABBox& operator-=(const float3& that);
-
-	AABBox& operator*=(T that);
-
-	AABBox& operator/=(T  that);
-
-	AABBox& operator=(const AABBox& that);
-
-	AABBox& operator=(AABBox&& that);
+	AABBox_T<T>& operator=(AABBox_T<T> const & rhs) noexcept;
+	AABBox_T<T>& operator=(AABBox_T<T>&& rhs) noexcept;
 
 	// 一元操作符
-	const AABBox& operator+() const;
-
-	const AABBox operator-() const;
+	AABBox_T<T> const operator+() const noexcept;
+	AABBox_T<T> const operator-() const noexcept;
 
 	// 属性
-	float3 GetMin() const
+	T Width() const noexcept;
+	T Height() const noexcept;
+	T Depth() const noexcept;
+	virtual bool IsEmpty() const noexcept override;
+
+	Vector_T<T, 3> const LeftBottomNear() const noexcept;
+	Vector_T<T, 3> const LeftTopNear() const noexcept;
+	Vector_T<T, 3> const RightBottomNear() const noexcept;
+	Vector_T<T, 3> const RightTopNear() const noexcept;
+	Vector_T<T, 3> const LeftBottomFar() const noexcept;
+	Vector_T<T, 3> const LeftTopFar() const noexcept;
+	Vector_T<T, 3> const RightBottomFar() const noexcept;
+	Vector_T<T, 3> const RightTopFar() const noexcept;
+
+	Vector_T<T, 3>& Min() noexcept
 	{
-		return this->vMin;
+		return v3Min;
 	}
-
-	float3& GetMin()
+	constexpr Vector_T<T, 3> const & Min() const noexcept
 	{
-		return this->vMin;
+		return v3Min;
 	}
-
-	float3 GetMax() const
+	Vector_T<T, 3>& Max() noexcept
 	{
-		return this->vMax;
+		return v3Max;
 	}
-
-	float3& GetMax()
+	constexpr Vector_T<T, 3> const & Max() const noexcept
 	{
-		return this->vMax;
+		return v3Max;
 	}
+	Vector_T<T, 3> Center() const noexcept;
+	Vector_T<T, 3> HalfSize() const noexcept;
 
-	T GetWidth() const;
+	virtual bool VecInBound(Vector_T<T, 3> const & v) const noexcept override;
+	virtual T MaxRadiusSq() const noexcept override;
 
-	T GetHeight() const;
+	//bool Intersect(AABBox_T<T> const & aabb) const noexcept;
+	//bool Intersect(OBBox_T<T> const & obb) const noexcept;
+	//bool Intersect(Sphere_T<T> const & sphere) const noexcept;
+	//bool Intersect(Frustum_T<T> const & frustum) const noexcept;
 
-	T GetDepth() const;
+	Vector_T<T, 3> Corner(size_t index) const noexcept;
 
-	float3 GetCenter() const;
+	bool operator==(AABBox_T<T> const & rhs) const noexcept;
 
-	// 相交测试
-	bool Intersect(const Sphere& sphere);
-
-	bool Intersect(const AABBox& aabb);
-
-	bool Intersect(const OBBox_T& obb);
-
-	bool operator==(const AABBox& that);
 private:
-	float3 vMin;
-	float3 vMax;
+	Vector_T<T, 3> v3Min, v3Max;
 };
 #endif//_STX_MATH_AABB_

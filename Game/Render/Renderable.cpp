@@ -109,7 +109,7 @@ void Renderable::OnRenderBegin()
 	*inv_mv_param = inv_v;
 	*mvp_param = mvp;
 	*model_view_param = mv;
-	*albedo_tex_param = m_Textures[Material::TextureType::TS_Albedo];
+	*albedo_tex_param = m_Textures[RenderMaterial::TextureType::TS_Albedo];
 	*cull_mode = CULL_FACE_BACK;
 
 	auto layout = this->GetRenderLayout();
