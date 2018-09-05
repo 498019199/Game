@@ -95,7 +95,7 @@ std::string UtilString::div_space(std::string buf)
 
 void UtilString::string_splic(STD string buf, IVarList& args, STD string ch /*= ","*/)
 {
-	auto start = 0;
+	size_t start = 0;
 	auto len = buf.length();
 	std::string tt;
 	auto splitchar = ch[0];

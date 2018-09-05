@@ -304,9 +304,6 @@ size_t RenderModel::GetMaterialNum() const
 
 RenderMaterialPtr& RenderModel::GetMaterial(size_t nIndex)
 {
-	BOOST_ASSERT(nIndex <= -1);
-	BOOST_ASSERT(nIndex < GetMaterialNum());
-
 	return m_MaterialPtrVec[nIndex];
 }
 
@@ -343,7 +340,6 @@ void StaticMesh::DoBuildMeshInfo()
 {
 	RenderModelPtr model = m_pModel.lock();
 	m_Mtl = model->GetMaterial(this->GetMaterialID());
-
 	for (size_t i = 0; i < RenderMaterial::TS_TypeCount; ++i)
 	{
 		if (!m_Mtl->m_TexNames[i].empty())
@@ -453,14 +449,19 @@ void LoadModel(const std::string strFineName,
  				tmp.v.x() = attrib.vertices[3 * idx.vertex_index + 0];
  				tmp.v.y() = attrib.vertices[3 * idx.vertex_index + 1];
  				tmp.v.z() = attrib.vertices[3 * idx.vertex_index + 2];
+				tmp.v.w() = 1.0f;
  				if (-1 != idx.normal_index)
  				{
  					tmp.n.x() = attrib.normals[3 * idx.normal_index + 0];
  					tmp.n.y() = attrib.normals[3 * idx.normal_index + 1];
  					tmp.n.z() = attrib.normals[3 * idx.normal_index + 2];
+					tmp.v.w() = 0.0f;
  				}
- 				tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];
- 				tmp.t.y() = attrib.texcoords[2 * idx.texcoord_index + 1];
+				if (-1 != idx.texcoord_index)
+				{
+					tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];
+					tmp.t.y() = attrib.texcoords[2 * idx.texcoord_index + 1];
+				}
  
  				VerticeVec.push_back(tmp);
  			}
@@ -469,8 +470,6 @@ void LoadModel(const std::string strFineName,
  			shapes[s].mesh.material_ids[f];
  		}
  	}
-
-
 }
 
 RenderModelPtr SyncLoadModel(const std::string& strFileName, uint32_t nAttr,

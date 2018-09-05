@@ -253,12 +253,10 @@ void DxGraphDevice::BeginRender()
 
 void DxGraphDevice::DoRender(const RenderCVarlistPtr& cvList, const RenderLayoutPtr& layout)
 {
-	auto ib = layout->GetIndexStream();
 	auto vb = *(layout->GetVertexStream().get());
-	for (uint32_t i = 0; i < ib.size(); ++i)
+	for (uint32_t i = 0; i < vb.size() ; i+=3)
 	{
-		auto indiecs = ib[i];
-		ClipPolys(cvList, vb[indiecs[0]], vb[indiecs[1]], vb[indiecs[2]]);
+		ClipPolys(cvList, vb[i], vb[i + 1], vb[i + 2]);
 	}
 }
 

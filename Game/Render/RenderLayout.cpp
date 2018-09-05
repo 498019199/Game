@@ -7,6 +7,7 @@ RenderLayout::RenderLayout()
 
 void RenderLayout::BindIndexStream(uint32_t nLods, const std::vector<int3>& Indecs)
 {
+	m_nTriCount = nLods;
 	//m_VertexsIndex.resize(nLods);
 	//memcpy(&m_VertexsIndex[0], &Indecs[0], nLods * sizeof(int3));
 }

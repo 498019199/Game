@@ -98,7 +98,7 @@ typedef struct
 {
 	const uint8_t * pData;
 	std::size_t nSize;
-	int nOffset;
+	std::size_t  nOffset;
 }tImageSource;
 
 static void pngReadCallback(png_structp png_ptr, png_bytep data, png_size_t length)
@@ -517,10 +517,10 @@ bool ImageResource::LoadImageTIFF(const uint8_t * data, std::size_t dataLen)
 		m_nWidth = w;
 		m_nHeight = h;
 
-		m_nDataLen = npixels * sizeof(uint32);
+		m_nDataLen =static_cast<uint32_t>( npixels * sizeof(uint32_t));
 		m_pData = NEW uint8_t[(m_nDataLen * sizeof(uint8_t))];//static_cast<uint8_t*>(malloc(m_nDataLen * sizeof(uint8_t)));
 
-		uint32* raster = (uint32*)_TIFFmalloc(npixels * sizeof(uint32));
+		uint32_t* raster = (uint32_t*)_TIFFmalloc(npixels * sizeof(uint32_t));
 		if (raster != nullptr)
 		{
 			if (TIFFReadRGBAImageOriented(tif, w, h, raster, ORIENTATION_TOPLEFT, 0))
@@ -567,7 +567,7 @@ bool ImageResource::LoadImageS3TC(const uint8_t * data, std::size_t dataLen)
 	// 压缩数据长度
 	if (Configuration::IssupportsS3TC())  
 	{
-		m_nDataLen = dataLen - sizeof(S3TCTexHeader);
+		m_nDataLen = static_cast<uint32_t>(dataLen - sizeof(S3TCTexHeader));
 		m_pData = static_cast<uint8_t*>(malloc(m_nDataLen * sizeof(uint8_t)));
 		memcpy((void *)m_pData, (void *)pixelData, m_nDataLen);
 	}
