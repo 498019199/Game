@@ -21,6 +21,16 @@ enum TriType
 	TRI_TYPE_FLAT_NORMAL = 4,
 };
 
+enum ClipMask : uint32_t
+{
+	CLIPMASK_X_POS = 0x1,
+	CLIPMASK_X_NEG = 0x2,
+	CLIPMASK_Y_POS = 0x4,
+	CLIPMASK_Y_NEG = 0x8,
+	CLIPMASK_Z_POS = 0x10,
+	CLIPMASK_Z_NEG = 0x20,
+};
+
 DxGraphDevice::DxGraphDevice(Context* pContext)
 	:IEntityEx(pContext),m_pixel_format(0), m_szPrimaryBuffer(NULL), m_szBackBuffer(NULL),
 	m_nPrimaryPatch(0), m_nBackPatch(0)
@@ -253,10 +263,16 @@ void DxGraphDevice::BeginRender()
 
 void DxGraphDevice::DoRender(const RenderCVarlistPtr& cvList, const RenderLayoutPtr& layout)
 {
+	float4x4 mv;
+	cvList->QueryByName("mvp")->Value(mv);
 	auto vb = *(layout->GetVertexStream().get());
+	zbVertex4D vertices[64 * 3];
 	for (uint32_t i = 0; i < vb.size() ; i+=3)
 	{
-		ClipPolys(cvList, vb[i], vb[i + 1], vb[i + 2]);
+		vertices[0].v = MathLib::MatrixMulVector(vb[i].v, mv);
+		vertices[1].v = MathLib::MatrixMulVector(vb[i + 1].v, mv);
+		vertices[2].v = MathLib::MatrixMulVector(vb[i + 2].v, mv);
+		DrawTriangle(cvList, vertices);
 	}
 }
 
@@ -299,145 +315,216 @@ int DxGraphDevice::CullingPolys(zbVertex4D* ps, int* encodes)
 	return nInVertNum;
 }
 
-void DxGraphDevice::ClipPolys(const RenderCVarlistPtr& cvList, const zbVertex4D& v1, const zbVertex4D& v2, const zbVertex4D& v3)
+float4 DxGraphDevice::ViewportTransform(const float4& vert)
 {
-	float4x4 mv;
-	cvList->QueryByName("model_view")->Value(mv);
-	zbVertex4D ps[4];
-	ps[0] = v1, ps[1] = v2, ps[2] = v3;
-	ps[0].v = MathLib::MatrixMulVector(v1.v, mv);
-	ps[1].v = MathLib::MatrixMulVector(v2.v, mv);
-	ps[2].v = MathLib::MatrixMulVector(v3.v, mv);
+	float rhw = 1.0f / vert.w();
+	float x = (vert.x() * rhw + 1.0f) * m_nWidth* 0.5f;
+	float y = (1.0f - vert.y() * rhw) *  m_nHeight * 0.5f;
+	float z = vert.z() * rhw;
+	float w = 1.0f;
 
-	// 剔除三角形
-	int encodes[3] = {};
-	auto nInVertNum = CullingPolys(ps, encodes);
-	if (0 == nInVertNum)
+	return float4(x, y, z, w);
+}
+
+
+void DxGraphDevice::DrawTriangle(const RenderCVarlistPtr& cvList, const zbVertex4D* vertices)
+{
+	uint32_t andClipMask = 0;
+	uint32_t clipMask = 0;
+	for (size_t i = 0; i < 3; ++i)
 	{
+		uint32_t vertexClipMask = 0;
+		if (vertices[i].v.x() > vertices[i].v.w())
+			vertexClipMask |= CLIPMASK_X_POS;
+		if (vertices[i].v.x() < -vertices[i].v.w())
+			vertexClipMask |= CLIPMASK_X_NEG;
+		if (vertices[i].v.y() > vertices[i].v.w())
+			vertexClipMask |= CLIPMASK_Y_POS;
+		if (vertices[i].v.y() < -vertices[i].v.w())
+			vertexClipMask |= CLIPMASK_Y_NEG;
+		if (vertices[i].v.z() > vertices[i].v.w())
+			vertexClipMask |= CLIPMASK_Z_POS;
+		if (vertices[i].v.z() < 0.0f)
+			vertexClipMask |= CLIPMASK_Z_NEG;
+
+		clipMask |= vertexClipMask;
+		if (!i)
+			andClipMask = vertexClipMask;
+		else
+			andClipMask &= vertexClipMask;
+	}
+
+	if (andClipMask)
 		return;
-	}
 
-	// 只对近裁剪面和远裁剪面裁剪,判断是否有顶点在近裁剪面外侧
-	float4 v; float t1,t2,xi,yi;
-	auto camera = Context::Instance()->ActiveScene()->ActiveCamera();
-	auto fNear = camera->NearPlane();
-	if ((encodes[0] | encodes[1] | encodes[2]) & CLIP_Z__MID)
+	// 背面剔除
+	int nCullMode;
+	cvList->QueryByName("cull_mode")->QueryVar().Value(nCullMode);
+
+	zbVertex4D projected[3];
+	if (!clipMask)
 	{
-		zbVertex4D tmp;
-		if (2 == nInVertNum)
+		projected[0].v = ViewportTransform(vertices[0].v);
+		projected[1].v = ViewportTransform(vertices[1].v);
+		projected[2].v = ViewportTransform(vertices[2].v);
+
+		if (CullFace(nCullMode, projected[0].v, projected[1].v, projected[2].v))
 		{
-			// 三角形有1个顶点在近裁剪面内侧，2个顶点在外侧
-			if (encodes[0] == CLIP_Z__MID)
-			{
-			}
-			else if (encodes[1] == CLIP_Z__MID)
-			{
-				tmp = ps[0];
-				ps[0] = ps[1];
-				ps[1] = ps[2];
-				ps[2] = tmp;
-			}
-			else
-			{
-				tmp = ps[0];
-				ps[0] = ps[2];
-				ps[2] = ps[1];
-				ps[1] = tmp;
-			}
-
-			// 创建参数化方程p = v0 + v01 * t
-			v = ps[1].v - ps[0].v;
-			t1 = fNear / v.z();
-
-			xi = ps[0].v.x() + v.x() * t1;
-			yi = ps[0].v.y() + v.y() * t1;
-			// 用交点覆盖原来的顶点
-			ps[1].v.x() = xi;
-			ps[1].v.y() = yi;
-			ps[1].v.z() = fNear;
-
-			// 对三角形边v0->v2进行裁剪
-			v = ps[2].v - ps[0].v;
-			t2 = (fNear - ps[0].v.z()) / v.z();
-
-			xi = ps[0].v.x() + v.x() * t2;
-			yi = ps[0].v.y() + v.y() * t2;
-
-			// 用交点覆盖原来的顶点
-			ps[2].v.x() = xi;
-			ps[2].v.y() = yi;
-			ps[2].v.z() = fNear;
+			return;
 		}
-		else if (1 == nInVertNum)
-		{
-			// 三角形有2个顶点在近裁剪面内侧，1个顶点在外侧
-			if (encodes[0] == CLIP_Z__MIN)
-			{
-			}
-			else if (encodes[1] == CLIP_Z__MIN)
-			{
-				tmp = ps[0];
-				ps[0] = ps[1];
-				ps[1] = ps[2];
-				ps[2] = tmp;
-			}
-			else
-			{
-				tmp = ps[0];
-				ps[0] = ps[2];
-				ps[2] = ps[1];
-				ps[1] = tmp;
-			}
 
-			zbVertex4D np1 = ps[0], np2 = ps[1], np3 = ps[2];
-			float x01i, y01i, x02i, y02i;
-			// 对每条边进行裁剪
-			// 创建参数化方程p = v0 + v01 * t
-			v = ps[1].v - ps[0].v;
-			t1 = (fNear - ps[0].v.z()) / v.z();
+		DrawTriangle2D(projected);
+	}
+	else
+	{
+		bool triangles[64];
+		triangles[0] = true;
+		size_t numTriangles = 1;
+	}
+}
 
-			x01i = ps[0].v.x() + v.x()* t1;
-			y01i = ps[0].v.y() + v.y() * t1;
+typedef struct { zbVertex4D v, v1, v2; } edge_t;
+typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
+typedef struct { zbVertex4D v, step; int x, y, w; } scanline_t;
 
-			// 对三角形边v0->v2进行裁剪
-			v = ps[2].v, - ps[0].v;
-			t2 = (fNear - ps[0].v.z()) / v.z();
+// 对三角形点排序，分割成平顶三角形，平底三角形
+int TrapezoidInitTriangle(trapezoid_t *trap, const zbVertex4D *p1, const zbVertex4D *p2, const zbVertex4D *p3)
+{
+	// 直线
+	if (p1->v.y() == p2->v.y() && p1->v.y() == p3->v.y()) return 0;
+	if (p1->v.x() == p2->v.x() && p1->v.x() == p3->v.x()) return 0;
 
-			x02i = ps[0].v.x() + v.x() * t2;
-			y02i = ps[0].v.y() + v.y() * t2;
-			// 用交点覆盖原来的顶点
-			ps[0].v.x() = x01i;
-			ps[0].v.y() = y01i;
-			ps[0].v.z() = fNear;
+	// 对点进行排序，p1 < p2 < p3
+	if (p1->v.y() > p2->v.y()) std::swap(p1, p2);
+	if (p1->v.y() > p3->v.y()) std::swap(p1, p3); 
+	if (p2->v.y() > p3->v.y()) std::swap(p2, p3);
 
-			np2.v.x() = x01i;
-			np2.v.y() = y01i;
-			np2.v.z() = fNear;
+	// 区分三角形
+	if (p1->v.y() == p2->v.y())
+	{
+		if (p1->v.x() > p2->v.x()) std::swap(p1, p2);
+		//TRI_TYPE_FLAT_TOP
+		trap[0].top = p1->v.y();
+		trap[0].bottom = p3->v.y();
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p3;
+		trap[0].right.v1 = *p2;
+		trap[0].right.v2 = *p3;
+		return (trap[0].top < trap[0].bottom) ? 1 : 0;
+	}
+	else if (p2->v.y() == p3->v.y())
+	{
+		//TRI_TYPE_FLAT_BOTTOM
+		if (p2->v.x() > p3->v.x()) std::swap(p2, p3);
+		trap[0].top = p1->v.y();
+		trap[0].bottom = p3->v.y();
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p2;
+		trap[0].right.v1 = *p1;
+		trap[0].right.v2 = *p3;
+		return (trap[0].top < trap[0].bottom) ? 1 : 0;
+	}
+	else
+	{
+		//TRI_TYPE_FLAT_NORMAL
+		trap[0].top = p1->v.y();
+		trap[0].bottom = p2->v.y();
+		trap[1].top = p2->v.y();
+		trap[1].bottom = p3->v.y();
+		float k = (p3->v.y() - p1->v.y()) / (p2->v.y() - p1->v.y());
+		float x = p1->v.x() + (p2->v.x() - p1->v.x()) * k;
 
-			np1.v.x() = x02i;
-			np1.v.y() = y02i;
-			np1.v.z() = fNear;
+		if (x <= p3->v.x()) 
+		{		
+			trap[0].left.v1 = *p1;
+			trap[0].left.v2 = *p2;
+			trap[0].right.v1 = *p1;
+			trap[0].right.v2 = *p3;
+			trap[1].left.v1 = *p2;
+			trap[1].left.v2 = *p3;
+			trap[1].right.v1 = *p1;
+			trap[1].right.v2 = *p3;
+		}
+		else 
+		{					
+			trap[0].left.v1 = *p1;
+			trap[0].left.v2 = *p3;
+			trap[0].right.v1 = *p1;
+			trap[0].right.v2 = *p2;
+			trap[1].left.v1 = *p1;
+			trap[1].left.v2 = *p3;
+			trap[1].right.v1 = *p2;
+			trap[1].right.v2 = *p3;
 		}
 	}
 
-	float4x4 mvp;
-	cvList->QueryByName("mvp")->Value(mvp);
-	ps[0].v = MathLib::MatrixMulVector(v1.v, mvp);
-	ps[1].v = MathLib::MatrixMulVector(v2.v, mvp);
-	ps[2].v = MathLib::MatrixMulVector(v3.v, mvp);
+	return 2;
+}
+
+// 根据左右两边的端点，初始化计算出扫描线的起点和步长
+void TrapezoidToScanline(const trapezoid_t *traps, scanline_t *scanline, int y)
+{
+	float s1 = traps->left.v2.v.y() - traps->left.v1.v.y();
+	float s2 = traps->right.v2.v.y() - traps->right.v1.v.y();
+	float t1 = (y - traps->left.v1.v.y()) / s1;
+	float t2 = (y - traps->right.v1.v.y()) / s2;
+
+	trapezoid_t trap;
+	trap.left.v.v = MathLib::Lerp(traps->left.v1.v, traps->left.v2.v, y);
+	trap.left.v.n = MathLib::Lerp(traps->left.v1.n, traps->left.v2.n, y);
+	trap.left.v.t = MathLib::Lerp(traps->left.v1.t, traps->left.v2.t, y);
+	trap.left.v.color = MathLib::Lerp(traps->left.v1.color, traps->left.v2.color, y);
+	trap.right.v.v = MathLib::Lerp(traps->right.v1.v, traps->right.v2.v, y);
+	trap.right.v.n = MathLib::Lerp(traps->right.v1.n, traps->right.v2.n, y);
+	trap.right.v.t = MathLib::Lerp(traps->right.v1.t, traps->right.v2.t, y);
+	trap.right.v.color = MathLib::Lerp(traps->right.v1.color, traps->right.v2.color, y);
+
+	float width = trap.right.v.v.x() - trap.left.v.v.x();
+	scanline->x = (int)(trap.left.v.v.x() + 0.5f);
+	scanline->w = (int)(trap.right.v.v.x() + 0.5f) - scanline->x;
+	if (trap.left.v.v.x() >= trap.right.v.v.x())
+		scanline->w = 0;
+
+	scanline->y = y;
+	scanline->v = trap.left.v;
+	float inv = 1.0f / width;
+	//y->v.x() = (x2->v.x() - x1->v.x()) * inv;
+	//y->v.y() = (x2->v.y() - x1->v.y()) * inv;
+	//y->pos.z = (x2->pos.z - x1->pos.z) * inv;
+	//y->pos.w = (x2->pos.w - x1->pos.w) * inv;
+	//y->tc.u = (x2->tc.u - x1->tc.u) * inv;
+	//y->tc.v = (x2->tc.v - x1->tc.v) * inv;
+	//y->color.r = (x2->color.r - x1->color.r) * inv;
+	//y->color.g = (x2->color.g - x1->color.g) * inv;
+	//y->color.b = (x2->color.b - x1->color.b) * inv;
+}
+
+void DxGraphDevice::DrawTriangle2D(zbVertex4D* vertices)
+{
 	if (1)
 	{
-		for (int i = 0; i < 3; ++i)
+		zbVertex4D v1 = vertices[0], v2 = vertices[1], v3 = vertices[2];
+		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
+		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v3.v.x()), int(v3.v.y()), 1920);
+		DeviceDrawLine(int(v3.v.x()), int(v3.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
+	} 
+	else
+	{
+	}
+	trapezoid_t traps[2];
+	int n = TrapezoidInitTriangle(traps, &vertices[0], &vertices[1], &vertices[2]);
+	for (int i = 0; i < n; ++i)
+	{
+		int top = MathLib::RoundToInt(traps->top);
+		int bottom = MathLib::RoundToInt(traps->bottom);
+		for (int j = top; j < bottom; j++)
 		{
-			float rhw = 1.0f / ps[i].v.w();
-			ps[i].v.x() = (ps[i].v.x() * rhw + 1.0f) * GetContext()->GetWidth() * 0.5f;
-			ps[i].v.y() = (1.0f - ps[i].v.y() * rhw) *  GetContext()->GetHeight() * 0.5f;
-			ps[i].v.z() = ps[i].v.z() * rhw;
-			ps[i].v.w() = 1.0f;
+			IF_BREAK(j > m_nHeight && j < 0);
+			// 插值计算
+			scanline_t scanline;
+			TrapezoidToScanline(traps, &scanline, j);
 		}
 	}
-
-	DeviceDrawPrimitive(cvList, ps[0], ps[1], ps[2]);
 }
 
 void DxGraphDevice::EndRender()

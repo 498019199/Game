@@ -78,8 +78,12 @@ public:
 	// 剔除三角形
 	int CullingPolys(zbVertex4D* ps, int* encodes);
 
-	void ClipPolys(const RenderCVarlistPtr& cvList, const zbVertex4D& v1, const zbVertex4D& v2, const zbVertex4D& v3);
-	
+	// 转换到屏幕坐标
+	float4 ViewportTransform(const float4& vert);
+
+	void DrawTriangle(const RenderCVarlistPtr& cvList, const zbVertex4D* vertices);
+	void DrawTriangle2D(zbVertex4D* vertices);
+
 	void DoRender(const RenderCVarlistPtr& cvList, const RenderLayoutPtr& layout);
 
 	// 背面消除

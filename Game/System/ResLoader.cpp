@@ -43,10 +43,10 @@ ResLoader::ResLoader(Context* pContext)
 	this->AddPath("");
 #if defined(STX_PLATFORM_WIN) || defined(STX_PLATFORM_LINUX) || defined(STX_PLATFORM_DARWIN)
 	this->AddPath("..");
-	this->AddPath("Res/ini/obj");
-	this->AddPath("Res/ini/sample");
-	this->AddPath("Res/ini/struct");
-	this->AddPath("Res/ini/tex");
+	this->AddPath("ini/obj");
+	this->AddPath("ini/sample");
+	this->AddPath("ini/struct");
+	this->AddPath("ini/tex");
 #endif
 //	loading_thread_ = MakeUniquePtr<joiner<void>>(ICore::Instance().ThreadPool()(
 //		[this] { this->LoadingThreadFunc(); }));

@@ -103,6 +103,20 @@ namespace MathLib
 		return Sqr(data) * data;
 	}
 
+	// 四舍五入
+	template <typename T>
+	inline T
+		Round(const T& x) noexcept
+	{
+		return (x > 0) ? static_cast<T>(static_cast<int>(T(0.5) + x)) :
+			-static_cast<T>(static_cast<int>(T(0.5) - x));
+	}
+	template <typename T>
+	inline int RoundToInt(T x) 
+	{ 
+		return static_cast<int>(Round(x));
+	}
+
 	// 限制 val 在 low 和 high 之间
 	template <typename T>
 	inline T const &
