@@ -15,7 +15,7 @@ extern "C"
     //×Ö·û´®³¤¶È
     inline uint32_t PlatformStringLength(const char* src)
     {
-#if defined(STX_PLATFORM_WIN)
+#if defined(STX_PLATFORM_WINDOWS)
 		return MultiByteToWideChar(CP_ACP, 0, src, strlen(src), NULL, 0);
 #elif defined (STX_PLATFORM_IOS)
 #elif defined (STX_PLATFORM_LINUX)
@@ -26,7 +26,7 @@ extern "C"
     //×Ö·û´®×ª¿í×Ö·û´®
     inline bool PlatformStringToStrWide(const char* src, wchar_t* buff, uint32_t len)
     {
-#if defined(STX_PLATFORM_WIN)
+#if defined(STX_PLATFORM_WINDOWS)
         uint32_t min_size = (PlatformStringLength(src) + 1) * sizeof(wchar_t);
         if (len < min_size)
         {
@@ -46,7 +46,7 @@ extern "C"
     //¿í×Ö·û´®³¤¶È
     inline uint32_t PlatformStrWideLength(const wchar_t* src)
     {
-#if defined(STX_PLATFORM_WIN)
+#if defined(STX_PLATFORM_WINDOWS)
         return WideCharToMultiByte(CP_OEMCP, NULL, src, -1, NULL, 0, NULL, FALSE);
 #elif defined (STX_PLATFORM_IOS)
 #elif defined (STX_PLATFORM_LINUX)
@@ -56,7 +56,7 @@ extern "C"
     //¿í×Ö·û´®×ª×Ö·û´®
     inline bool PlatformStrWideToString(const wchar_t* src, char* buff, uint32_t len)
     {
-#if defined(STX_PLATFORM_WIN)
+#if defined(STX_PLATFORM_WINDOWS)
         uint32_t min_size = PlatformStrWideLength(src);
         if (len < min_size)
         {

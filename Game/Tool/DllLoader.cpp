@@ -29,7 +29,7 @@
  */
 
 #include "../System/ResLoader.h"
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -49,8 +49,8 @@ DllLoader::~DllLoader()
 
 bool DllLoader::Load(const std::string & dll_name)
 {
-#ifdef STX_PLATFORM_WIN
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
+#ifdef STX_PLATFORM_WINDOWS_DESKTOP
 	pHandleDLL = static_cast<void*>(::LoadLibraryExA(dll_name.c_str(), nullptr, 0));
 #else
 	std::wstring wname;
@@ -68,7 +68,7 @@ void DllLoader::Free()
 {
 	if (pHandleDLL)
 	{
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
 		::FreeLibrary(static_cast<HMODULE>(pHandleDLL));
 #else
 		::dlclose(dll_handle_);
@@ -78,7 +78,7 @@ void DllLoader::Free()
 
 void* DllLoader::GetProcAddress(std::string const & proc_name)
 {
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
 	return reinterpret_cast<void*>(::GetProcAddress(static_cast<HMODULE>(pHandleDLL), proc_name.c_str()));
 #else
 	return ::dlsym(pHandleDLL, proc_name.c_str());

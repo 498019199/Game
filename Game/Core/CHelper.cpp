@@ -494,11 +494,6 @@ const WString CHelper::QueryGlobalWideStr(const char* szName)
 	return tmp;
 }
 
-std::string CHelper::GetRecource()
-{
-	return Context::Instance()->GetResource();
-}
-
 void CHelper::TraceLog(int nType, char* szMsg, ...)
 {
 	//Context::Instance()->Trace_Log(nType, szMsg);

@@ -1,11 +1,11 @@
 #include "../Container/macro.h"
-#if defined STX_PLATFORM_WIN
+#if defined STX_PLATFORM_WINDOWS
 #include <windows.h>
 #pragma warning(push)
 #pragma warning(disable: 4471) // A forward declaration of an unscoped enumeration must have an underlying type
-#endif//STX_PLATFORM_WIN
+#endif//STX_PLATFORM_WINDOWS
 
-#if defined(STX_PLATFORM_WIN)
+#if defined(STX_PLATFORM_WINDOWS)
 #pragma warning(pop)
 #endif
 
@@ -26,7 +26,7 @@ ResLoader::ResLoader(Context* pContext)
 	:IEntityEx(pContext),m_bQuit(false)
 {
 	m_InstanceResLoaderPtr = std::unique_ptr<ResLoader>(this);
-#if defined STX_PLATFORM_WIN
+#if defined STX_PLATFORM_WINDOWS
 	char buf[MAX_PATH];
 	::GetModuleFileNameA(nullptr, buf, sizeof(buf));
 	m_strExePath = buf;
@@ -41,7 +41,7 @@ ResLoader::ResLoader(Context* pContext)
 
 	m_PathDataVec.push_back(std::make_tuple(CT_HASH(""), 0, "", PackagePtr()));
 	this->AddPath("");
-#if defined(STX_PLATFORM_WIN) || defined(STX_PLATFORM_LINUX) || defined(STX_PLATFORM_DARWIN)
+#if defined(STX_PLATFORM_WINDOWS) || defined(STX_PLATFORM_LINUX) || defined(STX_PLATFORM_DARWIN)
 	this->AddPath("..");
 	this->AddPath("ini/obj");
 	this->AddPath("ini/sample");
@@ -110,7 +110,7 @@ std::string ResLoader::AbsPath(std::string_view path)
 	}
 
 	std::string ret = new_path.string();
-#if defined STX_PLATFORM_WIN
+#if defined STX_PLATFORM_WINDOWS
 	std::replace(ret.begin(), ret.end(), '\\', '/');
 #endif
 	return ret;
@@ -339,7 +339,7 @@ std::string ResLoader::Locate(std::string_view name)
 			if ((std::get<1>(path) != 0) || (HashRange(name.begin(), name.begin() + std::get<1>(path)) == std::get<0>(path)))
 			{
 				std::string res_name(std::get<2>(path) + std::string(name.substr(std::get<1>(path))));
-#if defined STX_PLATFORM_WIN
+#if defined STX_PLATFORM_WINDOWS
 				std::replace(res_name.begin(), res_name.end(), '\\', '/');
 #endif
 
@@ -390,7 +390,7 @@ ResIdentifierPtr ResLoader::Open(std::string_view strName)
 			if ((std::get<1>(var) != 0) || (HashRange(strName.begin(), strName.begin() + std::get<1>(var)) == std::get<0>(var)))
 			{
 				std::string strNameRes(std::get<2>(var) + std::string(strName.substr(std::get<1>(var))));
-#if defined STX_PLATFORM_WIN
+#if defined STX_PLATFORM_WINDOWS
 				std::replace(strNameRes.begin(), strNameRes.end(), '\\', '/');
 #endif
 

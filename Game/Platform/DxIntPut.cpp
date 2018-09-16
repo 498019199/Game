@@ -1,7 +1,6 @@
 #include "../Platform/DxIntPut.h"
 
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }      //自定义一个SAFE_RELEASE()宏,便于COM资源的释放 
-extern HWND g_hwnd;
 LPDIRECTINPUTDEVICE8		g_pMouseDevice;
 LPDIRECTINPUTDEVICE8		g_pKeyboardDevice;
 DxIntPut::DxIntPut()
@@ -16,8 +15,9 @@ DxIntPut::~DxIntPut()
 	ShutDown();
 }
 
-bool DxIntPut::InitDevice(HINSTANCE hInstance)
+bool DxIntPut::InitDevice(HINSTANCE hInstance, HWND hwnd)
 {
+	m_hwnd = hwnd;
 	if (FAILED(DirectInput8Create(hInstance, DIRECTINPUT_HEADER_VERSION, IID_IDirectInput8, (void**)&m_pDirectInput, NULL)))
 	{
 		return false;
@@ -108,7 +108,7 @@ void DxIntPut::CreateKeyBoard()
 	// 设置数据格式和协作级别  
 	m_pDirectInput->CreateDevice(GUID_SysKeyboard, &g_pKeyboardDevice, NULL);
 	g_pKeyboardDevice->SetDataFormat(&c_dfDIKeyboard);
-	g_pKeyboardDevice->SetCooperativeLevel(g_hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+	g_pKeyboardDevice->SetCooperativeLevel(m_hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 
 	//获取设备控制权  
 	g_pKeyboardDevice->Acquire();

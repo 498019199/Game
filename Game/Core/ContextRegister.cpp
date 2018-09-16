@@ -5,6 +5,7 @@
 
 #include "../System/Log.h"
 #include "../System/ResLoader.h"
+#include "../Platform/renderer.h"
 
 #include "../Render/SceneManager.h"
 #include "../Render/ICamera.h"
@@ -18,20 +19,6 @@
 #define REGISTER_SUBSYSTEM(val) pContext->RegisterSubsystem(NEW val(pContext))
 #define REGISTER_FACTORY(val) val::RegisterObject(pContext)
 
-ConfigPath::ConfigPath()
-{
-	memset(szWorkPath, 0, sizeof(szWorkPath));
-	memset(szCodePath, 0, sizeof(szCodePath));
-	memset(szResourcePath, 0, sizeof(szResourcePath));
-}
-
-void ConfigPath::SetConfigPath(const char* szPath)
-{
-	SafePrint(szWorkPath, "%s", szPath);
-	SafePrint(szCodePath, "%s\\Game\\", szPath);
-	SafePrint(szResourcePath, "%s\\Res\\", szPath);
-}
-
 extern Context* InitCore(const IVarList& args)
 {
 	auto pContext =  Context::Instance();
@@ -43,11 +30,10 @@ extern Context* InitCore(const IVarList& args)
 
 	int nWidth = args.IntVal(0);
 	int nHeight = args.IntVal(1);
-	pContext->SetPath(args.StringVal(2));
-	std::string strPath = pContext->GetResource();
-	strPath += "config.xml";
-	auto fp = ResLoader::Instance()->Open(strPath);
-	bool bFullScreen = false;
+	auto fp = ResLoader::Instance()->Open(args.StringVal(3));
+	bool bFullScreen = args.BoolVal(2);
+	bool bKeepScreenOn = true;
+
 	ITexture::PixelFormat format = ITexture::PixelFormat::RGBA8888;
 
 	if (fp)
@@ -57,40 +43,62 @@ extern Context* InitCore(const IVarList& args)
 		NULL_RETURN(pNode, nullptr);
 		auto context_node = pNode->FirstNode("context");
 		NULL_RETURN(context_node, nullptr);
-		auto graphics_node = pNode->FirstNode("graphics");
-		NULL_RETURN(graphics_node, nullptr);
 
-		auto frame_node = graphics_node->FirstNode("frame");
-		auto attr = frame_node->Attrib("width");
-		if (attr)
+
+		auto graphics_node = pNode->FirstNode("graphics");
+		if (nullptr != graphics_node)
 		{
-			nWidth = attr->ValueInt();
-		}
-		attr = frame_node->Attrib("height");
-		if (attr)
-		{
-			nHeight = attr->ValueInt();
-		}
-		std::string color_fmt_str = "ARGB8";
-		attr = frame_node->Attrib("color_fmt");
-		if (attr)
-		{
-			color_fmt_str = std::string(attr->ValueString());
-		}
-		size_t const color_fmt_str_hash = RT_HASH(color_fmt_str.c_str());
-		if (CT_HASH("ARGB8") == color_fmt_str_hash)
-		{
-			format = ITexture::PixelFormat::RGBA8888;
-		}
-		else if (CT_HASH("ABGR8") == color_fmt_str_hash)
-		{
-			format = ITexture::PixelFormat::BGRA8888;
+			auto frame_node = graphics_node->FirstNode("frame");
+			auto attr = frame_node->Attrib("width");
+			if (attr)
+			{
+				nWidth = attr->ValueInt();
+			}
+			attr = frame_node->Attrib("height");
+			if (attr)
+			{
+				nHeight = attr->ValueInt();
+			}
+
+			std::string color_fmt_str = "ARGB8";
+			attr = frame_node->Attrib("color_fmt");
+			if (attr)
+			{
+				color_fmt_str = std::string(attr->ValueString());
+			}
+			size_t const color_fmt_str_hash = RT_HASH(color_fmt_str.c_str());
+			if (CT_HASH("ARGB8") == color_fmt_str_hash)
+			{
+				format = ITexture::PixelFormat::RGBA8888;
+			}
+			else if (CT_HASH("ABGR8") == color_fmt_str_hash)
+			{
+				format = ITexture::PixelFormat::BGRA8888;
+			}
+
+			attr = frame_node->Attrib("fullscreen");
+			if (attr)
+			{
+				bFullScreen = UtilString::as_bool(attr->ValueString());
+			}
+			attr = frame_node->Attrib("keep_screen_on");
+			if (attr)
+			{
+				bKeepScreenOn = UtilString::as_bool(attr->ValueString());
+			}
 		}
 	}
 
+	WindowDesc config;
+	config.bHideWin = false;
+	config.nTop = 0;
+	config.nLeft = 0;
+	config.nWidth = nWidth;
+	config.nHeight = nHeight;
+	config.bFullScreen = bFullScreen;
+	config.bKeepScreenOn = bKeepScreenOn;
+	pContext->SetConfig(config);
 	ITexture::setDefaultAlphaPixelFormat(format);
-	pContext->SetHeight(nHeight);
-	pContext->SetWidth(nWidth);
 	return pContext;
 }
 
@@ -98,6 +106,7 @@ extern void InitCoreList(Context* pContext)
 {
 	// 子系统
 	REGISTER_SUBSYSTEM(DxGraphDevice);
+	REGISTER_SUBSYSTEM(Renderer);
 
 	// 场景
 	REGISTER_FACTORY(SceneManager);

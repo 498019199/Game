@@ -71,4 +71,8 @@ typedef std::shared_ptr<StaticMesh> StaticMeshPtr;
 
 class SceneObject;
 typedef std::shared_ptr<SceneObject> SceneObjectPtr;
+
+class Window;
+typedef std::shared_ptr<Window> WindowPtr;
+struct  WindowDesc;
 #endif //_PREDEFINE_H

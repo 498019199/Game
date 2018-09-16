@@ -11,12 +11,37 @@
 # endif
 
 #ifdef _WIN32
-    #define STX_PLATFORM_WIN
+    #define STX_PLATFORM_WINDOWS
     #if _WIN64
         #define STX_PLATFORM_WIN64
     #else
         #define STX_PLATFORM_WIN32
     #endif
+
+#ifndef _WIN32_WINNT_WIN7
+	#define _WIN32_WINNT_WIN7 0x0601
+#endif
+	#ifndef _WIN32_WINNT_WINBLUE
+	#define _WIN32_WINNT_WINBLUE 0x0603
+#endif
+#ifndef _WIN32_WINNT_WIN10
+	#define _WIN32_WINNT_WIN10 0x0A00
+#endif
+
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+	#include <winapifamily.h>
+	#if defined(WINAPI_FAMILY)
+		#if WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+			#define STX_PLATFORM_WINDOWS_DESKTOP
+		#else
+			#define STX_PLATFORM_WINDOWS_STORE
+		#endif
+	#else
+		#define STX_PLATFORM_WINDOWS_DESKTOP
+	#endif
+#else
+	#define STX_PLATFORM_WINDOWS_DESKTOP
+#endif
 #endif
 
 #ifdef _GUN_

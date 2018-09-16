@@ -14,6 +14,12 @@
 class UtilString
 {
 public:
+	//字符串转换bool
+	//\@ src    字符串
+	//\@ start  开始位置（默认从0开始）
+	//\@ base   进制（默认十进制）
+	static int as_bool(std::string_view name);
+
     //字符串转换int
     //\@ src    字符串
     //\@ start  开始位置（默认从0开始）

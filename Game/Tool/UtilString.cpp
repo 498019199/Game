@@ -23,7 +23,7 @@ std::size_t UtilString::safe_sprinf(char* buf, std::size_t nsize, const char* fm
     va_list args;
     va_start(args, fmt);
     std::size_t size_1 = nsize - 1;
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
     int res = vsnprintf_s(buf, size_1, _TRUNCATE, fmt, args);
 #endif//STX_PLATFORM_WIN
     if ((std::size_t)res >= size_1)
@@ -214,6 +214,18 @@ std::string UtilString::as_string(const wchar_t* val)
         return (sztmp);
     }
     return "";
+}
+
+int UtilString::as_bool(std::string_view name)
+{
+	if (("true" == name) || ("1" == name))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 int UtilString::as_int(const char* src, std::size_t *start /*= 0*/, int base /*= 10*/)

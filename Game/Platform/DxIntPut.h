@@ -19,7 +19,7 @@ public:
 
 	~DxIntPut();
 
-	bool InitDevice(HINSTANCE hInstance);
+	bool InitDevice(HINSTANCE hInstance, HWND hwnd);
 
 	void Execute();
 
@@ -41,6 +41,7 @@ private:
 	bool Read(IDirectInputDevice8  *pDIDevice, void* pBuffer, int nSize);
 private:
 	LPDIRECTINPUT8 m_pDirectInput;
+	HWND m_hwnd;
 	// ЪѓБъ
 	DIMOUSESTATE            m_diMouseState;
 	// МќХЬ

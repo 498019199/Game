@@ -3,7 +3,7 @@
 #pragma once
 #include "../Container/macro.h"
 
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
     #include "windows_socket.h"
     #include "PlatformUtil.h"
     #include "windows_thread.h"
@@ -19,7 +19,7 @@
     #include "linux_socket.h"
 #endif
 
-#ifdef STX_PLATFORM_WIN
+#ifdef STX_PLATFORM_WINDOWS
     #define  SPRINTF sprintf_s
 typedef CRITICAL_SECTION pthread_t;
 #endif

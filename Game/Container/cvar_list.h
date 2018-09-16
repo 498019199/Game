@@ -263,7 +263,7 @@ public:
 	void AddString(const char* value)
 	{
 		int nSize = strlen(value) + 1;
-		char *str = AddBufferData(nSize);
+		char *str = reinterpret_cast<char*>(AddBufferData(nSize));
 		memcpy(str, value, nSize);
 		
 		auto val = MakeSharedPtr<VariableInt>();
@@ -276,7 +276,7 @@ public:
 	void AddWideString(const wchar_t* value)
 	{
 		int nSize = (wcslen(value) + 1) * sizeof(wchar_t);
-		wchar_t *str = (wchar_t*)AddBufferData(nSize);
+		wchar_t *str = reinterpret_cast<wchar_t*>(AddBufferData(nSize));
 		memcpy(str, value, nSize);
 
 		auto val = MakeSharedPtr<VariableInt>();
@@ -328,7 +328,7 @@ public:
 
 	bool BoolVal(const std::size_t index) const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -340,7 +340,7 @@ public:
 
 	int IntVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -352,7 +352,7 @@ public:
 
 	int64_t Int64Val(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -364,7 +364,7 @@ public:
 
 	float FloatVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -376,7 +376,7 @@ public:
 
 	double DoubleVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -388,7 +388,7 @@ public:
 
 	const char* StringVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -400,7 +400,7 @@ public:
 
 	const wchar_t* WideStringVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -412,7 +412,7 @@ public:
 
 	PERSISTID ObjectVal(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -424,7 +424,7 @@ public:
 
 	float FloatVal2(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -436,7 +436,7 @@ public:
 
 	float FloatVal3(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -448,7 +448,7 @@ public:
 
 	float FloatVal4(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -460,7 +460,7 @@ public:
 
 	float FloatVal4x4(const std::size_t index)const
 	{
-		if (index > m_Capacity)
+		if (index >= m_Capacity)
 		{
 			return false;
 		}
@@ -471,12 +471,12 @@ public:
 	}
 
 private:
-	char* AddBufferData(std::size_t nSize)
+	uint8_t* AddBufferData(std::size_t nSize)
 	{
 		if (m_nBuffUsed + nSize >= m_nBufferSize)
 		{
 			std::size_t new_size = m_nBufferSize * 2;
-			char* p = NEW char[new_size];
+			uint8_t* p = NEW uint8_t[new_size];
 			memcpy(p, m_Buffer, m_nBufferSize);
 			if (m_nBufferSize > BUFFER_SIZE)
 			{
@@ -531,8 +531,8 @@ private:
 	std::vector<VariablePtr> m_VarList;
 	uint32_t m_Size;
 	uint32_t m_Capacity;
-	char m_Buffer[BUFFER_SIZE];
-	char* m_pBuffer;
+	uint8_t m_Buffer[BUFFER_SIZE];
+	uint8_t* m_pBuffer;
 	std::size_t m_nBufferSize;
 	std::size_t m_nBuffUsed;
 };

@@ -117,7 +117,7 @@ private:
 	int m_nClientX;
 	int m_nClientY;
 	bool m_bWindows;
-
+	HWND	m_hWnd;				// Win32 Window handle
 	LPDIRECT3D9       m_d3d;
 	LPDIRECT3DDEVICE9 m_device;
 

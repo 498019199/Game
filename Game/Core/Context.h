@@ -7,22 +7,33 @@
 
 #include "predefine.h"
 #include "Entity/Entity.h"
+#include "App.h"
 #include "../Container/hash_list.h"
 #include "../Container/cvar_list.h"
 
 #include <map>
 #include "../Container/C++17/string_view.h"
 #include <boost/noncopyable.hpp>
-struct ConfigPath
+
+struct WindowDesc
 {
-	ConfigPath();
+	bool	bHideWin;
+	bool	bFullScreen;
 
-	void SetConfigPath(const char* szPath);
+	int		nLeft;
+	int		nTop;
+	int		nWidth;
+	int		nHeight;
 
-	char szWorkPath[256];
-	char szCodePath[256];
-	char szResourcePath[256];
+	bool bKeepScreenOn;
+
+	WindowDesc()
+		:bHideWin(false),bFullScreen(false)
+		,nLeft(0),nTop(0),nWidth(0),nHeight(0)
+		, bKeepScreenOn(false)
+	{}
 };
+
 extern Context* InitCore(const IVarList& args);
 extern void InitCoreList(Context* pContext);
 extern void EndCore();
@@ -33,10 +44,6 @@ class Context : boost::noncopyable
 public:
 	// 实例化
 	static Context* Instance();
-
-	// 路径
-	void SetPath(const char* szPath);
-	const char* GetResource();
 
 	// 退出状态
 	void SetQuit();
@@ -63,10 +70,10 @@ public:
 	//
 	void SetScene(ScenePtr scene) { pCurScene = (scene); }
 	ScenePtr ActiveScene() { return pCurScene; }
-	int GetWidth() { return m_nWidth; }
-	int GetHeight() { return m_nHeight; }
-	void SetWidth(int nWidth) { m_nWidth = nWidth; }
-	void SetHeight(int nHeight) { m_nHeight = nHeight; }
+	WindowDesc& GetConfig() { return m_ConfigWinDesc; }
+	void SetConfig(const WindowDesc& desc) { m_ConfigWinDesc = desc; }
+	int GetWidth() { return m_ConfigWinDesc.nWidth; }
+	int GetHeight() { return m_ConfigWinDesc.nHeight; }
 
 	// 注册
 	template <typename T> void RegisterFactory();
@@ -86,15 +93,19 @@ public:
 	IEntityPtr GetEntity(const PERSISTID& obj);
 	void AddEntity(const PERSISTID& obj, IEntityPtr pEntity);
 	bool RemoveEntity(const PERSISTID& ob);
+
+	void AppInstance(App* app){m_App = app;}
+	bool AppValid() const{return m_App != nullptr;}
+	App* AppInstance(){BOOST_ASSERT(m_App);return m_App;}
 private:
-	int m_nWidth;													// 界面宽
-	int m_nHeight;													// 界面高
+	WindowDesc m_ConfigWinDesc;
 	ScenePtr pCurScene;
 	static std::unique_ptr<Context> m_InstanceContext;
 	bool m_Quit;													// 是否退出
 	HashMap m_GlobalVar;									//全局临时值
-	ConfigPath m_Path;											// 路径
 
+	// 窗口流程管理类，
+	App*		m_App;
 	// 子系统
 	hash_list<char, std::shared_ptr<IEntityEx>> m_SubSystemMrg;
 	// 工程类管理

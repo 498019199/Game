@@ -1,6 +1,5 @@
 #include "DxTextPrintWindows.h"
 #include <stdio.h>
-extern HWND g_hwnd;
 LPD3DXFONT              g_pTextFlamatYH;				// ×ÖÌå
 
 DxTextPrintWindows::DxTextPrintWindows()
@@ -27,7 +26,7 @@ bool DxTextPrintWindows::InitFont(DxGraphDevice* device, const char* sFormat)
 void DxTextPrintWindows::PrintWindows(int3 v3Pos, float fps, char ch, bool* s, const char* szMsg)
 {
 	RECT formatRect;
-	GetClientRect(g_hwnd, &formatRect);
+	GetClientRect(m_hWnd, &formatRect);
 	char szBuffer[1024] = {0};
 	int charCount = sprintf_s(szBuffer, "FPS:%0.3f", fps);
 	if (g_pTextFlamatYH)

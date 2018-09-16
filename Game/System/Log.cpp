@@ -89,12 +89,12 @@ int FIlePrinter::print(const tstring& msg)
             time(&t);
             struct tm *tt = localtime(&t);
             tchar new_file[129] = {};
-            _stprintf(new_file, "%04d%02d%02d_%02d%02d%02d_%d"
+            _stprintf(new_file, _T("%04d%02d%02d_%02d%02d%02d_%d")
                 , tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday
                 , tt->tm_hour, tt->tm_min, tt->tm_sec, ++m_fileindex);
             //path
             tstring strNewfile(m_filename);
-            tstring::size_type dot = m_filename.find_last_of(".");
+            tstring::size_type dot = m_filename.find_last_of(_T("."));
             if (tstring::npos == dot)
             {
                 strNewfile += m_filename;

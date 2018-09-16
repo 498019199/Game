@@ -1,5 +1,6 @@
 // 2018年1月21日 19点14分从红龙那本总改成3D游戏编程技巧大师
 #include "DxGraphDevice.h"
+#include "../Platform/Window/Window.h"
 #include "../Util/UtilTool.h"
 #include "../Container/macro.h"
 #include "../Container/RenderVariable.h"
@@ -8,7 +9,7 @@
 #include "../Render/ICamera.h"
 #include <boost/assert.hpp>
 std::unique_ptr<DxGraphDevice> DxGraphDevice::m_InstanceDevice = nullptr;
-extern HWND g_hwnd;
+
 #define CLIP_FLOAT(v) static_cast<float>(v)
 #define RGB(r,g,b)          ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }      //自定义一个SAFE_RELEASE()宏,便于COM资源的释放 
@@ -35,6 +36,7 @@ DxGraphDevice::DxGraphDevice(Context* pContext)
 	:IEntityEx(pContext),m_pixel_format(0), m_szPrimaryBuffer(NULL), m_szBackBuffer(NULL),
 	m_nPrimaryPatch(0), m_nBackPatch(0)
 {
+	m_hWnd = pContext->Instance()->AppInstance()->GetMainWin()->GetHWnd();
 	m_InstanceDevice = std::unique_ptr<DxGraphDevice>(this);
 }
 
@@ -713,7 +715,7 @@ void DxGraphDevice::DDrawFilp()
 	if (m_bWindows)
 	{
 		RECT    dest_rect;
-		GetWindowRect(g_hwnd, &dest_rect);
+		GetWindowRect(m_hWnd, &dest_rect);
 
 		// compute the destination rectangle
 		dest_rect.left += m_nClientX;

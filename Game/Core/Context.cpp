@@ -14,17 +14,6 @@ Context* Context::Instance()
 	return m_InstanceContext.get();
 }
 
-void Context::SetPath(const char* szPath)
-{
-	m_Path.SetConfigPath(szPath);
-}
-
-const char* Context::GetResource()
-{
-	return m_Path.szResourcePath;
-
-}
-
 void Context::SetQuit()
 {
 	m_Quit = true;

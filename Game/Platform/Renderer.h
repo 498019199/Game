@@ -16,46 +16,28 @@ enum class GameState
 	GAME_EXIT,				// 游戏退出
 };
 
-class Renderer
+class Renderer:public IEntityEx
 {
 public:
-	// 初始化
-	Renderer& Init()
-	{
-		static Renderer s_App;
-		return s_App;
-	}
+	STX_ENTITY(Renderer, IEntity);
 
-	void Inilize(int nWidth, int nHeight, const char* szWorkPath, HINSTANCE hInstance);
+	Renderer(Context* pContext);
+
+	virtual bool OnInit() override;
+
+	virtual bool OnShut() override;
+
+	virtual void Update() override;
+
+	void Inilize(HWND hwnd, HINSTANCE hInstance);
 	void SetFont(DxGraphDevice* device);
 	void ProccessWinMsg(std::size_t nParam1, std::size_t nParam2);
-
-	// 计时开始
-	void StarTimer() { m_Timer.ReStart(); }
-	// 计时暂停
-	bool WaitTimer(uint32_t nWaitTime)
-	{ 
-		while (m_Timer.Elapsed() < nWaitTime)
-		{
-			//double _1 = m_Timer.Elapse();
-		}
-
-		m_Timer.ReStart();
-		return true;
-	}
-	// 计时结束
 
 	// 载入
 	void Load();
 
 	// 运行
-	void Run();
-
-	// 退出
-	void Exit();
-
-	// 用于计算帧速率  
-	float GetFPS();
+	void Refresh();
 private:
 	// 渲染处理
 	void Render();
@@ -67,13 +49,5 @@ private:
 	int g_ErrorMsg;			// 游戏错误标识
 	DxIntPut m_IntPut;
 	DxTextPrintWindows m_TextPrint;
-	// 时间，帧数管理
-	Timer m_Timer;
-	float m_fAppTime;
-	float m_fFrameTime;
-	uint32_t m_nTotalNumFrames;
-	uint32_t n_nNumFrame;
-	float m_fAccumulate;
-	float m_fFPS;
 };
 #endif//APP_H_

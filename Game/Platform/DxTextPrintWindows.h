@@ -15,5 +15,6 @@ public:
 
 	void PrintWindows(int3 v3Pos, float fps, char ch, bool* s, const char* szMsg);
 private:
+	HWND	m_hWnd;				// Win32 Window handle
 };
 #endif//DX_TEXT_PRINTWINDOWS_H_
