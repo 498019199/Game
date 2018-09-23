@@ -34,10 +34,15 @@ public:
 
 	typedef boost::signals2::signal<void(const Window& wnd, bool active)> ActiveEvent;
 	typedef boost::signals2::signal<void(const Window& wnd, wchar_t ch)> CharEvent;
+	typedef boost::signals2::signal<void(const Window& wnd, bool active)> SizeEvent;
 #if defined STX_PLATFORM_WINDOWS_DESKTOP
 	typedef boost::signals2::signal<void(const Window& wnd, HRAWINPUT ri)> RawInputEvent;
-#endif
+	typedef boost::signals2::signal<void(const Window& wnd, const int2& pt, uint32_t id)> PointerDownEvent;
+	typedef boost::signals2::signal<void(const Window& wnd, const int2& pt, uint32_t id)> PointerUpEvent;
+	typedef boost::signals2::signal<void(const Window& wnd, const int2& pt, uint32_t id, bool down)> PointerUpdateEvent;
+	typedef boost::signals2::signal<void(const Window& wnd, const int2& pt, uint32_t id, int32_t wheel_delta)> PointerWheelEvent;
 	typedef boost::signals2::signal<void(const Window& wnd)> CloseEvent;
+#endif
 
 	int32_t Left() const{return m_nTop;}
 	int32_t Top() const{return m_nTop;}
@@ -51,6 +56,18 @@ public:
 	void Closed(bool closed){m_bClosed = closed;}
 	bool Windows() { return m_bKeepScreenOn; }
 	void Windows(bool bWin) { m_bKeepScreenOn = bWin; }
+
+	ActiveEvent& OnActive() { return m_sgActiveEvent; }
+	CharEvent& OnChar() { return m_sgCharEvent; }
+	SizeEvent& OnSize() { return m_sgSizeEvent; }
+#if defined STX_PLATFORM_WINDOWS_DESKTOP
+	RawInputEvent& OnRawInput() { return m_sgRawInputEvent; }
+	CloseEvent& OnClose() { return m_sgCloseEvent; }
+	PointerDownEvent& OnPointerDown() { return m_sgPointerDownEvent; }
+	PointerUpEvent& OnPointerUp() { return m_sgPointerUpEvent; }
+	PointerUpdateEvent& OnPointerUpdate() { return m_sgPointerUpdateEvent; }
+	PointerWheelEvent& OnPointerWheel() { return m_sgPointerWheelEvent; }
+#endif
 private:
 #if defined STX_PLATFORM_WINDOWS_DESKTOP
 	LRESULT MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -60,15 +77,7 @@ private:
 	void MsgProc(XEvent const & event);
 #endif
 
-	ActiveEvent& OnActive(){return m_sgActiveEvent;}
-	CharEvent& OnChar(){return m_sgCharEvent;}
-
-#if defined STX_PLATFORM_WINDOWS_DESKTOP
-	RawInputEvent& OnRawInput(){return m_sgRawInputEvent;}
-#endif
-
-	CloseEvent& OnClose(){return m_sgCloseEvent;}
-protected:
+	void UpdateDpiScale(float scale);
 private:
 	int32_t m_nLeft;
 	int32_t m_nTop;
@@ -84,6 +93,7 @@ private:
 
 	ActiveEvent m_sgActiveEvent;
 	CharEvent m_sgCharEvent;
+	SizeEvent m_sgSizeEvent;
 #if defined STX_PLATFORM_WINDOWS
 	bool m_bHide;
 	bool m_bExternalWnd;
@@ -99,8 +109,12 @@ private:
 	uint32_t m_WinStype;
 	HWND m_Hwnd;
 	WNDPROC m_DefaultWndProc;
-#endif
-	CloseEvent m_sgCloseEvent;
-};
 
+	PointerDownEvent m_sgPointerDownEvent;
+	PointerUpEvent m_sgPointerUpEvent;
+	PointerUpdateEvent m_sgPointerUpdateEvent;
+	PointerWheelEvent m_sgPointerWheelEvent;
+	CloseEvent m_sgCloseEvent;
+#endif
+};
 #endif//_STX_WINDOW_H_

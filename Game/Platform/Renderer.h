@@ -4,7 +4,6 @@
 #include "../Platform/DxGraphDevice.h"
 #include "../Platform/DxTextPrintWindows.h"
 #include "../Platform/DxIntPut.h"
-#include "../System/Timer.h"
 
 enum class GameState
 {

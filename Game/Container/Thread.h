@@ -1,7 +1,7 @@
 #ifndef _STX_THREAD_HPP
 #define _STX_THREAD_HPP
 #pragma once
-
+/*
 #include <boost/assert.hpp>
 #include <thread>
 #include <condition_variable>
@@ -578,5 +578,5 @@ public:
 
 private:
 	std::shared_ptr<thread_pool_common_data_t> data_;
-};
+};*/
 #endif//_STX_THREAD_HPP

@@ -1,6 +1,6 @@
 #include "Context.h"
 #include "../Util/UtilTool.h"
-
+#include "../Core/predefine.h"
 #include "../Platform/DxGraphDevice.h"
 
 #include "../System/Log.h"

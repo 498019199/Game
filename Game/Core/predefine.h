@@ -75,4 +75,32 @@ typedef std::shared_ptr<SceneObject> SceneObjectPtr;
 class Window;
 typedef std::shared_ptr<Window> WindowPtr;
 struct  WindowDesc;
+
+
+class InputEngine;
+class InputDevice;
+typedef std::shared_ptr<InputDevice> InputDevicePtr;
+class InputKeyboard;
+typedef std::shared_ptr<InputKeyboard> InputKeyboardPtr;
+class InputMouse;
+typedef std::shared_ptr<InputMouse> InputMousePtr;
+class InputJoystick;
+typedef std::shared_ptr<InputJoystick> InputJoystickPtr;
+class InputTouch;
+typedef std::shared_ptr<InputTouch> InputTouchPtr;
+class InputSensor;
+typedef std::shared_ptr<InputSensor> InputSensorPtr;
+class InputFactory;
+struct InputActionParam;
+typedef std::shared_ptr<InputActionParam> InputActionParamPtr;
+struct InputKeyboardActionParam;
+typedef std::shared_ptr<InputKeyboardActionParam> InputKeyboardActionParamPtr;
+struct InputMouseActionParam;
+typedef std::shared_ptr<InputMouseActionParam> InputMouseActionParamPtr;
+struct InputJoystickActionParam;
+typedef std::shared_ptr<InputJoystickActionParam> InputJoystickActionParamPtr;
+struct InputTouchActionParam;
+typedef std::shared_ptr<InputTouchActionParam> InputTouchActionParamPtr;
+struct InputSensorActionParam;
+typedef std::shared_ptr<InputSensorActionParam> InputSensorActionParamPtr;
 #endif //_PREDEFINE_H

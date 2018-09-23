@@ -4,6 +4,7 @@
 #include "Platform/Renderer.h"
 #include "Platform/DxGraphDevice.h"
 #include "Platform/Window/Window.h"
+#include "Platform/MsgInput/MInput.hpp"
 #include "Core/Context.h"
 #include "Util/UtilTool.h"
 
@@ -16,6 +17,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	app->Create();
 	
 	InitCoreList(pCore);
+	pCore->RegisterSubsystem(NEW MsgInputEngine(pCore));
 	auto win = app->GetMainWin();
 	auto pDevice = Context::Instance()->GetSubsystem<DxGraphDevice>();
 	pDevice->InitDevice(win->GetHWnd(), win->Width(), win->Height(), win->Top(), win->Left(), win->Windows());

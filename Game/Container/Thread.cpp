@@ -1,4 +1,4 @@
-#include "Thread.h"
+/*#include "Thread.h"
 #include "../Util/UtilTool.h"
 
 thread_pool::thread_pool_join_info::thread_pool_join_info()
@@ -214,4 +214,4 @@ thread_pool::thread_pool(size_t num_min_cached_threads, size_t num_max_cached_th
 thread_pool::~thread_pool()
 {
 	data_->kill_all();
-}
+}*/

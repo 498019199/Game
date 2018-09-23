@@ -1,7 +1,7 @@
 #include "SceneManager.h"
 #include "Renderable.h"
 #include "ICamera.h"
-
+#include "../Platform/MsgInput/MInput.hpp"
 SceneManager::SceneManager(Context* pContext)
 	:IEntity(pContext)
 {
@@ -31,6 +31,9 @@ void SceneManager::AddVisBase(VisBasePtr vis)
 
 void SceneManager::Render()
 {
+	auto ie = Context::Instance()->Instance()->GetSubsystem<MsgInputEngine>();
+	ie->Update();
+
 	for (auto it : m_Lights)
 	{
 	}
