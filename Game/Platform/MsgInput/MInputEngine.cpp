@@ -146,8 +146,6 @@ bool MsgInputEngine::OnInit()
 		{
 			devices_.push_back(device);
 		}
-
-		return true;
 	}
 
 	if (::RegisterRawInputDevices(&rids[0], static_cast<UINT>(rids.size()), sizeof(rids[0])))

@@ -525,14 +525,14 @@ namespace MathLib
 			lhs.w() * rhs.w() - lhs.x() * rhs.x() - lhs.y() * rhs.y() - lhs.z() * rhs.z());
 	}
 
-	Quaternion Conjugate(Quaternion const & rhs) noexcept;
+	template Quaternion Conjugate(Quaternion const & rhs) noexcept;
 	template <typename T>
 	Quaternion_T<T> Conjugate(Quaternion_T<T> const & rhs) noexcept
 	{
 		return Quaternion_T<T>(-rhs.x(), -rhs.y(), -rhs.z(), rhs.w());
 	}
 
-	Quaternion Inverse(const Quaternion& rhs) noexcept;
+	template Quaternion Inverse(const Quaternion& rhs) noexcept;
 	template <typename T>
 	Quaternion_T<T> Inverse(const Quaternion_T<T>& rhs) noexcept
 	{
@@ -540,7 +540,7 @@ namespace MathLib
 		return Quaternion_T<T>(rhs.x() * var, rhs.y() * var, rhs.z() * var, rhs.w() * var);
 	}
 
-	Quaternion ToQuaternion(const float4x4 & rhs) noexcept;
+	template Quaternion ToQuaternion(const float4x4 & rhs) noexcept;
 	template <typename T>
 	Quaternion_T<T> ToQuaternion(const Matrix4_T<T>& mat) noexcept
 	{
@@ -576,31 +576,31 @@ namespace MathLib
 		switch (nBigBestIndex)
 		{
 		case 0:
-			quat.w = fBigBestValue;
-			quat.x = (mat(1, 2) - mat(2, 1)) * mult;
-			quat.y = (mat(2, 0) - mat(0, 2)) * mult;
-			quat.z = (mat(0, 1) - mat(1, 0)) * mult;
+			quat.w() = fBigBestValue;
+			quat.x() = (mat(1, 2) - mat(2, 1)) * mult;
+			quat.y() = (mat(2, 0) - mat(0, 2)) * mult;
+			quat.z() = (mat(0, 1) - mat(1, 0)) * mult;
 			break;
 
 		case 1:
-			quat.x = fBigBestValue;
-			quat.w = (mat(1, 2) - mat(2, 1)) * mult;
-			quat.y = (mat(0, 1) + mat(1, 0)) * mult;
-			quat.z = (mat(2, 0) - mat(0, 2)) * mult;
+			quat.x() = fBigBestValue;
+			quat.w() = (mat(1, 2) - mat(2, 1)) * mult;
+			quat.y() = (mat(0, 1) + mat(1, 0)) * mult;
+			quat.z() = (mat(2, 0) - mat(0, 2)) * mult;
 			break;
 
 		case 2:
-			quat.y = fBigBestValue;
-			quat.w = (mat(2, 0) - mat(0, 2)) * mult;
-			quat.x = (mat(0, 1) + mat(1, 0)) * mult;
-			quat.z = (mat(1, 2) + mat(2, 1)) * mult;
+			quat.y() = fBigBestValue;
+			quat.w() = (mat(2, 0) - mat(0, 2)) * mult;
+			quat.x() = (mat(0, 1) + mat(1, 0)) * mult;
+			quat.z() = (mat(1, 2) + mat(2, 1)) * mult;
 			break;
 
 		case 3:
-			quat.z = fBigBestValue;
-			quat.w = (mat(0, 1) - mat(1, 0)) * mult;
-			quat.x = (mat(2, 0) + mat(0, 2)) * mult;
-			quat.y = (mat(1, 2) + mat(2, 1)) * mult;
+			quat.z() = fBigBestValue;
+			quat.w() = (mat(0, 1) - mat(1, 0)) * mult;
+			quat.x() = (mat(2, 0) + mat(0, 2)) * mult;
+			quat.y() = (mat(1, 2) + mat(2, 1)) * mult;
 			break;
 		}
 
@@ -629,14 +629,14 @@ namespace MathLib
 	//template <typename T>
 	//Quaternion_T<T> Exp(const Quaternion_T<T> & rhs)
 	//{
-
+	//
 	//}
 
 	//template Quaternion In(const Quaternion& rhs);
 	//template <typename T>
 	//Quaternion_T<T> In(const Quaternion_T<T> & quat)
 	//{
-
+	//
 	//}
 
 	template Quaternion QuaternionRotate(const float3& rhs, const float rotate);
@@ -697,6 +697,78 @@ namespace MathLib
 	Quaternion Squad(const Quaternion_T<T> & q1, const Quaternion_T<T> & a, const Quaternion_T<T> & b, const Quaternion_T<T> & c, T ft)
 	{
 		return Slerp(Slerp(q1, c, ft), Slerp(a, b, ft), T(2) * ft * (1 - ft));
+	}
+
+	template void decompose(float3& scale, Quaternion& rot, float3& trans, float4x4 const & rhs) noexcept;
+	template <typename T>
+	void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, Matrix4_T<T> const & rhs) noexcept
+	{
+		scale.x() = Sqrt(rhs(0, 0) * rhs(0, 0) + rhs(0, 1) * rhs(0, 1) + rhs(0, 2) * rhs(0, 2));
+		scale.y() = Sqrt(rhs(1, 0) * rhs(1, 0) + rhs(1, 1) * rhs(1, 1) + rhs(1, 2) * rhs(1, 2));
+		scale.z() = Sqrt(rhs(2, 0) * rhs(2, 0) + rhs(2, 1) * rhs(2, 1) + rhs(2, 2) * rhs(2, 2));
+
+		trans = Vector_T<T, 3>(rhs(3, 0), rhs(3, 1), rhs(3, 2));
+		Matrix4_T<T> rot_mat;
+		rot_mat(0, 0) = rhs(0, 0) / scale.x();
+		rot_mat(0, 1) = rhs(0, 1) / scale.x();
+		rot_mat(0, 2) = rhs(0, 2) / scale.x();
+		rot_mat(0, 3) = 0;
+		rot_mat(1, 0) = rhs(1, 0) / scale.y();
+		rot_mat(1, 1) = rhs(1, 1) / scale.y();
+		rot_mat(1, 2) = rhs(1, 2) / scale.y();
+		rot_mat(1, 3) = 0;
+		rot_mat(2, 0) = rhs(2, 0) / scale.z();
+		rot_mat(2, 1) = rhs(2, 1) / scale.z();
+		rot_mat(2, 2) = rhs(2, 2) / scale.z();
+		rot_mat(2, 3) = 0;
+		rot_mat(3, 0) = 0;
+		rot_mat(3, 1) = 0;
+		rot_mat(3, 2) = 0;
+		rot_mat(3, 3) = 1;
+		rot = ToQuaternion(rot_mat);
+	}
+
+	// From http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+	template void to_yaw_pitch_roll(float& yaw, float& pitch, float& roll, Quaternion const & quat) noexcept;
+	template <typename T>
+	void to_yaw_pitch_roll(T& yaw, T& pitch, T& roll, Quaternion_T<T> const & quat) noexcept
+	{
+		T sqx = quat.x() * quat.x();
+		T sqy = quat.y() * quat.y();
+		T sqz = quat.z() * quat.z();
+		T sqw = quat.w() * quat.w();
+		T unit = sqx + sqy + sqz + sqw;
+		T test = quat.w() * quat.x() + quat.y() * quat.z();
+		if (test > T(0.499) * unit)
+		{
+			// singularity at north pole
+			yaw = 2 * Atan2(quat.z(), quat.w());
+			pitch = PI / 2;
+			roll = 0;
+		}
+		else
+		{
+			if (test < -T(0.499) * unit)
+			{
+				// singularity at south pole
+				yaw = -2 * Atan2(quat.z(), quat.w());
+				pitch = -PI / 2;
+				roll = 0;
+			}
+			else
+			{
+				yaw = Atan2(2 * (quat.y() * quat.w() - quat.x() * quat.z()), -sqx - sqy + sqz + sqw);
+				pitch = Asin(2 * test / unit);
+				roll = Atan2(2 * (quat.z() * quat.w() - quat.x() * quat.y()), -sqx + sqy - sqz + sqw);
+			}
+		}
+	}
+
+	template float3 transform_quat(float3 const & v, Quaternion const & quat) noexcept;
+	template <typename T>
+	Vector_T<T, 3> transform_quat(Vector_T<T, 3> const & v, Quaternion_T<T> const & quat) noexcept
+	{
+		return v + Cross(quat.GetV(), Cross(quat.GetV(), v) + quat.w() * v) * T(2);
 	}
 }
 

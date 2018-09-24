@@ -23,20 +23,20 @@ public:
 	virtual bool OnShut();
 
 	float FOV() const	{	return m_fFov;	}
-
 	float AspectRatio() const		{	return m_fAspectRatio;	}
-
 	float NearPlane() const	{	return m_fNearClipZ;	}
-
 	float FarPlane() const	{	return m_fFarClipZ;	}
-	 
-	float ViewDist() const { return m_fViewDist;  }
+	float LookAtDist() const { return m_fViewDist;  }
 
 	const float4x4& ViewMatrix() const;
 	const float4x4& ProjMatrix() const;
 	const float4x4& InvertViewMatrix() const;
 	const float4x4& InvertProjMatrix() const;
-	const float3& GetEyePos() const;
+	const float3& EyePos() const { return *reinterpret_cast<const float3 *>(&m_InvViewMat.Row(3)); }
+	float3 LookAt() const{return this->EyePos() + this->ForwardVec() * m_fViewDist;}
+	const float3& RightVec() const { return *reinterpret_cast<const float3 *>(&m_InvViewMat.Row(0)); }
+	const float3& UpVec() const { return *reinterpret_cast<const float3 *>(&m_InvViewMat.Row(1)); }
+	const float3& ForwardVec() const { return *reinterpret_cast<const float3 *>(&m_InvViewMat.Row(2)); }
 	// Method:			ViewParams
 	// Qualifier:			设置摄像机的观察矩阵
 	// eye_pos:			相机在世界坐标系中的位置

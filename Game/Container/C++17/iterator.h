@@ -13,11 +13,11 @@
 			return t.size();
 		}
 
-		template <typename T, size_t N>
-		inline constexpr size_t size(T const (&)[N]) noexcept
-		{
-			return N;
-		}
+		//template <typename T, size_t N>
+		//inline constexpr size_t size(T const (&)[N]) noexcept
+		//{
+		//	return N;
+		//}
 }
 #endif
 #endif		// _STX_ITERATOR_H_

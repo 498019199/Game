@@ -49,15 +49,9 @@ const float4x4& ICamera::InvertProjMatrix() const
 	return m_InvProjMat;
 }
 
-const float3& ICamera::GetEyePos() const
-{
-	return m_pos;
-}
-
 void ICamera::ViewParams(const float3& eye_pos, const float3& look_at, const float3& up_vec)
 {
-	m_pos = eye_pos;
-	/*m_fViewDist = MathLib::Length(look_at - eye_pos);*/
+	m_fViewDist = MathLib::Length(look_at - eye_pos);
 	m_ViewMat = MathLib::LookAtLH(eye_pos, look_at, up_vec);
 	m_InvViewMat = MathLib::Inverse(m_ViewMat);
 }
