@@ -61,12 +61,18 @@ Window::Window(std::string const & name, const WindowDesc& settings, void* nativ
 		m_bExternalWnd = false;
 	}
 
-	RECT rc;
-	::GetClientRect(m_Hwnd, &rc);
-	m_nLeft = rc.left;
-	m_nTop = rc.top;
-	m_nWidth = rc.right - rc.left;
-	m_Height = rc.bottom - rc.top;
+	RECT window_rect;
+	::GetClientRect(m_Hwnd, &window_rect);
+	AdjustWindowRectEx(&window_rect,
+		GetWindowStyle(m_Hwnd),
+		GetMenu(m_Hwnd) != NULL,
+		GetWindowExStyle(m_Hwnd));
+	m_nLeft = -window_rect.left;
+	m_nTop = -window_rect.top;
+	m_nWidth = window_rect.right - window_rect.left;
+	m_Height = window_rect.bottom - window_rect.top;
+	int sx = -window_rect.left;
+	int sy = -window_rect.top;
 	::SetWindowLongPtr(m_Hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	::ShowWindow(m_Hwnd, m_bHide ? SW_HIDE : SW_SHOWNORMAL);
 	::UpdateWindow(m_Hwnd);
@@ -124,34 +130,39 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		this->OnChar()(*this, static_cast<wchar_t>(wParam));
 		break;
 
-	case WM_SIZE:
-	{
-		RECT rc;
-		::GetClientRect(m_Hwnd, &rc);
-		m_nLeft = rc.left;
-		m_nTop = rc.top;
-		m_nWidth = rc.right - rc.left;
-		m_Height = rc.bottom - rc.top;
+	//case WM_SIZE:
+	//{
+	//	RECT rc;
+	//	::GetClientRect(m_Hwnd, &rc);
+	//	AdjustWindowRectEx(&rc,
+	//		GetWindowStyle(m_Hwnd),
+	//		GetMenu(m_Hwnd) != NULL,
+	//		GetWindowExStyle(m_Hwnd));
+	//	m_nLeft = -rc.left;
+	//	m_nTop = -rc.top;
+	//	m_nWidth = rc.right - rc.left;
+	//	m_Height = rc.bottom - rc.top;
 
-		// Check to see if we are losing or gaining our window.  Set the
-		// active flag to match
-		if ((SIZE_MAXHIDE == wParam) || (SIZE_MINIMIZED == wParam))
-		{
-			m_bActive = false;
-			this->OnSize()(*this, false);
-		}
-		else
-		{
-			m_bActive = true;
-			this->OnSize()(*this, true);
-		}
-	}
-	break;
+	//	// Check to see if we are losing or gaining our window.  Set the
+	//	// active flag to match
+	//	if ((SIZE_MAXHIDE == wParam) || (SIZE_MINIMIZED == wParam))
+	//	{
+	//		m_bActive = false;
+	//		this->OnSize()(*this, false);
+	//	}
+	//	else
+	//	{
+	//		m_bActive = true;
+	//		this->OnSize()(*this, true);
+	//	}
+	//}
+	//break;
 
 		// ¼üÅÌ
 	case WM_INPUT:
 		this->OnRawInput()(*this, reinterpret_cast<HRAWINPUT>(lParam));
-		break;
+	break;
+
 #if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
 	case WM_POINTERDOWN:
 	{

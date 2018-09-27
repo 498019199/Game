@@ -93,7 +93,7 @@ public:
 	{
 		m_SubVisbase.assign(first, last);
 	}
-	VisBasePtr const & SubVisBase(size_t id) const
+	RenderablePtr const & SubVisBase(size_t id) const
 	{
 		return m_SubVisbase[id];
 	}
@@ -125,6 +125,6 @@ protected:
 	RenderMaterialPtr m_Mtl;
 	std::array<TexturePtr, RenderMaterial::TextureType::TS_TypeCount> m_Textures;
 
-	std::vector<VisBasePtr> m_SubVisbase;
+	std::vector<RenderablePtr> m_SubVisbase;
 };
 #endif//_IVISBASE_H_

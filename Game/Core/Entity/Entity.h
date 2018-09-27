@@ -60,6 +60,7 @@ protected:
 	Context * m_pContext;
 	CPropData   m_CPropDatas;				// ¡Ÿ ±÷µ
 	PERSISTID   m_Self;								// id
+	//m_funcExecute;
 };
 template <class T> T* IEntity::GetSubsystem() const { return GetContext()->GetSubsystem<T>(); }
 

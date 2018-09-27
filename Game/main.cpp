@@ -17,14 +17,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	app->Create();
 	
 	InitCoreList(pCore);
-	pCore->RegisterSubsystem(NEW MsgInputEngine(pCore));
 	auto win = app->GetMainWin();
 	auto pDevice = Context::Instance()->GetSubsystem<DxGraphDevice>();
 	pDevice->InitDevice(win->GetHWnd(), win->Width(), win->Height(), win->Top(), win->Left(), win->Windows());
 	auto render = Context::Instance()->GetSubsystem<Renderer>();
-	render->Inilize(win->GetHWnd(), hInstance);
 	render->SetFont(pDevice);
 	pCore->Test();
+
 	app->Run();
 	return 0;
 }

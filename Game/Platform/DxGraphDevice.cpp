@@ -5,7 +5,7 @@
 #include "../Container/macro.h"
 #include "../Container/RenderVariable.h"
 #include "../Render/RenderLayout.h"
-#include "../Render/SceneManager.h"
+#include "../Render/IScene.h"
 #include "../Render/ICamera.h"
 #include <boost/assert.hpp>
 std::unique_ptr<DxGraphDevice> DxGraphDevice::m_InstanceDevice = nullptr;
@@ -509,10 +509,12 @@ void DxGraphDevice::DrawTriangle2D(zbVertex4D* vertices)
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v3.v.x()), int(v3.v.y()), 1920);
 		DeviceDrawLine(int(v3.v.x()), int(v3.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
+		return;
 	} 
 	else
 	{
 	}
+
 	trapezoid_t traps[2];
 	int n = TrapezoidInitTriangle(traps, &vertices[0], &vertices[1], &vertices[2]);
 	for (int i = 0; i < n; ++i)

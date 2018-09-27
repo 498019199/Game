@@ -1092,7 +1092,7 @@ using namespace Microsoft::WRL;
 					accel.x(), accel.y(), accel.z(), 0,
 					0, 0, 0, 1);
 				input_sensor->orientation_quat_ = MathLib::to_quaternion(rotate);
-				MathLib::to_yaw_pitch_roll(input_sensor->tilt_.x(), input_sensor->tilt_.y(), input_sensor->tilt_.z(),
+				MathLib::ToYawPitchRoll(input_sensor->tilt_.x(), input_sensor->tilt_.y(), input_sensor->tilt_.z(),
 					input_sensor->orientation_quat_);
 				input_sensor->magnetic_heading_north_ = atan2(MathLib::dot(magnetic, accel),
 					MathLib::dot(magnetic, m));

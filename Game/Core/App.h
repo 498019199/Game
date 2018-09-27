@@ -2,15 +2,13 @@
 #ifndef STX_APP_H
 #define STX_APP_H
 #pragma once
-
 #include "../Core/predefine.h"
 #include "../Math/Math.h"
 #include "../Util/Timer.h"
 class App
 {
 public:
-
-	App(const std::string& name, void* native_wnd);
+	 explicit App(const std::string& name, void* native_wnd);
 
 	~App();
 
@@ -23,6 +21,12 @@ public:
 	WindowPtr MakeWindow(const std::string& name, const WindowDesc& settings);
 	WindowPtr MakeWindow(const std::string& name, const WindowDesc& settings, void* native_wnd);
 	WindowPtr GetMainWin() { return m_MainWinPtr; }
+
+
+	uint32_t TotalNumFrames() const;
+	float FPS() const;
+	float AppTime() const;
+	float FrameTime() const;
 protected:
 	void LookAt(float3 const & eye, float3 const & lookAt);
 	void LookAt(float3 const & eye, float3 const & lookAt, float3 const & up);
@@ -30,10 +34,13 @@ protected:
 
 protected:
 	uint32_t Update(uint32_t pass);
+
+	void UpdateStats();
+
+	void DoUpdateOverlay();
 private:
 	virtual void OnCreate(){}
 	virtual void OnDestroy(){}
-
 private:
 	std::string m_strAppName;
 	WindowPtr m_MainWinPtr;

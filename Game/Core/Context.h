@@ -62,9 +62,9 @@ public:
 	bool RemoveGlobalValue(const char* szName);
 
 	// Ö¡Ñ­»·
+	void DisPlay(float fTimer);
 	bool AddExecute(const PERSISTID obj);
 	void RemoveExecute(const PERSISTID obj);
-	void Execute(float fTime);
 	void Test();
 
 	//

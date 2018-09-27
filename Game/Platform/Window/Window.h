@@ -44,7 +44,7 @@ public:
 	typedef boost::signals2::signal<void(const Window& wnd)> CloseEvent;
 #endif
 
-	int32_t Left() const{return m_nTop;}
+	int32_t Left() const{return m_nLeft;}
 	int32_t Top() const{return m_nTop;}
 	uint32_t Width() const{return m_nWidth;}
 	uint32_t Height() const{return m_Height;}

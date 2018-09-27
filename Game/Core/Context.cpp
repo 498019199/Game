@@ -76,10 +76,10 @@ bool Context::RemoveGlobalValue(const char* szName)
 	return true;
 }
 
-void Context::Execute(float fTime)
+void Context::DisPlay(float fTimer)
 {
 	hash_list<char, std::shared_ptr<IEntityEx>>::iterator it = m_SubSystemMrg.begin();
-	for (;it != m_SubSystemMrg.end(); ++it)
+	for (; it != m_SubSystemMrg.end(); ++it)
 	{
 		it.get_data()->Update();
 	}

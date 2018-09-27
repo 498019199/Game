@@ -50,7 +50,7 @@ Vector_T<Valty, 4> Matrix4_T<Valty>::Col(size_t index) const noexcept
 }
 
 template <typename Valty>
-Vector_T<Valty, 4> Matrix4_T<Valty>::Row(size_t index)  const noexcept
+const Vector_T<Valty, 4>& Matrix4_T<Valty>::Row(size_t index)  const noexcept
 {
 	return this->m[index];
 }

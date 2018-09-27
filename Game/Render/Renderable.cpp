@@ -2,7 +2,7 @@
 #include "../Container/RenderVariable.h"
 #include "../Container/ArrayRef.hpp"
 #include "../Render/ICamera.h"
-#include "../Render/SceneManager.h"
+#include "../Render/IScene.h"
 #include "../Platform/DxGraphDevice.h"
 
 Renderable::Renderable(Context* pContext)
@@ -18,7 +18,7 @@ Renderable::Renderable(Context* pContext)
 
 void Renderable::RegisterObject(Context* pContext)
 {
-	pContext->RegisterFactory<SceneManager>();
+	pContext->RegisterFactory<IScene>();
 }
 
 void Renderable::SetPosition(float x, float y, float z)
@@ -93,11 +93,6 @@ void Renderable::Render()
 void Renderable::OnRenderBegin()
 {
 	auto pDevice = GetSubsystem<DxGraphDevice>();
-	auto var = Context::Instance()->GetGlobalValue("control_move");
-	var->Value(m_ModleMat);
-	m_ModleMat(3, 0) = m_Position.x();
-	m_ModleMat(3, 1) = m_Position.y();
-	m_ModleMat(3, 2) = m_Position.z();
 
 	auto camera = GetContext()->ActiveScene()->ActiveCamera();
 	auto view = camera->ViewMatrix();

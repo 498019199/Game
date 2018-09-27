@@ -43,8 +43,8 @@
 #include <string>
 
 CameraController::CameraController(Context* pContext)
-	: IEntity(pContext),rotationScaler_(0.05f), moveScaler_(1),
-		camera_(nullptr)
+	: IEntity(pContext),m_fRotationScaler(0.05f), m_fMoveScaler(1),
+		m_pCamera(nullptr)
 {
 }
 
@@ -54,18 +54,18 @@ CameraController::~CameraController()
 
 void CameraController::Scalers(float rotationScaler, float moveScaler)
 {
-	rotationScaler_ = rotationScaler;
-	moveScaler_ = moveScaler;
+	m_fRotationScaler = rotationScaler;
+	m_fMoveScaler = moveScaler;
 }
 
 void CameraController::AttachCamera(ICamera& camera)
 {
-	camera_ = &camera;
+	m_pCamera = &camera;
 }
 
 void CameraController::DetachCamera()
 {
-	camera_ = nullptr;
+	m_pCamera = nullptr;
 }
 
 
@@ -106,6 +106,12 @@ FirstPersonCameraController::FirstPersonCameraController(Context* pContext, bool
 	}
 }
 
+
+void FirstPersonCameraController::RegisterObject(Context* pContext)
+{
+	pContext->RegisterFactory<FirstPersonCameraController>();
+}
+
 void FirstPersonCameraController::RequiresLeftButtonDown(bool lbd)
 {
 	left_button_down_ = lbd;
@@ -114,7 +120,7 @@ void FirstPersonCameraController::RequiresLeftButtonDown(bool lbd)
 void FirstPersonCameraController::InputHandler(InputEngine const & ie, InputAction const & action)
 {
 	float elapsed_time = ie.ElapsedTime();
-	if (camera_)
+	if (m_pCamera)
 	{
 		float const scaler = elapsed_time * 10;
 
@@ -196,7 +202,7 @@ void FirstPersonCameraController::AttachCamera(ICamera& camera)
 	MathLib::decompose(scale, quat, trans, camera.ViewMatrix());
 
 	float yaw, pitch, roll;
-	MathLib::to_yaw_pitch_roll(yaw, pitch, roll, quat);
+	MathLib::ToYawPitchRoll(yaw, pitch, roll, quat);
 
 	MathLib::SinCos(pitch / 2, rot_x_.x(), rot_x_.y());
 	MathLib::SinCos(yaw / 2, rot_y_.x(), rot_y_.y());
@@ -209,24 +215,23 @@ void FirstPersonCameraController::AttachCamera(ICamera& camera)
 
 void FirstPersonCameraController::Move(float x, float y, float z)
 {
-	if (camera_)
+	if (m_pCamera)
 	{
 		float3 movement(x, y, z);
-		movement *= moveScaler_;
+		movement *= m_fMoveScaler;
 
-		float3 new_eye_pos = camera_->EyePos() + MathLib::transform_quat(movement, inv_rot_);
-
-		camera_->ViewParams(new_eye_pos, new_eye_pos + camera_->ForwardVec() * camera_->LookAtDist(), camera_->UpVec());
+		float3 new_eye_pos = m_pCamera->EyePos()+ MathLib::transform_quat(movement, inv_rot_);
+		m_pCamera->ViewParams(new_eye_pos, new_eye_pos + m_pCamera->ForwardVec() * m_pCamera->LookAtDist(), m_pCamera->UpVec());
 	}
 }
 
 void FirstPersonCameraController::RotateRel(float yaw, float pitch, float roll)
 {
-	if (camera_)
+	if (m_pCamera)
 	{
-		pitch *= -rotationScaler_ / 2;
-		yaw *= -rotationScaler_ / 2;
-		roll *= -rotationScaler_ / 2;
+		pitch *= -m_fRotationScaler / 2;
+		yaw *= -m_fRotationScaler / 2;
+		roll *= -m_fRotationScaler / 2;
 
 		float2 delta_x, delta_y, delta_z;
 		MathLib::SinCos(pitch, delta_x.x(), delta_x.y());
@@ -245,16 +250,16 @@ void FirstPersonCameraController::RotateRel(float yaw, float pitch, float roll)
 		float3 view_vec = MathLib::transform_quat(float3(0, 0, 1), inv_rot_);
 		float3 up_vec = MathLib::transform_quat(float3(0, 1, 0), inv_rot_);
 
-		camera_->ViewParams(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec);
+		m_pCamera->ViewParams(m_pCamera->EyePos(), m_pCamera->EyePos() + view_vec * m_pCamera->LookAtDist(), up_vec);
 	}
 }
 
 void FirstPersonCameraController::RotateAbs(Quaternion const & quat)
 {
-	if (camera_)
+	if (m_pCamera)
 	{
 		float yaw, pitch, roll;
-		MathLib::to_yaw_pitch_roll(yaw, pitch, roll, quat);
+		MathLib::ToYawPitchRoll(yaw, pitch, roll, quat);
 
 		MathLib::SinCos(pitch / 2, rot_x_.x(), rot_x_.y());
 		MathLib::SinCos(yaw / 2, rot_y_.x(), rot_y_.y());
@@ -264,7 +269,7 @@ void FirstPersonCameraController::RotateAbs(Quaternion const & quat)
 		float3 view_vec = MathLib::transform_quat(float3(0, 0, 1), inv_rot_);
 		float3 up_vec = MathLib::transform_quat(float3(0, 1, 0), inv_rot_);
 
-		camera_->ViewParams(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec);
+		m_pCamera->ViewParams(m_pCamera->EyePos(), m_pCamera->EyePos() + view_vec * m_pCamera->LookAtDist(), up_vec);
 	}
 }
 

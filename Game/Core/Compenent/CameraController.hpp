@@ -25,10 +25,9 @@ public:
 	virtual void DetachCamera();
 
 protected:
-	float		rotationScaler_;	// Scaler for rotation
-	float		moveScaler_;		// Scaler for movement
-
-	ICamera*		camera_;
+	float		m_fRotationScaler;	// Scaler for rotation
+	float		m_fMoveScaler;		// Scaler for movement
+	ICamera*		m_pCamera;
 };
 
 class FirstPersonCameraController : public CameraController
@@ -37,6 +36,8 @@ public:
 	STX_ENTITY(FirstPersonCameraController, CameraController);
 
 	explicit FirstPersonCameraController(Context* pContext, bool use_input_engine = true);
+
+	static void RegisterObject(Context* pContext);
 
 	virtual void AttachCamera(ICamera& camera);
 

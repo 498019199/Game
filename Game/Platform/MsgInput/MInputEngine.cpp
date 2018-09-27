@@ -479,3 +479,7 @@ NTSTATUS MsgInputEngine::HidP_GetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE U
 }
 #endif
 
+extern void InitInputList(Context* pContext)
+{
+	pContext->RegisterSubsystem(NEW MsgInputEngine(pContext));
+}

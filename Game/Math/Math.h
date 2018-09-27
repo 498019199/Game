@@ -274,11 +274,12 @@ template <typename T>
 	Quaternion Squad(const Quaternion_T<T> & q1, const Quaternion_T<T> & a,
 		const Quaternion_T<T> & b, const Quaternion_T<T> & c, T ft);
 
+	// 四元数转欧拉角
+	template <typename T>
+	void ToYawPitchRoll(T& yaw, T& pitch, T& roll, Quaternion_T<T> const & quat) noexcept;
 	/****************************移植，不懂*****************************/
 	template <typename T>
 	void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, Matrix4_T<T> const & rhs) noexcept;
-	template <typename T>
-	void to_yaw_pitch_roll(T& yaw, T& pitch, T& roll, Quaternion_T<T> const & quat) noexcept;
 	template <typename T>
 	Vector_T<T, 3> transform_quat(Vector_T<T, 3> const & v, Quaternion_T<T> const & quat) noexcept;
 // 平面

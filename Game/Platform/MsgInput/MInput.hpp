@@ -528,4 +528,5 @@ typedef struct _HIDP_VALUE_CAPS
 	};
 #endif
 
+extern void InitInputList(Context* pContext);
 #endif		// _MINPUT_HPP

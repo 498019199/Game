@@ -729,9 +729,9 @@ namespace MathLib
 	}
 
 	// From http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-	template void to_yaw_pitch_roll(float& yaw, float& pitch, float& roll, Quaternion const & quat) noexcept;
+	template void ToYawPitchRoll(float& yaw, float& pitch, float& roll, Quaternion const & quat) noexcept;
 	template <typename T>
-	void to_yaw_pitch_roll(T& yaw, T& pitch, T& roll, Quaternion_T<T> const & quat) noexcept
+	void ToYawPitchRoll(T& yaw, T& pitch, T& roll, Quaternion_T<T> const & quat) noexcept
 	{
 		T sqx = quat.x() * quat.x();
 		T sqy = quat.y() * quat.y();

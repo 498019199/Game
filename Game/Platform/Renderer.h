@@ -3,7 +3,6 @@
 #pragma once
 #include "../Platform/DxGraphDevice.h"
 #include "../Platform/DxTextPrintWindows.h"
-#include "../Platform/DxIntPut.h"
 
 enum class GameState
 {
@@ -28,7 +27,6 @@ public:
 
 	virtual void Update() override;
 
-	void Inilize(HWND hwnd, HINSTANCE hInstance);
 	void SetFont(DxGraphDevice* device);
 	void ProccessWinMsg(std::size_t nParam1, std::size_t nParam2);
 
@@ -40,13 +38,9 @@ public:
 private:
 	// 渲染处理
 	void Render();
-
-	// 逻辑处理
-	void Display(float second);
 private:
 	int g_GameState;			// 游戏状态
 	int g_ErrorMsg;			// 游戏错误标识
-	DxIntPut m_IntPut;
 	DxTextPrintWindows m_TextPrint;
 };
 #endif//APP_H_

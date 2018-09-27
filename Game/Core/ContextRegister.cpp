@@ -7,7 +7,7 @@
 #include "../System/ResLoader.h"
 #include "../Platform/renderer.h"
 
-#include "../Render/SceneManager.h"
+#include "../Render/IScene.h"
 #include "../Render/ICamera.h"
 #include "../Render/Renderable.h"
 #include "../Render/Mesh.h"
@@ -16,9 +16,10 @@
 
 #include "../Tool/XMLDocument.h"
 #include "../Container/Hash.h"
+extern void InitInputList(Context* pContext);
+extern void InitCompenetList(Context* pContext);
 #define REGISTER_SUBSYSTEM(val) pContext->RegisterSubsystem(NEW val(pContext))
 #define REGISTER_FACTORY(val) val::RegisterObject(pContext)
-
 extern Context* InitCore(const IVarList& args)
 {
 	auto pContext =  Context::Instance();
@@ -107,15 +108,18 @@ extern void InitCoreList(Context* pContext)
 	// 子系统
 	REGISTER_SUBSYSTEM(DxGraphDevice);
 	REGISTER_SUBSYSTEM(Renderer);
+	InitInputList(pContext);
 
 	// 场景
-	REGISTER_FACTORY(SceneManager);
+	REGISTER_FACTORY(IScene);
 
 	// 图形
 	REGISTER_FACTORY(Renderable);
 	REGISTER_FACTORY(ICamera);
 	REGISTER_FACTORY(RenderModel);
 	REGISTER_FACTORY(StaticMesh);
+
+	InitCompenetList(pContext);
 }
 
 extern void EndCore()

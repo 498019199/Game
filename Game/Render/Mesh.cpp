@@ -4,7 +4,7 @@
 #include "../Platform/DxGraphDevice.h"
 #include "../Util/UtilTool.h"
 #include "../Container/Hash.h"
-#include "../Render/SceneManager.h"
+#include "../Render/IScene.h"
 #include "../Render/ICamera.h"
 #include "../Render/Material.h"
 #include "../Render/ITexture.h"

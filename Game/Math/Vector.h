@@ -66,52 +66,34 @@ public:
 			::DoCopy(&vec[0], &rhs.vec[0]);
 	}
 	Vector_T(const ValTy& x, const ValTy& y) noexcept
+		:vec {x, y}
 	{
 		static_assert(2 == elem_num, "must be 2D vecotr");
-
-		this->x() = x;
-		this->y() = y;
 	}
 	Vector_T(ValTy&& x, ValTy&& y) noexcept
+		: vec{ std::move(x), std::move(y) }
 	{
 		static_assert(2 == elem_num, "must be 2D vecotr");
-
-		vec[0] = std::move(x);
-		vec[1] = std::move(y);
 	}
 	Vector_T(const ValTy& x, const ValTy& y, const ValTy& z) noexcept
+		: vec{ x, y , z}
 	{
 		static_assert(3 == elem_num, "must be 3D vecotr");
-
-		this->x() = x;
-		this->y() = y;
-		this->z() = z;
 	}
 	Vector_T(ValTy&& x, ValTy&& y, ValTy&& z) noexcept
+		: vec{ std::move(x), std::move(y) , std::move(z) }
 	{
 		static_assert(3 == elem_num, "must be 3D vecotr");
-
-		vec[0] = std::move(x);
-		vec[1] = std::move(y);
-		vec[2] = std::move(z);
 	}
 	Vector_T(const ValTy& x, const ValTy& y, const ValTy& z, const ValTy& w) noexcept
+		: vec{ x, y , z, w }
 	{
 		static_assert(4 == elem_num, "must be 4D vecotr");
-
-		this->x() = x;
-		this->y() = y;
-		this->z() = z;
-		this->w() = w;
 	}
 	Vector_T(ValTy&& x, ValTy&& y, ValTy&& z, ValTy&& w) noexcept
+		: vec{ std::move(x), std::move(y) , std::move(z), std::move(w) }
 	{
 		static_assert(4 == elem_num, "must be 4D vecotr");
-
-		vec[0] = std::move(x);
-		vec[1] = std::move(y);
-		vec[2] = std::move(z);
-		vec[3] = std::move(w);
 	}
 
 		// size

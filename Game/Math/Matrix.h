@@ -81,7 +81,7 @@ public:
     static const Matrix4_T & Zero() noexcept;
     static const Matrix4_T & Identity() noexcept;
     void Row(size_type index, const Vector_T<Valty, 4>& rhs) noexcept;
-    Vector_T<Valty, 4> Row(size_t index) const noexcept;
+    const Vector_T<Valty, 4>& Row(size_t index) const noexcept;
     void Col(size_type index, const Vector_T<Valty, 4>& rhs) noexcept;
     Vector_T<Valty, 4> Col(size_t index) const noexcept;
 
