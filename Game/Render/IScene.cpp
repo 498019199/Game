@@ -3,7 +3,7 @@
 #include "Renderable.h"
 #include "ICamera.h"
 #include "../Platform/MsgInput/MInput.hpp"
-#include "../Core/Compenent/CameraController.hpp"
+#include "../Util/UtilTool.h"
 IScene::IScene(Context* pContext)
 	:IEntity(pContext)
 {
@@ -14,10 +14,6 @@ IScene::IScene(Context* pContext)
 	camera->ViewParams(pos, at + pos, float3(0, 1, 0));
 	camera->ProjParams(MathLib::PIdiv2, 0.1f, 500.f, Context::Instance()->GetWidth(), Context::Instance()->GetHeight());
 	m_Camera = camera;
-
-	m_CameraControalPtr = Context::Instance()->CreateObject<FirstPersonCameraController>();
-	m_CameraControalPtr->AttachCamera(*m_Camera);
-	m_CameraControalPtr->Scalers(0.05f, 5.f);
 }
 
 void IScene::RegisterObject(Context* pContext)
@@ -37,9 +33,26 @@ uint32_t IScene::GetPolysNum() const
 	{
 		for (uint32_t i = 0; i < it->GetSubVisBaseNum(); ++i)
 		{
-			auto vis = reinterpret_cast<StaticMesh*>(it->SubVisBase(i).get());
+			auto vis = checked_pointer_cast<StaticMesh>(it->SubVisBase(i));
+			IF_BREAK(vis);
 			auto layer = vis->GetRenderLayout();
+			IF_BREAK(layer);
 			nCount += layer->GetTriCount();
+		}
+	}
+
+	return nCount;
+}
+
+uint32_t IScene::GetDynTextureSize() const
+{
+	uint32_t nCount = 0;
+	for (auto it : m_VisBaseList)
+	{
+		for (uint32_t i = 0; i < it->GetSubVisBaseNum(); ++i)
+		{
+			auto vis = checked_pointer_cast<StaticMesh>(it->SubVisBase(i));
+			IF_BREAK(vis);
 		}
 	}
 

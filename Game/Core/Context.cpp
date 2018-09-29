@@ -99,6 +99,10 @@ void Context::RegisterFactory(EnitityFactory* factory)
 std::shared_ptr<IEntity> Context::CreateObject(const char* szName)
 {
 	auto it = m_FactoryMrg.find(szName);
+	if (m_FactoryMrg.end() == it)
+	{
+		return nullptr;
+	}
 	return it.get_data()->CreateObject();
 }
 

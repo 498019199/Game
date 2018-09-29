@@ -19,6 +19,7 @@ public:
 	~IScene();
 
 	uint32_t GetPolysNum() const;
+	uint32_t GetDynTextureSize() const;
 
 	// 获取当前相机
 	CameraPtr ActiveCamera() { return m_Camera; }
@@ -30,7 +31,6 @@ private:
 
 	std::vector<RenderablePtr> m_VisBaseList;	// 渲染列表指针数组
 	CameraPtr m_Camera;
-	FirstPersonCameraControllerPtr m_CameraControalPtr;
 	std::vector<LightPtr> m_Lights;
 };
 #endif//_SCENE_H_

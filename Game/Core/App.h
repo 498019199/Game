@@ -22,7 +22,7 @@ public:
 	WindowPtr MakeWindow(const std::string& name, const WindowDesc& settings, void* native_wnd);
 	WindowPtr GetMainWin() { return m_MainWinPtr; }
 
-
+	std::string GetName() { return m_strAppName; }
 	uint32_t TotalNumFrames() const;
 	float FPS() const;
 	float AppTime() const;

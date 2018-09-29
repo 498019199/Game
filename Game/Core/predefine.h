@@ -80,7 +80,8 @@ class Window;
 typedef std::shared_ptr<Window> WindowPtr;
 struct  WindowDesc;
 
-
+class IScene;
+typedef std::shared_ptr<IScene> IScenePtr;
 class InputEngine;
 class InputDevice;
 typedef std::shared_ptr<InputDevice> InputDevicePtr;

@@ -15,8 +15,17 @@
 #include "../Container/C++17/string_view.h"
 #include <boost/noncopyable.hpp>
 
+enum RenderType
+{
+	RENDER_TYPE_NONE = 0,
+	RENDER_TYPE_WIREFRAME = 1, // ‰÷»æœﬂøÚ
+	RENDER_TYPE_TEXTURE = 2,	//‰÷»æŒ∆¿Ì
+	RENDER_TYPE_COLOR = 4,		// ‰÷»æ—’…´
+};
 struct WindowDesc
 {
+	RenderType m_nRenderType;
+
 	bool	bHideWin;
 	bool	bFullScreen;
 
@@ -26,9 +35,8 @@ struct WindowDesc
 	int		nHeight;
 
 	bool bKeepScreenOn;
-
 	WindowDesc()
-		:bHideWin(false),bFullScreen(false)
+		:m_nRenderType(RENDER_TYPE_NONE),bHideWin(false),bFullScreen(false)
 		,nLeft(0),nTop(0),nWidth(0),nHeight(0)
 		, bKeepScreenOn(false)
 	{}
@@ -67,14 +75,14 @@ public:
 	void RemoveExecute(const PERSISTID obj);
 	void Test();
 
-	//
+	// ªÒ»°≈‰÷√ ˝æ›
 	void SetScene(ScenePtr scene) { pCurScene = (scene); }
 	ScenePtr ActiveScene() { return pCurScene; }
 	WindowDesc& GetConfig() { return m_ConfigWinDesc; }
 	void SetConfig(const WindowDesc& desc) { m_ConfigWinDesc = desc; }
 	int GetWidth() { return m_ConfigWinDesc.nWidth; }
 	int GetHeight() { return m_ConfigWinDesc.nHeight; }
-
+	RenderType GetRenderType() { return m_ConfigWinDesc.m_nRenderType; }
 	// ◊¢≤·
 	template <typename T> void RegisterFactory();
 	void RegisterFactory(EnitityFactory* factory);

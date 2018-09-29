@@ -503,7 +503,7 @@ void TrapezoidToScanline(const trapezoid_t *traps, scanline_t *scanline, int y)
 
 void DxGraphDevice::DrawTriangle2D(zbVertex4D* vertices)
 {
-	if (1)
+	if (RENDER_TYPE_WIREFRAME == Context::Instance()->GetRenderType())
 	{
 		zbVertex4D v1 = vertices[0], v2 = vertices[1], v3 = vertices[2];
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);

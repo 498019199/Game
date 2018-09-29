@@ -98,8 +98,10 @@ extern Context* InitCore(const IVarList& args)
 	config.nHeight = nHeight;
 	config.bFullScreen = bFullScreen;
 	config.bKeepScreenOn = bKeepScreenOn;
+	config.m_nRenderType = RENDER_TYPE_WIREFRAME;
 	pContext->SetConfig(config);
 	ITexture::setDefaultAlphaPixelFormat(format);
+
 	return pContext;
 }
 
