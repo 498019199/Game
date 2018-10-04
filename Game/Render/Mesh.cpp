@@ -8,6 +8,7 @@
 #include "../Render/ICamera.h"
 #include "../Render/Material.h"
 #include "../Render/ITexture.h"
+#include "../Tool/XMLDocument.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../SDK/tinyobj/tiny_obj_loader.h"
 
@@ -382,52 +383,12 @@ void LoadModel(const std::string strFineName,
 	tinyobj::MaterialFileReader readMatFn(last_fxml_directory.string() + "/");
  	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()), &readMatFn);
 
-	mtls.resize(materials.size());
-	for (uint32_t mtl_index = 0; mtl_index < static_cast<uint32_t>(materials.size()); ++mtl_index)
-	{
-		RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
-		mtls[mtl_index] = mtl;
+	XMLDocument doc;
+	ResIdentifierPtr mtl_input = ResLoader::Instance()->Open(last_fxml_directory.string() + "/" + "Dragon.xml");
+	auto root = doc.Parse(mtl_input);
+	XMLAttributePtr material = root->Attrib("material");
+	auto material = ASyncLoadRenderMaterial("", material);
 
-		mtl->m_strName = materials[mtl_index].name;
-
-		mtl->m_f4Albedo.x() = materials[mtl_index].ambient[0];
-		mtl->m_f4Albedo.y() = materials[mtl_index].ambient[1];
-		mtl->m_f4Albedo.z() = materials[mtl_index].ambient[2];
-		mtl->m_f4Albedo.w() = materials[mtl_index].ambient[3];
-
-		mtl->m_fMetalness = materials[mtl_index].metallic;
-
-		mtl->m_fGlossiness = materials[mtl_index].sheen;
-
-		mtl->m_f3Emissive.x() = materials[mtl_index].emission[0];
-		mtl->m_f3Emissive.y() = materials[mtl_index].emission[1];
-		mtl->m_f3Emissive.z() = materials[mtl_index].emission[2];
-
-		if ('\0' != materials[mtl_index].ambient_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Albedo] = materials[mtl_index].ambient_texname;
-		}
-		if ('\0' != materials[mtl_index].metallic_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Metalness] = materials[mtl_index].metallic_texname;
-		}
-		if ('\0' != materials[mtl_index].sheen_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Glossiness] = materials[mtl_index].sheen_texname;
-		}
-		if ('\0' != materials[mtl_index].emissive_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Emissive] = materials[mtl_index].emissive_texname;
-		}
-		if ('\0' != materials[mtl_index].normal_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Normal] = materials[mtl_index].normal_texname;
-		}
-		if ('\0' != materials[mtl_index].specular_highlight_texname[0])
-		{
-			mtl->m_TexNames[RenderMaterial::TS_Height] = materials[mtl_index].specular_highlight_texname;
-		}
-	}
  	// Loop over shapes
  	for (uint32_t s = 0; s < static_cast<uint32_t>(shapes.size()); s++)
  	{

@@ -20,16 +20,6 @@ public:
 	static bool IssupportsS3TC();
 };
 
-typedef struct MipmapInfo
-{
-	uint8_t* pAddress;
-	int nlength;
-
-	MipmapInfo() 
-		:pAddress(nullptr), nlength(0) 
-	{}
-}MipmapInfo;
-
 class ImageResource
 {
 public:
@@ -46,7 +36,7 @@ public:
 	inline ITexture::IMAGE_TYPE GetFileType() { return m_fileType; }
 	inline uint8_t* GetData() { return m_pData; }
 	inline int               getNumberOfMipmaps() { return m_NumberOfMipmaps; }
-	inline MipmapInfo*       getMipmaps() { return m_Mipmaps; }
+	inline ITexture::MipmapInfo*       getMipmaps() { return m_Mipmaps; }
 	inline bool              hasPremultipliedAlpha() { return m_bHhasPremultipliedAlpha; }
 	//ÊÇÑ¹ËõµÄ
 	bool                     IsCompressed();
@@ -90,7 +80,7 @@ private:
 	uint32_t m_nDataLen;
 	uint8_t * m_pData;
 	int m_NumberOfMipmaps;
-	MipmapInfo m_Mipmaps[MIPMAP_MAX];   // pointer to mipmap images
+	ITexture::MipmapInfo m_Mipmaps[MIPMAP_MAX];   // pointer to mipmap images
 	ITexture::PixelFormat m_renderFormat;
 	bool m_bHhasPremultipliedAlpha;// false if we can't auto detect the image is premultiplied or not.
 };

@@ -7,6 +7,8 @@
 #include "../Render/RenderLayout.h"
 #include "../Render/IScene.h"
 #include "../Render/ICamera.h"
+#include "../Render/ITexture.h"
+#include "../Math/Math.h"
 #include <boost/assert.hpp>
 std::unique_ptr<DxGraphDevice> DxGraphDevice::m_InstanceDevice = nullptr;
 
@@ -31,6 +33,21 @@ enum ClipMask : uint32_t
 	CLIPMASK_Z_POS = 0x10,
 	CLIPMASK_Z_NEG = 0x20,
 };
+
+static float4 Frustum[6] = 
+{
+	float4(-1.0f, 0.0f, 0.0f, 1.0f),
+	float4(1.0f, 0.0f, 0.0f, 1.0f),
+	float4(0.0f, -1.0f, 0.0f, 1.0f),
+	float4(0.0f, 1.0f, 0.0f, 1.0f),
+	float4(0.0f, 0.0f, -1.0f, 1.0f),
+	float4(0.0f, 0.0f, 1.0f, 0.0f),
+};
+
+struct edge_t { zbVertex4D v, v1, v2; };
+struct trapezoid_t { float top, bottom; edge_t left, right; };
+struct scanline_t { zbVertex4D v, step; int x, y, w; };
+struct v2f{float4 pos;float2 texcoord;Color color;float4 normal;float4 storage0;float4 storage1;float4 storage2;};
 
 DxGraphDevice::DxGraphDevice(Context* pContext)
 	:IEntityEx(pContext),m_pixel_format(0), m_szPrimaryBuffer(NULL), m_szBackBuffer(NULL),
@@ -117,6 +134,9 @@ bool DxGraphDevice::InitDevice(HWND hwnd, UINT nWidth, UINT nHeight, UINT nClien
 	trace_log("Current card model:%s", Adapter.Description);
 	trace_log("Startup::%s", "DxGraphDevice");
 #endif
+
+	m_DeepZbuffer = NEW float[m_nWidth * m_nHeight];
+	BOOST_ASSERT(m_DeepZbuffer);
 	return true;
 }
 
@@ -274,6 +294,10 @@ void DxGraphDevice::DoRender(const RenderCVarlistPtr& cvList, const RenderLayout
 		vertices[0].v = MathLib::MatrixMulVector(vb[i].v, mv);
 		vertices[1].v = MathLib::MatrixMulVector(vb[i + 1].v, mv);
 		vertices[2].v = MathLib::MatrixMulVector(vb[i + 2].v, mv);
+
+		vertices[0].t = vb[i].t;
+		vertices[1].t = vb[i + 1].t;
+		vertices[2].t = vb[i + 2].t;
 		DrawTriangle(cvList, vertices);
 	}
 }
@@ -329,7 +353,15 @@ float4 DxGraphDevice::ViewportTransform(const float4& vert)
 }
 
 
-void DxGraphDevice::DrawTriangle(const RenderCVarlistPtr& cvList, const zbVertex4D* vertices)
+void DxGraphDevice::ViewportTransformReverse(float4 y, const float4& x, float w, float width, float height)
+{
+	y.x() = (x.x() * 2 / width - 1.0f) * w;
+	y.y() = (1.0f - x.y() * 2 / height) * w;
+	y.z() = x.z() * w;
+	y.w() = w;
+}
+
+void DxGraphDevice::DrawTriangle(const RenderCVarlistPtr& cvList, zbVertex4D* vertices)
 {
 	uint32_t andClipMask = 0;
 	uint32_t clipMask = 0;
@@ -359,38 +391,61 @@ void DxGraphDevice::DrawTriangle(const RenderCVarlistPtr& cvList, const zbVertex
 	if (andClipMask)
 		return;
 
-	// 背面剔除
-	int nCullMode;
-	cvList->QueryByName("cull_mode")->QueryVar().Value(nCullMode);
-
-	zbVertex4D projected[3];
+	bool triangles[64] = { 0 };
+	triangles[0] = true;
 	if (!clipMask)
 	{
-		projected[0].v = ViewportTransform(vertices[0].v);
-		projected[1].v = ViewportTransform(vertices[1].v);
-		projected[2].v = ViewportTransform(vertices[2].v);
-
-		if (CullFace(nCullMode, projected[0].v, projected[1].v, projected[2].v))
-		{
-			return;
-		}
-
-		DrawTriangle2D(projected);
+		DrawPrimitive(cvList, vertices, triangles, 1);
 	}
 	else
 	{
-		bool triangles[64];
-		triangles[0] = true;
-		size_t numTriangles = 1;
+		uint32_t numTriangles = 1;
+		if (clipMask & CLIPMASK_X_POS)
+			ClipVertices(Frustum[0], vertices, triangles, numTriangles);
+		if (clipMask & CLIPMASK_X_NEG)
+			ClipVertices(Frustum[1], vertices, triangles, numTriangles);
+		if (clipMask & CLIPMASK_Y_POS)
+			ClipVertices(Frustum[2], vertices, triangles, numTriangles);
+		if (clipMask & CLIPMASK_Y_NEG)
+			ClipVertices(Frustum[3], vertices, triangles, numTriangles);
+		if (andClipMask & CLIPMASK_Z_POS)
+			ClipVertices(Frustum[4], vertices, triangles, numTriangles);
+		if (andClipMask & CLIPMASK_Z_NEG)
+			ClipVertices(Frustum[5], vertices, triangles, numTriangles);
+
+		DrawPrimitive(cvList, vertices, triangles, numTriangles);
 	}
 }
 
-typedef struct { zbVertex4D v, v1, v2; } edge_t;
-typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
-typedef struct { zbVertex4D v, step; int x, y, w; } scanline_t;
+void DxGraphDevice::DrawPrimitive(const RenderCVarlistPtr& cvList, zbVertex4D* vertices, bool(&triangles)[64], uint32_t numTriangles)
+{
+	int nCullMode;
+	cvList->QueryByName("cull_mode")->QueryVar().Value(nCullMode);
+	for (uint32_t i = 0; i < numTriangles; ++i)
+	{
+		zbVertex4D projected[3];
+		v2f vfs[3];
+		for (uint32_t j = 0; j < 3; ++j)
+		{
+			vfs[j].texcoord = vertices[i + j].t;
+		}
+
+		if (triangles[i])
+		{
+			uint32_t index = i * 3;
+			projected[0].v = ViewportTransform(vertices[index].v);
+			projected[1].v = ViewportTransform(vertices[index + 1].v);
+			projected[2].v = ViewportTransform(vertices[index + 2].v);
+
+			// 背面剔除
+			IF_CONTINUE(CullFace(nCullMode, projected[index].v, projected[index + 1].v, projected[index + 2].v));
+			DrawTriangle2D(cvList, projected, vfs);
+		}
+	}
+}
 
 // 对三角形点排序，分割成平顶三角形，平底三角形
-int TrapezoidInitTriangle(trapezoid_t *trap, const zbVertex4D *p1, const zbVertex4D *p2, const zbVertex4D *p3)
+int DxGraphDevice::TrapezoidInitTriangle(trapezoid_t *trap, const zbVertex4D *p1, const zbVertex4D *p2, const zbVertex4D *p3)
 {
 	// 直线
 	if (p1->v.y() == p2->v.y() && p1->v.y() == p3->v.y()) return 0;
@@ -463,45 +518,117 @@ int TrapezoidInitTriangle(trapezoid_t *trap, const zbVertex4D *p1, const zbVerte
 	return 2;
 }
 
+void DxGraphDevice::VertexInterp(zbVertex4D& v, const zbVertex4D& v1, const zbVertex4D& v2, float t)
+{
+	v.v = MathLib::Lerp(v1.v, v2.v, t);
+	v.n = MathLib::Lerp(v1.n, v2.n, t);
+	v.t = MathLib::Lerp(v1.t, v2.t, t);
+	v.color = MathLib::Lerp(v1.color, v2.color, t);
+}
+
+void DxGraphDevice::VertexAdd(zbVertex4D& y, const zbVertex4D& x)
+{
+	y.v += x.v;
+	y.t += x.t;
+	y.color += x.color;
+}
+
 // 根据左右两边的端点，初始化计算出扫描线的起点和步长
-void TrapezoidToScanline(const trapezoid_t *traps, scanline_t *scanline, int y)
+void DxGraphDevice::TrapezoidToScanline(trapezoid_t *traps, scanline_t& scanline, int y)
 {
 	float s1 = traps->left.v2.v.y() - traps->left.v1.v.y();
 	float s2 = traps->right.v2.v.y() - traps->right.v1.v.y();
 	float t1 = (y - traps->left.v1.v.y()) / s1;
 	float t2 = (y - traps->right.v1.v.y()) / s2;
+	VertexInterp(traps->left.v, traps->left.v1, traps->left.v2, t1);
+	VertexInterp(traps->right.v, traps->right.v1, traps->right.v2, t2);
 
-	trapezoid_t trap;
-	trap.left.v.v = MathLib::Lerp(traps->left.v1.v, traps->left.v2.v, y);
-	trap.left.v.n = MathLib::Lerp(traps->left.v1.n, traps->left.v2.n, y);
-	trap.left.v.t = MathLib::Lerp(traps->left.v1.t, traps->left.v2.t, y);
-	trap.left.v.color = MathLib::Lerp(traps->left.v1.color, traps->left.v2.color, y);
-	trap.right.v.v = MathLib::Lerp(traps->right.v1.v, traps->right.v2.v, y);
-	trap.right.v.n = MathLib::Lerp(traps->right.v1.n, traps->right.v2.n, y);
-	trap.right.v.t = MathLib::Lerp(traps->right.v1.t, traps->right.v2.t, y);
-	trap.right.v.color = MathLib::Lerp(traps->right.v1.color, traps->right.v2.color, y);
+	float width = traps->right.v.v.x() - traps->left.v.v.x();
+	scanline.x = MathLib::RoundToInt(traps->left.v.v.x() + 0.5f);
+	scanline.w = MathLib::RoundToInt(traps->right.v.v.x() + 0.5f) - scanline.x;
+	if (traps->left.v.v.x() >= traps->right.v.v.x())
+		scanline.w = 0;
 
-	float width = trap.right.v.v.x() - trap.left.v.v.x();
-	scanline->x = (int)(trap.left.v.v.x() + 0.5f);
-	scanline->w = (int)(trap.right.v.v.x() + 0.5f) - scanline->x;
-	if (trap.left.v.v.x() >= trap.right.v.v.x())
-		scanline->w = 0;
+	scanline.y = y;
+	scanline.v = traps->left.v;
 
-	scanline->y = y;
-	scanline->v = trap.left.v;
 	float inv = 1.0f / width;
-	//y->v.x() = (x2->v.x() - x1->v.x()) * inv;
-	//y->v.y() = (x2->v.y() - x1->v.y()) * inv;
-	//y->pos.z = (x2->pos.z - x1->pos.z) * inv;
-	//y->pos.w = (x2->pos.w - x1->pos.w) * inv;
-	//y->tc.u = (x2->tc.u - x1->tc.u) * inv;
-	//y->tc.v = (x2->tc.v - x1->tc.v) * inv;
-	//y->color.r = (x2->color.r - x1->color.r) * inv;
-	//y->color.g = (x2->color.g - x1->color.g) * inv;
-	//y->color.b = (x2->color.b - x1->color.b) * inv;
+	scanline.step.v = (traps->right.v.v - traps->left.v.v) * inv;
+	scanline.step.t = (traps->right.v.t - traps->left.v.t) * inv;
+	scanline.step.color = (traps->right.v.color - traps->left.v.color) * inv;
 }
 
-void DxGraphDevice::DrawTriangle2D(zbVertex4D* vertices)
+void DxGraphDevice::DrawScanline(const RenderCVarlistPtr& cvList, scanline_t& scanline, zbVertex4D* vertices, v2f *vfs)
+{
+	int y = scanline.y;
+	int x = scanline.x;
+	int count = scanline.w;
+	int width = m_nWidth;
+	uint32_t *pView = reinterpret_cast<uint32_t*>(m_szBackBuffer);
+	for (; count > 0 && x < width; x++, count--)
+	{
+		float rhw = scanline.v.v.w();
+		if (m_DeepZbuffer == NULL || rhw >= m_DeepZbuffer[y*width + x])
+			if (m_DeepZbuffer != NULL)
+				m_DeepZbuffer[y*width + x] = rhw;
+
+		float4 interpos = scanline.v.v;
+		Color color;
+		v2f vf;
+		float4 barycenter;
+		float w = 1.0f / scanline.v.v.w();
+
+		ViewportTransformReverse(interpos, interpos, w, float(m_nWidth), float(m_nHeight));
+		MathLib::ComputeBarycentricCoords3d(barycenter, vertices[0].v, vertices[1].v, vertices[2].v, interpos);
+		V2fInterpolating(vf, vfs[0], vfs[1], vfs[2], barycenter.x(), barycenter.y(), barycenter.z());
+
+		FragShader(vf, cvList, color);
+		pView[y*width + x] = color.ARGB();
+		VertexAdd(scanline.v, scanline.step);
+	}
+}
+
+void DxGraphDevice::FragShader(v2f& vf, const RenderCVarlistPtr& cvList, Color& color)
+{
+	float2 tex = vf.texcoord;
+
+	float4 albedo_clr;
+	cvList->QueryByName("albedo_clr")->Value(albedo_clr);
+	TexturePtr pTex;
+	cvList->QueryByName("albedo_tex")->Value(pTex);
+	if (pTex)
+	{
+		color = nullptr != pTex ? pTex->GetTextureColor(tex.x(), tex.y(), vf.pos.w(), 15) : Color(1920);
+	}
+}
+
+template<typename T>
+void Interpolating(T& dest, const T& src1, const T& src2, const T& src3, float a, float b, float c)
+{
+	dest = T::Zero();
+	T each = src1;
+	each *= a;
+	dest += each;
+	each = src2;
+	each *= b;
+	dest += each;
+	each = src3;
+	each *= c;
+	dest += each;
+}
+
+void DxGraphDevice::V2fInterpolating(v2f& dest, const v2f& src1, const v2f& src2, const v2f& src3, float a, float b, float c)
+{
+	Interpolating(dest.pos, src1.pos, src2.pos, src3.pos, a, b, c);
+	Interpolating(dest.color, src1.color, src2.color, src3.color, a, b, c);
+	Interpolating(dest.texcoord, src1.texcoord, src2.texcoord, src3.texcoord, a, b, c);
+	Interpolating(dest.normal, src1.normal, src2.normal, src3.normal, a, b, c);
+	Interpolating(dest.storage0, src1.storage0, src2.storage0, src3.storage0, a, b, c);
+	Interpolating(dest.storage1, src1.storage1, src2.storage1, src3.storage1, a, b, c);
+	Interpolating(dest.storage2, src1.storage2, src2.storage2, src3.storage2, a, b, c);
+}
+
+void DxGraphDevice::DrawTriangle2D(const RenderCVarlistPtr& cvList, zbVertex4D* vertices, v2f *vfs)
 {
 	if (RENDER_TYPE_WIREFRAME == Context::Instance()->GetRenderType())
 	{
@@ -509,26 +636,103 @@ void DxGraphDevice::DrawTriangle2D(zbVertex4D* vertices)
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v3.v.x()), int(v3.v.y()), 1920);
 		DeviceDrawLine(int(v3.v.x()), int(v3.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
-		return;
 	} 
-	else
+	else if (RENDER_TYPE_TEXTURE == Context::Instance()->GetRenderType())
 	{
-	}
-
-	trapezoid_t traps[2];
-	int n = TrapezoidInitTriangle(traps, &vertices[0], &vertices[1], &vertices[2]);
-	for (int i = 0; i < n; ++i)
-	{
-		int top = MathLib::RoundToInt(traps->top);
-		int bottom = MathLib::RoundToInt(traps->bottom);
-		for (int j = top; j < bottom; j++)
+		trapezoid_t traps[2];
+		int n = TrapezoidInitTriangle(traps, &vertices[0], &vertices[1], &vertices[2]);
+		for (int i = 0; i < n; ++i)
 		{
-			IF_BREAK(j > m_nHeight && j < 0);
-			// 插值计算
-			scanline_t scanline;
-			TrapezoidToScanline(traps, &scanline, j);
+			int top = MathLib::RoundToInt(traps->top);
+			int bottom = MathLib::RoundToInt(traps->bottom);
+			for (int j = top; j < bottom; j++)
+			{
+				IF_BREAK(j > m_nHeight && j < 0);
+				// 插值计算
+				scanline_t scanline;
+				TrapezoidToScanline(traps, scanline, j);
+				DrawScanline(cvList, scanline, vertices, vfs);
+			}
 		}
 	}
+}
+
+void DxGraphDevice::ClipVertices(float4 plane, zbVertex4D* vertices, bool *triangles, uint32_t& numTriangles)
+{
+	uint32_t num = numTriangles;
+	for (uint32_t i = 0; i < num; ++i)
+	{
+		if (triangles[i])
+		{
+			uint32_t nIndex = i * 3;
+			float f0 = MathLib::Dot(plane, vertices[nIndex].v);
+			float f1 = MathLib::Dot(plane, vertices[nIndex + 1].v);
+			float f2 = MathLib::Dot(plane, vertices[nIndex + 2].v);
+
+			// If all vertices behind the plane, reject triangle
+			if (f0 < 0.0f && f1 < 0.0f && f2 < 0.0f)
+			{
+				triangles[i] = false;
+				continue;
+			}
+			// If 2 vertices behind the plane, create a new triangle in-place
+			else if (f0 < 0.0f && f1 < 0.0f)
+			{
+				vertices[nIndex] = ClipEdge(vertices[nIndex], vertices[nIndex + 2], f0, f2);
+				vertices[nIndex + 1] = ClipEdge(vertices[nIndex + 1], vertices[nIndex + 2], f1, f2);
+			}
+			else if (f0 < 0.0f && f2 < 0.0f)
+			{
+				vertices[nIndex] = ClipEdge(vertices[nIndex], vertices[nIndex + 1], f0, f1);
+				vertices[nIndex + 2] = ClipEdge(vertices[nIndex + 2], vertices[nIndex + 1], f2, f1);
+			}
+			else if (f1 < 0.0f && f2 < 0.0f)
+			{
+				vertices[nIndex + 1] = ClipEdge(vertices[nIndex + 1], vertices[nIndex], f1, f0);
+				vertices[nIndex + 2] = ClipEdge(vertices[nIndex + 2], vertices[nIndex], f2, f0);
+			}
+			// 1 vertex behind the plane: create one new triangle, and modify one in-place
+			else if (f0 < 0.0f)
+			{
+				unsigned newIdx = numTriangles * 3;
+				triangles[numTriangles] = true;
+				++numTriangles;
+
+				vertices[newIdx] = ClipEdge(vertices[nIndex], vertices[nIndex + 2], f0, f2);
+				vertices[newIdx + 1] = vertices[nIndex] = ClipEdge(vertices[nIndex], vertices[nIndex + 1], f0, f1);
+				vertices[newIdx + 2] = vertices[nIndex + 2];
+			}
+			else if (f1 < 0.0f)
+			{
+				unsigned newIdx = numTriangles * 3;
+				triangles[numTriangles] = true;
+				++numTriangles;
+
+				vertices[newIdx + 1] = ClipEdge(vertices[nIndex + 1], vertices[nIndex], f1, f0);
+				vertices[newIdx + 2] = vertices[nIndex + 1] = ClipEdge(vertices[nIndex + 1], vertices[nIndex + 2], f1, f2);
+				vertices[newIdx] = vertices[nIndex];
+			}
+			else if (f2 < 0.0f)
+			{
+				unsigned newIdx = numTriangles * 3;
+				triangles[numTriangles] = true;
+				++numTriangles;
+
+				vertices[newIdx + 2] = ClipEdge(vertices[nIndex + 2], vertices[nIndex + 1], f2, f1);
+				vertices[newIdx] = vertices[nIndex + 2] = ClipEdge(vertices[nIndex + 2], vertices[nIndex], f2, f0);
+				vertices[newIdx + 1] = vertices[nIndex + 1];
+			}
+		}
+	}
+}
+
+zbVertex4D DxGraphDevice::ClipEdge(const zbVertex4D& v0, const zbVertex4D& v1, float f0, float f1) const
+{
+	zbVertex4D tmp;
+	float t = f0 / (f0 - f1);
+	tmp.v = v0.v + t * (v1.v - v0.v);
+	tmp.t = v0.t + t * (v1.t - v0.t);
+	return tmp;
 }
 
 void DxGraphDevice::EndRender()
@@ -558,6 +762,8 @@ void DxGraphDevice::ShutDown()
 	SAFE_RELEASE(m_lpddpal);
 	SAFE_RELEASE(m_lpddsprimary);
 	SAFE_RELEASE(m_lpddsback);
+
+	delete[] m_DeepZbuffer;
 }
 
 LPDIRECTDRAWSURFACE7  DxGraphDevice::DDrawCreateSurface(UINT nWidth, UINT nHeight, int nSurfaceType /*= 0*/, int nColorType /*= 0*/)

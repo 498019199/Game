@@ -38,6 +38,16 @@ namespace MathLib
 		fc = Cos(angle);
 	}
 
+	float Log(float x) noexcept
+	{
+		return std::log(x);
+	}
+
+	float Log10(float x) noexcept
+	{
+		return std::log10(x);
+	}
+
 	// From Quake III. But the magic number is from http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
 	float RecipSqrt(float number) noexcept
 	{
@@ -55,6 +65,14 @@ namespace MathLib
 		fni.f = fni.f * (threehalfs - (x2 * fni.f * fni.f));		// 2nd iteration, this can be removed
 
 		return fni.f;
+	}
+
+	template const float& Clamp(const float& val, const float& low, const float& high) noexcept;
+	template const int& Clamp(const int& val, const int& low, const int& high) noexcept;
+	template <typename T>
+	const T& Clamp(const T& val, const T& low, const T& high) noexcept
+	{
+		return std::max(low, std::min(high, val));
 	}
 
 	template float Lerp(const float& lhs, const float& rhs, float s) noexcept;
@@ -537,7 +555,7 @@ namespace MathLib
 	Quaternion_T<T> Inverse(const Quaternion_T<T>& rhs) noexcept
 	{
 		T var(T(1) / Length(rhs));
-		return Quaternion_T<T>(rhs.x() * var, rhs.y() * var, rhs.z() * var, rhs.w() * var);
+		return Quaternion_T<T>(-rhs.x() * var, -rhs.y() * var, -rhs.z() * var, rhs.w() * var);
 	}
 
 	template Quaternion ToQuaternion(const float4x4 & rhs) noexcept;
@@ -770,5 +788,59 @@ namespace MathLib
 	{
 		return v + Cross(quat.GetV(), Cross(quat.GetV(), v) + quat.w() * v) * T(2);
 	}
+
+	bool ComputeBarycentricCoords3d(float4& res, const float4& p0, const float4& p1, const float4& p2, const float4& p)
+	{
+		float4 d1 = p1- p0;
+		float4 d2 = p2 - p1;
+		float4 n = Cross(d1, d2);
+		float u1, u2, u3, u4;
+		float v1, v2, v3, v4;
+		if ((fabs(n.x()) >= fabs(n.y())) && (fabs(n.x()) >= fabs(n.z())))
+		{
+			u1 = p0.y() - p2.y();
+			u2 = p1.y() - p2.y();
+			u3 = p.y() - p0.y();
+			u4 = p.y() - p2.y();
+			v1 = p0.z() - p2.z();
+			v2 = p1.z() - p2.z();
+			v3 = p.z() - p0.z();
+			v4 = p.z() - p2.z();
+		}
+		else if (fabs(n.y()) >= fabs(n.z()))
+		{
+			u1 = p0.z() - p2.z();
+			u2 = p1.z() - p2.z();
+			u3 = p.z() - p0.z();
+			u4 = p.z() - p2.z();
+			v1 = p0.x() - p2.x();
+			v2 = p1.x() - p2.x();
+			v3 = p.x() - p0.x();
+			v4 = p.x() - p2.x();
+		}
+		else 
+		{
+			u1 = p0.x() - p2.x();
+			u2 = p1.x() - p2.x();
+			u3 = p.x() - p0.x();
+			u4 = p.x() - p2.x();
+			v1 = p0.y() - p2.y();
+			v2 = p1.y() - p2.y();
+			v3 = p.y() - p0.y();
+			v4 = p.y() - p2.y();
+		}
+
+		float denom = v1 * u2 - v2 * u1;
+		if (fabsf(denom) < 1e-6) 
+		{
+			return false;
+		}
+		float oneOverDenom = 1.0f / denom;
+		res.x() = (v4 * u2 - v2 * u4) * oneOverDenom;
+		res.y() = (v1 * u3 - v3 * u1) * oneOverDenom;
+		res.z() = 1.0f - res.x() - res.y();
+		return true;
+	}
+
 }
 

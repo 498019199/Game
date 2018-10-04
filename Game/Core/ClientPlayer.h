@@ -17,6 +17,9 @@ private:
 	void CreatePlayer();
 
 	void InputHandler(const InputEngine& sender, const InputAction& action);
+
+	void DoUpdateOverlay();
+	uint32_t DoUpdate(uint32_t pass);
 private:
 	std::vector<RenderablePtr> m_SceneObj;
 	IScenePtr m_pScene;

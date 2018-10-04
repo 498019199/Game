@@ -67,18 +67,11 @@ bool ITexture::AddImage(ResIdentifierPtr fp)
 
 	if (pImagePtr->getNumberOfMipmaps() > 1)
 	{
-	}
-	else if (pImagePtr->IsCompressed())
-	{
-		//if (pixelFormat != pImagePtr->getRenderFormat())
-		//{
-		//	//g_pCore->Trace2("cocos2d: WARNING: This image is compressed and we cann't convert it for now");
-		//}
-		//initWithData(tempData, tempDataLen, pImagePtr->getRenderFormat(), imageWidth, imageHeight, imageSize);
-		//return true;
-	}
-	else
-	{
+		if (pixelFormat != pImagePtr->getRenderFormat())
+		{
+			//CCLOG("cocos2d: WARNING: This image has more than 1 mipmaps and we will not convert the data format");
+		}
+
 		uint8_t* outTempData = nullptr;
 		uint32_t outTempDataLen = 0;
 		pixelFormat = convertDataToFormat(tempData, tempDataLen, renderFormat, pixelFormat, &outTempData, &outTempDataLen);
@@ -88,9 +81,17 @@ bool ITexture::AddImage(ResIdentifierPtr fp)
 		{
 			m_pData = outTempData;
 			m_DataLen = outTempDataLen;
-			//free(outTempData);
 		}
 		m_hasPremultipliedAlpha = pImagePtr->hasPremultipliedAlpha();
+		return true;
+	}
+	else if (pImagePtr->IsCompressed())
+	{
+		if (pixelFormat != pImagePtr->getRenderFormat())
+		{
+			//g_pCore->Trace2("cocos2d: WARNING: This image is compressed and we cann't convert it for now");
+		}
+		initWithData(tempData, tempDataLen, pImagePtr->getRenderFormat(), imageWidth, imageHeight, imageSize);
 		return true;
 	}
 
@@ -102,9 +103,92 @@ const ITexture::PixelFormatInfoMap& ITexture::GetPixelFormatInfoMap()
 	return m_pixelFormatInfoTables;
 }
 
-Color ITexture::GetTextureColor(float fu, float fv, float z)
+Color ITexture::GetTextureColor(float fu, float fv, float z, float fMaxZ)
 {
-	return Color(0, 0, 0, 0);
+	Color color(0,0,0,0);
+	uint32_t* data = (reinterpret_cast<uint32_t*>(m_Mipmaps[0].pAddress));
+	int nWidth = Context::Instance()->GetWidth();
+	int nHeight = Context::Instance()->GetHeight();
+
+	if (0)
+	{
+		int nTmipLevels = MathLib::RoundToInt(MathLib::Log(nWidth * 1.f));
+		int nMipLevel = MathLib::RoundToInt(nTmipLevels * (z / fMaxZ));
+		if (nMipLevel > nTmipLevels) nMipLevel = nTmipLevels;
+		if (nMipLevel > MIPMAP_MAX) nMipLevel = MIPMAP_MAX;
+		data = (reinterpret_cast<uint32_t*>(m_Mipmaps[nMipLevel].pAddress));
+		for (int ts = 0; ts < nMipLevel; ts++)
+		{
+			nWidth = nWidth >> 1;
+			nHeight = nHeight >> 1;
+		}
+	}
+
+	// wrap ·½Ê½
+	fu = (fu - static_cast<int>(fu)) * (nWidth - 1);
+	fv = (fv - static_cast<int>(fv)) * (nHeight - 1);
+	int uint = static_cast<int>(fu);
+	int vint = static_cast<int>(fv);
+	int uint_pls_1 = uint + 1;
+	int vint_pls_1 = vint + 1;
+	uint_pls_1 = MathLib::Clamp(uint_pls_1, 0, nWidth - 1);
+	vint_pls_1 = MathLib::Clamp(vint_pls_1, 0, nHeight - 1);
+
+	int textel00, textel10, textel01, textel11;
+	textel00 = data[(vint + 0)*nWidth + (uint + 0)];
+	textel10 = data[(vint_pls_1)*nWidth + (uint + 0)];
+	textel01 = data[(vint + 0)*nWidth + (uint_pls_1)];
+	textel11 = data[(vint_pls_1)*nWidth + (uint_pls_1)];
+
+	int textel00_a = (textel00 >> 24) & 0xff;
+	int textel00_r = (textel00 >> 16) & 0xff;
+	int textel00_g = (textel00 >> 8) & 0xff;
+	int textel00_b = textel00 & 0xff;
+
+	int textel10_a = (textel10 >> 24) & 0xff;
+	int textel10_r = (textel10 >> 16) & 0xff;
+	int textel10_g = (textel10 >> 8) & 0xff;
+	int textel10_b = textel10 & 0xff;
+
+	int textel01_a = (textel01 >> 24) & 0xff;
+	int textel01_r = (textel01 >> 16) & 0xff;
+	int textel01_g = (textel01 >> 8) & 0xff;
+	int textel01_b = textel01 & 0xff;
+
+	int textel11_a = (textel11 >> 24) & 0xff;
+	int textel11_r = (textel11 >> 16) & 0xff;
+	int textel11_g = (textel11 >> 8) & 0xff;
+	int textel11_b = textel11 & 0xff;
+
+	float dtu = fu - (float)uint;
+	float dtv = fv - (float)vint;
+	float one_minus_dtu = 1.0f - dtu;
+	float one_minus_dtv = 1.0f - dtv;
+	float one_minus_dtu_x_one_minus_dtv = (one_minus_dtu) * (one_minus_dtv);
+	float dtu_x_one_minus_dtv = (dtu) * (one_minus_dtv);
+	float dtu_x_dtv = (dtu) * (dtv);
+	float one_minus_dtu_x_dtv = (one_minus_dtu) * (dtv);
+
+	color.a() = one_minus_dtu_x_one_minus_dtv * textel00_a +
+		dtu_x_one_minus_dtv * textel01_a +
+		dtu_x_dtv * textel11_a +
+		one_minus_dtu_x_dtv * textel10_a;
+
+	color.r() = one_minus_dtu_x_one_minus_dtv * textel00_r +
+		dtu_x_one_minus_dtv * textel01_r +
+		dtu_x_dtv * textel11_r +
+		one_minus_dtu_x_dtv * textel10_r;
+
+	color.g() = one_minus_dtu_x_one_minus_dtv * textel00_g +
+		dtu_x_one_minus_dtv * textel01_g +
+		dtu_x_dtv * textel11_g +
+		one_minus_dtu_x_dtv * textel10_g;
+
+	color.b() = one_minus_dtu_x_one_minus_dtv * textel00_b +
+		dtu_x_one_minus_dtv * textel01_b +
+		dtu_x_dtv * textel11_b +
+		one_minus_dtu_x_dtv * textel10_b;
+	return color;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -651,7 +735,8 @@ bool ITexture::initWithMipmaps(MipmapInfo* mipmaps, int mipmapsNum, PixelFormat 
 	m_nHight = pixelsHigh;
 	for (int i = 0; i < mipmapsNum; ++i)
 	{
-		uint8_t *data = mipmaps[i].pAddress;
+		m_Mipmaps[i].pAddress = mipmaps[i].pAddress;
+		m_Mipmaps[i].nlength = mipmaps[i].nlength;
 	}
 	m_pixelFormat = pixelFormat;
 	m_hasPremultipliedAlpha = false;

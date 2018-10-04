@@ -39,7 +39,8 @@ void ClientPlayer::OnCreate()
 
 	auto model = SyncLoadModel("Dragon_meshml/Dragon.obj", 0);
 	model->LoadMeshTexture();
-	model->SetPosition(0.f, 2.f, -20.f);
+	model->SetPosition(0.f, 90.f, -20.f);
+	model->SetScale(0.1f, 0.1f, 0.1f);
 	m_pScene->AddVisBase(model);
 	m_SceneObj.push_back(model);
 }
@@ -64,4 +65,14 @@ void ClientPlayer::InputHandler(const InputEngine& sender, const InputAction& ac
 		this->Quit();
 		break;
 	}
+}
+
+void ClientPlayer::DoUpdateOverlay()
+{
+	Context::Instance()->DisPlay(FrameTime());
+}
+
+uint32_t ClientPlayer::DoUpdate(uint32_t pass)
+{
+	return 0;
 }

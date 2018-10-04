@@ -20,7 +20,6 @@ enum RenderType
 	RENDER_TYPE_NONE = 0,
 	RENDER_TYPE_WIREFRAME = 1, // ‰÷»æœﬂøÚ
 	RENDER_TYPE_TEXTURE = 2,	//‰÷»æŒ∆¿Ì
-	RENDER_TYPE_COLOR = 4,		// ‰÷»æ—’…´
 };
 struct WindowDesc
 {

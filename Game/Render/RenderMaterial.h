@@ -47,6 +47,6 @@ public:
 	float4 tess_factors;
 };
 
-RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse = nullptr);
-RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse = nullptr);
+RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse = nullptr);
+RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse = nullptr);
 #endif//_MATERIAL_H_

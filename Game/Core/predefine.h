@@ -108,4 +108,8 @@ struct InputTouchActionParam;
 typedef std::shared_ptr<InputTouchActionParam> InputTouchActionParamPtr;
 struct InputSensorActionParam;
 typedef std::shared_ptr<InputSensorActionParam> InputSensorActionParamPtr;
+
+struct scanline_t;
+struct trapezoid_t;
+struct v2f;
 #endif //_PREDEFINE_H

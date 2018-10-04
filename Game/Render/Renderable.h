@@ -115,9 +115,13 @@ protected:
 	RenderCVarParameter* inv_mv_param;
 	RenderCVarParameter* model_view_param;
 	RenderCVarParameter* albedo_tex_param;
+	RenderCVarParameter* albedo_clr_param;
 	RenderCVarParameter* metalness_tex_param;
+	RenderCVarParameter* metalness_clr_param;
 	RenderCVarParameter* glossiness_tex_param;
+	RenderCVarParameter* glossiness_clr_param;
 	RenderCVarParameter* emissive_tex_param;
+	RenderCVarParameter* emissive_clr_param;
 	RenderCVarParameter* normal_tex_param;
 	RenderCVarParameter* height_tex_param;
 	RenderCVarParameter* cull_mode;

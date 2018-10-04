@@ -37,7 +37,8 @@ protected:
 
 	void UpdateStats();
 
-	void DoUpdateOverlay();
+	virtual void DoUpdateOverlay() = 0;
+	virtual uint32_t DoUpdate(uint32_t pass) = 0;
 private:
 	virtual void OnCreate(){}
 	virtual void OnDestroy(){}

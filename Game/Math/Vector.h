@@ -108,7 +108,7 @@ public:
 	}
 
 		// 零向量
-	static Vector_T const zero() noexcept
+	static Vector_T const Zero() noexcept
 	{
 		static Vector_T<ValTy, SIZE> const zero(value_type(0));
 		return zero;

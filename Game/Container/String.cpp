@@ -532,7 +532,7 @@ String String::ToUpper() const
 	return ret;
 }
 
-std::vector<String>& String::Split(char separator, bool keepEmptyStrings) const
+std::vector<String> String::Split(char separator, bool keepEmptyStrings) const
 {
 	return Split(CString(), separator, keepEmptyStrings);
 }
@@ -1014,7 +1014,7 @@ unsigned String::DecodeUTF16(const wchar_t*& src)
 }
 #endif
 
-std::vector<String>& String::Split(const char* str, char separator, bool keepEmptyStrings)
+std::vector<String> String::Split(const char* str, char separator, bool keepEmptyStrings)
 {
 	std::vector<String> ret;
 	const char* strEnd = str + String::CStringLength(str);
@@ -1034,7 +1034,7 @@ std::vector<String>& String::Split(const char* str, char separator, bool keepEmp
 	if (splitLen > 0 || keepEmptyStrings)
 		ret.push_back(String(str, splitLen));
 
-	return ret;
+	return std::move(ret);
 }
 
 String String::Joined(const std::vector<String>& subStrings, const String& glue)

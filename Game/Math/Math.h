@@ -36,13 +36,13 @@ namespace MathLib
 	float const RAD2DEG = 57.29577f;			// 弧度化角度因数
 												// 角度化弧度
 	template <typename T>
-	inline T deg2rad(T const & x) noexcept
+	inline T deg2rad(const T& x) noexcept
 	{
 		return static_cast<T>(x * DEG2RAD);
 	}
 	// 弧度化角度
 	template <typename T>
-	inline T rad2deg(T const & x) noexcept
+	inline T rad2deg(const T& x) noexcept
 	{
 		return static_cast<T>(x * RAD2DEG);
 	}
@@ -54,6 +54,8 @@ namespace MathLib
 	float Acos(float angle) noexcept;
 	float Atan2(float x, float y) noexcept;
 	void SinCos(float angle, float& fs, float& fc) noexcept;
+	float Log(float x) noexcept;
+	float Log10(float x) noexcept;
 
 	template <typename T>
 	inline T Sqrt(T x) noexcept
@@ -105,8 +107,7 @@ namespace MathLib
 
 	// 四舍五入
 	template <typename T>
-	inline T
-		Round(const T& x) noexcept
+	inline T Round(const T& x) noexcept
 	{
 		return (x > 0) ? static_cast<T>(static_cast<int>(T(0.5) + x)) :
 			-static_cast<T>(static_cast<int>(T(0.5) - x));
@@ -117,13 +118,16 @@ namespace MathLib
 		return static_cast<int>(Round(x));
 	}
 
+	// 取整
+	template <typename T>
+	inline T Trunc(T const & x) noexcept
+	{
+		return static_cast<T>(static_cast<int>(x));
+	}
+
 	// 限制 val 在 low 和 high 之间
 	template <typename T>
-	inline T const &
-		Clamp(T const & val, T const & low, T const & high) noexcept
-	{
-		return std::max(low, std::min(high, val));
-	}
+	inline const T& Clamp(const T& val, const T& low, const T& high) noexcept;
 
 	// 线性插值
 	template <typename T>
@@ -305,6 +309,105 @@ template <typename T>
 	//bool IntersectOBBToSphere(const OBBox& obb, const Sphere& sphere);
 	//bool IntersectSphereToSphere(const Sphere& rhs, const Sphere& lhs);
 	/**************************************对偶四元数*******************************************/
+
+	/**************************************其他*******************************************/
+	// http://www.cnblogs.com/ThreeThousandBigWorld/archive/2012/07/16/2593892.html
+	// http://blog.chinaunix.net/uid-26651460-id-3083223.html
+	// http://stackoverflow.com/questions/5255806/how-to-calculate-tangent-and-binormal
+	// 计算TBN基,法线贴图
+	template <typename TangentIterator, typename BinormIterator,
+		typename IndexIterator, typename PositionIterator, typename TexCoordIterator, typename NormalIterator>
+		inline void
+		compute_tangent(TangentIterator targentsBegin, BinormIterator binormsBegin,
+			IndexIterator indicesBegin, IndexIterator indicesEnd,
+			PositionIterator xyzsBegin, PositionIterator xyzsEnd,
+			TexCoordIterator texsBegin, NormalIterator normalsBegin) noexcept
+	{
+		typedef typename std::iterator_traits<PositionIterator>::value_type position_type;
+		typedef typename std::iterator_traits<TexCoordIterator>::value_type texcoord_type;
+		typedef typename std::iterator_traits<TangentIterator>::value_type tangent_type;
+		typedef typename std::iterator_traits<BinormIterator>::value_type binormal_type;
+		typedef typename std::iterator_traits<NormalIterator>::value_type normal_type;
+		typedef typename position_type::value_type value_type;
+
+		int const num = static_cast<int>(std::distance(xyzsBegin, xyzsEnd));
+
+		for (int i = 0; i < num; ++i)
+		{
+			*(targentsBegin + i) = tangent_type::Zero();
+			*(binormsBegin + i) = binormal_type::Zero();
+		}
+
+		for (IndexIterator iter = indicesBegin; iter != indicesEnd; iter += 3)
+		{
+			uint32_t const v0Index = *(iter + 0);
+			uint32_t const v1Index = *(iter + 1);
+			uint32_t const v2Index = *(iter + 2);
+
+			position_type const & v0XYZ(*(xyzsBegin + v0Index));
+			position_type const & v1XYZ(*(xyzsBegin + v1Index));
+			position_type const & v2XYZ(*(xyzsBegin + v2Index));
+
+			Vector_T<value_type, 3> v1v0 = v1XYZ - v0XYZ;
+			Vector_T<value_type, 3> v2v0 = v2XYZ - v0XYZ;
+
+			texcoord_type const & v0Tex(*(texsBegin + v0Index));
+			texcoord_type const & v1Tex(*(texsBegin + v1Index));
+			texcoord_type const & v2Tex(*(texsBegin + v2Index));
+
+			value_type s1 = v1Tex.x() - v0Tex.x();
+			value_type t1 = v1Tex.y() - v0Tex.y();
+
+			value_type s2 = v2Tex.x() - v0Tex.x();
+			value_type t2 = v2Tex.y() - v0Tex.y();
+
+			value_type denominator = s1 * t2 - s2 * t1;
+			Vector_T<value_type, 3> tangent, binormal;
+			if (MathLib::Abs(denominator) < std::numeric_limits<value_type>::epsilon())
+			{
+				tangent = Vector_T<value_type, 3>(1, 0, 0);
+				binormal = Vector_T<value_type, 3>(0, 1, 0);
+			}
+			else
+			{
+				tangent = (t2 * v1v0 - t1 * v2v0) / denominator;
+				binormal = (s1 * v2v0 - s2 * v1v0) / denominator;
+			}
+
+			tangent_type t = Vector_T<value_type, 4>(tangent.x(), tangent.y(), tangent.z(), value_type(1));
+
+			*(targentsBegin + v0Index) += t;
+			*(binormsBegin + v0Index) += binormal;
+
+			*(targentsBegin + v1Index) += t;
+			*(binormsBegin + v1Index) += binormal;
+
+			*(targentsBegin + v2Index) += t;
+			*(binormsBegin + v2Index) += binormal;
+		}
+
+		for (int i = 0; i < num; ++i)
+		{
+			tangent_type t(*(targentsBegin + i));
+			Vector_T<value_type, 3> tangent(t.x(), t.y(), t.z());
+			binormal_type binormal(*(binormsBegin + i));
+			normal_type normal(*(normalsBegin + i));
+
+			// Gram-Schmidt orthogonalize
+			tangent = Normalize(tangent - normal * dot(tangent, normal));
+			// Calculate handedness
+			value_type k = 1;
+			if (Dot(Cross(normal, tangent), binormal) < 0)
+			{
+				k = -1;
+			}
+
+			*(targentsBegin + i) = Vector_T<value_type, 4>(tangent.x(), tangent.y(), tangent.z(), k);
+			*(binormsBegin + i) = Cross(normal, tangent);
+		}
+	}
+
+	bool ComputeBarycentricCoords3d(float4& res, const float4& p0, const float4& p1, const float4& p2, const float4& p);
 }
 
 #include "Vector.h"

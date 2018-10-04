@@ -218,6 +218,10 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		::SetWindowPos(this->GetHWnd(), HWND_TOP, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOREPOSITION);
 	}
 	break;
+
+	case WM_CLOSE:
+		Context::Instance()->Close();
+		break;
 #endif
 	}
 

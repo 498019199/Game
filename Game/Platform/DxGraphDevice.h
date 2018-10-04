@@ -80,10 +80,24 @@ public:
 
 	// 转换到屏幕坐标
 	float4 ViewportTransform(const float4& vert);
+	void ViewportTransformReverse(float4 y, const float4& x, float w, float width, float height);;
 
-	void DrawTriangle(const RenderCVarlistPtr& cvList, const zbVertex4D* vertices);
-	void DrawTriangle2D(zbVertex4D* vertices);
+	void DrawTriangle(const RenderCVarlistPtr& cvList, zbVertex4D* vertices);
+	void DrawPrimitive(const RenderCVarlistPtr& cvList, zbVertex4D* vertices, bool(&triangles)[64], uint32_t numTriangles);
+	void DrawTriangle2D(const RenderCVarlistPtr& cvList, zbVertex4D* vertices, v2f *vfs);
+	
+	int TrapezoidInitTriangle(trapezoid_t *trap, const zbVertex4D *p1, const zbVertex4D *p2, const zbVertex4D *p3);
+	void VertexInterp(zbVertex4D& v, const zbVertex4D& v1, const zbVertex4D& v2, float t);
+	void VertexAdd(zbVertex4D& y, const zbVertex4D& x);
+	void TrapezoidToScanline(trapezoid_t *traps, scanline_t& scanline, int y);
+	
+	void DrawScanline(const RenderCVarlistPtr& cvList, scanline_t& scanline, zbVertex4D* vertices, v2f *vfs);
+	void FragShader(v2f& vf, const RenderCVarlistPtr& cvList, Color& color);
+	void V2fInterpolating(v2f& dest, const v2f& src1, const v2f& src2, const v2f& src3, float a, float b, float c);
 
+	void ClipVertices(float4 plane, zbVertex4D* vertices, bool *triangles, uint32_t& numTriangles);
+	zbVertex4D ClipEdge(const zbVertex4D& v0, const zbVertex4D& v1, float f0, float f1) const;
+	
 	void DoRender(const RenderCVarlistPtr& cvList, const RenderLayoutPtr& layout);
 
 	// 背面消除
@@ -133,6 +147,7 @@ private:
 	UCHAR                *m_szPrimaryBuffer;      // 显示表面视频缓存
 	PALETTEENTRY        m_palette[256];         // color palette
 	UCHAR                *m_szBackBuffer;         // 缓存表面视频缓存
+	float *m_DeepZbuffer;             // 深度缓存
 	int m_nPrimaryPatch;
 	int m_nBackPatch;
 };

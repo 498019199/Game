@@ -13,6 +13,7 @@
 #define NULL_RETURN(v, r) if(nullptr == v){ return r; }
 #define NULL_RETURN_VOID(v) if(nullptr == v) { return; }
 #define IF_BREAK(a) if(a) { break; }
+#define IF_RETURN(a) if(a) { return ; }
 #define IF_CONTINUE(a) if(!(a)) { continue; }
 #define CEILING_DIV_2(len) ((((len) + 1)&(~(1)))/2)
 #define STRING_EQUIP(s1, s2) (s1 && s2 && 0 == strcmp(s1, s2))

@@ -9,7 +9,7 @@ IScene::IScene(Context* pContext)
 {
 	auto camera = Context::Instance()->CreateObject<ICamera>();
 	BOOST_ASSERT(nullptr != camera);
-	float3 pos(0, 2.f, -2.5f);
+	float3 pos(0, 2.f, -20.5f);
 	float3 at(0, 0, 1);
 	camera->ViewParams(pos, at + pos, float3(0, 1, 0));
 	camera->ProjParams(MathLib::PIdiv2, 0.1f, 500.f, Context::Instance()->GetWidth(), Context::Instance()->GetHeight());
@@ -34,9 +34,9 @@ uint32_t IScene::GetPolysNum() const
 		for (uint32_t i = 0; i < it->GetSubVisBaseNum(); ++i)
 		{
 			auto vis = checked_pointer_cast<StaticMesh>(it->SubVisBase(i));
-			IF_BREAK(vis);
+			IF_BREAK(nullptr == vis);
 			auto layer = vis->GetRenderLayout();
-			IF_BREAK(layer);
+			IF_BREAK(nullptr == layer);
 			nCount += layer->GetTriCount();
 		}
 	}
@@ -66,8 +66,6 @@ void IScene::AddVisBase(RenderablePtr vis)
 
 void IScene::Render()
 {
-	auto ie = Context::Instance()->Instance()->GetSubsystem<MsgInputEngine>();
-	ie->Update();
 	for (auto it : m_Lights)
 	{
 	}

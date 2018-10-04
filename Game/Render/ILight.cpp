@@ -2,7 +2,7 @@
 #define  ExCHAR(val) static_cast<int>(val)
 
 ILight::ILight(Context* pContext)
-	:IEntity(pContext),m_nState(0), m_nAttr(0), m_nType(LT_None), m_Pos(float4::zero())
+	:IEntity(pContext),m_nState(0), m_nAttr(0), m_nType(LT_None), m_Pos(float4::Zero())
 {
 }
 

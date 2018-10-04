@@ -45,13 +45,13 @@ class MaterialLoadingDesc : public ResLoadingDesc
 
 	struct RenderMaterialDesc
 	{
-		XMLNodePtr pFileParse;
+		XMLAttributePtr pFileParse;
 		std::string strResName;
 		std::shared_ptr<MaterialData> MtlData;
 		std::shared_ptr<RenderMaterialPtr> Mtl;
 	};
 public:
-	MaterialLoadingDesc(const std::string strFileName, XMLNodePtr pFileParse)
+	MaterialLoadingDesc(const std::string strFileName, XMLAttributePtr pFileParse)
 	{
 		m_MtlDesc.pFileParse = pFileParse;
 		m_MtlDesc.strResName = strFileName;
@@ -78,12 +78,12 @@ public:
 			return;
 		}
 
-		XMLNodePtr root = m_MtlDesc.pFileParse;
+		XMLDocument doc;
+		XMLAttributePtr root = m_MtlDesc.pFileParse;
 		if (nullptr == root)
 		{
 			ResIdentifierPtr mtl_input = ResLoader::Instance()->Open(m_MtlDesc.strResName);
-			XMLDocument doc;
-			XMLNodePtr root = doc.Parse(mtl_input);
+			root = doc.Parse(mtl_input);
 		}
 
 		{
@@ -243,12 +243,12 @@ private:
 	std::mutex m_MainThreadStageMutex;
 };
 
-RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse /*= nullptr*/)
+RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse /*= nullptr*/)
 {
 	return ResLoader::Instance()->SyncQueryT<RenderMaterial>(MakeSharedPtr<MaterialLoadingDesc>(strFileName, pFileParse));
 }
 
-RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse /*= nullptr*/)
+RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse /*= nullptr*/)
 {
 	return ResLoader::Instance()->SyncQueryT<RenderMaterial>(MakeSharedPtr<MaterialLoadingDesc>(strFileName, pFileParse));
 }

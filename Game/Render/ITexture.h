@@ -13,6 +13,16 @@ struct MipmapInfo;
 class ITexture 
 {
 public:
+	typedef struct MipmapInfo
+	{
+		uint8_t* pAddress;
+		int nlength;
+
+		MipmapInfo()
+			:pAddress(nullptr), nlength(0)
+		{}
+	}MipmapInfo;
+
 	enum class TextureType
 	{
 		// 1D texture, used in combination with 1D texture coordinates
@@ -110,7 +120,7 @@ public:
 	static const PixelFormatInfoMap& GetPixelFormatInfoMap();
 
 	// 根据坐标获取颜色(双线性插值和mipmap)
-	Color GetTextureColor(float fu, float fv, float z);
+	Color GetTextureColor(float fu, float fv, float z, float fMaxZ);
 	template<typename T>
 	inline T* GetData()
 	{
@@ -188,6 +198,7 @@ private:
 	static void convertRGBA8888ToRGBA4444(const uint8_t* data, uint32_t dataLen, uint8_t* outData);
 	static void convertRGBA8888ToRGB5A1(const uint8_t* data, uint32_t dataLen, uint8_t* outData);
 private:
+	static const int MIPMAP_MAX = 16;
 	// 名字
 	std::string m_strTexture;
 	// 资源指针
@@ -196,6 +207,7 @@ private:
 	// 大小
 	int m_nWidth;
 	int m_nHight;
+	MipmapInfo m_Mipmaps[MIPMAP_MAX];
 	bool m_hasMipmaps;
 	// 纹理是否有Alpha预乘
 	bool m_hasPremultipliedAlpha;

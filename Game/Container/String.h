@@ -617,7 +617,7 @@ public:
 	/// Return string in lowercase.
 	String ToLower() const;
 	/// Return substrings split by a separator char. By default don't return empty strings.
-	std::vector<String>& Split(char separator, bool keepEmptyStrings = false) const;
+	std::vector<String> Split(char separator, bool keepEmptyStrings = false) const;
 	/// Join substrings with a 'glue' string.
 	void Join(const std::vector<String>& subStrings, const String& glue);
 	/// Return index to the first occurrence of a string, or NPOS if not found.
@@ -692,7 +692,7 @@ public:
 	}
 
 	/// Return substrings split by a separator char. By default don't return empty strings.
-	static std::vector<String>& Split(const char* str, char separator, bool keepEmptyStrings = false);
+	static std::vector<String> Split(const char* str, char separator, bool keepEmptyStrings = false);
 	/// Return a string by joining substrings with a 'glue' string.
 	static String Joined(const std::vector<String>& subStrings, const String& glue);
 	/// Encode Unicode character to UTF8. Pointer will be incremented.

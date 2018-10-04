@@ -108,6 +108,8 @@ public:
 
 	uint32_t ARGB() const noexcept;
 	uint32_t ABGR() const noexcept;
+	// 零向量
+	static const Color_T Zero() noexcept;
 
 	// 赋值操作符
 	Color_T& operator+=(Color_T<T> const & rhs) noexcept;

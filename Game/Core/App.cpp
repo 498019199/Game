@@ -130,7 +130,7 @@ uint32_t App::Update(uint32_t pass)
 		this->DoUpdateOverlay();
 	}
 
-	return 0;
+	return this->DoUpdate(pass);
 }
 
 void App::UpdateStats()
@@ -153,9 +153,4 @@ void App::UpdateStats()
 	}
 
 	m_Timer.ReStart();
-}
-
-void App::DoUpdateOverlay()
-{
-	Context::Instance()->DisPlay(m_fFrameTime);
 }

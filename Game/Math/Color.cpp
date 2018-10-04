@@ -49,6 +49,14 @@ uint32_t Color_T<T>::ABGR() const noexcept
 	return (a << 24) | (b << 16) | (g << 8) | (r << 0);
 }
 
+
+template <typename T>
+const Color_T<T> Color_T<T>::Zero() noexcept
+{
+	static const Color_T<T>  zero(0,0,0,0);
+	return zero;
+}
+
 template <typename T>
 Color_T<T>& Color_T<T>::operator+=(Color_T<T> const & rhs) noexcept
 {
