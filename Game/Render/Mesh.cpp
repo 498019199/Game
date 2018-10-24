@@ -6,7 +6,7 @@
 #include "../Container/Hash.h"
 #include "../Render/IScene.h"
 #include "../Render/ICamera.h"
-#include "../Render/Material.h"
+#include "../Render/RenderMaterial.h"
 #include "../Render/ITexture.h"
 #include "../Tool/XMLDocument.h"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -365,6 +365,32 @@ void StaticMesh::AddIndexStream(uint32_t nLod, const std::vector<int3>& Indices)
 	m_LayoutPtr->BindIndexStream(nLod, Indices);
 }
 
+void CalcNormal(float N[3], float v0[3], float v1[3], float v2[3]) {
+	float v10[3];
+	float v20[3];
+	float len2;
+
+	v10[0] = v1[0] - v0[0];
+	v10[1] = v1[1] - v0[1];
+	v10[2] = v1[2] - v0[2];
+
+	v20[0] = v2[0] - v0[0];
+	v20[1] = v2[1] - v0[1];
+	v20[2] = v2[2] - v0[2];
+
+	N[0] = v20[1] * v10[2] - v20[2] * v10[1];
+	N[1] = v20[2] * v10[0] - v20[0] * v10[2];
+	N[2] = v20[0] * v10[1] - v20[1] * v10[0];
+
+	len2 = N[0] * N[0] + N[1] * N[1] + N[2] * N[2];
+	if (len2 > 0.0f) {
+		float len = (float)sqrt((double)len2);
+
+		N[0] /= len;
+		N[1] /= len;
+	}
+}
+
 void LoadModel(const std::string strFineName, 
 	std::vector<RenderMaterialPtr>& mtls,
 	std::vector<uint32_t>& mtl_ids,
@@ -383,11 +409,68 @@ void LoadModel(const std::string strFineName,
 	tinyobj::MaterialFileReader readMatFn(last_fxml_directory.string() + "/");
  	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &(lzma_file->input_stream()), &readMatFn);
 
-	XMLDocument doc;
-	ResIdentifierPtr mtl_input = ResLoader::Instance()->Open(last_fxml_directory.string() + "/" + "Dragon.xml");
-	auto root = doc.Parse(mtl_input);
-	XMLAttributePtr material = root->Attrib("material");
-	auto material = ASyncLoadRenderMaterial("", material);
+	mtls.resize(materials.size());
+	for (uint32_t mtl_index = 0; mtl_index < static_cast<uint32_t>(materials.size()); ++mtl_index)
+	{
+		RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
+		mtls[mtl_index] = mtl;
+
+		mtl->m_strName = materials[mtl_index].name;
+
+		mtl->m_f4Albedo.x() = materials[mtl_index].ambient[0];
+		mtl->m_f4Albedo.y() = materials[mtl_index].ambient[1];
+		mtl->m_f4Albedo.z() = materials[mtl_index].ambient[2];
+		mtl->m_f4Albedo.w() = materials[mtl_index].ambient[3];
+		
+		mtl->m_f4Diffuse.x() = materials[mtl_index].diffuse[0];
+		mtl->m_f4Diffuse.y() = materials[mtl_index].diffuse[1];
+		mtl->m_f4Diffuse.z() = materials[mtl_index].diffuse[2];
+		mtl->m_f4Diffuse.w() = materials[mtl_index].diffuse[3];
+		
+		mtl->m_f4Specular.x() = materials[mtl_index].specular[0];
+		mtl->m_f4Specular.y() = materials[mtl_index].specular[1];
+		mtl->m_f4Specular.z() = materials[mtl_index].specular[2];
+		mtl->m_f4Specular.w() = materials[mtl_index].specular[3];
+
+		mtl->m_nShininess = materials[mtl_index].shininess;
+
+		mtl->m_fMetalness = materials[mtl_index].metallic;
+
+		mtl->m_fGlossiness = materials[mtl_index].sheen;
+
+		mtl->m_f3Emissive.x() = materials[mtl_index].emission[0];
+		mtl->m_f3Emissive.y() = materials[mtl_index].emission[1];
+		mtl->m_f3Emissive.z() = materials[mtl_index].emission[2];
+
+		if ('\0' != materials[mtl_index].ambient_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Albedo] = materials[mtl_index].ambient_texname;
+		}
+		if ('\0' != materials[mtl_index].metallic_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Metalness] = materials[mtl_index].metallic_texname;
+		}
+		if ('\0' != materials[mtl_index].sheen_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Glossiness] = materials[mtl_index].sheen_texname;
+		}
+		if ('\0' != materials[mtl_index].emissive_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Emissive] = materials[mtl_index].emissive_texname;
+		}
+		if ('\0' != materials[mtl_index].normal_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Normal] = materials[mtl_index].normal_texname;
+		}
+		if ('\0' != materials[mtl_index].specular_highlight_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Height] = materials[mtl_index].specular_highlight_texname;
+		}
+		if ('\0' != materials[mtl_index].specular_highlight_texname[0])
+		{
+			mtl->m_TexNames[RenderMaterial::TS_Bump] = materials[mtl_index].bump_texname;
+		}
+	}
 
  	// Loop over shapes
  	for (uint32_t s = 0; s < static_cast<uint32_t>(shapes.size()); s++)
@@ -400,17 +483,21 @@ void LoadModel(const std::string strFineName,
  		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
  		{
  			size_t fv = shapes[s].mesh.num_face_vertices[f];
+			tinyobj::index_t idx1 = shapes[s].mesh.indices[index_offset + 1];
+			tinyobj::index_t idx2 = shapes[s].mesh.indices[index_offset + 2];
  			// Loop over vertices in the face.
  			for (size_t v = 0; v < fv; v++) 
  			{
  				// access to vertex
  				zbVertex4D tmp;
+				tmp.nMaterialID = shapes[s].mesh.material_ids[f];
+				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
 				memset(&tmp, 0, sizeof(zbVertex4D));
- 				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
  				tmp.v.x() = attrib.vertices[3 * idx.vertex_index + 0];
  				tmp.v.y() = attrib.vertices[3 * idx.vertex_index + 1];
  				tmp.v.z() = attrib.vertices[3 * idx.vertex_index + 2];
 				tmp.v.w() = 1.0f;
+
  				if (-1 != idx.normal_index)
  				{
  					tmp.n.x() = attrib.normals[3 * idx.normal_index + 0];
@@ -418,6 +505,7 @@ void LoadModel(const std::string strFineName,
  					tmp.n.z() = attrib.normals[3 * idx.normal_index + 2];
 					tmp.v.w() = 0.0f;
  				}
+			
 				if (-1 != idx.texcoord_index)
 				{
 					tmp.t.x() = attrib.texcoords[2 * idx.texcoord_index + 0];

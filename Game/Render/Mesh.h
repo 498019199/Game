@@ -27,6 +27,7 @@ public:
 	void SetMaterialNum(int nCount);
 	size_t GetMaterialNum() const;
 	RenderMaterialPtr& GetMaterial(size_t nIndex);
+	const std::map<int, int>& GetMaterialIndex() { return m_MaterialIndex; }
 
 	RenderLayoutPtr GetRenderLayout() const override { return m_LayoutPtr; }
 
@@ -41,6 +42,7 @@ private:
 	// ≤ƒ÷ ¡–±Ì
 	std::vector<RenderMaterialPtr> m_MaterialPtrVec;
 	RenderLayoutPtr m_LayoutPtr;
+	std::map<int, int> m_MaterialIndex;
 };
 
 class StaticMesh :public Renderable

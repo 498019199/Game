@@ -37,12 +37,24 @@ void ClientPlayer::OnCreate()
 	});
 	inputEngine.ActionMap(actionMap, input_handler);
 
-	auto model = SyncLoadModel("Dragon_meshml/Dragon.obj", 0);
-	model->LoadMeshTexture();
-	model->SetPosition(0.f, 90.f, -20.f);
-	model->SetScale(0.1f, 0.1f, 0.1f);
-	m_pScene->AddVisBase(model);
-	m_SceneObj.push_back(model);
+	//auto model = SyncLoadModel("Dragon_meshml/Dragon.obj", 0);
+	//model->LoadMeshTexture();
+	//model->SetPosition(0.f, 90.f, -20.f);
+	//model->SetScale(0.1f, 0.1f, 0.1f);
+	//m_pScene->AddVisBase(model);
+
+	auto cube = SyncLoadModel("Dragon_meshml/cube.obj", 0);
+	cube->LoadMeshTexture();
+	cube->SetPosition(0.f, 0.f, 0.f);
+	cube->SetScale(1.f, 1.f, 1.f);
+	m_pScene->AddVisBase(cube);
+	m_SceneObj.push_back(cube);
+
+	//auto model = SyncLoadModel("Dragon_meshml/Infinite-Level_02.obj", 0);
+	//model->LoadMeshTexture();
+	//model->SetPosition(0.f, 0.f, 0.f);
+	//model->SetScale(5.f, 5.f, 5.f);
+	//m_pScene->AddVisBase(model);
 }
 
 void ClientPlayer::LoadScene()

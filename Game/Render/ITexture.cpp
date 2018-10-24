@@ -107,8 +107,8 @@ Color ITexture::GetTextureColor(float fu, float fv, float z, float fMaxZ)
 {
 	Color color(0,0,0,0);
 	uint32_t* data = (reinterpret_cast<uint32_t*>(m_Mipmaps[0].pAddress));
-	int nWidth = Context::Instance()->GetWidth();
-	int nHeight = Context::Instance()->GetHeight();
+	int nWidth = m_nWidth;
+	int nHeight = m_nHight;
 
 	if (0)
 	{

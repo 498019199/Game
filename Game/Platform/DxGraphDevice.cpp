@@ -298,6 +298,10 @@ void DxGraphDevice::DoRender(const RenderCVarlistPtr& cvList, const RenderLayout
 		vertices[0].t = vb[i].t;
 		vertices[1].t = vb[i + 1].t;
 		vertices[2].t = vb[i + 2].t;
+
+		vertices[0].color = vb[i].color;
+		vertices[1].color = vb[i + 1].color;
+		vertices[2].color = vb[i + 2].color;
 		DrawTriangle(cvList, vertices);
 	}
 }
@@ -428,6 +432,7 @@ void DxGraphDevice::DrawPrimitive(const RenderCVarlistPtr& cvList, zbVertex4D* v
 		for (uint32_t j = 0; j < 3; ++j)
 		{
 			vfs[j].texcoord = vertices[i + j].t;
+			vfs[j].color = vertices[i + j].color;
 		}
 
 		if (triangles[i])
@@ -438,7 +443,7 @@ void DxGraphDevice::DrawPrimitive(const RenderCVarlistPtr& cvList, zbVertex4D* v
 			projected[2].v = ViewportTransform(vertices[index + 2].v);
 
 			// ±³ÃæÌÞ³ý
-			IF_CONTINUE(CullFace(nCullMode, projected[index].v, projected[index + 1].v, projected[index + 2].v));
+			IF_CONTINUE(!CullFace(nCullMode, projected[index].v, projected[index + 1].v, projected[index + 2].v));
 			DrawTriangle2D(cvList, projected, vfs);
 		}
 	}
@@ -583,7 +588,10 @@ void DxGraphDevice::DrawScanline(const RenderCVarlistPtr& cvList, scanline_t& sc
 		V2fInterpolating(vf, vfs[0], vfs[1], vfs[2], barycenter.x(), barycenter.y(), barycenter.z());
 
 		FragShader(vf, cvList, color);
-		pView[y*width + x] = color.ARGB();
+		uint32_t _1 = color.ARGB();
+		if (0 == _1) 
+			_1 = 1920;
+		pView[y*width + x] = _1;
 		VertexAdd(scanline.v, scanline.step);
 	}
 }
@@ -592,13 +600,34 @@ void DxGraphDevice::FragShader(v2f& vf, const RenderCVarlistPtr& cvList, Color& 
 {
 	float2 tex = vf.texcoord;
 
-	float4 albedo_clr;
+	float4 albedo_clr, diffuse_clr, specular_clr;
+	float shininess_clr;
 	cvList->QueryByName("albedo_clr")->Value(albedo_clr);
+	cvList->QueryByName("diffuse_clr")->Value(diffuse_clr);
+	cvList->QueryByName("specular_clr")->Value(specular_clr);
+	cvList->QueryByName("shininess_clr")->Value(shininess_clr);
+
 	TexturePtr pTex;
 	cvList->QueryByName("albedo_tex")->Value(pTex);
-	if (pTex)
+	if (pTex && 0 == pTex->GetName().compare("Dragon_meshml/022green.dds"))
 	{
-		color = nullptr != pTex ? pTex->GetTextureColor(tex.x(), tex.y(), vf.pos.w(), 15) : Color(1920);
+		color = pTex->GetTextureColor(tex.x(), tex.y(), vf.pos.w(), 15);
+	}
+	else
+	{
+		float4 tmp = albedo_clr;
+		tmp += diffuse_clr;
+		tmp += specular_clr;
+
+		color.a() = 1;
+		color.r() = tmp.x();
+		color.g() = tmp.y();
+		color.b() = tmp.z();
+	}
+
+	if (0 == color.ARGB())
+	{
+		color = vf.color;
 	}
 }
 
@@ -630,14 +659,14 @@ void DxGraphDevice::V2fInterpolating(v2f& dest, const v2f& src1, const v2f& src2
 
 void DxGraphDevice::DrawTriangle2D(const RenderCVarlistPtr& cvList, zbVertex4D* vertices, v2f *vfs)
 {
-	if (RENDER_TYPE_WIREFRAME == Context::Instance()->GetRenderType())
+	if (RENDER_TYPE_WIREFRAME & Context::Instance()->GetRenderType())
 	{
 		zbVertex4D v1 = vertices[0], v2 = vertices[1], v3 = vertices[2];
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
 		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v3.v.x()), int(v3.v.y()), 1920);
 		DeviceDrawLine(int(v3.v.x()), int(v3.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
 	} 
-	else if (RENDER_TYPE_TEXTURE == Context::Instance()->GetRenderType())
+	if (RENDER_TYPE_TEXTURE & Context::Instance()->GetRenderType())
 	{
 		trapezoid_t traps[2];
 		int n = TrapezoidInitTriangle(traps, &vertices[0], &vertices[1], &vertices[2]);
@@ -732,6 +761,7 @@ zbVertex4D DxGraphDevice::ClipEdge(const zbVertex4D& v0, const zbVertex4D& v1, f
 	float t = f0 / (f0 - f1);
 	tmp.v = v0.v + t * (v1.v - v0.v);
 	tmp.t = v0.t + t * (v1.t - v0.t);
+	tmp.color = v0.color + t * (v1.color - v0.color);
 	return tmp;
 }
 
@@ -1005,33 +1035,6 @@ bool DxGraphDevice::CullFace(int fType, const float4& p1, const float4& p2, cons
 	}
 
 	return true;
-}
-
-void DxGraphDevice::DeviceDrawPrimitive(const RenderCVarlistPtr& cvList, const zbVertex4D& v1, const zbVertex4D& v2, const zbVertex4D& v3)
-{
-	// ±³ÃæÌÞ³ý
-	int nCullMode;
-	cvList->QueryByName("cull_mode")->QueryVar().Value(nCullMode);
-	if (CullFace(nCullMode, v1.v, v2.v, v3.v))
-	{
-		return;
-	}
-
-	zbVertex4D vertice[3] = { v1, v2, v3 };
-	for (int i = 0; i < 3; i++)
-	{
-		zbVertex4D vertex = vertice[i];
-	}
-	//
-	if (0)
-	{
-	} 
-	else
-	{
-		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
-		DeviceDrawLine(int(v1.v.x()), int(v1.v.y()), int(v3.v.x()), int(v3.v.y()), 1920);
-		DeviceDrawLine(int(v3.v.x()), int(v3.v.y()), int(v2.v.x()), int(v2.v.y()), 1920);
-	}
 }
 
 void DxGraphDevice::DeviceDrawLine(int x1, int y1, int x2, int y2, UINT32 c)

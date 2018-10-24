@@ -103,9 +103,6 @@ public:
 	// 背面消除
 	bool CullFace(int fType, const float4& p1, const float4& p2, const float4& p3);
 
-	// 根据 render_state 绘制原始三角形
-	void DeviceDrawPrimitive(const RenderCVarlistPtr& cvList, const zbVertex4D& v1,const zbVertex4D& v2, const zbVertex4D& v3);
-
 	// 画线
 	void DeviceDrawLine(int x1, int y1, int x2, int y2, UINT32 c);
 

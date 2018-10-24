@@ -90,6 +90,9 @@ void Renderable::BindDeferredData(const RenderCVarlistPtr& cvList)
 	pos_center = m_cvList->QueryByName("pos_center");
 	albedo_tex_param = m_cvList->QueryByName("albedo_tex");
 	albedo_clr_param = m_cvList->QueryByName("albedo_clr");
+	diffuse_clr_param = m_cvList->QueryByName("diffuse_clr");
+	specular_clr_param = m_cvList->QueryByName("specular_clr");
+	shininess_clr_param = m_cvList->QueryByName("shininess_clr");
 	metalness_tex_param = m_cvList->QueryByName("metalness_tex");
 	metalness_clr_param = m_cvList->QueryByName("metalness_clr");
 	glossiness_tex_param = m_cvList->QueryByName("glossiness_tex");
@@ -98,6 +101,7 @@ void Renderable::BindDeferredData(const RenderCVarlistPtr& cvList)
 	metalness_clr_param = m_cvList->QueryByName("emissive_clr");
 	normal_tex_param = m_cvList->QueryByName("normal_tex");
 	height_tex_param = m_cvList->QueryByName("height_tex");
+	bump_tex_param = m_cvList->QueryByName("bump_tex");
 	cull_mode = m_cvList->QueryByName("cull_mode");
 }
 
@@ -128,12 +132,16 @@ void Renderable::OnRenderBegin()
 
 	*albedo_tex_param = m_Textures[RenderMaterial::TextureType::TS_Albedo];
 	*albedo_clr_param = m_Mtl ? m_Mtl->m_f4Albedo : float4(0, 0, 0, 1);
+	*diffuse_clr_param = m_Mtl ? m_Mtl->m_f4Diffuse : float4(0, 0, 0, 1);
+	*specular_clr_param = m_Mtl ? m_Mtl->m_f4Specular : float4(0, 0, 0, 1);
+	*shininess_clr_param = m_Mtl ? m_Mtl->m_nShininess : 0.f;
 
 	*metalness_tex_param = m_Textures[RenderMaterial::TextureType::TS_Metalness];
 	*glossiness_tex_param = m_Textures[RenderMaterial::TextureType::TS_Glossiness];
 	*emissive_tex_param = m_Textures[RenderMaterial::TextureType::TS_Emissive];
 	*normal_tex_param = m_Textures[RenderMaterial::TextureType::TS_Normal];
 	*height_tex_param = m_Textures[RenderMaterial::TextureType::TS_Height];
+	*bump_tex_param = m_Textures[RenderMaterial::TextureType::TS_Bump];
 
 	*cull_mode = CULL_FACE_BACK;
 
@@ -156,4 +164,3 @@ const RenderCVarlistPtr& Renderable::GetRenderEffect() const
 {
 	return m_cvList;
 }
-

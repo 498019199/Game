@@ -3,9 +3,9 @@
 #define _SCENE_H_
 #pragma once
 #include "../Core/predefine.h"
-#include "../../Core/Context.h"
-#include "../../Core/entity/Entity.h"
-#include "../../Math/math.h"
+#include "../Core/Context.h"
+#include "../Core/entity/Entity.h"
+#include "../Math/math.h"
 
 class IScene :public IEntity
 {

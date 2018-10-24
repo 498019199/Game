@@ -135,6 +135,7 @@ public:
 	uint32_t NumMipMaps() { return 0; }
 	int GetWidth() const { return m_nWidth; };
 	int GetHight() const { return m_nHight; };
+	const std::string& GetName() {return m_strTexture;}
 	uint32_t GetUseMemoryLength() { return m_DataLen; }
 private:
 	//用带数据的texture2d初始化。

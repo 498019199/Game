@@ -19,6 +19,7 @@ public:
 		TS_Normal,				// 法线贴图；用于增加模型的细节。
 		TS_Height,				// 视差贴图；更有立体感的一种贴图方。
 
+		TS_Bump,					// 这个PS可以转法线贴图
 		TS_TypeCount
 	};
 
@@ -31,6 +32,10 @@ public:
 
 	std::string m_strName;
 	float4 m_f4Albedo;
+	float4 m_f4Diffuse;
+	float4 m_f4Specular;
+
+	float m_nShininess;
 	float m_fMetalness;
 	float m_fGlossiness;
 	float3 m_f3Emissive;
@@ -47,6 +52,6 @@ public:
 	float4 tess_factors;
 };
 
-RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse = nullptr);
-RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLAttributePtr pFileParse = nullptr);
+RenderMaterialPtr SyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse = nullptr);
+RenderMaterialPtr ASyncLoadRenderMaterial(const std::string strFileName, XMLNodePtr pFileParse = nullptr);
 #endif//_MATERIAL_H_

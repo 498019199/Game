@@ -1,10 +1,10 @@
 #ifndef _LIGHT_H_
 #define _LIGHT_H_
 #pragma once
-#include "../../Core/Context.h"
-#include "../../Core/Entity/Entity.h"
+#include "../Core/Context.h"
+#include "../Core/Entity/Entity.h"
 #include "../Math/Color.h"
-#include "../../Math/math.h"
+#include "../Math/math.h"
 
 class ILight :public IEntity
 {

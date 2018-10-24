@@ -23,7 +23,7 @@ enum RenderType
 };
 struct WindowDesc
 {
-	RenderType m_nRenderType;
+	int m_nRenderType;
 
 	bool	bHideWin;
 	bool	bFullScreen;
@@ -35,7 +35,7 @@ struct WindowDesc
 
 	bool bKeepScreenOn;
 	WindowDesc()
-		:m_nRenderType(RENDER_TYPE_NONE),bHideWin(false),bFullScreen(false)
+		:m_nRenderType(0),bHideWin(false),bFullScreen(false)
 		,nLeft(0),nTop(0),nWidth(0),nHeight(0)
 		, bKeepScreenOn(false)
 	{}
@@ -81,7 +81,7 @@ public:
 	void SetConfig(const WindowDesc& desc) { m_ConfigWinDesc = desc; }
 	int GetWidth() { return m_ConfigWinDesc.nWidth; }
 	int GetHeight() { return m_ConfigWinDesc.nHeight; }
-	RenderType GetRenderType() { return m_ConfigWinDesc.m_nRenderType; }
+	int GetRenderType() { return m_ConfigWinDesc.m_nRenderType; }
 	// зЂВс
 	template <typename T> void RegisterFactory();
 	void RegisterFactory(EnitityFactory* factory);

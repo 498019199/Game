@@ -3,7 +3,7 @@
 #ifndef _IVISBASE_H_
 #define _IVISBASE_H_
 #pragma once
-#include "../../Core/Context.h"
+#include "../Core/Context.h"
 #include "../Core/predefine.h"
 #include "../Render/RenderMaterial.h"
 #include "../Math/Math.h"
@@ -17,13 +17,13 @@ typedef struct zbVertex4D
 	float4 v;							// 点
 	float4 n;							// 顶点法线
 	float2 t;							// 贴图坐标
-
+	int nMaterialID;
 	zbVertex4D()
 		:nAttr(0)
 	{}
 
 	zbVertex4D(const float4& pos, const float4& normal, const float2 ts, const Color& clr)
-		:nAttr(0), v(pos), n(normal), t(ts), color(clr)
+		:nAttr(0), v(pos), n(normal), t(ts), color(clr), nMaterialID(0)
 	{}
 }zbVertex4D;
 typedef std::vector<zbVertex4D> VertexVec;
@@ -116,6 +116,9 @@ protected:
 	RenderCVarParameter* model_view_param;
 	RenderCVarParameter* albedo_tex_param;
 	RenderCVarParameter* albedo_clr_param;
+	RenderCVarParameter* diffuse_clr_param;
+	RenderCVarParameter* specular_clr_param;
+	RenderCVarParameter* shininess_clr_param;
 	RenderCVarParameter* metalness_tex_param;
 	RenderCVarParameter* metalness_clr_param;
 	RenderCVarParameter* glossiness_tex_param;
@@ -124,6 +127,7 @@ protected:
 	RenderCVarParameter* emissive_clr_param;
 	RenderCVarParameter* normal_tex_param;
 	RenderCVarParameter* height_tex_param;
+	RenderCVarParameter* bump_tex_param;
 	RenderCVarParameter* cull_mode;
 
 	RenderMaterialPtr m_Mtl;

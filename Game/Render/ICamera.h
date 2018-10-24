@@ -3,9 +3,9 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 #pragma once
-#include "../../Core/Context.h"
-#include "../../Core/Entity/Entity.h"
-#include "../../Math/math.h"
+#include "../Core/Context.h"
+#include "../Core/Entity/Entity.h"
+#include "../Math/math.h"
 
 class ICamera :public IEntity
 {
