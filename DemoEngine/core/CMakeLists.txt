@@ -19,6 +19,15 @@ set(SRCS_LIST   ${PROJECT_SOURCE_DIR}/core/src/IContext.cpp
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     list(APPEND SRCS_LIST   ${PROJECT_SOURCE_DIR}/core/src/app/windows/WindowApp.cpp
+###########################################  D3D9  ######################################################
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Adapter.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9AdapterList.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9RenderDevice.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9RenderShaderObject.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture2D.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture3D.cpp
+                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9TextureCube.cpp
 ###########################################  D3D11  #####################################################
                             ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Adapter.cpp
                             ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11AdapterList.cpp

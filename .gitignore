@@ -1,6 +1,8 @@
+/.idea
+/.vscode
+/build
 /DemoEngine/3rd
 /DemoEngine/example
 /DemoEngine/lib
 /DemoEngine/build
 /DemoEngine/bin
-/Tool
