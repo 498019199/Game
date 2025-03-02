@@ -68,13 +68,15 @@ namespace MathHelper
             vector_helper<T, N - 1>::DoMul(out + 1, lhs + 1, rhs + 1);
         }
 
-		static void DoScale(T out[N], T const lhs[N], const T& rhs) noexcept
+		template <typename U>
+		static void DoScale(T out[N], T const lhs[N], const U& rhs) noexcept
 		{
 			out[0] = lhs[0] * rhs;
 			vector_helper<T, N - 1>::DoScale(out + 1, lhs + 1, rhs);
 		}
 
-		static void DoDiv(T out[N], const T lhs[N], const T rhs[N]) noexcept
+		template <typename U>
+		static void DoDiv(T out[N], const T lhs[N], const U rhs[N]) noexcept
         {
             out[0] = lhs[0] / rhs[0];
             vector_helper<T, N - 1>::DoDiv(out + 1, lhs + 1, rhs + 1);
@@ -132,12 +134,14 @@ namespace MathHelper
 			out[0] = lhs[0] * rhs[0];
 		}
 
-		static void DoScale(T out[1], const T lhs[1], const T& rhs) noexcept
+		template <typename U>
+		static void DoScale(T out[1], const T lhs[1], const U& rhs) noexcept
 		{
 			out[0] = lhs[0] * rhs;
 		}
 
-		static void DoDiv(T out[1], const T lhs[1], const T rhs[1]) noexcept
+		template <typename U>
+		static void DoDiv(T out[1], const T lhs[1], const U rhs[1]) noexcept
 		{
 			out[0] = lhs[0] / rhs[0];
 		}

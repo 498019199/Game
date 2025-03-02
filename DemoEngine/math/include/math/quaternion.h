@@ -27,7 +27,7 @@ public:
 	Quaternion_T(Quaternion_T&& rhs) noexcept;
 	constexpr Quaternion_T(T x, T y, T z, T w) noexcept;
 
-	// 取向量
+	// ȡ    
 	iterator begin() noexcept
 	{
 		return quat_.begin();
@@ -86,7 +86,7 @@ public:
 		return quat_[3];
 	}
 
-	// 赋值操作符
+	//   ֵ      
 	const Quaternion_T& operator+=(const Quaternion_T & rhs) noexcept;
 	const Quaternion_T& operator-=(const Quaternion_T & rhs) noexcept;
 	const Quaternion_T& operator*=(const Quaternion_T & rhs) noexcept;
@@ -100,12 +100,10 @@ public:
 	Quaternion_T operator*(const Quaternion_T & rhs) const noexcept;
 	Quaternion_T operator*(T rhs) const noexcept;
 	Quaternion_T operator/(T rhs) const noexcept;
-
-	// 一元操作符
+   
 	Quaternion_T const operator+() const noexcept;
 	Quaternion_T const operator-() const noexcept;
-
-	// 取方向向量
+     
 	const Vector_T<T, 3> GetV() const noexcept;
 	void SetV(Vector_T<T, 3> const & rhs) noexcept;
 

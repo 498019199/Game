@@ -18,17 +18,17 @@ Rotator_T<T>::Rotator_T(Rotator_T&& rhs) noexcept
 template<typename T>
 constexpr Rotator_T<T>::Rotator_T(T inF)
 {
-    this->rot_.pitch() = inF;
-	this->rot_.yaw() = inF;
-	this->rot_.roll() = inF;
+    pitch() = inF;
+	yaw() = inF;
+	roll() = inF;
 }
 
 template<typename T>
 constexpr Rotator_T<T>::Rotator_T(T in_x, T in_y, T in_z) noexcept
 {
-    this->rot_.pitch() = in_x;
-	this->rot_.yaw() = in_y;
-	this->rot_.roll() = in_z;
+    pitch() = in_x;
+	yaw() = in_y;
+	roll() = in_z;
 }
 
 template<typename T>
@@ -99,13 +99,13 @@ Rotator_T<T> const Rotator_T<T>::operator+() const noexcept
 template<typename T>
 bool Rotator_T<T>::operator==(Rotator_T<T> const & rhs) const noexcept
 {
-    this->rot_ == rhs.rot_;
+    return this->rot_ == rhs.rot_;
 }
 
 template<typename T>
 bool Rotator_T<T>::operator!=(Rotator_T<T> const & rhs) const noexcept
 {
-    this->rot_ != rhs.rot_;
+    return this->rot_ != rhs.rot_;
 }
 
 template<typename T>
@@ -138,5 +138,5 @@ Rotator_T<T> Rotator_T<T>::operator/(T rhs) const noexcept
     return Rotator_T<T>(*this).operator/=(rhs);    
 }
 
-
+template class Rotator_T<float>;
 }

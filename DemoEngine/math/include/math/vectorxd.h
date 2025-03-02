@@ -31,19 +31,19 @@ public:
 	typedef typename DetailType::const_iterator const_iterator;
 	typedef typename DetailType::size_type size_type;
 	typedef typename DetailType::difference_type difference_type;
-	enum{ elem_num = N };
+	static constexpr size_t elem_num = N;
 
 public:
-	Vector_T()  noexcept
+	constexpr Vector_T()  noexcept
 	{}
 	
-	explicit Vector_T(const T* rhs) noexcept
+	explicit constexpr Vector_T(const T* rhs) noexcept
 	{
     	MathHelper::vector_helper<T, N>
     	::DoCopy(data(), rhs);
 	}
 
-	explicit Vector_T(const T& rhs) noexcept
+	constexpr Vector_T(const T& rhs) noexcept
 	{
     	MathHelper::vector_helper<T, N>
     	::DoAssign(data(), rhs);
@@ -55,51 +55,51 @@ public:
     	::DoCopy(data(), rhs.data());
 	}
 
-	Vector_T(Vector_T&& rhs) noexcept
+	constexpr Vector_T(Vector_T&& rhs) noexcept
 	    :vec_(std::move(rhs.vec_))
 	{}
 
 	template<typename U, int M>
-	Vector_T(const Vector_T<U, M>& rhs) noexcept
+	constexpr Vector_T(const Vector_T<U, M>& rhs) noexcept
 	{
 		static_assert(M >= N, "Could not convert to a smaller vector.");
 		MathHelper::vector_helper<T, N>
 			::DoCopy(data(), rhs.data());
 	}
 
-	Vector_T(const T& x, const T& y) noexcept
+	constexpr Vector_T(const T& x, const T& y) noexcept
 		:vec_ {{x, y}}
 	{
 		static_assert(2 == elem_num, "must be 2D vecotr");
 	}
-	Vector_T(T&& x, T&& y) noexcept
+	constexpr Vector_T(T&& x, T&& y) noexcept
 		: vec_{ {std::move(x), std::move(y)} }
 	{
 		static_assert(2 == elem_num, "must be 2D vecotr");
 	}
-	Vector_T(const T& x, const T& y, const T& z) noexcept
+	constexpr Vector_T(const T& x, const T& y, const T& z) noexcept
 		: vec_{ {x, y , z} }
 	{
 		static_assert(3 == elem_num, "must be 3D vecotr");
 	}
-	Vector_T(T&& x, T&& y, T&& z) noexcept
+	constexpr Vector_T(T&& x, T&& y, T&& z) noexcept
 		: vec_{ {std::move(x), std::move(y) , std::move(z)} }
 	{
 		static_assert(3 == elem_num, "must be 3D vecotr");
 	}
-	Vector_T(const T& x, const T& y, const T& z, const T& w) noexcept
+	constexpr Vector_T(const T& x, const T& y, const T& z, const T& w) noexcept
 		: vec_{ {x, y , z, w} }
 	{
 		static_assert(4 == elem_num, "must be 4D vecotr");
 	}
-	Vector_T(T&& x, T&& y, T&& z, T&& w) noexcept
+	constexpr Vector_T(T&& x, T&& y, T&& z, T&& w) noexcept
 		: vec_{ {std::move(x), std::move(y) , std::move(z), std::move(w)} }
 	{
 		static_assert(4 == elem_num, "must be 4D vecotr");
 	}
 
 	// size
-	size_t size() noexcept
+	size_t constexpr size() noexcept
 	{
 		return elem_num;
 	}
@@ -109,14 +109,14 @@ public:
 		return elem_num;
 	}
 
-	// 零向量
+	//       
 	static Vector_T const Zero() noexcept
 	{
 		static Vector_T<T, N> const zero(value_type(0));
 		return zero;
 	}
 
-	iterator begin() noexcept
+	constexpr iterator begin() noexcept
 	{
 		return vec_.begin();
 	}
@@ -124,7 +124,7 @@ public:
 	{
 		return vec_.begin();
 	}
-	iterator end() noexcept
+	constexpr iterator end() noexcept
 	{
 		return vec_.end();
 	}
@@ -132,7 +132,7 @@ public:
 	{
 		return vec_.end();
 	}
-	reference operator[](size_t off) noexcept
+	constexpr reference operator[](size_t off) noexcept
 	{
 		return vec_[off];
 	}
@@ -140,7 +140,7 @@ public:
 	{
 		return vec_[off];
 	}
-	reference x() noexcept
+	constexpr reference x() noexcept
 	{
 		return vec_[0];
 	}
@@ -148,7 +148,7 @@ public:
 	{
 		return vec_[0];
 	}
-	reference y() noexcept
+	constexpr reference y() noexcept
 	{
 		static_assert(elem_num >= 2, "must be 2D vecotr");
 		return vec_[1];
@@ -158,7 +158,7 @@ public:
 		static_assert(elem_num >= 2, "must be 2D vecotr");
 		return vec_[1];
 	}
-	reference z() noexcept
+	constexpr reference z() noexcept
 	{
 		static_assert(elem_num >= 3, "must be 3D vecotr");
 		return vec_[2];
@@ -168,7 +168,7 @@ public:
 		static_assert(elem_num >= 3, "must be 3D vecotr");
 		return vec_[2];
 	}
-	reference w() noexcept
+	constexpr reference w() noexcept
 	{
 		static_assert(elem_num >= 4, "must be 4D vecotr");
 		return vec_[3];
@@ -217,19 +217,25 @@ public:
     	return *this;
 	}
 
-	// operator 叉积
+	// operator 
 	Vector_T operator^(const Vector_T& rhs) const noexcept
 	{
 		return Cross(*this, rhs);
 	}
 
-	// operator 点积
+	// operator 
 	T operator|(const Vector_T& rhs) const noexcept
 	{
 		return Dot(*this, rhs);
 	}
 
-	// operator * 数乘
+	// operator *     
+	template <typename U>
+	const Vector_T& operator*=(Vector_T<U, N> const & rhs) noexcept
+	{
+		MathHelper::vector_helper<T, N>::DoMul(vec_.data(), vec_.data(), rhs.data());
+		return *this;
+	}
 	template <typename U>
 	const Vector_T& operator*=(const U& rhs) noexcept
 	{
@@ -252,7 +258,7 @@ public:
     	return *this;
 	}
 
-	// 复制构造
+	//    ƹ   
 	Vector_T& operator=(const Vector_T& rhs) noexcept
 	{
     	if (this != &rhs)
@@ -275,13 +281,13 @@ public:
 		return *this;
 	}
 
-	// 正
+	//   
 	const Vector_T operator+() const  noexcept
 	{
     	return *this;
 	}
 
-	// 负
+	//   
 	const Vector_T operator-() const noexcept
 	{
 		Vector_T tmp(*this);

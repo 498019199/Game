@@ -9,9 +9,16 @@ namespace MathWorker
 
     float cos(float x) noexcept
     {
-        return std::cos(x);
+        return sin(x + PI / 2);
     }
 
+    
+    void SinCos(float fAnglel, float& s, float& c) noexcept
+	{
+        s = sin(fAnglel);
+        c = cos(fAnglel);
+	}
+    
     // 线性颜色值转换为 sRGB 颜色值的操作
     // 线性颜色空间更适合于计算和物理模拟，而 sRGB 空间则是常见的显示设备所使用的颜色空间。
     // 根据线性颜色值的大小，使用不同的公式将其转换为 sRGB 颜色值。
@@ -40,12 +47,6 @@ namespace MathWorker
             return pow((srgb + ALPHA) / (1 + ALPHA), 2.4f);
         }
     }
-
-    void SinCos(float fAnglel, float& X, float&Y)
-	{
-        X = std::sin(fAnglel);
-        Y = std::cos(fAnglel);
-	}
 
     template bool IsEqual(float X, float Y);
     template bool IsEqual(double X, double Y);
@@ -210,9 +211,9 @@ namespace MathWorker
     }
 
 
-    template float4x4 MatrixMove(float X, float Y, float Z);
+    template float4x4 Translation(float X, float Y, float Z);
     template<typename T>
-    Matrix4_T<T> MatrixMove(T X, T Y, T Z)
+    Matrix4_T<T> Translation(T X, T Y, T Z)
     {
         return Matrix4_T<T>(
             1, 0, 0, 0,
@@ -221,11 +222,11 @@ namespace MathWorker
             X, Y, Z, 1);
     }
 
-    template float4x4 MatrixMove(const float3& Move);
+    template float4x4 Translation(const float3& Move);
     template<typename T>
-    Matrix4_T<T> MatrixMove(const Vector_T<T, 3> &Move)
+    Matrix4_T<T> Translation(const Vector_T<T, 3> &Move)
     {
-        return MatrixMove(Move.x(), Move.y(), Move.z());
+        return Translation(Move.x(), Move.y(), Move.z());
     }
 
     template float4x4 MatrixScale(float X, float Y, float Z);
@@ -375,9 +376,9 @@ namespace MathWorker
     }
 
     // 矩阵的逆
-    template float4x4 MatrixInverse(const float4x4& mat);
+    template float4x4 Inverse(const float4x4& mat);
     template<typename T>
-    Matrix4_T<T> MatrixInverse(const Matrix4_T<T>& mat)
+    Matrix4_T<T> Inverse(const Matrix4_T<T>& mat)
     {
         const float _2132_2231(mat(1, 0) * mat(2, 1) - mat(1, 1) * mat(2, 0));
         const float _2133_2331(mat(1, 0) * mat(2, 2) - mat(1, 2) * mat(2, 0));
@@ -444,7 +445,7 @@ namespace MathWorker
     }
 
     // 视口为中心的正交投影矩阵
-	float4x4 OrthoLH(float w, float h, float nearPlane, float farPlane);
+	template float4x4 OrthoLH(float w, float h, float nearPlane, float farPlane);
     template<typename T>
 	Matrix4_T<T> OrthoLH(T w, T h, T nearPlane, T farPlane)
     {
@@ -455,7 +456,7 @@ namespace MathWorker
 
     // dx->[-1,1][-1,1][0,1]，selected
     // openGL->[-1,1][-1,1][-1,1]
-	float4x4 OrthoOffCenterLH(float left, float right, float bottom, float top, float farPlane, float nearPlane);
+	template float4x4 OrthoOffCenterLH(float left, float right, float bottom, float top, float farPlane, float nearPlane);
     template<typename T>
 	Matrix4_T<T> OrthoOffCenterLH(T left, T right, T bottom, T top, T farPlane, T nearPlane)
     {
@@ -493,7 +494,7 @@ namespace MathWorker
 	}
 
     // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/bb281711(v=vs.85)
-	float4x4 LookAtRH(const float3& Eye, const float3& At, const float3& Up);
+	template float4x4 LookAtRH(const float3& Eye, const float3& At, const float3& Up);
     template<typename T>
 	Matrix4_T<T> LookAtRH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
     {
@@ -509,7 +510,7 @@ namespace MathWorker
 
     // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/bb281710(v=vs.85)
     // Eye 是摄像机位置，At 是摄像机朝向方向，Up 摄像机向上方向
-	float4x4 LookAtLH(const float3& Eye, const float3& At, const float3& Up);
+	template float4x4 LookAtLH(const float3& Eye, const float3& At, const float3& Up);
     template<typename T>
 	Matrix4_T<T> LookAtLH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
     {
@@ -597,6 +598,39 @@ namespace MathWorker
             0,		0,		-(2 * Far * Near) / q,      0); 
     }
 
+    template void Decompose(float3& scale, quater& rot, float3& trans, const float4x4& m);
+    template<typename T>
+    void Decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m)
+    {
+        // S=> M去掉T得m3x3矩阵，（RS）^T*RT=M3^T*M3=S*S
+        scale.x() = sqrt(m(0, 0) * m(0, 0) + m(0, 1) * m(0, 1) + m(0, 2) * m(0, 2));
+        scale.y() = sqrt(m(1, 0) * m(1, 0) + m(1, 1) * m(1, 1) + m(1, 2) * m(1, 2));
+        scale.z() = sqrt(m(2, 0) * m(2, 0) + m(2, 1) * m(2, 1) + m(2, 2) * m(2, 2));
+
+        // T
+        trans = Vector_T<T, 3>(m(3, 0), m(3, 1), m(3, 2));
+
+        // R=RS*1/S
+        Matrix4_T<T> rot_mat;
+        rot_mat(0, 0) = m(0, 0) / scale.x();
+        rot_mat(0, 1) = m(0, 1) / scale.x();
+        rot_mat(0, 2) = m(0, 2) / scale.x();
+        rot_mat(0, 3) = 0;
+        rot_mat(1, 0) = m(1, 0) / scale.y();
+        rot_mat(1, 1) = m(1, 1) / scale.y();
+        rot_mat(1, 2) = m(1, 2) / scale.y();
+        rot_mat(1, 3) = 0;
+        rot_mat(2, 0) = m(2, 0) / scale.z();
+        rot_mat(2, 1) = m(2, 1) / scale.z();
+        rot_mat(2, 2) = m(2, 2) / scale.z();
+        rot_mat(2, 3) = 0;
+        rot_mat(3, 0) = 0;
+        rot_mat(3, 1) = 0;
+        rot_mat(3, 2) = 0;
+        rot_mat(3, 3) = 1;
+        rot = ToQuaternion(rot_mat);
+    }
+
     template quater Mul(const quater& lhs, const quater& rhs) noexcept;
     template<typename T>
 	Quaternion_T<T> Mul(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
@@ -623,33 +657,39 @@ namespace MathWorker
 		return Quaternion_T<T>(-rhs.x() * var, -rhs.y() * var, -rhs.z() * var, rhs.w() * var);
 	}
 
-    float4x4 ToMatrix(const quater &quat)
+    template float4x4 ToMatrix(const quater &quat);
+    template<typename T>
+	Matrix4_T<T> ToMatrix(const Quaternion_T<T>& quat)
     {
         // calculate coefficients
-        const float x2(quat.x() + quat.x());
-        const float y2(quat.y() + quat.y());
-        const float z2(quat.z() + quat.z());
+        const T x2(quat.x() + quat.x());
+        const T y2(quat.y() + quat.y());
+        const T z2(quat.z() + quat.z());
 
-        const float xx2(quat.x() * x2), xy2(quat.x() * y2), xz2(quat.x() * z2);
-        const float yy2(quat.y() * y2), yz2(quat.y() * z2), zz2(quat.z() * z2);
-        const float wx2(quat.w() * x2), wy2(quat.w() * y2), wz2(quat.w() * z2);
+        const T xx2(quat.x() * x2), xy2(quat.x() * y2), xz2(quat.x() * z2);
+        const T yy2(quat.y() * y2), yz2(quat.y() * z2), zz2(quat.z() * z2);
+        const T wx2(quat.w() * x2), wy2(quat.w() * y2), wz2(quat.w() * z2);
 
-        return float4x4(
+        return Matrix4_T<T>(
             1 - yy2 - zz2,	xy2 + wz2,		xz2 - wy2,		0,
             xy2 - wz2,		1 - xx2 - zz2,	yz2 + wx2,		0,
             xz2 + wy2,		yz2 - wx2,		1 - xx2 - yy2,	0,
             0,				0,				0,				1);
     }
 
-    float4x4 ToMatrix(const rotator &rot)
+    template float4x4 ToMatrix(const rotator &rot);
+    template<typename T>
+	Matrix4_T<T> ToMatrix(const Rotator_T<T>& rot)
     {
-        float4x4 rot_x = MatrixRotateX(rot.pitch());
-        float4x4 rot_y = MatrixRotateX(rot.yaw());
-        float4x4 rot_z = MatrixRotateX(rot.roll());
+        Matrix4_T<T> rot_x = MatrixRotateX(rot.pitch());
+        Matrix4_T<T> rot_y = MatrixRotateY(rot.yaw());
+        Matrix4_T<T> rot_z = MatrixRotateZ(rot.roll());
         return rot_x * rot_y * rot_z;
     }
 
-    quater ToQuaternion(const float4x4 &mat)
+    template quater ToQuaternion(const float4x4 &mat);
+    template<typename T>
+	Quaternion_T<T> ToQuaternion(const Matrix4_T<T>& mat)
     {
         quater quat;
         float s;
@@ -730,11 +770,13 @@ namespace MathWorker
         return Normalize(quat);
     }
 
-    quater ToQuaternion(const rotator &rot)
+    template quater ToQuaternion(const rotator &rot);
+    template<typename T>
+	Quaternion_T<T> ToQuaternion(const Rotator_T<T>& rot)
     {
-        const float angX(rot.pitch() / 2), angY(rot.yaw() / 2), angZ(rot.roll() / 2);
-        float sx, sy, sz;
-        float cx, cy, cz;
+        const T angX(rot.pitch() / 2), angY(rot.yaw() / 2), angZ(rot.roll() / 2);
+        T sx, sy, sz;
+        T cx, cy, cz;
         SinCos(angX, sx, cx);
         SinCos(angY, sy, cy);
         SinCos(angZ, sz, cz);
@@ -746,20 +788,24 @@ namespace MathWorker
             sx * sy * sz + cx * cy * cz);
     }
 
-    rotator ToRotator(const float4x4 &mat)
-    {
-        return rotator();
-    }
+    //template rotator ToRotator(const float4x4 &mat);
+    //template<typename T>
+	//Rotator_T<float> ToRotator(const Matrix4_T<T>& mat)
+    //{
+    //     return rotator();
+    //}
 
     // From http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-    rotator ToRotator(const quater &quat)
+    template rotator ToRotator(const quater &quat);
+    template<typename T>
+	Rotator_T<T> ToRotator(const Quaternion_T<T>& quat)
     {
-        float sqx = quat.x() * quat.x();
-        float sqy = quat.y() * quat.y();
-        float sqz = quat.z() * quat.z();
-        float sqw = quat.w() * quat.w();
-        float unit = sqx + sqy + sqz + sqw;
-        float test = quat.w() * quat.x() + quat.y() * quat.z();
+        T sqx = quat.x() * quat.x();
+        T sqy = quat.y() * quat.y();
+        T sqz = quat.z() * quat.z();
+        T sqw = quat.w() * quat.w();
+        T unit = sqx + sqy + sqz + sqw;
+        T test = quat.w() * quat.x() + quat.y() * quat.z();
         rotator rot;
         if (test > 0.499f * unit)
         {
@@ -787,4 +833,46 @@ namespace MathWorker
         return rot;
     }
 
+    template void ToYawPitchRoll(float& yaw, float& pitch, float& roll, const quater& quat);
+    template<typename T>
+	void ToYawPitchRoll(T& yaw, T& pitch, T& roll, const Quaternion_T<T>& quat)
+    {
+        T sqx = quat.x() * quat.x();
+        T sqy = quat.y() * quat.y();
+        T sqz = quat.z() * quat.z();
+        T sqw = quat.w() * quat.w();
+        T unit = sqx + sqy + sqz + sqw;
+        T test = quat.w() * quat.x() + quat.y() * quat.z();
+        rotator rot;
+        if (test > 0.499f * unit)
+        {
+            // singularity at north pole
+            yaw = 2 * atan2(quat.z(), quat.w());
+            pitch = PI / 2;
+            roll = 0;
+        }
+        else
+        {
+            if (test < -(0.499f) * unit)
+            {
+                // singularity at south pole
+                yaw = -2 * atan2(quat.z(), quat.w());
+                pitch = -PI / 2;
+                roll = 0;
+            }
+            else
+            {
+                yaw = atan2(2 * (quat.y() * quat.w() - quat.x() * quat.z()), -sqx - sqy + sqz + sqw);
+                pitch = asin(2 * test / unit);
+                roll = atan2(2 * (quat.z() * quat.w() - quat.x() * quat.y()), -sqx + sqy - sqz + sqw);
+            }
+        }
+    }
+
+    template float3 TransformQuat(const float3& v, const quater& quat);
+	template<typename T>
+	Vector_T<T, 3> TransformQuat(const Vector_T<T, 3>& v, const Quaternion_T<T>& quat)
+    {
+        return v + Cross(quat.GetV(), Cross(quat.GetV(), v) + quat.w() * v) * T(2);
+    }
 }
