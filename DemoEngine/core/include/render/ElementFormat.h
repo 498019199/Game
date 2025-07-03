@@ -27,10 +27,10 @@
 
 #pragma once
 
-#include <core/define.h>
+#include <base/common.h>
+#include <common/Util.h>
 
-
-namespace CoreWorker
+namespace RenderWorker
 {
 	enum ElementChannel
 	{
@@ -670,8 +670,8 @@ namespace CoreWorker
 			std::max(ChannelBits<2>(format), ChannelBits<3>(format)));
 	}
 
-	/*KLAYGE_CORE_API*/ void ConvertToABGR32F(ElementFormat fmt, void const * input, uint32_t num_elems, Color* output);
-	/*KLAYGE_CORE_API*/ void ConvertFromABGR32F(ElementFormat fmt, Color const * input, uint32_t num_elems, void* output);
+	void ConvertToABGR32F(ElementFormat fmt, void const * input, uint32_t num_elems, Color* output);
+	void ConvertFromABGR32F(ElementFormat fmt, Color const * input, uint32_t num_elems, void* output);
 
 
 	enum ElementAccessHint
@@ -683,7 +683,7 @@ namespace CoreWorker
 		EAH_GPU_Unordered = 1UL << 4,
 		EAH_GPU_Structured = 1UL << 5,
 		EAH_Generate_Mips = 1UL << 6,
-		EAH_Immutable = 1UL << 7,
+		EAH_Immutable = 1UL << 7, // 该资源在创建后其内容将不会被修改
 		EAH_Raw = 1UL << 8,
 		EAH_Append = 1UL << 9,
 		EAH_Counter = 1UL << 10,

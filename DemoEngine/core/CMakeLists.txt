@@ -1,53 +1,60 @@
-include_directories(${PROJECT_SOURCE_DIR}/core/include
-                    ${PROJECT_SOURCE_DIR}/common/include
-                    ${PROJECT_SOURCE_DIR}/math/include
-                    ${PROJECT_SOURCE_DIR}/3rd/ini/ini/src
-                    ${PROJECT_SOURCE_DIR}/3rd/assimp/assimp/include
-                    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Include
-                    ${PROJECT_SOURCE_DIR}/3rd/FreeImage/Source)
+include_directories( 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/include
+    ${PROJECT_SOURCE_DIR}/math/include
+    ${PROJECT_SOURCE_DIR}/common/include
+    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Include
+    ${PROJECT_SOURCE_DIR}/3rd/FreeImage/FreeImage/Source
+    ${PROJECT_SOURCE_DIR}/3rd/imgui)
 
-set(SRCS_LIST   ${PROJECT_SOURCE_DIR}/core/src/IContext.cpp
-########################################  Render Base  ##################################################
-                        ${PROJECT_SOURCE_DIR}/core/src/render/IRenderDevice.cpp
-                        ${PROJECT_SOURCE_DIR}/core/src/render/ElementFormat.cpp
-                        ${PROJECT_SOURCE_DIR}/core/src/render/IRenderMaterial.cpp
-                        ${PROJECT_SOURCE_DIR}/core/src/render/IRenderModel.cpp
-                        ${PROJECT_SOURCE_DIR}/core/src/render/pack/MeshLoader.cpp
-                        ${PROJECT_SOURCE_DIR}/core/src/render/pack/TexMetadata.cpp
-###########################################  OpenGL  ####################################################
-                )
+set(SRC_LIST
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/App/WinApp.cpp
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    list(APPEND SRCS_LIST   ${PROJECT_SOURCE_DIR}/core/src/app/windows/WindowApp.cpp
-###########################################  D3D9  ######################################################
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Adapter.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9AdapterList.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9RenderDevice.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9RenderShaderObject.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture2D.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9Texture3D.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX9/D3D9TextureCube.cpp
-###########################################  D3D11  #####################################################
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Adapter.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11AdapterList.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11RenderDevice.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11RenderShaderObject.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Texture.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Texture2D.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Texture3D.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11TextureCube.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11RenderWindow.cpp
-                            ${PROJECT_SOURCE_DIR}/core/src/render/directX11/D3D11Util.cpp
-###########################################  D3D12  #####################################################
-        )
-endif()
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11GraphicsBuffer.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11RenderEngine.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11RenderLayout.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11RenderStateObject.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11RenderView.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11ShaderObject.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11Util.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11Texture.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11Texture2D.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/D3D11/D3D11RenderFactory.cpp
 
-add_library(core STATIC ${SRCS_LIST}
-        ${LIB_DIR_PATH}/common${DEMOENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
-        ${LIB_DIR_PATH}/math${DEMOENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib)
-set_target_properties(core PROPERTIES
-	DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
-	OUTPUT_NAME core${DEMOENGINE_OUTPUT_SUFFIX})
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/DevHelper/ImagePlane.cpp
 
-add_subdirectory(test)
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/Camera.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/GraphicsBuffer.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/Light.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/Mesh.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/Renderable.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderEffect.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderEngine.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderFactory.cpp 
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderLayout.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderStateObject.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/RenderView.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/ShaderObject.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Render/Texture.cpp
+
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Scene/SceneNode.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Scene/World.cpp
+
+
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Context.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/Control.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/RenderableHelper.cpp
+    ${PROJECT_SOURCE_DIR}/Chapter9/core/src/TexCompression.cpp)
+    
+add_executable(Chapter9
+    ${SRC_LIST} 
+    ${PROJECT_SOURCE_DIR}/Chapter9/main_tree_billboard.cpp)
+
+target_link_libraries(Chapter9 PRIVATE 
+    ${LIB_DIR_PATH}/math${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    ${LIB_DIR_PATH}/common${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    ${LIB_DIR_PATH}/imgui${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    #${LIB_DIR_PATH}/FreeImage${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/d3d11.lib
+    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/d3dx11d.lib
+    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/dxgi.lib
+    ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/dxguid.lib) 

@@ -2,7 +2,7 @@
 #include <core/IApp.h>
 #include <windows.h>
 
-namespace CoreWorker
+namespace RenderWorker
 {
 class WindowApp : public IApp 
 {
