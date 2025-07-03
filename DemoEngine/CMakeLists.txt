@@ -25,7 +25,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     endif()
 endif()
 
-#add_subdirectory(3rd)
+add_subdirectory(3rd)
 add_subdirectory(common)
 file(COPY ${PROJECT_SOURCE_DIR}/common/include DESTINATION "${LIBRARY_OUTPUT_PATH}")
 add_subdirectory(math)

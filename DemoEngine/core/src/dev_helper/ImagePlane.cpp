@@ -1,4 +1,4 @@
-#include <DevHelper/ImagePlane.h>
+#include <dev_helper/ImagePlane.h>
 #include <render/RenderEngine.h>
 
 //#include <FreeImage.h>

@@ -7,7 +7,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/3rd/imgui)
 
 set(SRC_LIST
-    ${PROJECT_SOURCE_DIR}/core/src/app/windows/WinApp.cpp
+    ${PROJECT_SOURCE_DIR}/core/src/app/WinApp.cpp
 
     ${PROJECT_SOURCE_DIR}/core/src/d3d11/D3D11GraphicsBuffer.cpp
     ${PROJECT_SOURCE_DIR}/core/src/d3d11/D3D11RenderEngine.cpp
@@ -44,14 +44,6 @@ set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/core/src/RenderableHelper.cpp
     ${PROJECT_SOURCE_DIR}/core/src/TexCompression.cpp)
 
-target_link_libraries(d3d11_render PRIVATE 
-     ${LIB_DIR_PATH}/math${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
-     ${LIB_DIR_PATH}/common${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
-     ${LIB_DIR_PATH}/imgui${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib)
-#     #${LIB_DIR_PATH}/FreeImage${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
-#     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/d3d11.lib
-#     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/d3dx11d.lib
-#     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/dxgi.lib
-#     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Lib/x64/dxguid.lib) 
+add_library(core STATIC ${SRC_LIST})
 
 add_subdirectory(test)
