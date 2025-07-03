@@ -1,5 +1,4 @@
 /.idea
-/.vscode
 /build
 /DemoEngine/example
 /DemoEngine/lib
@@ -18,3 +17,4 @@ DemoEngine/.vscode/
 /DemoEngine/3rd/zlib/zlib
 /DemoEngine/3rd/dxsdk/dxsdk
 
+/Editer/src/3rd/imgui

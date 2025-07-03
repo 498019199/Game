@@ -33,3 +33,4 @@ file(COPY ${PROJECT_SOURCE_DIR}/math/include DESTINATION "${LIBRARY_OUTPUT_PATH}
 add_subdirectory(core)
 file(COPY ${PROJECT_SOURCE_DIR}/core/include DESTINATION "${LIBRARY_OUTPUT_PATH}")
 
+add_subdirectory(Editor)
