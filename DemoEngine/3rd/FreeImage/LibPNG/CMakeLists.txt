@@ -1,0 +1,51 @@
+SET(LIB_NAME LibPNG)
+
+SET(LIBPNG_SOURCE_FILES
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/png.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngerror.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngget.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngmem.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngpread.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngread.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngrio.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngrtran.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngrutil.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngset.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngtrans.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngwio.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngwrite.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngwtran.c
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngwutil.c
+)
+SET(LIBPNG_HEADER_FILES
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/png.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngconf.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngdebug.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pnginfo.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pnglibconf.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngpriv.h
+	${FREEIMAGE_PROJECT_DIR}/Source/LibPNG/pngstruct.h
+)
+SOURCE_GROUP("Source Files" FILES ${LIBPNG_SOURCE_FILES})
+SOURCE_GROUP("Header Files" FILES ${LIBPNG_HEADER_FILES})
+
+ADD_LIBRARY(${LIB_NAME} STATIC
+	${LIBPNG_SOURCE_FILES} ${LIBPNG_HEADER_FILES}
+)
+
+if(ZENGINE_PLATFORM_WINDOWS)
+	target_compile_definitions(${LIB_NAME}
+		PRIVATE
+			-D_CRT_SECURE_NO_DEPRECATE
+	)
+endif()
+
+target_include_directories(${LIB_NAME}
+	PRIVATE
+		${ZLIB_INCLUDE_DIRS}
+)
+
+TARGET_LINK_LIBRARIES(${LIB_NAME}
+	PRIVATE
+		${ZENGINE_ZLIB_NAME}
+)

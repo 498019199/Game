@@ -1,0 +1,24 @@
+From ac3d7f0aba109a50163448723ac75d686439a7ad Mon Sep 17 00:00:00 2001
+From: Minmin Gong <gongminmin@msn.com>
+Date: Sat, 14 Dec 2019 17:12:32 -0800
+Subject: [PATCH 6/9] Fix compiling problems on VS2019 Update 4
+
+---
+ Source/OpenEXR/Imath/ImathQuat.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Source/OpenEXR/Imath/ImathQuat.h b/Source/OpenEXR/Imath/ImathQuat.h
+index e95e356..bae49a6 100644
+--- a/Source/OpenEXR/Imath/ImathQuat.h
++++ b/Source/OpenEXR/Imath/ImathQuat.h
+@@ -59,6 +59,7 @@
+ #include "ImathMatrix.h"
+ #include "ImathNamespace.h"
+ 
++#include <algorithm>
+ #include <iostream>
+ 
+ IMATH_INTERNAL_NAMESPACE_HEADER_ENTER
+-- 
+2.42.0.windows.2
+
