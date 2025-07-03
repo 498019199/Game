@@ -8,10 +8,12 @@
 DemoEngine/.vscode/
 
 
-/3rd/dxsdk/dxsdk
-/3rd/assimp/assimp
-/3rd/FreeImage/FreeImage
-/3rd/zlib/zlib
-/3rd/rapidjson/rapidjson
-/3rd/rapidxml/rapidxml
-/3rd/d3dcompiler/d3dcompiler
+
+/DemoEngine/3rd/assimp/assimp
+/DemoEngine/3rd/d3dcompiler/d3dcompiler
+/DemoEngine/3rd/DirectX-Headers
+/DemoEngine/3rd/FreeImage/FreeImage
+/DemoEngine/3rd/rapidjson/rapidjson
+/DemoEngine/3rd/rapidxml/rapidxml
+/DemoEngine/3rd/zlib/zlib
+

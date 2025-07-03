@@ -1,54 +1,20 @@
-/**
- * @file ErrorHandling.hpp
- * @author Minmin Gong
- *
- * @section DESCRIPTION
- *
- * This source file is part of KFL, a subproject of KlayGE
- * For the latest info, see http://www.klayge.org
- *
- * @section LICENSE
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published
- * by the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- * You may alternatively use this source under the terms of
- * the KlayGE Proprietary License (KPL). You can obtained such a license
- * from http://www.klayge.org/licensing/.
- */
-
-#ifndef _KFL_ERRORHANDLING_HPP
-#define _KFL_ERRORHANDLING_HPP
-
 #pragma once
 
 #include <stdexcept>
 #include <string>
 #include <string_view>
 
-namespace CommonWorker
+//---------------------------------------------------------------------------------------
+// Simple d3d error checker for book demos.
+//---------------------------------------------------------------------------------------
+// Throw error message
+namespace RenderWorker
 {
 	std::string CombineFileLine(std::string_view file, uint32_t line);
-	void Verify(bool x);
-
-#if defined(_DEBUG)
-	[[noreturn]] void KFLUnreachableInternal(std::string_view msg = {}, std::string_view file = {}, uint32_t line = 0);
-#endif
-} // namespace CommonWorker
+}
 
 // Throw error code
-#define TEC(x) throw std::system_error(x, CommonWorker::CombineFileLine(__FILE__, __LINE__))
+#define TEC(x) throw std::system_error(x, RenderWorker::CombineFileLine(__FILE__, __LINE__))
 
 // Throw error message
 #define TMSG(msg) throw std::runtime_error(msg)
@@ -69,18 +35,10 @@ namespace CommonWorker
 #define TIFERRC(x) TIFEC(std::make_error_code(x))
 
 // Throw if failed (HRESULT)
-#define TIFHR(hr)                                              \
-	{                                                          \
-		if ((hr) < 0)                                          \
-		{                                                      \
-			TMSG(CommonWorker::CombineFileLine(__FILE__, __LINE__)); \
-		}                                                      \
+#define TIFHR(hr)                                              		 \
+	{                                                          		 \
+		if ((hr) < 0)                                          		 \
+		{                                                      		 \
+			TMSG(RenderWorker::CombineFileLine(__FILE__, __LINE__)); \
+		}                                                      		 \
 	}
-
-#ifdef _DEBUG
-#define DEMO_UNREACHABLE(msg) CommonWorker::KFLUnreachableInternal(msg, __FILE__, __LINE__)
-#else
-#define DEMO_UNREACHABLE(msg) std::unreachable()
-#endif
-
-#endif // _KFL_ERRORHANDLING_HPP

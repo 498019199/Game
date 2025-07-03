@@ -1,15 +1,16 @@
 #include <common/Log.h>
-#include <common/common.h>
+#include <common/util.h>
 #include <common/instance.h>
 #include <cstdarg>
 #include <format>
 #include <utility>
+#include <chrono>
 
 #ifdef DEMOENGINE_PLATFORM_WINDOWS
     #include <windows.h>
 #endif
 
-namespace CommonWorker
+namespace RenderWorker
 {
 
 #define BUFFDATA_SIZE 512 //临时缓存大小
@@ -101,12 +102,12 @@ int FIlePrinter::print(const std::string& msg)
             m_filecontent.close();
 			COMMON_ASSERT(m_filecontent.is_open());
             //create file print msg
-            time_t t;
-            time(&t);
-            struct tm *tt = localtime(&t);
-            std::string new_file = std::format("{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}",
-                                        tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday,
-                                        tt->tm_hour, tt->tm_min, tt->tm_sec, ++m_fileindex);
+            auto now = std::chrono::system_clock::now();
+            auto local_time = std::chrono::zoned_time(std::chrono::current_zone(), now);
+            std::string new_file = std::format(
+                "{0:%Y%m%d_%H%M%S}_{1}", 
+                local_time, 
+                ++m_fileindex);
             //path
             std::string strNewfile(m_filename);
             std::string::size_type dot = m_filename.find_last_of(".");
@@ -156,11 +157,9 @@ void Log::lock()
 Log::Log()
 	:m_log_type(LogLevel::LOG_NONE), m_isthread(false), m_isopen(false)
 {
-    char tmString[TIME_BUF_SZIE + 1] = { 0 };
     auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::system_clock::to_time_t(now);
-    tm* localTime = std::localtime(&time);
-    std::strftime(tmString, sizeof(tmString), "%Y-%m-%d-%H:%M:%S", localTime);
+    auto local_time = std::chrono::zoned_time(std::chrono::current_zone(), now);
+    std::string tmString = std::format("{:%Y-%m-%d-%H:%M:%S}", local_time);
     std::string strFileName = tmString;
     strFileName += "_0_log.log";
 
@@ -299,11 +298,9 @@ bool Log::RemovePrint(int index)
 int Log::do_log(LogLevel nlevel, const std::string& strbuffer)
 {
     // get time string
-    char tmString[TIME_BUF_SZIE + 1] = { 0 };
     auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::system_clock::to_time_t(now);
-    tm* localTime = std::localtime(&time);
-    std::strftime(tmString, sizeof(tmString), "%Y-%m-%d %H:%M:%S", localTime);
+    auto local_time = std::chrono::zoned_time(std::chrono::current_zone(), now);
+    std::string tmString = std::format("{:%Y-%m-%d-%H:%M:%S}", local_time);
 
     std::ostringstream o;
     o << tmString << ("-")  << szLevelName[static_cast<int>(nlevel)] << (":") << strbuffer << std::endl;

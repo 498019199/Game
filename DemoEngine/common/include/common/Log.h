@@ -8,7 +8,7 @@
 #include <locale>
 #include <mutex>   
 
-namespace CommonWorker
+namespace RenderWorker
 {
 enum class LogLevel:uint8_t
 {
@@ -161,13 +161,13 @@ private:
 
 // 宏定义
 // 依靠下列预定义的可以很方便的添加或者删除日志输出,提高效率
-#define LOGER_ERROR() \
-    (*CommonWorker::Log::Instance()) << CommonWorker::LogLevel::LOG_ERROR  
-#define LOGER_WARN()\
-    (*CommonWorker::Log::Instance()) << CommonWorker::LogLevel::LOG_WARING 
-#define LOGER_INFO()\
-    (*CommonWorker::Log::Instance()) << CommonWorker::LogLevel::LOG_INFO 
-#define LOGER_DEBUG()\
-    (*CommonWorker::Log::Instance()) << CommonWorker::LogLevel::LOG_DEBUG 
-#define LOGER_TRACE()\
-    (*CommonWorker::Log::Instance()) << CommonWorker::LogLevel::LOG_TRACE 
+#define LOGER_ERROR() std::cout
+    //(*RenderWorker::Log::Instance()) << RenderWorker::LogLevel::LOG_ERROR  
+#define LOGER_WARN() std::cout
+    //(*RenderWorker::Log::Instance()) << RenderWorker::LogLevel::LOG_WARING 
+#define LOGER_INFO() std::cout
+    //(*RenderWorker::Log::Instance()) << RenderWorker::LogLevel::LOG_INFO 
+#define LOGER_DEBUG() std::cout
+    //(*RenderWorker::Log::Instance()) << RenderWorker::LogLevel::LOG_DEBUG 
+#define LOGER_TRACE() std::cout
+    //(*RenderWorker::Log::Instance()) << RenderWorker::LogLevel::LOG_TRACE 
