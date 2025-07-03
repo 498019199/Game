@@ -14,4 +14,4 @@ set_target_properties(math PROPERTIES
 	OUTPUT_NAME math${ZENGINE_OUTPUT_SUFFIX}
 	ARCHIVE_OUTPUT_NAME math${ZENGINE_OUTPUT_SUFFIX}
 )
-#add_subdirectory(test)
+add_subdirectory(test)

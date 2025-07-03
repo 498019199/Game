@@ -31,5 +31,5 @@ file(COPY ${PROJECT_SOURCE_DIR}/common/include DESTINATION "${LIBRARY_OUTPUT_PAT
 add_subdirectory(math)
 file(COPY ${PROJECT_SOURCE_DIR}/math/include DESTINATION "${LIBRARY_OUTPUT_PATH}")
 add_subdirectory(core)
-#file(COPY ${PROJECT_SOURCE_DIR}/core/include DESTINATION "${LIBRARY_OUTPUT_PATH}")
+file(COPY ${PROJECT_SOURCE_DIR}/core/include DESTINATION "${LIBRARY_OUTPUT_PATH}")
 

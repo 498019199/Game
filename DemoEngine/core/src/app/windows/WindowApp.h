@@ -1,10 +1,10 @@
 #pragma once
-#include <core/IApp.h>
+#include <core/App.h>
 #include <windows.h>
 
 namespace RenderWorker
 {
-class WindowApp : public IApp 
+class WindowApp : public App 
 {
 public:
 	WindowApp(const std::string& strName, const FWindowDesc& Settings, void* pNativeWnd);
