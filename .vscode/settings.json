@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "D:/git/Game/DemoEngine",
+    "cmake.sourceDirectory": "G:/shareData/project/github/Game/DemoEngine",
     "files.associations": {
         "chrono": "cpp",
         "format": "cpp",

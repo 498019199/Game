@@ -15,4 +15,5 @@ set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorProjectPanel.cpp)
 
 add_executable(ZEditor
+    ${SRC_LIST}
     ${PROJECT_SOURCE_DIR}/Editor/main.cpp)
