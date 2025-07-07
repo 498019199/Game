@@ -5,6 +5,7 @@
 #include "D3D11Texture.h"
 #include "D3D11RenderStateObject.h"
 #include "D3D11RenderView.h"
+#include "D3D11RenderEngine.h"
 
 namespace RenderWorker
 {
@@ -100,5 +101,10 @@ GraphicsBufferPtr D3D11RenderFactory::MakeConstantBuffer(BufferUsage usage, uint
 	auto ret = MakeSharedPtr<D3D11GraphicsBuffer>(usage, access_hint, D3D11_BIND_CONSTANT_BUFFER, size_in_byte, structure_byte_stride);
     ret->CreateHWResource(init_data);
 	return ret;
+}
+
+std::unique_ptr<RenderEngine> D3D11RenderFactory::DoMakeRenderEngine()
+{
+    return MakeUniquePtr<D3D11RenderEngine>();
 }
 }

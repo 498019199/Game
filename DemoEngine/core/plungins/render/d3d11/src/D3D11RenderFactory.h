@@ -31,6 +31,9 @@ public:
         uint32_t structure_byte_stride = 0) override;
 
 private:
+    std::unique_ptr<RenderEngine> DoMakeRenderEngine() override;
+    
+private:
 	D3D11RenderFactory(D3D11RenderFactory const & rhs);
 	D3D11RenderFactory& operator=(D3D11RenderFactory const & rhs);
 };

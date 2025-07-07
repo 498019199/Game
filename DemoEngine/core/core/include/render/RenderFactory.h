@@ -5,6 +5,7 @@
 #include <Render/Texture.h>
 #include <Render/RenderStateObject.h>
 #include <Render/RenderView.h>
+#include <Render/RenderEngine.h>
 
 namespace RenderWorker
 {
@@ -15,6 +16,7 @@ public:
     RenderFactory();
     virtual ~RenderFactory() noexcept;
 
+    RenderEngine& RenderEngineInstance();
     virtual RenderLayoutPtr MakeRenderLayout() = 0;
 
     virtual ShaderObjectPtr MakeShaderObject() = 0;
@@ -39,7 +41,15 @@ public:
         uint32_t structure_byte_stride = 0) = 0;
     virtual GraphicsBufferPtr MakeConstantBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride = 0) = 0;
+
+private:
+    virtual std::unique_ptr<RenderEngine> DoMakeRenderEngine() = 0;
+
+protected:
+    std::unique_ptr<RenderEngine> re_;
 };
+
+
 
 
 

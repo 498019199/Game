@@ -19,9 +19,9 @@ struct VertexPosNormalColor
 RenderableBox::  RenderableBox(float width, float height, float depth, const Color & color)
 {
     float w2 = width / 2, h2 = height / 2, d2 = depth / 2;
-
-    rls_[0] = MakeSharedPtr<D3D11RenderLayout>();
-    rls_[0]->TopologyType(D3D11RenderLayout::TT_TriangleList);
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    rls_[0] = rf.MakeRenderLayout();
+    rls_[0]->TopologyType(RenderLayout::TT_TriangleList);
 
     std::vector<VertexElement> merged_ves;
     VertexPosNormalColor vertex[24];
@@ -85,7 +85,6 @@ RenderableBox::  RenderableBox(float width, float height, float depth, const Col
     merged_ves.emplace_back(VertexElement(VEU_Diffuse, 0, EF_ABGR32F));
     //merged_ves.emplace_back(VertexElement(VEU_Tangent, 0, EF_ABGR8));
     //merged_ves.emplace_back(VertexElement(VEU_TextureCoord, 0, EF_SIGNED_GR16));
-    auto& rf = Context::Instance().RenderFactoryInstance();
     auto vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable, static_cast<uint32_t>(24 * sizeof(vertex[0])), &vertex[0]);
     rls_[0]->BindVertexStream(vb, merged_ves);
 
@@ -107,8 +106,9 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
     uint32_t vertexCount = 2 + (levels - 1) * (slices + 1);
     uint32_t indexCount = 6 * (levels - 1) * slices;
 
-    rls_[0] = MakeSharedPtr<D3D11RenderLayout>();
-    rls_[0]->TopologyType(D3D11RenderLayout::TT_TriangleList);
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    rls_[0] = rf.MakeRenderLayout();
+    rls_[0]->TopologyType(RenderLayout::TT_TriangleList);
 
     std::vector<VertexElement> merged_ves;
     std::vector<VertexPosNormalColor> vertex;
@@ -158,7 +158,6 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
     tmp.color = color;
     vertex[vIndex++] = tmp;
 
-    auto& rf = Context::Instance().RenderFactoryInstance();
     merged_ves.emplace_back(VertexElement(VEU_Position, 0, EF_BGR32F));
     merged_ves.emplace_back(VertexElement(VEU_Normal, 0, EF_BGR32F));
     merged_ves.emplace_back(VertexElement(VEU_Diffuse, 0, EF_ABGR32F));
