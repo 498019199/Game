@@ -1,8 +1,8 @@
 
 #pragma once
-#include <render/RenderStateObject.h>
-#include <render/RenderLayout.h>
-#include <render/RenderDeviceCaps.h>
+#include <Render/RenderStateObject.h>
+#include <Render/RenderLayout.h>
+#include <Render/RenderDeviceCaps.h>
 
 namespace RenderWorker
 {

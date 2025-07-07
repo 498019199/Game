@@ -3,9 +3,6 @@
 #include <base/Context.h>
 #include <common/Util.h>
 
-#include "D3D11/D3D11RenderLayout.h"
-#include "D3D11/D3D11RenderFactory.h"
-
 #include <filesystem>
 
 namespace RenderWorker

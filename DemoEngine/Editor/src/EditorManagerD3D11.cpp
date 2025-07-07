@@ -2,12 +2,12 @@
 #include <imgui/imgui_impl_dx11.h>
 #include <imgui/imgui_impl_win32.h>
 
-#include <base/Context.h>
-#include <render/RenderEngine.h>
+// #include <base/Context.h>
+// #include <render/RenderEngine.h>
 
 namespace EditorWorker
 {
-using namespace RenderWorker;
+//using namespace RenderWorker;
 
 EditorManagerD3D11::EditorManagerD3D11()
 {
@@ -18,11 +18,11 @@ EditorManagerD3D11::EditorManagerD3D11()
     ImGui::StyleColorsDark();
 
     // 设置平台/渲染器后端
-    ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND());
-	const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    auto re = d3d11_re.D3DDevice();
-    auto ctx = d3d11_re.D3DDeviceImmContext();
-    ImGui_ImplDX11_Init(re, ctx);
+    // ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND());
+	// const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    // auto re = d3d11_re.D3DDevice();
+    // auto ctx = d3d11_re.D3DDeviceImmContext();
+    //ImGui_ImplDX11_Init(re, ctx);
 }
 
 EditorManagerD3D11::~EditorManagerD3D11()

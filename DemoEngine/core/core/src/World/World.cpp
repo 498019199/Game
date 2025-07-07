@@ -1,11 +1,10 @@
-#include <base/World.h>
-#include <base/Context.h>
-#include <base/WinApp.h>
-#include <render/RenderEffect.h>
-#include <render/Renderable.h>
+#include <Base/Context.h>
+#include <Base/WinApp.h>
 
-#include "../D3D11/D3D11GraphicsBuffer.h"
-#include "../D3D11/D3D11RenderEngine.h"
+#include <World/World.h>
+
+#include <Render/RenderEffect.h>
+#include <Render/Renderable.h>
 
 namespace RenderWorker
 {

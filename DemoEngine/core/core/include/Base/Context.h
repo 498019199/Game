@@ -1,6 +1,6 @@
 #pragma once
-#include <base/WinApp.h>
-#include <base/World.h>
+#include <Base/WinApp.h>
+#include <World/World.h>
 #include <render/RenderFactory.h>
 #include <render/RenderEngine.h>
 

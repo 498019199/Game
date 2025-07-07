@@ -1,38 +1,11 @@
-#include <base/WinApp.h>
 #include <common/Timer.h>
-#include <base/Context.h>
-#include <base/World.h>
 
-#include "../D3D11/D3D11RenderEngine.h"
-#include "../D3D11/D3D11Util.h"
-
-#define CHPATER_USE_IMGUISE 1
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_dx11.h>
-#include <imgui/imgui_impl_win32.h>
+#include <Base/WinApp.h>
+#include <Base/Context.h>
+#include <World/World.h>
 
 namespace RenderWorker
 {
-
-bool InitImGui()
-{
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // 允许键盘控制
-    io.ConfigWindowsMoveFromTitleBarOnly = true;              // 仅允许标题拖动
-
-    // 设置Dear ImGui风格
-    ImGui::StyleColorsDark();
-
-    // 设置平台/渲染器后端
-    ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND());
-	const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    auto re = d3d11_re.D3DDevice();
-    auto ctx = d3d11_re.D3DDeviceImmContext();
-    ImGui_ImplDX11_Init(re, ctx);
-    return true;
-}
 
 WinAPP::WinAPP()
 {
@@ -44,8 +17,6 @@ WinAPP::~WinAPP()
 
 LRESULT WinAPP::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
-        return true;
     //if()
     //else
 	{
@@ -122,7 +93,6 @@ bool WinAPP::InitDevice(HWND hwnd, const RenderSettings& settings)
 	if(re)
 	{
 		Context::Instance().RenderEngineInstance(*re);
-		InitImGui();
 		return true;    
 	}
 	return false;
@@ -171,8 +141,6 @@ int WinAPP::Run()
 			if( !is_paused )
 			{
 				CalculateFrameStats();
-
-				ImguiUpdate(frame_time_);
 
 				const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
 				d3d11_re.SwitchChain();

@@ -20,8 +20,6 @@ public:
     
     int Run();
 
-    virtual void ImguiUpdate(float dt) = 0;
-
     HWND GetHWND() const { return hwnd_; }
 
     float AspectRatio() const { return static_cast<float>(width_) / height_; }

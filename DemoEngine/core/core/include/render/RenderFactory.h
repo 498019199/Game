@@ -1,10 +1,10 @@
 #pragma once
-#include <render/GraphicsBuffer.h>
-#include <render/RenderLayout.h>
-#include <render/ShaderObject.h>
-#include <render/Texture.h>
-#include <render/RenderStateObject.h>
-#include <render/RenderView.h>
+#include <Render/GraphicsBuffer.h>
+#include <Render/RenderLayout.h>
+#include <Render/ShaderObject.h>
+#include <Render/Texture.h>
+#include <Render/RenderStateObject.h>
+#include <Render/RenderView.h>
 
 namespace RenderWorker
 {

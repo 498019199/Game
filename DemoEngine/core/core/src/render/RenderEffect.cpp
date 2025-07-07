@@ -6,7 +6,7 @@
 #include <common/ErrorHandling.h>
 #include <common/Util.h>
 #include <common/ResIdentifier.h>
-#include <base/Context.h>
+#include <Base/Context.h>
 #include <Render/RenderFactory.h>
 #include <Render/RenderStateObject.h>
 #include <Render/RenderView.h>

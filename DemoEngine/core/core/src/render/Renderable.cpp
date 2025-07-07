@@ -1,6 +1,7 @@
-#include <render/Renderable.h>
-#include <render/RenderEffect.h>
-#include <base/Context.h>
+#include <Base/Context.h>
+
+#include <Render/Renderable.h>
+#include <Render/RenderEffect.h>
 
 namespace RenderWorker
 {

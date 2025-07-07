@@ -1,8 +1,10 @@
-#include <render/Texture.h>
-#include <render/TexCompression.h>
 #include <common/ResIdentifier.h>
-#include <base/Context.h>
-#include <render/RenderFactory.h>
+
+#include <Base/Context.h>
+
+#include <Render/Texture.h>
+#include <Render/TexCompression.h>
+#include <Render/RenderFactory.h>
 
 #include <fstream>
 #include <filesystem>

@@ -1,7 +1,7 @@
 
 #pragma once
-#include <base/common.h>
-#include <render/ElementFormat.h>
+#include <Base/common.h>
+#include <Render/ElementFormat.h>
 
 namespace RenderWorker
 {

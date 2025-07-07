@@ -1,8 +1,8 @@
 #pragma once
 #include <common/Util.h>
 #include <common/common.h>
-#include <render/Texture.h>
-#include <render/GraphicsBuffer.h>
+#include <Render/Texture.h>
+#include <Render/GraphicsBuffer.h>
 
 namespace RenderWorker
 {

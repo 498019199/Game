@@ -1,4 +1,4 @@
-#include <render/Camera.h>
+#include <Render/Camera.h>
 
 namespace RenderWorker
 {
