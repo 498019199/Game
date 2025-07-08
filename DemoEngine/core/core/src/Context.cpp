@@ -1,4 +1,4 @@
-#include <Base/Context.h>
+#include <base/Context.h>
 #include <common/Util.h>
 #include <common/ResIdentifier.h>
 
@@ -6,104 +6,52 @@
 #include <fstream>
 namespace RenderWorker
 {
-std::unique_ptr<Context> Context::instance_;
+
+class Context::Impl final
+{
+public:
+    Context& Instance() const;
+
+    WinAPP& AppInstance() noexcept;
+    RenderEngine& RenderEngineInstance() noexcept;
+    RenderFactory& RenderFactoryInstance() noexcept;
+    World& WorldInstance() noexcept;
+    ResourceLoad& ResourceLoadInstance() noexcept;
+}
 
 Context::Context()
 {
-    work_path_ = std::filesystem::current_path().parent_path().parent_path().string();
+
 }
 
 Context& Context::Instance()
 {
-    if(!instance_)
-    {
-        if (!instance_)
-		{
-			instance_ = std::make_unique<Context>();
-		}
-    }
-
-    return *instance_;
+    return Impl::Instance();
 }
 
-void Context::AppInstance(WinAPP& app)
+WinAPP& Context::AppInstance() noexcept
 {
-    app_ = &app;
+    return pimpl_->AppInstance();
 }
 
-WinAPP& Context::AppInstance()
+RenderEngine& Context::RenderEngineInstance() noexcept
 {
-    COMMON_ASSERT(app_);
-    return *app_;
+    return pimpl_->RenderEngineInstance();
 }
 
-void Context::RenderEngineInstance(RenderEngine& render_engine)
+RenderFactory& Context::RenderFactoryInstance() noexcept
 {
-    render_engine_ = &render_engine;
+    return pimpl_->RenderFactoryInstance();
 }
 
-RenderEngine& Context::RenderEngineInstance() const
+World& Context::WorldInstance() noexcept
 {
-    COMMON_ASSERT(render_engine_);
-    return *render_engine_;
+    return pimpl_->WorldInstance();
 }
 
-RenderFactory& Context::RenderFactoryInstance()
+ResourceLoad& Context::ResourceLoadInstance() noexcept
 {
-    COMMON_ASSERT(render_engine_);
-    return *render_factory_;
+    return pimpl_->WorldInstance();
 }
 
-World& Context::WorldInstance()
-{
-    COMMON_ASSERT(world_);
-    return *world_;
-}
-
-
-void Context::LoadConfig(const char* file_name)
-{
-    render_factory_ = MakeSharedPtr<D3D11RenderFactory>();
-    COMMON_ASSERT(render_factory_);
-
-    world_ = MakeSharedPtr<World>();
-    COMMON_ASSERT(world_);
-}
-
-void Context::AddResource(const std::string& Path)
-{
-    resource_path_ = work_path_ + Path;
-}
-
-const std::string& Context::GetWorkPath() const
-{
-    return work_path_;
-}
-
-const std::string& Context::GetResourcePath() const
-{
-    return resource_path_;
-}
-
-ResIdentifierPtr Context::OpenFile(std::string_view FileName)
-{
-    return OpenFile(std::string(FileName.data()));
-}
-
-ResIdentifierPtr Context::OpenFile(const std::string& FileName)
-{
-    std::string resource_path = Context::Instance().GetResourcePath();
-    std::string ResourcePath = Context::Instance().GetResourcePath() + FileName;
-    uint64_t const timestamp = std::filesystem::last_write_time(resource_path).time_since_epoch().count();
-    return MakeSharedPtr<ResIdentifier>(
-        FileName, 
-        timestamp, 
-        MakeSharedPtr<std::ifstream>(ResourcePath.c_str(), std::ios_base::binary));
-}
-
-std::string Context::Locate(std::string_view name)
-{
-    std::string resource_path = Context::Instance().GetResourcePath();
-    return Context::Instance().GetResourcePath() + std::string(name);
-}
 }

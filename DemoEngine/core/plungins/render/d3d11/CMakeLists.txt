@@ -1,4 +1,4 @@
-add_library(DemoEngine_Render_D3D11 SHARED
+add_library(ZENGINE_Render_D3D11 SHARED
 	src/D3D11Adapter.cpp
 	src/D3D11Adapter.h
 	src/D3D11AdapterList.cpp
@@ -36,6 +36,6 @@ add_library(DemoEngine_Render_D3D11 SHARED
 	#src/D3D11VideoMode.cpp
 	#src/D3D11VideoMode.h)
 
-target_precompile_headers(DemoEngine_Render_D3D11
+target_precompile_headers(ZENGINE_Render_D3D11
 	PRIVATE
 		"${PROJECT_SOURCE_DIR}/core/include/Base/Context.h")

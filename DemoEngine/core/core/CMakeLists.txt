@@ -57,5 +57,5 @@ set(BASE_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/RenderableHelper.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/TexCompression.cpp)
     
-add_library(DemoEngine_Core 
+add_library(ZENGINE_Core 
     ${BASE_SOURCE_FILES} ${BASE_HEADER_FILES})

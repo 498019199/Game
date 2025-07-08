@@ -6,7 +6,7 @@
 #include <utility>
 #include <chrono>
 
-#ifdef DEMOENGINE_PLATFORM_WINDOWS
+#ifdef ZENGINE_PLATFORM_WINDOWS
     #include <windows.h>
 #endif
 
@@ -30,7 +30,7 @@ const char* szLevelName[]
 //vs ide 输出
 int WindowsDebugPrinter::print(const std::string& msg)
 {
- #ifdef DEMOENGINE_PLATFORM_WINDOWS
+ #ifdef ZENGINE_PLATFORM_WINDOWS
      OutputDebugStringA(msg.c_str());
 #endif
     //std::cout << msg << std::endl;

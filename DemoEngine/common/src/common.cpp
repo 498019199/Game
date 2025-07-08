@@ -1,6 +1,6 @@
 #include <common/common.h>
 
-#ifdef DEMOENGINE_PLATFORM_WINDOWS
+#ifdef ZENGINE_PLATFORM_WINDOWS
 	#include <windows.h>
 #else
 	#include <cerrno>
@@ -17,11 +17,11 @@ namespace CommonWorker
 /////////////////////////////////////////////////////////////////////////////////
 std::string& Convert(std::string& dest, std::wstring_view src)
 {
-#if defined DEMOENGINE_PLATFORM_WINDOWS
+#if defined ZENGINE_PLATFORM_WINDOWS
     int const mbs_len = WideCharToMultiByte(CP_ACP, 0, src.data(), static_cast<int>(src.size()), nullptr, 0, nullptr, nullptr);
     auto tmp = MakeUniquePtr<char[]>(mbs_len + 1);
     WideCharToMultiByte(CP_ACP, 0, src.data(), static_cast<int>(src.size()), tmp.get(), mbs_len, nullptr, nullptr);
-#elif defined DEMOENGINE_PLATFORM_ANDROID
+#elif defined ZENGINE_PLATFORM_ANDROID
     // Hack for wcstombs
     std::vector<char> tmp;
     for (auto ch : src)
@@ -69,11 +69,11 @@ std::wstring& Convert(std::wstring& dest, std::wstring_view src)
 /////////////////////////////////////////////////////////////////////////////////
 std::wstring& Convert(std::wstring& dest, std::string_view src)
 {
-#if defined DEMOENGINE_PLATFORM_WINDOWS
+#if defined ZENGINE_PLATFORM_WINDOWS
     int const wcs_len = MultiByteToWideChar(CP_ACP, 0, src.data(), static_cast<int>(src.size()), nullptr, 0);
     auto tmp = MakeUniquePtr<wchar_t[]>(wcs_len + 1);
     MultiByteToWideChar(CP_ACP, 0, src.data(), static_cast<int>(src.size()), tmp.get(), wcs_len);
-#elif defined DEMOENGINE_PLATFORM_ANDROID
+#elif defined ZENGINE_PLATFORM_ANDROID
     // Hack for mbstowcs
     std::vector<wchar_t> tmp;
     for (auto iter = src.begin(); iter != src.end(); ++ iter)

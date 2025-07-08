@@ -14,9 +14,9 @@
 	#endif
 
     #if _MSC_VER >= 1930
-		#define DEMOENGINE_COMPILER_VERSION 143
+		#define ZENGINE_COMPILER_VERSION 143
 	#elif _MSC_VER >= 1920
-		#define DEMOENGINE_COMPILER_VERSION 142
+		#define ZENGINE_COMPILER_VERSION 142
 	#else
 		#error "Unsupported compiler version. Please install VS2019 or up."
 	#endif
@@ -34,22 +34,22 @@
 		#define NOMINMAX
 	#endif
 	
-    #define DEMOENGINE_PLATFORM_WINDOWS
+    #define ZENGINE_PLATFORM_WINDOWS
 	#if defined(_WIN64)
-		#define DEMOENGINE_PLATFORM_WIN64
+		#define ZENGINE_PLATFORM_WIN64
 	#else
-		#define DEMOENGINE_PLATFORM_WIN32
+		#define ZENGINE_PLATFORM_WIN32
 	#endif
 #elif defined(__ANDROID__)
-    #define DEMOENGINE_PLATFORM_ANDROID
+    #define ZENGINE_PLATFORM_ANDROID
 #elif defined(linux) || defined(__linux) || defined(__linux__)
-    #define DEMOENGINE_PLATFORM_LINUX
+    #define ZENGINE_PLATFORM_LINUX
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
 	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-		#define DEMOENGINE_PLATFORM_IOS
+		#define ZENGINE_PLATFORM_IOS
 	#else
-		#define DEMOENGINE_PLATFORM_DARWIN
+		#define ZENGINE_PLATFORM_DARWIN
 	#endif
 #else
 	#error "Unknown platform. The supported target platforms are Windows, Android, Linux, macOS, and iOS."
@@ -62,12 +62,12 @@
 		#ifndef NTDDI_WIN10_RS4
 			#error "You need to install Windows SDK 10.0.17133.0 or up to build UWP."
 		#endif
-		#define DEMOENGINE_PLATFORM_WINDOWS_STORE
+		#define ZENGINE_PLATFORM_WINDOWS_STORE
 	#else
-		#define DEMOENGINE_PLATFORM_WINDOWS_DESKTOP
+		#define ZENGINE_PLATFORM_WINDOWS_DESKTOP
 	#endif
 #else
-	#define DEMOENGINE_PLATFORM_WINDOWS_DESKTOP
+	#define ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif
 
 
