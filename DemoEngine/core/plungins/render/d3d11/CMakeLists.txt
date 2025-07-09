@@ -38,4 +38,4 @@ add_library(ZENGINE_Render_D3D11 SHARED
 
 target_precompile_headers(ZENGINE_Render_D3D11
 	PRIVATE
-		"${PROJECT_SOURCE_DIR}/core/include/Base/Context.h")
+		"${PROJECT_SOURCE_DIR}/core/core/include/Base/Context.h")

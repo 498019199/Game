@@ -1,6 +1,6 @@
 #include <common/common.h>
-
 #include <math/math.h>
+
 namespace RenderWorker
 {
 using int1 = MathWorker::int1;

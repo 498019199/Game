@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+#include <cstdint>
 
 namespace RenderWorker
 {
@@ -40,19 +42,6 @@ private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 
