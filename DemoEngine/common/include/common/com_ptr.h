@@ -363,15 +363,15 @@ namespace CommonWorker
 namespace std
 {
 	template <typename T>
-	void swap(RenderWorker::com_ptr<T>& lhs, RenderWorker::com_ptr<T>& rhs) noexcept
+	void swap(CommonWorker::com_ptr<T>& lhs, CommonWorker::com_ptr<T>& rhs) noexcept
 	{
 		lhs.swap(rhs);
 	}
 
 	template <typename T>
-	struct hash<RenderWorker::com_ptr<T>>
+	struct hash<CommonWorker::com_ptr<T>>
 	{
-		using argument_type = RenderWorker::com_ptr<T>;
+		using argument_type = CommonWorker::com_ptr<T>;
 		using result_type = std::size_t;
 
 		result_type operator()(argument_type const& p) const noexcept

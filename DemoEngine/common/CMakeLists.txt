@@ -57,34 +57,29 @@ source_group("Base\\Header Files" FILES ${COMMON_SOURCE_FILES})
 source_group("Math\\Source Files" FILES ${MATH_SOURCE_FILES})
 source_group("Math\\Header Files" FILES ${MATH_HEADER_FILES})
 
-add_library(common STATIC
+add_library(ZENGINE_common STATIC
 	${COMMON_SOURCE_FILES} ${COMMON_HEADER_FILES}
 	${MATH_SOURCE_FILES} ${MATH_HEADER_FILES}
 )
 
-target_include_directories(common
-	PUBLIC
-		${COMMON_PROJECT_DIR}/include
-)
-
-target_link_libraries(common
+target_link_libraries(ZENGINE_common
 	PRIVATE
 		rapidjson
 		rapidxml
 )
 
-target_include_directories(common
+target_include_directories(ZENGINE_common
 	PUBLIC
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${COMMON_PROJECT_DIR}/include
 )
 
-set_target_properties(common PROPERTIES
-    OUTPUT_NAME common${ZENGINE_OUTPUT_SUFFIX}
-    FOLDER "common"
+set_target_properties(ZENGINE_common PROPERTIES
+    OUTPUT_NAME ZENGINE_common${ZENGINE_OUTPUT_SUFFIX}
+    FOLDER "ZENGINE"
 )
 
-target_precompile_headers(common
+target_precompile_headers(ZENGINE_common
 	PRIVATE
 		include/common/common.h
 )

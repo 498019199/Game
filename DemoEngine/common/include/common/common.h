@@ -3,6 +3,8 @@
 #include <common/Log.h>
 #include <common/instance.h>
 #include <common/defer.h>
+#include <common/Util.h>
+#include <common/ErrorHandling.h>
 
 #include <vector>
 #include <map>
