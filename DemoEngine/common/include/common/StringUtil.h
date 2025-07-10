@@ -353,5 +353,5 @@ namespace CommonWorker
 		{
 			return CaseInsensitiveLexicographicalCompare(lhs, rhs, std::locale());
 		}
-	} // namespace StringUtil
-} // namespace KlayGE
+	} 
+}

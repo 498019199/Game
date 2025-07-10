@@ -79,7 +79,7 @@ D3D11Texture2D::D3D11Texture2D(const ID3D11Texture2DPtr& d3d_tex)
         break;
 
     default:
-        KFL_UNREACHABLE("Invalid usage");
+        ZENGINE_UNREACHABLE("Invalid usage");
     }
     if (desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
     {

@@ -1,6 +1,7 @@
 #include <Base/Context.h>
 
-#include <Render/RenderEngine.h>
+#include <render/RenderEngine.h>
+#include <render/RenderFactory.h>
 
 namespace RenderWorker
 {

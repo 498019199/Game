@@ -27,8 +27,7 @@ endif()
 
 add_subdirectory(3rd)
 add_subdirectory(common)
-
-#add_subdirectory(core)
+add_subdirectory(core)
 #add_subdirectory(Editor)
 
 #file(COPY ${PROJECT_SOURCE_DIR}/core/include DESTINATION "${LIBRARY_OUTPUT_PATH}")

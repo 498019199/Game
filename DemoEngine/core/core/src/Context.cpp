@@ -17,12 +17,7 @@ public:
     RenderFactory& RenderFactoryInstance() noexcept;
     World& WorldInstance() noexcept;
     ResourceLoad& ResourceLoadInstance() noexcept;
-}
-
-Context::Context()
-{
-
-}
+};
 
 Context& Context::Instance()
 {

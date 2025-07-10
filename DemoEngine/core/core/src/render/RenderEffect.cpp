@@ -1,20 +1,14 @@
 // RenderEffect.cpp
 //////////////////////////////////////////////////////////////////////////////////
 
+#include <base/Context.h>
+#include <base/ResourceLoad.h>
 
-
-#include <common/ErrorHandling.h>
-#include <common/Util.h>
-#include <common/ResIdentifier.h>
-#include <Base/Context.h>
-#include <Render/RenderFactory.h>
-#include <Render/RenderStateObject.h>
-#include <Render/RenderView.h>
-#include <Render/ShaderObject.h>
-#include <Render/Texture.h>
-#include <common/XMLDom.h>
-#include <common/Hash.h>
-#include <common/StringUtil.h>
+#include <render/RenderFactory.h>
+#include <render/RenderStateObject.h>
+#include <render/RenderView.h>
+#include <render/ShaderObject.h>
+#include <render/Texture.h>
 
 #include <charconv>
 #include <cstring>
@@ -22,13 +16,13 @@
 #include <fstream>
 #include <iterator>
 #include <mutex>
-#include <string>
 #include <variant>
 
-#include <Render/RenderEffect.h>
+#include <render/RenderEffect.h>
 
 namespace
 {
+	using namespace CommonWorker;
 	using namespace RenderWorker;
 
 	uint32_t const KFX_VERSION = 0x0151;
@@ -126,7 +120,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid type name");
+		ZENGINE_UNREACHABLE("Invalid type name");
 	}
 
 	std::string_view TypeNameFromCode(RenderEffectDataType type)
@@ -137,7 +131,7 @@ namespace
 			return types[type].first;
 		}
 
-		KFL_UNREACHABLE("Invalid type");
+		ZENGINE_UNREACHABLE("Invalid type");
 	}
 
 	ShadeMode ShadeModeFromName(std::string_view name)
@@ -157,7 +151,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid ShadeMode name");
+		ZENGINE_UNREACHABLE("Invalid ShadeMode name");
 	}
 
 	CompareFunction CompareFunctionFromName(std::string_view name)
@@ -183,7 +177,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid CompareFunction name");
+		ZENGINE_UNREACHABLE("Invalid CompareFunction name");
 	}
 
 	CullMode CullModeFromName(std::string_view name)
@@ -204,7 +198,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid CullMode name");
+		ZENGINE_UNREACHABLE("Invalid CullMode name");
 	}
 
 	PolygonMode PolygonModeFromName(std::string_view name)
@@ -225,7 +219,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid PolygonMode name");
+		ZENGINE_UNREACHABLE("Invalid PolygonMode name");
 	}
 
 	AlphaBlendFactor AlphaBlendFactorFromName(std::string_view name)
@@ -260,7 +254,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid AlphaBlendFactor name");
+		ZENGINE_UNREACHABLE("Invalid AlphaBlendFactor name");
 	}
 
 	BlendOperation BlendOperationFromName(std::string_view name)
@@ -283,7 +277,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid BlendOperation name");
+		ZENGINE_UNREACHABLE("Invalid BlendOperation name");
 	}
 
 	StencilOperation StencilOperationFromName(std::string_view name)
@@ -309,7 +303,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid StencilOperation name");
+		ZENGINE_UNREACHABLE("Invalid StencilOperation name");
 	}
 
 	TexFilterOp TexFilterOpFromName(std::string_view name)
@@ -351,7 +345,7 @@ namespace
 			return static_cast<TexFilterOp>((cmp << 4) + TFO_Anisotropic);
 		}
 
-		KFL_UNREACHABLE("Invalid TexFilterOp name");
+		ZENGINE_UNREACHABLE("Invalid TexFilterOp name");
 	}
 
 	TexAddressingMode TexAddressingModeFromName(std::string_view name)
@@ -373,7 +367,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid TexAddressingMode name");
+		ZENGINE_UNREACHABLE("Invalid TexAddressingMode name");
 	}
 
 	LogicOperation LogicOperationFromName(std::string_view name)
@@ -407,7 +401,7 @@ namespace
 			}
 		}
 
-		KFL_UNREACHABLE("Invalid LogicOperation name");
+		ZENGINE_UNREACHABLE("Invalid LogicOperation name");
 	}
 
 	int RetrieveIndex(XMLNode const & node)
@@ -1495,7 +1489,7 @@ namespace
 				}
 				else
 				{
-					KFL_UNREACHABLE("Invalid sampler state name");
+					ZENGINE_UNREACHABLE("Invalid sampler state name");
 				}
 			}
 
@@ -3905,7 +3899,7 @@ namespace
 			break;
 
 		default:
-			KFL_UNREACHABLE("Invalid type");
+			ZENGINE_UNREACHABLE("Invalid type");
 		}
 
 		return ret;
@@ -4135,9 +4129,8 @@ namespace RenderWorker
 			immutable_ = MakeSharedPtr<Immutable>();
 		}
 
-		//auto& res_loader = Context::Instance().ResLoaderInstance();
-
-		std::filesystem::path first_fxml_path(Context::Locate(*names.begin()));
+		auto& res_loader = Context::Instance().ResourceLoadInstance();
+		std::filesystem::path first_fxml_path(res_loader.Locate(*names.begin()));
 		std::filesystem::path first_fxml_directory = first_fxml_path.parent_path();
 
 		std::string connected_name;
@@ -4161,8 +4154,7 @@ namespace RenderWorker
 		for (auto const& name : names)
 		{
 			immutable_->timestamp = 0;
-			//ResIdentifierPtr source = res_loader.Open(path_file);
-    		ResIdentifierPtr source = Context::OpenFile(name); 
+			ResIdentifierPtr source = res_loader.Open(path_file);
 			if (source)
 			{
 				immutable_->timestamp = std::max(immutable_->timestamp, source->Timestamp());
@@ -4184,8 +4176,7 @@ namespace RenderWorker
 		immutable_->need_compile = false;
 #endif
 		std::string kfx_name = *names.begin();
-		//ResIdentifierPtr kfx_source = res_loader.Open(kfx_name);
-		ResIdentifierPtr kfx_source = Context::OpenFile(kfx_name);
+		ResIdentifierPtr kfx_source = res_loader.Open(kfx_name);
 		if (!kfx_source || !this->StreamIn(*kfx_source))
 		{
 #if ZENGINE_IS_DEV_PLATFORM
@@ -4203,8 +4194,7 @@ namespace RenderWorker
 			immutable_->shader_descs.resize(1);
 
 			std::vector<std::string> include_names;
-			ResIdentifierPtr main_source = Context::OpenFile(names[0]);
-			//ResIdentifierPtr main_source = res_loader.Open(names[0]);
+			ResIdentifierPtr main_source = res_loader.Open(names[0]);
 			if (main_source)
 			{
 				XMLNode root = LoadXml(*main_source);
@@ -4212,8 +4202,7 @@ namespace RenderWorker
 
 				for (size_t i = 1; i < names.size(); ++i)
 				{
-					//ResIdentifierPtr source = res_loader.Open(names[i]);
-					ResIdentifierPtr source = Context::OpenFile(names[i]);
+					ResIdentifierPtr source = res_loader.Open(names[i]);
 					if (source)
 					{
 						XMLNode frag_root = LoadXml(*source);
@@ -4543,7 +4532,7 @@ namespace RenderWorker
 #if ZENGINE_IS_DEV_PLATFORM
 	void RenderEffect::PreprocessIncludes(XMLNode& root, std::vector<std::string>& include_names)
 	{
-		//auto& res_loader = Context::Instance().ResLoaderInstance();
+		auto& res_loader = Context::Instance().ResourceLoadInstance();
 		for (const XMLNode* node = root.FirstNode("include"); node; node = root.FirstNode("include"))
 		{
 			const XMLAttribute* attr = node->Attrib("name");
@@ -4557,7 +4546,7 @@ namespace RenderWorker
 			auto iter = std::find(include_names.begin(), include_names.end(), include_name);
 			if (iter == include_names.end())
 			{
-				auto const& include_root = LoadXml(*Context::OpenFile(include_name));
+				auto const& include_root = LoadXml(*res_loader.Open(include_name));
 				for (const XMLNode* child_node = include_root.FirstNode(); child_node; child_node = child_node->NextSibling())
 				{
 					if (XMLNodeType::Element == child_node->Type())
@@ -4574,7 +4563,7 @@ namespace RenderWorker
 
 	void RenderEffect::RecursiveIncludeNode(XMLNode const& root, std::vector<std::string>& include_names) const
 	{
-		//auto& res_loader = Context::Instance().ResLoaderInstance();
+		auto& res_loader = Context::Instance().ResourceLoadInstance();
 		for (const XMLNode* node = root.FirstNode("include"); node; node = node->NextSibling("include"))
 		{
 			const XMLAttribute* attr = node->Attrib("name");
@@ -4582,7 +4571,7 @@ namespace RenderWorker
 
 			const std::string_view include_name = attr->ValueString();
 
-			XMLNode include_root = LoadXml(*Context::OpenFile(include_name));
+			XMLNode include_root = LoadXml(*res_loader.Open(include_name));
 			this->RecursiveIncludeNode(include_root, include_names);
 
 			bool found = false;
@@ -4677,7 +4666,7 @@ namespace RenderWorker
 			}
 		}
 
-		KFL_UNREACHABLE("Inherit from non-exist tech");
+		ZENGINE_UNREACHABLE("Inherit from non-exist tech");
 	}
 
 	void RenderEffect::ResolveOverrideTechs(XMLNode& root)
@@ -5493,7 +5482,7 @@ namespace RenderWorker
 				break;
 
 			default:
-				KFL_UNREACHABLE("Invalid shader type");
+				ZENGINE_UNREACHABLE("Invalid shader type");
 			}
 			// ShaderModel const & ver = frag.Version();
 			// if ((ver.major_ver != 0) || (ver.minor_ver != 0))
@@ -6284,7 +6273,7 @@ namespace RenderWorker
 							}
 							else
 							{
-								KFL_UNREACHABLE("Invalid usage");
+								ZENGINE_UNREACHABLE("Invalid usage");
 							}
 
 							std::string component_str;
@@ -6315,7 +6304,7 @@ namespace RenderWorker
 			}
 			else
 			{
-				KFL_UNREACHABLE("Invalid state name");
+				ZENGINE_UNREACHABLE("Invalid state name");
 			}
 		}
 
@@ -7002,7 +6991,7 @@ namespace RenderWorker
 	// 		std::string val;
 	// 		anno.Value(val);
 
-	// 		if (Context::Instance().ResLoaderInstance().Locate(val).empty())
+	// 		if (Context::Instance().ResourceLoadInstance().Locate(val).empty())
 	// 		{
 	// 			LogError() << val << " NOT found" << std::endl;
 	// 		}
@@ -7361,453 +7350,453 @@ namespace RenderWorker
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] RenderVariable const& rhs)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] bool const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] uint32_t const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] int32_t const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] float const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] uint2 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] uint3 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] uint4 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] int2 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] int3 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] int4 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] float2 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] float3 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] float4 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] float4x4 const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] TexturePtr const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] ShaderResourceViewPtr const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	// RenderVariable& RenderVariable::operator=([[maybe_unused]] UnorderedAccessViewPtr const & value)
 	// {
-	// 	KFL_UNREACHABLE("Can't be called");
+	// 	ZENGINE_UNREACHABLE("Can't be called");
 	// }
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] SamplerStateObjectPtr const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::string const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::string_view value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] ShaderDesc const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<bool> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<uint32_t> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<int32_t> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<float> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<uint2> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<uint3> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<uint4> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<int2> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<int3> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<int4> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<float2> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<float3> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<float4> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<float4x4> const & value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<bool const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<uint32_t const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<int32_t const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<float const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<uint2 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<uint3 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<uint4 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<int2 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<int3 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<int4 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<float2 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<float3 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<float4 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<float4x4 const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::vector<uint8_t> const& value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	RenderVariable& RenderVariable::operator=([[maybe_unused]] std::span<uint8_t const> value)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] bool& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] uint32_t& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] int32_t& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] float& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] uint2& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] uint3& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] uint4& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] int2& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] int3& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] int4& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] float2& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] float3& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] float4& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] float4x4& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] TexturePtr& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] ShaderResourceViewPtr& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	// void RenderVariable::Value([[maybe_unused]] UnorderedAccessViewPtr& value) const
 	// {
-	// 	KFL_UNREACHABLE("Can't be called");
+	// 	ZENGINE_UNREACHABLE("Can't be called");
 	// }
 
 	void RenderVariable::Value([[maybe_unused]] SamplerStateObjectPtr& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::string& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::string_view& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] ShaderDesc& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<bool>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<uint32_t>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<int32_t>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<float>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<uint2>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<uint3>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<uint4>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<int2>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<int3>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<int4>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<float2>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<float3>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<float4>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<float4x4>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::Value([[maybe_unused]] std::vector<uint8_t>& value) const
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::BindToCBuffer([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] uint32_t cbuff_index,
 		[[maybe_unused]] uint32_t offset, [[maybe_unused]] uint32_t stride)
 	{
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 	}
 
 	void RenderVariable::RebindToCBuffer([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] uint32_t cbuff_index)
 	{		
-		KFL_UNREACHABLE("Can't be called");
+		ZENGINE_UNREACHABLE("Can't be called");
 
 	}
 

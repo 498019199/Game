@@ -36,7 +36,7 @@ protected:
 
     float app_time_ = 0.f;
 	float frame_time_ = 0.f;
-    Timer timer_;
+    CommonWorker::Timer timer_;
     bool is_paused = false;
 
     uint32_t	left_;

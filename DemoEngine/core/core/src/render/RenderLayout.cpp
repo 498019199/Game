@@ -1,7 +1,7 @@
 #include <Base/Context.h>
 
-#include <Render/RenderLayout.h>
-#include <Render/RenderEffect.h>
+#include <render/RenderLayout.h>
+#include <render/RenderEffect.h>
 
 namespace RenderWorker
 {

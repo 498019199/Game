@@ -1,6 +1,6 @@
 #pragma once
 // #include <core/SceneNode.h>
-
+#include <common/common.h>
 // class LightSource: public SceneNode
 // {
 // public:
@@ -76,7 +76,7 @@
 // {
 
 // };
-#include <Base/common.h>
+
 namespace RenderWorker
 {
 struct DirectionalLightSource

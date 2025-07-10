@@ -90,7 +90,7 @@ D3D11RenderEngine::D3D11RenderEngine(HWND hwnd, const RenderSettings& settings)
 		break;
 
 	default:
-		KFL_UNREACHABLE("Invalid feature level");
+		ZENGINE_UNREACHABLE("Invalid feature level");
 	}
 
 	// Check 4X MSAA quality support for our back buffer format.
@@ -345,7 +345,7 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 		}
 		else
 		{
-			KFL_UNREACHABLE("Invalid topology type");
+			ZENGINE_UNREACHABLE("Invalid topology type");
 		}
 		break;
 	}
@@ -571,7 +571,7 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 		// D3D11 feature level 12.1+ supports objects in shader model 5.1, although it doesn't support shader model 5.1 bytecode
 		caps_.cs_support = true;
 	default:
-		KFL_UNREACHABLE("Invalid feature level");
+		ZENGINE_UNREACHABLE("Invalid feature level");
 	}
 
 	{

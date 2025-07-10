@@ -51,7 +51,7 @@ ShaderStageObjectPtr D3D11RenderFactory::MakeShaderStageObject(ShaderStage stage
         break;
 
     default:
-        KFL_UNREACHABLE("Invalid shader stage");
+        ZENGINE_UNREACHABLE("Invalid shader stage");
     }
     return ret;
 }

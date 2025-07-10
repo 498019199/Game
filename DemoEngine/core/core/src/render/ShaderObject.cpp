@@ -1,9 +1,7 @@
-#include <common/DllLoader.h>
-#include <common/com_ptr.h>
-#include <common/CustomizedStreamBuf.h>
-#include <Base/Context.h>
+#include <base/Context.h>
 
-#include <Render/ShaderObject.h>
+#include <render/RenderEffect.h>
+#include <render/ShaderObject.h>
 
 #if ZENGINE_IS_DEV_PLATFORM
 
@@ -21,6 +19,8 @@
 namespace
 {
 using namespace RenderWorker;
+using namespace CommonWorker;
+
 class D3DCompilerLoader
 {
 public:
@@ -266,7 +266,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 				break;
 
 			default:
-				KFL_UNREACHABLE("Invalid shader stage");
+				ZENGINE_UNREACHABLE("Invalid shader stage");
 			}
 			macros.emplace_back(D3D_SHADER_MACRO{type_name, "1"});
 		}

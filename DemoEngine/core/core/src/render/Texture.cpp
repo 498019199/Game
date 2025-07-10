@@ -1,10 +1,9 @@
-#include <common/ResIdentifier.h>
+#include <base/Context.h>
+#include <base/ResourceLoad.h>
 
-#include <Base/Context.h>
-
-#include <Render/Texture.h>
-#include <Render/TexCompression.h>
-#include <Render/RenderFactory.h>
+#include <render/Texture.h>
+#include <render/TexCompression.h>
+#include <render/RenderFactory.h>
 
 #include <fstream>
 #include <filesystem>
@@ -520,7 +519,7 @@ namespace
 			return EF_ETC2_ABGR8_SRGB;
 
 		default:
-			KFL_UNREACHABLE("Invalid format");
+			ZENGINE_UNREACHABLE("Invalid format");
 		}
 	}
 
@@ -763,7 +762,7 @@ namespace
 			return static_cast<DXGI_FORMAT>(0x8000000AUL);
 
 		default:
-			KFL_UNREACHABLE("Invalid format");
+			ZENGINE_UNREACHABLE("Invalid format");
 		}
 	}
 
@@ -923,7 +922,7 @@ namespace
 					}
 					else
 					{
-						KFL_UNREACHABLE("Invalid format");
+						ZENGINE_UNREACHABLE("Invalid format");
 					}
 					break;
 
@@ -963,7 +962,7 @@ namespace
 								}
 								else
 								{
-									KFL_UNREACHABLE("Invalid format");
+									ZENGINE_UNREACHABLE("Invalid format");
 								}
 							}
 						}
@@ -971,7 +970,7 @@ namespace
 					break;
 
 				default:
-					KFL_UNREACHABLE("Invalid rgb bit count");
+					ZENGINE_UNREACHABLE("Invalid rgb bit count");
 				}
 			}
 			else
@@ -987,7 +986,7 @@ namespace
 						}
 						else
 						{
-							KFL_UNREACHABLE("Invalid format");
+							ZENGINE_UNREACHABLE("Invalid format");
 						}
 						break;
 
@@ -998,12 +997,12 @@ namespace
 						}
 						else
 						{
-							KFL_UNREACHABLE("Invalid format");
+							ZENGINE_UNREACHABLE("Invalid format");
 						}
 						break;
 
 					default:
-						KFL_UNREACHABLE("Invalid rgb bit count");
+						ZENGINE_UNREACHABLE("Invalid rgb bit count");
 					}
 				}
 				else
@@ -1026,7 +1025,7 @@ namespace
 								}
 								else
 								{
-									KFL_UNREACHABLE("Invalid format");
+									ZENGINE_UNREACHABLE("Invalid format");
 								}
 							}
 							break;
@@ -1058,14 +1057,14 @@ namespace
 									}
 									else
 									{
-										KFL_UNREACHABLE("Invalid format");
+										ZENGINE_UNREACHABLE("Invalid format");
 									}
 								}
 							}
 							break;
 
 						default:
-							KFL_UNREACHABLE("Invalid rgb bit count");
+							ZENGINE_UNREACHABLE("Invalid rgb bit count");
 						}
 					}
 					else
@@ -1076,7 +1075,7 @@ namespace
 						}
 						else
 						{
-							KFL_UNREACHABLE("Invalid alpha format");
+							ZENGINE_UNREACHABLE("Invalid alpha format");
 						}
 					}
 				}
@@ -1140,7 +1139,7 @@ namespace
 					break;
 
 				default:
-					KFL_UNREACHABLE("Invalid resource dimension");
+					ZENGINE_UNREACHABLE("Invalid resource dimension");
 				}
 			}	
 		}
@@ -1433,7 +1432,7 @@ TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
 		break;
 
 	default:
-		KFL_UNREACHABLE("Invalid texture type");
+		ZENGINE_UNREACHABLE("Invalid texture type");
 	}
 	texture->CreateHWResource(init_data, nullptr);
 	return texture;
@@ -1441,7 +1440,8 @@ TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
 
 TexturePtr LoadVirtualTexture(std::string_view tex_name)
 {
-    ResIdentifierPtr tex_res = Context::OpenFile(tex_name);
+	auto& res_loader = Context::Instance().ResourceLoadInstance();
+    ResIdentifierPtr tex_res = res_loader.Open(tex_name);
 
     Texture::TextureType type;
     uint32_t width, height, depth;

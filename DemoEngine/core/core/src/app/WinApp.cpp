@@ -1,5 +1,3 @@
-#include <common/Timer.h>
-
 #include <Base/WinApp.h>
 #include <Base/Context.h>
 #include <World/World.h>

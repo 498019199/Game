@@ -1,8 +1,6 @@
 #include <render/RenderableHelper.h>
 #include <render/RenderEffect.h>
-#include <base/Context.h>
-#include <common/Util.h>
-
+#include <render/RenderFactory.h>
 #include <filesystem>
 
 namespace RenderWorker
@@ -57,7 +55,7 @@ RenderableBox::  RenderableBox(float width, float height, float depth, const Col
     vertex[22].pos = float3(w2, h2, -d2);
     vertex[23].pos = float3(w2, -h2, -d2);
     
-    for (UINT i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         // 右面(+X面)
         vertex[i].normal = float3(1.0f, 0.0f, 0.0f);

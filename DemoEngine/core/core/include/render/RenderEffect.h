@@ -8,13 +8,13 @@
 #include <Render/Texture.h>
 #include <Render/RenderView.h>
 
-#include <vector>
+#include <common/common.h>
 namespace RenderWorker
 {
+using namespace CommonWorker;
 
 class RenderTechnique;
 class RenderEffectStructType;
-class ResIdentifier;
 class RenderEffect;
 using RenderEffectPtr = std::shared_ptr<RenderEffect>;
 class RenderEffectConstantBuffer;

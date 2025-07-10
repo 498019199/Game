@@ -1,9 +1,12 @@
 #pragma once
 #include <memory>
 #include <cstdint>
+#include <common/common.h>
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 struct RenderSettings
 {
     bool    full_screen = false;
@@ -26,7 +29,7 @@ class ResourceLoad;
 class Context final
 {
 public:
-    Context();
+    Context() = default;
     ~Context() = default;
 
     void LoadConfig(const char* file_name);

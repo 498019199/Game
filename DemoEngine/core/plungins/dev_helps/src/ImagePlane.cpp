@@ -135,7 +135,7 @@ bool ImagePlane::Load(std::string_view name)
     //                 break;
 
     //             //default:
-    //                 //KFL_UNREACHABLE("Unsupported bpp.");
+    //                 //ZENGINE_UNREACHABLE("Unsupported bpp.");
     //             }
     //         }
     //         break;
@@ -183,7 +183,7 @@ bool ImagePlane::Load(std::string_view name)
     //         break;
 
     //     //default:
-    //         //KFL_UNREACHABLE("Unsupported image type.");
+    //         //ZENGINE_UNREACHABLE("Unsupported image type.");
     //     }
 
     //     uint8_t const * src = FreeImage_GetBits(dib.get());

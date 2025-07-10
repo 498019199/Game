@@ -5,6 +5,8 @@
 #include <common/defer.h>
 #include <common/Util.h>
 #include <common/ErrorHandling.h>
+#include <common/ResIdentifier.h>
+#include <common/Hash.h>
 
 #include <vector>
 #include <map>
@@ -31,4 +33,7 @@ using quater = MathWorker::quater;
 using rotator = MathWorker::rotator;
 using float4x4 = MathWorker::float4x4;
 using Color = MathWorker::Color;
+
+using ResIdentifier = CommonWorker::ResIdentifier;
+using ResIdentifierPtr = CommonWorker::ResIdentifierPtr;
 }

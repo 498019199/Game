@@ -220,7 +220,7 @@ DXGI_FORMAT D3D11Mapping::MappingFormat(ElementFormat format)
         return DXGI_FORMAT_BC7_UNORM_SRGB;
 
     default:
-        KFL_UNREACHABLE("Invalid format");
+        ZENGINE_UNREACHABLE("Invalid format");
     }
 
 }
@@ -434,7 +434,7 @@ ElementFormat D3D11Mapping::MappingFormat(DXGI_FORMAT format)
         return EF_BC7_SRGB;
 
     default:
-        KFL_UNREACHABLE("Invalid format");
+        ZENGINE_UNREACHABLE("Invalid format");
     }
 }
 
@@ -485,7 +485,7 @@ D3D11_FILTER D3D11Mapping::Mapping(TexFilterOp filter)
         return D3D11_FILTER_COMPARISON_ANISOTROPIC;
 
     default:
-        KFL_UNREACHABLE("Invalid texture filter operation");
+        ZENGINE_UNREACHABLE("Invalid texture filter operation");
     }
 }
 
@@ -506,7 +506,7 @@ D3D11_TEXTURE_ADDRESS_MODE D3D11Mapping::Mapping(TexAddressingMode mode)
         return D3D11_TEXTURE_ADDRESS_BORDER; // 会采样指定的边界颜色。边界颜色可以在创建采样器状态时进行设置。
 
     default:
-        KFL_UNREACHABLE("Invalid texture addressing mode");
+        ZENGINE_UNREACHABLE("Invalid texture addressing mode");
     }
 }
 
@@ -539,7 +539,7 @@ D3D11_COMPARISON_FUNC D3D11Mapping::Mapping(CompareFunction func)
         return D3D11_COMPARISON_GREATER;
 
     default:
-        KFL_UNREACHABLE("Invalid compare function");
+        ZENGINE_UNREACHABLE("Invalid compare function");
     }
 }
 
@@ -557,7 +557,7 @@ D3D11_CULL_MODE D3D11Mapping::Mapping(CullMode mode)
         return D3D11_CULL_BACK;
 
     default:
-        KFL_UNREACHABLE("Invalid cull mode");
+        ZENGINE_UNREACHABLE("Invalid cull mode");
     }
 }
 
@@ -575,7 +575,7 @@ D3D11_FILL_MODE D3D11Mapping::Mapping(PolygonMode mode)
         return D3D11_FILL_SOLID;
 
     default:
-        KFL_UNREACHABLE("Invalid polygon mode");
+        ZENGINE_UNREACHABLE("Invalid polygon mode");
     }
 }
 
@@ -788,7 +788,7 @@ D3D11_PRIMITIVE_TOPOLOGY D3D11Mapping::Mapping(RenderLayout::topology_type tt)
         return D3D11_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST;
 
     default:
-        KFL_UNREACHABLE("Invalid topology type");
+        ZENGINE_UNREACHABLE("Invalid topology type");
     }
 }
 
@@ -848,7 +848,7 @@ D3D11_BLEND D3D11Mapping::Mapping(AlphaBlendFactor factor)
         return D3D11_BLEND_INV_SRC1_COLOR;
 
     default:
-        KFL_UNREACHABLE("Invalid alpha blend factor");
+        ZENGINE_UNREACHABLE("Invalid alpha blend factor");
     }
 }
 
@@ -872,7 +872,7 @@ D3D11_BLEND_OP D3D11Mapping::Mapping(BlendOperation bo)
         return D3D11_BLEND_OP_MAX;
 
     default:
-        KFL_UNREACHABLE("Invalid blend operation");
+        ZENGINE_UNREACHABLE("Invalid blend operation");
     }
 }
 
@@ -939,7 +939,7 @@ D3D11_STENCIL_OP D3D11Mapping::Mapping(StencilOperation op)
         return D3D11_STENCIL_OP_DECR;
 
     default:
-        KFL_UNREACHABLE("Invalid stencil operation");
+        ZENGINE_UNREACHABLE("Invalid stencil operation");
     };
 }
 

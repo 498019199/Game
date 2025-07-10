@@ -697,7 +697,7 @@ D3D11ShaderObject::ParameterBind D3D11ShaderObject::GetBindFunc(ShaderStage stag
         break;
 
     default:
-        KFL_UNREACHABLE("Invalid type");
+        ZENGINE_UNREACHABLE("Invalid type");
     }
 
     return ret;

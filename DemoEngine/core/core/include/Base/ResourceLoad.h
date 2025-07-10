@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <string_view>
-#include <common/ResIdentifier.h>
+#include <common/common.h>
 
 namespace RenderWorker
 {

@@ -171,7 +171,7 @@ D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture::FillSRVDesc([[maybe_unused]] Eleme
     [[maybe_unused]] uint32_t first_level,
     [[maybe_unused]] uint32_t num_levels) const
 {
-    KFL_UNREACHABLE("Can't be called");
+    ZENGINE_UNREACHABLE("Can't be called");
 }
 
 uint32_t D3D11Texture2D::Width(uint32_t level) const noexcept 
