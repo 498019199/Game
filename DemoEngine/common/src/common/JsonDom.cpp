@@ -34,9 +34,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
-#include <common/common.h>
 #include <common/JsonDom.h>
-
+#include <common/ErrorHandling.h>
+#include <common/Util.h>
 
 using namespace CommonWorker;
 
@@ -104,7 +104,7 @@ namespace
 		}
 		else
 		{
-			DEMO_UNREACHABLE("Invalid type");
+			ZENGINE_UNREACHABLE("Invalid type");
 		}
 	}
 
@@ -159,7 +159,7 @@ namespace
 			break;
 
 		default:
-			DEMO_UNREACHABLE("Invalid type");
+			ZENGINE_UNREACHABLE("Invalid type");
 		}
 	}
 
@@ -239,7 +239,7 @@ namespace CommonWorker
 				break;
 
 			default:
-				DEMO_UNREACHABLE("Invalid type");
+				ZENGINE_UNREACHABLE("Invalid type");
 			}
 		}
 		Impl() : type_(JsonValueType::Null)
@@ -294,7 +294,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Object)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& obj_value = std::get<std::vector<std::pair<std::string, JsonValue>>>(value_);
@@ -312,7 +312,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Object)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& obj_value = std::get<std::vector<std::pair<std::string, JsonValue>>>(value_);
@@ -330,7 +330,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Array)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& array_value = std::get<std::vector<JsonValue>>(value_);
@@ -348,7 +348,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Object)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& obj_value = std::get<std::vector<std::pair<std::string, JsonValue>>>(value_);
@@ -359,7 +359,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Array)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& array_value = std::get<std::vector<JsonValue>>(value_);
@@ -394,7 +394,7 @@ namespace CommonWorker
 			}
 			else
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 		}
 
@@ -412,7 +412,7 @@ namespace CommonWorker
 			}
 			else
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 		}
 
@@ -464,7 +464,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Bool)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			return std::get<bool>(value_);
@@ -474,7 +474,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Int)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			return std::get<int32_t>(value_);
@@ -484,7 +484,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::UInt)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			return std::get<uint32_t>(value_);
@@ -494,7 +494,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Float)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			return std::get<float>(value_);
@@ -504,7 +504,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::String)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			return std::get<std::string>(value_);
@@ -514,7 +514,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Array)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			const auto& array_value = std::get<std::vector<JsonValue>>(value_);
@@ -525,7 +525,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Object)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			const auto& obj_value = std::get<std::vector<std::pair<std::string, JsonValue>>>(value_);
@@ -536,7 +536,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Object)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& obj_value = std::get<std::vector<std::pair<std::string, JsonValue>>>(value_);
@@ -552,7 +552,7 @@ namespace CommonWorker
 		{
 			if (type_ != JsonValueType::Array)
 			{
-				DEMO_UNREACHABLE("Can't be called");
+				ZENGINE_UNREACHABLE("Can't be called");
 			}
 
 			auto& array_value = std::get<std::vector<JsonValue>>(value_);
@@ -786,4 +786,4 @@ namespace CommonWorker
 		doc.Accept(writer);
 		os << sb.GetString();
 	}
-} // namespace KlayGE
+} 

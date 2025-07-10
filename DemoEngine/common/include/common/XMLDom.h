@@ -34,7 +34,7 @@
 #include <vector>
 #include <memory>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	class XMLAttribute;
 	class XMLNode;

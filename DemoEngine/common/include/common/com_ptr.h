@@ -33,10 +33,9 @@
 
 #pragma once
 #include <utility>
-#include <common/common.h>
 #include <common/ErrorHandling.h>
 #include <common/Uuid.h>
-namespace RenderWorker
+namespace CommonWorker
 {
 	template <typename T>
 	class com_ptr

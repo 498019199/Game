@@ -39,7 +39,7 @@
 
 #include <common/DllLoader.h>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	DllLoader::DllLoader()
 		: dll_handle_(nullptr)

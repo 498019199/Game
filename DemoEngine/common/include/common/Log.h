@@ -8,7 +8,7 @@
 #include <locale>
 #include <mutex>   
 
-namespace RenderWorker
+namespace CommonWorker
 {
 enum class LogLevel:uint8_t
 {

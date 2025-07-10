@@ -32,7 +32,7 @@
 #include <cstring>
 #include <common/CustomizedStreamBuf.h>
 #include <common/Util.h>
-namespace RenderWorker
+namespace CommonWorker
 {
 	MemInputStreamBuf::MemInputStreamBuf(void const * p, std::streamsize num_bytes)
 		: MemInputStreamBuf(p, static_cast<uint8_t const *>(p) + num_bytes)

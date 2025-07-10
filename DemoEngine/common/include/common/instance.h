@@ -3,7 +3,7 @@
 #include <mutex>
 #include <atomic>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 template <typename ClassType>
 class Singleton 

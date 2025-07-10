@@ -1,4 +1,4 @@
-#include <common/common.h>
+
 #include <math/math.h>
 
 namespace RenderWorker

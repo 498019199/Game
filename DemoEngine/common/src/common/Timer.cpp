@@ -3,7 +3,7 @@
 #include <limits>
 #include <chrono>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
 Timer::Timer()

@@ -37,7 +37,7 @@
 #include <vector>
 #include <string>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	class MemInputStreamBuf : public std::streambuf
 	{

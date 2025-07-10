@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
 

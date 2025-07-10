@@ -8,13 +8,14 @@
 // Simple d3d error checker for book demos.
 //---------------------------------------------------------------------------------------
 // Throw error message
-namespace RenderWorker
+namespace CommonWorker
 {
 	std::string CombineFileLine(std::string_view file, uint32_t line);
+	void Verify(bool x);
 }
 
 // Throw error code
-#define TEC(x) throw std::system_error(x, RenderWorker::CombineFileLine(__FILE__, __LINE__))
+#define TEC(x) throw std::system_error(x, CommonWorker::CombineFileLine(__FILE__, __LINE__))
 
 // Throw error message
 #define TMSG(msg) throw std::runtime_error(msg)
@@ -39,6 +40,6 @@ namespace RenderWorker
 	{                                                          		 \
 		if ((hr) < 0)                                          		 \
 		{                                                      		 \
-			TMSG(RenderWorker::CombineFileLine(__FILE__, __LINE__)); \
+			TMSG(CommonWorker::CombineFileLine(__FILE__, __LINE__)); \
 		}                                                      		 \
 	}

@@ -50,7 +50,7 @@
 
 #define DLL_SUFFIX ZENGINE_OUTPUT_SUFFIX "." DLL_EXT_NAME
 
-namespace RenderWorker
+namespace CommonWorker
 {
 class DllLoader final
 {

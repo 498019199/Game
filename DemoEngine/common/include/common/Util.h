@@ -56,9 +56,9 @@ namespace std
 #endif
 
 
-#define KFL_UNREACHABLE(msg) std::unreachable()
+#define ZENGINE_UNREACHABLE(msg) std::unreachable()
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
     std::string& Convert(std::string& dest, std::wstring_view src);

@@ -10,7 +10,7 @@
     #include <windows.h>
 #endif
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
 #define BUFFDATA_SIZE 512 //临时缓存大小

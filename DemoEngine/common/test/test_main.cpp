@@ -1,4 +1,5 @@
 #include <common/common.h>
+
 using namespace CommonWorker;
 
 void test_log()

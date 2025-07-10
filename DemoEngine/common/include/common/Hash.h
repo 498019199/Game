@@ -37,7 +37,7 @@
 #include <string_view>
 #include <common/span.h>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	constexpr size_t HashCombineImpl(size_t value, size_t seed) noexcept
 	{

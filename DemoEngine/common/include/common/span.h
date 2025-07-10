@@ -1,7 +1,7 @@
 #pragma once
 #include <span>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
 template <typename ElementType>

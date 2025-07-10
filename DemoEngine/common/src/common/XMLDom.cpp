@@ -65,10 +65,9 @@
 
 #include <common/XMLDom.h>
 
-using namespace RenderWorker;
-
 namespace
 {
+	using namespace CommonWorker;
 	XMLAttribute CreateXmlAttribFromRapidXmlAttrib(rapidxml::xml_attribute<char> const& attrib)
 	{
 		return XMLAttribute(std::string_view(attrib.name(), attrib.name_size()), std::string_view(attrib.value(), attrib.value_size()));
@@ -276,7 +275,7 @@ namespace
 	}
 } // namespace
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	class XMLNode::Impl final
 	{

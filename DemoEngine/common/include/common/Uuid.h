@@ -7,7 +7,7 @@
 #include <guiddef.h>
 #endif
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
     struct Uuid

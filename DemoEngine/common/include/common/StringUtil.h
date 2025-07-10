@@ -7,7 +7,7 @@
 
 #include <common/Util.h>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	namespace StringUtil
 	{

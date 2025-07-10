@@ -1,6 +1,6 @@
 #pragma once
 
-namespace RenderWorker
+namespace CommonWorker
 {
 
 class Timer

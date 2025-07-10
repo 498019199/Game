@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-namespace RenderWorker
+namespace CommonWorker
 {
 class Defer 
 {

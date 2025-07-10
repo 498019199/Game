@@ -113,7 +113,6 @@ FOREACH(flag_var
 	ENDIF()
 ENDFOREACH()
 
-add_subdirectory(imgui)
 add_subdirectory(rapidjson)
 add_subdirectory(rapidxml)
 add_subdirectory(zlib)

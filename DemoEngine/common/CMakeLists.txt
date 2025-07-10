@@ -1,6 +1,7 @@
+set(COMMON_PROJECT_DIR "${ZENGINE_ROOT_DIR}/common")
+
 set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/com_ptr.h
-    ${PROJECT_SOURCE_DIR}/common/include/common/common.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Compiler.h
     ${PROJECT_SOURCE_DIR}/common/include/common/CustomizedStreamBuf.h
     ${PROJECT_SOURCE_DIR}/common/include/common/defer.h
@@ -21,10 +22,9 @@ set(COMMON_HEADER_FILES
 )
 
 set(COMMON_SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/common/src/common/common.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/CustomizedStreamBuf.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/DllLoader.cpp
-    ${PROJECT_SOURCE_DIR}/common/src/common/ErrorHandling.hcpp
+    ${PROJECT_SOURCE_DIR}/common/src/common/ErrorHandling.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/JsonDom.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Log.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Timer.cpp
@@ -52,14 +52,19 @@ set(MATH_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/common/src/math/rotator.cpp
 )
 
-source_group("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
-source_group("Base\\Header Files" FILES ${BASE_HEADER_FILES})
+source_group("Base\\Source Files" FILES ${COMMON_HEADER_FILES})
+source_group("Base\\Header Files" FILES ${COMMON_SOURCE_FILES})
 source_group("Math\\Source Files" FILES ${MATH_SOURCE_FILES})
 source_group("Math\\Header Files" FILES ${MATH_HEADER_FILES})
 
 add_library(common STATIC
-	${BASE_SOURCE_FILES} ${BASE_HEADER_FILES}
+	${COMMON_SOURCE_FILES} ${COMMON_HEADER_FILES}
 	${MATH_SOURCE_FILES} ${MATH_HEADER_FILES}
+)
+
+target_include_directories(common
+	PUBLIC
+		${COMMON_PROJECT_DIR}/include
 )
 
 target_link_libraries(common
@@ -67,3 +72,22 @@ target_link_libraries(common
 		rapidjson
 		rapidxml
 )
+
+target_include_directories(common
+	PUBLIC
+		${CMAKE_CURRENT_BINARY_DIR}/include
+		${COMMON_PROJECT_DIR}/include
+)
+
+set_target_properties(common PROPERTIES
+    OUTPUT_NAME common${ZENGINE_OUTPUT_SUFFIX}
+    FOLDER "common"
+)
+
+target_precompile_headers(common
+	PRIVATE
+		include/common/common.h
+)
+
+
+add_subdirectory(test)
