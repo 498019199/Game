@@ -70,4 +70,10 @@ void RenderEngine::BindSOBuffers(const RenderLayoutPtr& rl)
     so_buffers_ = rl;
     DoBindSOBuffers(rl);
 }
+
+void RenderEngine::Refresh()
+{
+    
+}
+
 }

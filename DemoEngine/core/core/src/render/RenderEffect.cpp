@@ -4154,7 +4154,7 @@ namespace RenderWorker
 		for (auto const& name : names)
 		{
 			immutable_->timestamp = 0;
-			ResIdentifierPtr source = res_loader.Open(path_file);
+			ResIdentifierPtr source = res_loader.Open(name);
 			if (source)
 			{
 				immutable_->timestamp = std::max(immutable_->timestamp, source->Timestamp());
@@ -4166,7 +4166,7 @@ namespace RenderWorker
 
 				for (auto const& include_name : include_names)
 				{
-					immutable_->timestamp = immutable_->timestamp;//std::max(immutable_->timestamp, source->Timestamp(include_name));
+					immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp(include_name));
 				}
 			}
 		}

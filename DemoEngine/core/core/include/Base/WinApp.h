@@ -16,7 +16,6 @@ public:
     ~WinAPP();
     
     bool CreateAppWindow(const RenderSettings& settings);
-    bool InitDevice(HWND hwnd, const RenderSettings& settings);
     
     int Run();
 
@@ -26,6 +25,8 @@ public:
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept;
     
+	LRESULT MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
     void CalculateFrameStats();
 protected:
     // Stats
@@ -47,6 +48,11 @@ protected:
     uint32_t win_style_;
     float dpi_scale_ = 1.f;
 
+    bool active_;
+	bool ready_;
+	bool closed_;
 };
+
+
 
 }

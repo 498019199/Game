@@ -1,6 +1,8 @@
-#include <Base/WinApp.h>
-#include <Base/Context.h>
-#include <World/World.h>
+#include <base/WinApp.h>
+#include <base/Context.h>
+#include <world/World.h>
+
+#include <render/RenderEngine.h>
 
 namespace RenderWorker
 {
@@ -15,10 +17,34 @@ WinAPP::~WinAPP()
 
 LRESULT WinAPP::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept
 {
-    //if()
-    //else
+	WinAPP* win = reinterpret_cast<WinAPP*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+	if (win != nullptr)
 	{
-		return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+		return win->MsgProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT WinAPP::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_ACTIVATE:
+		active_ = (WA_INACTIVE != LOWORD(wParam));
+		break;
+
+	case WM_ERASEBKGND:
+		return 1;
+
+	case WM_CLOSE:
+	{		
+		active_ = false;
+		ready_ = false;
+		closed_ = true;
+		::PostQuitMessage(0);
+		return 0;
+	}
 	}
 }
 
@@ -85,17 +111,6 @@ bool WinAPP::CreateAppWindow(const RenderSettings& settings)
 	return true;
 }
 
-bool WinAPP::InitDevice(HWND hwnd, const RenderSettings& settings)
-{
-    auto re = new D3D11RenderEngine(hwnd, settings);
-	if(re)
-	{
-		Context::Instance().RenderEngineInstance(*re);
-		return true;    
-	}
-	return false;
-}
-
 // 更新状态
 void WinAPP::CalculateFrameStats()
 {
@@ -122,32 +137,34 @@ void WinAPP::CalculateFrameStats()
 
 int WinAPP::Run()
 {
+	bool gotMsg;
     MSG msg = {0};
+	::PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE);
 
-    while(msg.message != WM_QUIT)
+    while(	WM_QUIT != msg.message )
 	{
-		// If there are Window messages then process them.
-		if(PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
+		// 如果窗口是激活的，用 PeekMessage()以便我们可以用空闲时间渲染场景
+		// 不然, 用 GetMessage() 减少 CPU 占用率
+		if (active_)
 		{
-            TranslateMessage( &msg );
-            DispatchMessage( &msg );
+			gotMsg = (::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0);
 		}
-		// Otherwise, do animation/game stuff.
 		else
-        {	
+		{
+			gotMsg = (::GetMessage(&msg, nullptr, 0, 0) != 0);
+		}
 
-			if( !is_paused )
-			{
-				CalculateFrameStats();
 
-				const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-				d3d11_re.SwitchChain();
-			}
-			else
-			{
-				Sleep(100);
-			}
-        }
+		const auto& re = Context::Instance().RenderEngineInstance();
+		if (gotMsg)
+		{
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+		else
+		{
+			re.Refresh();
+		}
     }
 
 	return (int)msg.wParam;

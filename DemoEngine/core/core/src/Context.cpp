@@ -10,14 +10,31 @@ namespace RenderWorker
 class Context::Impl final
 {
 public:
-    Context& Instance() const;
+    static Context& Instance()
+    {
+        if (!context_instance_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!context_instance_)
+            {
+                context_instance_ = MakeUniquePtr<Context>();
+            }
+        }
+        return *context_instance_;
+    }
 
     WinAPP& AppInstance() noexcept;
     RenderEngine& RenderEngineInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;
     World& WorldInstance() noexcept;
     ResourceLoad& ResourceLoadInstance() noexcept;
+
+private:
+	static std::mutex singleton_mutex_;
+	static std::unique_ptr<Context> context_instance_;
 };
+std::mutex Context::Impl::singleton_mutex_;
+std::unique_ptr<Context> Context::Impl::context_instance_;
 
 Context& Context::Instance()
 {
@@ -46,7 +63,7 @@ World& Context::WorldInstance() noexcept
 
 ResourceLoad& Context::ResourceLoadInstance() noexcept
 {
-    return pimpl_->WorldInstance();
+    return pimpl_->ResourceLoadInstance();
 }
 
 }

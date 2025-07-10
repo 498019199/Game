@@ -7,6 +7,7 @@
 #include <common/ErrorHandling.h>
 #include <common/ResIdentifier.h>
 #include <common/Hash.h>
+#include <common/StringUtil.h>
 
 #include <vector>
 #include <map>

@@ -32,6 +32,8 @@ public:
         return force_line_mode_;
     }
 
+    virtual void Refresh();
+    
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;
 private:
@@ -47,6 +49,7 @@ protected:
 
     RenderDeviceCaps caps_;
 };
+
 
 
 

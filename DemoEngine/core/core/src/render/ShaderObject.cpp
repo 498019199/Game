@@ -1,4 +1,7 @@
 #include <base/Context.h>
+#include <common/com_ptr.h>
+#include <common/CustomizedStreamBuf.h>
+#include <common/DllLoader.h>
 
 #include <render/RenderEffect.h>
 #include <render/ShaderObject.h>

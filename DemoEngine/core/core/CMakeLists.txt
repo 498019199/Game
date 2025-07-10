@@ -82,6 +82,7 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
 target_include_directories(ZENGINE_core
     PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR}/include
+        ${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
         ${ZENGINE_ROOT_DIR}/common/include
         ${ZENGINE_ROOT_DIR}/core/core/include
 )
@@ -91,9 +92,13 @@ target_include_directories(ZENGINE_core
 # 		include/base/Context.h
 # )
 
-
-
 set_target_properties(ZENGINE_core PROPERTIES
     OUTPUT_NAME ZENGINE_core${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "ZENGINE"
 )
+
+if(ZENGINE_IS_DEV_PLATFORM)
+	if(NOT (ZENGINE_ARCH_NAME STREQUAL "arm64"))
+		add_dependencies(ZENGINE_core D3DCompilerRedist)
+	endif()
+endif()
