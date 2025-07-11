@@ -46,6 +46,8 @@ LRESULT WinAPP::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	}
+
+	return 0;
 }
 
 bool WinAPP::CreateAppWindow(const RenderSettings& settings)

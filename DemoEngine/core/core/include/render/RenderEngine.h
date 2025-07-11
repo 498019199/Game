@@ -32,7 +32,7 @@ public:
         return force_line_mode_;
     }
 
-    virtual void Refresh();
+    virtual void Refresh() const;
     
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;

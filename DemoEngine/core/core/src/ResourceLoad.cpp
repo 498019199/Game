@@ -17,6 +17,8 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 class ResourceLoad::Impl
 {
 public:

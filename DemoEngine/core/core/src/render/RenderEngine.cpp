@@ -71,7 +71,7 @@ void RenderEngine::BindSOBuffers(const RenderLayoutPtr& rl)
     DoBindSOBuffers(rl);
 }
 
-void RenderEngine::Refresh()
+void RenderEngine::Refresh() const
 {
     
 }
