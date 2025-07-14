@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Test Engine",
+            "name": "test",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}\\bin\\Debug\\TestEngine.exe",
@@ -17,13 +17,13 @@
         },
 
         {
-            "name": "Editor",
+            "name": "editor",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\bin\\Debug\\Editor.exe",
+            "program": "${workspaceFolder}\\DemoEngine\\bin\\Debug\\ZENGINE_editor.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}\\bin\\Debug",
+            "cwd": "${workspaceFolder}\\DemoEngine\\bin\\Debug",
             "environment": [],
             //"preLaunchTask": 
         }

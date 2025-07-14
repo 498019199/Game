@@ -17,6 +17,7 @@
 
 namespace RenderWorker
 {
+
 using namespace CommonWorker;
 
 class ResourceLoad::Impl
@@ -326,6 +327,10 @@ private:
     std::mutex paths_mutex_;
 };
 
+
+
+
+
 ResourceLoad::ResourceLoad() noexcept = default;
 ResourceLoad::~ResourceLoad() noexcept = default;
 
@@ -368,6 +373,5 @@ uint64_t ResourceLoad::Timestamp(std::string_view name)
 {
     return pimpl_->Timestamp(std::move(name));
 }
-
 
 }

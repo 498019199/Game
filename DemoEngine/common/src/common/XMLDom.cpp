@@ -47,19 +47,19 @@
 #if defined(ZENGINE_COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // 'flags': unreferenced formal parameter
-#elif defined(KLAYGE_COMPILER_GCC)
+#elif defined(ZENGINE_COMPILER_GCC)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter" // Ignore unused parameter 'flags'
-#elif defined(KLAYGE_COMPILER_CLANG)
+#elif defined(ZENGINE_COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter" // Ignore unused parameter 'flags'
 #endif
 #include <rapidxml_print.hpp>
-#if defined(KLAYGE_COMPILER_MSVC)
+#if defined(ZENGINE_COMPILER_MSVC)
 #pragma warning(pop)
-#elif defined(KLAYGE_COMPILER_GCC)
+#elif defined(ZENGINE_COMPILER_GCC)
 #pragma GCC diagnostic pop
-#elif defined(KLAYGE_COMPILER_CLANG)
+#elif defined(ZENGINE_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
 

@@ -1,0 +1,53 @@
+From 41f35ccb3d56e64f5621ac07b103b05846ce25ab Mon Sep 17 00:00:00 2001
+From: Minmin Gong <gongminmin@msn.com>
+Date: Thu, 16 Jun 2022 22:15:06 -0700
+Subject: [PATCH 3/3] Fix for Android build
+
+---
+ C/7zCrc.c     | 2 +-
+ C/Sha256.c    | 2 +-
+ C/Sha256Opt.c | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/C/7zCrc.c b/C/7zCrc.c
+index c995a8be..d48f433c 100755
+--- a/C/7zCrc.c
++++ b/C/7zCrc.c
+@@ -86,7 +86,7 @@ UInt32 Z7_FASTCALL CrcUpdateT1(UInt32 v, const void *data, size_t size, const UI
+     #endif
+   #elif (defined(__clang__) && (__clang_major__ >= 3)) \
+      || (defined(__GNUC__) && (__GNUC__ > 4))
+-      #if !defined(__ARM_FEATURE_CRC32)
++      #if !defined(__ARM_FEATURE_CRC32) && !defined(__ANDROID__)
+         #define __ARM_FEATURE_CRC32 1
+         #if defined(__clang__)
+           #if defined(MY_CPU_ARM64)
+diff --git a/C/Sha256.c b/C/Sha256.c
+index 018cf6f4..ca3c044e 100755
+--- a/C/Sha256.c
++++ b/C/Sha256.c
+@@ -38,7 +38,7 @@ This code is based on public domain code from Wei Dai's Crypto++ library. */
+       #define Z7_COMPILER_SHA256_SUPPORTED
+     #endif
+   #elif defined(__clang__)
+-    #if (__clang_major__ >= 8) // fix that check
++    #if (__clang_major__ >= 8) && !defined(__ANDROID__) // fix that check
+       #define Z7_COMPILER_SHA256_SUPPORTED
+     #endif
+   #elif defined(__GNUC__)
+diff --git a/C/Sha256Opt.c b/C/Sha256Opt.c
+index e4465e3e..a91d0c4d 100755
+--- a/C/Sha256Opt.c
++++ b/C/Sha256Opt.c
+@@ -205,7 +205,7 @@ void Z7_FASTCALL Sha256_UpdateBlocks_HW(UInt32 state[8], const Byte *data, size_
+ #elif defined(MY_CPU_ARM_OR_ARM64)
+ 
+   #if defined(__clang__)
+-    #if (__clang_major__ >= 8) // fix that check
++    #if (__clang_major__ >= 8) && !defined(__ANDROID__) // fix that check
+       #define USE_HW_SHA
+     #endif
+   #elif defined(__GNUC__)
+-- 
+2.43.0.windows.1
+

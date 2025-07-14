@@ -6,7 +6,7 @@ set(staging_path "${D3DCOMPILER_DIR}/Redist/${D3DCOMPILER_ARCH_NAME}/${D3DCOMPIL
 
 if(NOT EXISTS "${staging_path}")
 	set(ProgramFilesX86 "ProgramFiles(x86)")
-	if(KLAYGE_PLATFORM_WINDOWS)
+	if(ZENGINE_PLATFORM_WINDOWS)
 		find_path(win_sdk_dir Redist/D3D
 			PATHS
 				"$ENV{${WindowsSdkDir}}"

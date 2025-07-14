@@ -1,13 +1,13 @@
 /.idea
+.vscode/settings.json
+
 /build
 /DemoEngine/example
 /DemoEngine/lib
 /DemoEngine/build
 /DemoEngine/bin
-DemoEngine/.vscode/
 
-
-
+/DemoEngine/3rd/7z/7z
 /DemoEngine/3rd/assimp/assimp
 /DemoEngine/3rd/d3dcompiler/d3dcompiler
 /DemoEngine/3rd/DirectX-Headers
@@ -17,4 +17,3 @@ DemoEngine/.vscode/
 /DemoEngine/3rd/zlib/zlib
 /DemoEngine/3rd/dxsdk/dxsdk
 
-/Editer/src/3rd/imgui
