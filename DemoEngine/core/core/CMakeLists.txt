@@ -13,6 +13,12 @@ set(BASE_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/RenderableHelper.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/ResourceLoad.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/TexCompression.cpp
+
+    ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveExtractCallback.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveOpenCallback.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/pack/LZMACodec.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/pack/Package.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/pack/Streams.cpp
 )
 
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})

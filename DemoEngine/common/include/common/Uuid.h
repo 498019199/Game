@@ -80,7 +80,7 @@ namespace CommonWorker
 
 #define DEFINE_UUID_OF(x)                                      \
     template <>                                                \
-    RenderWorker::Uuid const& RenderWorker::UuidOf<x>()                    \
+    CommonWorker::Uuid const& CommonWorker::UuidOf<x>()                    \
     {                                                          \
-        return reinterpret_cast<RenderWorker::Uuid const&>(IID_##x); \
+        return reinterpret_cast<CommonWorker::Uuid const&>(IID_##x); \
     }

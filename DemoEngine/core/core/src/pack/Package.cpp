@@ -1,4 +1,13 @@
-#include "Package.h"
+#include <base/Package.h>
+#include <common/Uuid.h>
+#include <common/com_ptr.h>
+
+#ifdef ZENGINE_PLATFORM_WINDOWS
+#include <unknwnbase.h>
+#endif
+
+#include <CPP/Common/MyWindows.h>
+#include <CPP/7zip/Archive/IArchive.h>
 
 DEFINE_UUID_OF(IArchiveExtractCallback);
 DEFINE_UUID_OF(IArchiveOpenCallback);
@@ -10,11 +19,13 @@ DEFINE_UUID_OF(IOutStream);
 
 namespace RenderWorker
 {
+    using namespace CommonWorker;
+
     // {23170F69-40C1-278A-1000-000110070000}
 	DEFINE_GUID(CLSID_CFormat7z,
 			0x23170F69, 0x40C1, 0x278A, 0x10, 0x00, 0x00, 0x01, 0x10, 0x07, 0x00, 0x00);
 
-	typedef KlayGE::uint32_t (WINAPI *CreateObjectFunc)(const GUID* clsID, const GUID* interfaceID, void** outObject);
+	typedef uint32_t (WINAPI *CreateObjectFunc)(const GUID* clsID, const GUID* interfaceID, void** outObject);
 
     Package::Package(ResIdentifierPtr const & archive_is)
         : Package(archive_is, "")
@@ -24,7 +35,7 @@ namespace RenderWorker
     
     Package::Package(ResIdentifierPtr const & archive_is, std::string_view password)
     {
-        BOOST_ASSERT(archive_is);
+        COMMON_ASSERT(archive_is);
 
 		com_ptr<IInArchive> archive;
 		TIFHR(SevenZipLoader::Instance().CreateObject(

@@ -1,0 +1,145 @@
+/**
+ * @file ArchiveExtractCallback.hpp
+ * @author Minmin Gong
+ *
+ * @section DESCRIPTION
+ *
+ * This source file is part of KlayGE
+ * For the latest info, see http://www.klayge.org
+ *
+ * @section LICENSE
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * You may alternatively use this source under the terms of
+ * the KlayGE Proprietary License (KPL). You can obtained such a license
+ * from http://www.klayge.org/licensing/.
+ */
+
+#include <common/common.h>
+#include <common/Util.h>
+
+#ifdef KLAYGE_PLATFORM_WINDOWS
+#include <unknwnbase.h>
+#endif
+#include <CPP/Common/MyWindows.h>
+
+#include "ArchiveExtractCallback.h"
+
+namespace KlayGE
+{
+	ArchiveExtractCallback::ArchiveExtractCallback(std::string_view pw, ISequentialOutStream* out_file_stream) noexcept
+		: password_is_defined_(!pw.empty()), out_file_stream_(out_file_stream)
+	{
+		Convert(password_, pw);
+	}
+	
+	ArchiveExtractCallback::~ArchiveExtractCallback() noexcept = default;
+
+	STDMETHODIMP_(ULONG) ArchiveExtractCallback::AddRef() noexcept
+	{
+		++ ref_count_;
+		return ref_count_;
+	}
+
+	STDMETHODIMP_(ULONG) ArchiveExtractCallback::Release() noexcept
+	{
+		-- ref_count_;
+		if (0 == ref_count_)
+		{
+			delete this;
+			return 0;
+		}
+		return ref_count_;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::QueryInterface(REFGUID iid, void** out_object) noexcept
+	{
+		if (UuidOf<ICryptoGetTextPassword>() == reinterpret_cast<Uuid const&>(iid))
+		{
+			*out_object = static_cast<ICryptoGetTextPassword*>(this);
+			this->AddRef();
+			return S_OK;
+		}
+		else if (UuidOf<IArchiveExtractCallback>() == reinterpret_cast<Uuid const&>(iid))
+		{
+			*out_object = static_cast<IArchiveExtractCallback*>(this);
+			this->AddRef();
+			return S_OK;
+		}
+		else
+		{
+			return E_NOINTERFACE;
+		}
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::SetTotal([[maybe_unused]] UInt64 size) noexcept
+	{
+		return S_OK;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::SetCompleted([[maybe_unused]] UInt64 const * complete_value) noexcept
+	{
+		return S_OK;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::GetStream([[maybe_unused]] UInt32 index, ISequentialOutStream** out_stream, Int32 ask_extract_mode) noexcept
+	{
+		enum
+		{
+			kExtract = 0,
+			kTest,
+			kSkip,
+		};
+
+		if (kExtract == ask_extract_mode)
+		{
+			out_file_stream_->AddRef();
+			*out_stream = out_file_stream_.get();
+		}
+		else
+		{
+			*out_stream = nullptr;
+		}
+		return S_OK;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::PrepareOperation([[maybe_unused]] Int32 ask_extract_mode) noexcept
+	{
+		return S_OK;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::SetOperationResult([[maybe_unused]] Int32 operation_result) noexcept
+	{
+		return S_OK;
+	}
+
+	STDMETHODIMP ArchiveExtractCallback::CryptoGetTextPassword(BSTR* password) noexcept
+	{
+		if (password_is_defined_)
+		{
+#ifdef KLAYGE_PLATFORM_WINDOWS_DESKTOP
+			*password = SysAllocString(password_.c_str());
+#else
+			*password = nullptr;
+#endif
+			return S_OK;
+		}
+		else
+		{
+			return E_ABORT;
+		}
+	}
+}
