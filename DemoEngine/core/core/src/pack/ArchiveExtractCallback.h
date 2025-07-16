@@ -73,7 +73,7 @@ namespace RenderWorker
 		bool password_is_defined_;
 		std::wstring password_;
 
-		com_ptr<ISequentialOutStream> out_file_stream_;
+		CommonWorker::com_ptr<ISequentialOutStream> out_file_stream_;
 	};
 }
 

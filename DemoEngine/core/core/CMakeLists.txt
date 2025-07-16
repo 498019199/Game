@@ -3,16 +3,22 @@ SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
 
 set(BASE_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/Base/Context.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/Base/CpuInfo.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/Base/LZMACodec.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/Base/Package.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/Base/ResLoader.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/Base/Thread.h
     ${PROJECT_SOURCE_DIR}/core/core/include/Base/WinApp.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Base/ResourceLoad.h
 )
 
 set(BASE_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/app/WinApp.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/Context.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/CpuInfo.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/RenderableHelper.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/ResourceLoad.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/ResLoader.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/TexCompression.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/Thread.cpp
 
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveExtractCallback.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveOpenCallback.cpp
@@ -89,6 +95,7 @@ target_include_directories(ZENGINE_core
     PUBLIC
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
+        ${ZENGINE_ROOT_DIR}/3rd/7z/7z
         ${ZENGINE_ROOT_DIR}/common/include
         ${ZENGINE_ROOT_DIR}/core/core/include
 )

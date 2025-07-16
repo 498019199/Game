@@ -27,8 +27,7 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#include <common/common.h>
+#include <common/Uuid.h>
 
 #ifdef KLAYGE_PLATFORM_WINDOWS
 #include <unknwnbase.h>
@@ -39,10 +38,12 @@
 
 namespace RenderWorker
 {
+	using namespace CommonWorker;
+
 	InStream::InStream(ResIdentifierPtr const & is)
 		: is_(is)
 	{
-		BOOST_ASSERT(*is);
+		COMMON_ASSERT(*is);
 
 		is_->seekg(0, std::ios_base::end);
 		stream_size_ = is_->tellg();

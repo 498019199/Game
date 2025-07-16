@@ -53,9 +53,12 @@ namespace std
 #if defined(DEBUG) || defined(_DEBUG)
     #define _CRTDBG_MAP_ALLOC
     #include <crtdbg.h>
+    #define ZENGINE_DBG_SUFFIX "_d"
+#else
+    #define ZENGINE_DBG_SUFFIX ""
 #endif
-
-
+#define DO_STRINGIZE(X) #X
+#define ZENGINE_OUTPUT_SUFFIX  "_" DO_STRINGIZE(ZENGINE_COMPILER_NAME) DO_STRINGIZE(ZENGINE_COMPILER_VERSION) ZENGINE_DBG_SUFFIX
 #define ZENGINE_UNREACHABLE(msg) std::unreachable()
 
 namespace CommonWorker

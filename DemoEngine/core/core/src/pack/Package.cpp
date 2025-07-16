@@ -1,6 +1,6 @@
-#include <base/Package.h>
 #include <common/Uuid.h>
 #include <common/com_ptr.h>
+#include <common/DllLoader.h>
 
 #ifdef ZENGINE_PLATFORM_WINDOWS
 #include <unknwnbase.h>
@@ -8,6 +8,11 @@
 
 #include <CPP/Common/MyWindows.h>
 #include <CPP/7zip/Archive/IArchive.h>
+
+#include "ArchiveExtractCallback.h"
+#include "ArchiveOpenCallback.h"
+#include "Streams.h"
+#include <base/Package.h>
 
 DEFINE_UUID_OF(IArchiveExtractCallback);
 DEFINE_UUID_OF(IArchiveOpenCallback);
@@ -17,22 +22,95 @@ DEFINE_UUID_OF(IInStream);
 DEFINE_UUID_OF(IStreamGetSize);
 DEFINE_UUID_OF(IOutStream);
 
-namespace RenderWorker
+namespace
 {
-    using namespace CommonWorker;
+	using namespace CommonWorker;
+	using namespace RenderWorker;
 
-    // {23170F69-40C1-278A-1000-000110070000}
+	// {23170F69-40C1-278A-1000-000110070000}
 	DEFINE_GUID(CLSID_CFormat7z,
 			0x23170F69, 0x40C1, 0x278A, 0x10, 0x00, 0x00, 0x01, 0x10, 0x07, 0x00, 0x00);
 
 	typedef uint32_t (WINAPI *CreateObjectFunc)(const GUID* clsID, const GUID* interfaceID, void** outObject);
 
-    Package::Package(ResIdentifierPtr const & archive_is)
-        : Package(archive_is, "")
-    {
-        
-    }
-    
+	HRESULT GetArchiveItemPath(IInArchive* archive, uint32_t index, std::string& result)
+	{
+		PROPVARIANT prop;
+		prop.vt = VT_EMPTY;
+		TIFHR(archive->GetProperty(index, kpidPath, &prop));
+		switch (prop.vt)
+		{
+		case VT_BSTR:
+			Convert(result, prop.bstrVal);
+			return S_OK;
+
+		case VT_EMPTY:
+			result.clear();
+			return S_OK;
+
+		default:
+			return E_FAIL;
+		}
+	}
+
+	HRESULT IsArchiveItemFolder(IInArchive* archive, uint32_t index, bool &result)
+	{
+		PROPVARIANT prop;
+		prop.vt = VT_EMPTY;
+		TIFHR(archive->GetProperty(index, kpidIsDir, &prop));
+		switch (prop.vt)
+		{
+		case VT_BOOL:
+			result = (prop.boolVal != VARIANT_FALSE);
+			return S_OK;
+
+		case VT_EMPTY:
+			result = false;
+			return S_OK;
+
+		default:
+			return E_FAIL;
+		}
+	}
+
+	class SevenZipLoader
+	{
+	public:
+		static SevenZipLoader& Instance()
+		{
+			static SevenZipLoader ret;
+			return ret;
+		}
+
+		HRESULT CreateObject(GUID const& cls_id, GUID const& interface_id, void** out_object)
+		{
+			return create_object_(&cls_id, &interface_id, out_object);
+		}
+
+	private:
+		SevenZipLoader()
+		{
+			dll_loader_.Load(DLL_PREFIX "7zxa" DLL_SUFFIX);
+
+			create_object_ = reinterpret_cast<CreateObjectFunc>(dll_loader_.GetProcAddress("CreateObject"));
+			COMMON_ASSERT(create_object_);
+		}
+
+	private:
+		DllLoader dll_loader_;
+		CreateObjectFunc create_object_;
+	};
+}
+
+namespace RenderWorker
+{
+    using namespace CommonWorker;
+
+	Package::Package(ResIdentifierPtr const & archive_is)
+		: Package(archive_is, "")
+	{
+	}
+
     Package::Package(ResIdentifierPtr const & archive_is, std::string_view password)
     {
         COMMON_ASSERT(archive_is);

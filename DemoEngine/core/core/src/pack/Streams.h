@@ -33,10 +33,7 @@
 
 #pragma once
 
-#include <atomic>
-#include <fstream>
-#include <string>
-
+#include <common/common.h>
 #include <CPP/7zip/IStream.h>
 
 

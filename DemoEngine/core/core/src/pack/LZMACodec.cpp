@@ -27,8 +27,9 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
+#include <base/LZMACodec.h>
 #include <common/common.h>
+#include <common/DllLoader.h>
 
 #include <cstring>
 #include <mutex>
@@ -41,6 +42,7 @@ namespace
 {
 
 	std::mutex singleton_mutex;
+	using namespace CommonWorker;
 
 	typedef int (Z7_STDCALL *LzmaCompressFunc)(unsigned char* dest, size_t* destLen, unsigned char const * src, size_t srcLen,
 		unsigned char* outProps, size_t* outPropsSize, /* *outPropsSize must be = 5 */
@@ -95,8 +97,8 @@ namespace
 			lzma_uncompress_func_ = ::LzmaUncompress;
 #endif
 
-			BOOST_ASSERT(lzma_compress_func_);
-			BOOST_ASSERT(lzma_uncompress_func_);
+			COMMON_ASSERT(lzma_compress_func_);
+			COMMON_ASSERT(lzma_uncompress_func_);
 		}
 
 	private:

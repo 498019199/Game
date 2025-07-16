@@ -38,8 +38,10 @@
 
 #include "ArchiveExtractCallback.h"
 
-namespace KlayGE
+namespace RenderWorker
 {
+	using namespace CommonWorker;
+
 	ArchiveExtractCallback::ArchiveExtractCallback(std::string_view pw, ISequentialOutStream* out_file_stream) noexcept
 		: password_is_defined_(!pw.empty()), out_file_stream_(out_file_stream)
 	{

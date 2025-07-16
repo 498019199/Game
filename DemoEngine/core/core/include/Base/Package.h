@@ -1,8 +1,8 @@
 #include <common/common.h>
+struct IInArchive;
 
 namespace RenderWorker
 {
-struct IInArchive;
 
 class Package final
 {
@@ -19,7 +19,7 @@ private:
 	uint32_t Find(std::string_view extract_file_path);
 
 private:
-    ResIdentifierPtr archive_stream_;
+    ResIdentifierPtr archive_is_;
 
     std::shared_ptr<IInArchive> archive_;
     std::string password_;

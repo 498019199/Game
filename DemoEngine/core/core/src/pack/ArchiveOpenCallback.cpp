@@ -41,6 +41,8 @@
 
 namespace RenderWorker
 {
+	using namespace CommonWorker;
+	
 	ArchiveOpenCallback::ArchiveOpenCallback(std::string_view pw) noexcept
 		: password_is_defined_(!pw.empty())
 	{
