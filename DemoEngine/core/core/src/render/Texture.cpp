@@ -1,5 +1,5 @@
 #include <base/Context.h>
-#include <base/ResourceLoad.h>
+#include <base/ResLoader.h>
 
 #include <render/Texture.h>
 #include <render/TexCompression.h>
@@ -1440,7 +1440,7 @@ TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
 
 TexturePtr LoadVirtualTexture(std::string_view tex_name)
 {
-	auto& res_loader = Context::Instance().ResourceLoadInstance();
+	auto& res_loader = Context::Instance().ResLoaderInstance();
     ResIdentifierPtr tex_res = res_loader.Open(tex_name);
 
     Texture::TextureType type;

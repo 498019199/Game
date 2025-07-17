@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <base/Context.h>
-#include <base/ResourceLoad.h>
+#include <base/ResLoader.h>
 
 #include <render/RenderFactory.h>
 #include <render/RenderStateObject.h>
@@ -4129,7 +4129,7 @@ namespace RenderWorker
 			immutable_ = MakeSharedPtr<Immutable>();
 		}
 
-		auto& res_loader = Context::Instance().ResourceLoadInstance();
+		auto& res_loader = Context::Instance().ResLoaderInstance();
 		std::filesystem::path first_fxml_path(res_loader.Locate(*names.begin()));
 		std::filesystem::path first_fxml_directory = first_fxml_path.parent_path();
 
@@ -4532,7 +4532,7 @@ namespace RenderWorker
 #if ZENGINE_IS_DEV_PLATFORM
 	void RenderEffect::PreprocessIncludes(XMLNode& root, std::vector<std::string>& include_names)
 	{
-		auto& res_loader = Context::Instance().ResourceLoadInstance();
+		auto& res_loader = Context::Instance().ResLoaderInstance();
 		for (const XMLNode* node = root.FirstNode("include"); node; node = root.FirstNode("include"))
 		{
 			const XMLAttribute* attr = node->Attrib("name");
@@ -4563,7 +4563,7 @@ namespace RenderWorker
 
 	void RenderEffect::RecursiveIncludeNode(XMLNode const& root, std::vector<std::string>& include_names) const
 	{
-		auto& res_loader = Context::Instance().ResourceLoadInstance();
+		auto& res_loader = Context::Instance().ResLoaderInstance();
 		for (const XMLNode* node = root.FirstNode("include"); node; node = node->NextSibling("include"))
 		{
 			const XMLAttribute* attr = node->Attrib("name");
@@ -6991,7 +6991,7 @@ namespace RenderWorker
 	// 		std::string val;
 	// 		anno.Value(val);
 
-	// 		if (Context::Instance().ResourceLoadInstance().Locate(val).empty())
+	// 		if (Context::Instance().ResLoaderInstance().Locate(val).empty())
 	// 		{
 	// 			LogError() << val << " NOT found" << std::endl;
 	// 		}

@@ -70,7 +70,7 @@ target_link_libraries(ZENGINE_common
 
 target_include_directories(ZENGINE_common
 	PUBLIC
-		${CMAKE_CURRENT_BINARY_DIR}/include
+		${ZENGINE_ROOT_HEADER}/include
 		${COMMON_PROJECT_DIR}/include
 )
 

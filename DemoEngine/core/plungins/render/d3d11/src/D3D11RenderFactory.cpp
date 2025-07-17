@@ -107,4 +107,5 @@ std::unique_ptr<RenderEngine> D3D11RenderFactory::DoMakeRenderEngine()
 {
     return MakeUniquePtr<D3D11RenderEngine>();
 }
+
 }

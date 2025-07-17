@@ -39,3 +39,14 @@ add_library(ZENGINE_Render_D3D11 SHARED
 target_precompile_headers(ZENGINE_Render_D3D11
 	PRIVATE
 		"${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h")
+
+target_include_directories(ZENGINE_Render_D3D11
+	PUBLIC
+		${ZENGINE_ROOT_HEADER}/include
+		${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
+)
+
+set_target_properties(ZENGINE_Render_D3D11 PROPERTIES
+		OUTPUT_NAME ZENGINE_Render_D3D11${ZENGINE_OUTPUT_SUFFIX}
+		FOLDER "ZENGINE"
+	)

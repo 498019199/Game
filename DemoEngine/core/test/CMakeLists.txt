@@ -1,5 +1,4 @@
-include_directories(${PROJECT_SOURCE_DIR}/core/include
-                    ${PROJECT_SOURCE_DIR}/common/include
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include
                     ${PROJECT_SOURCE_DIR}/3rd/ini/ini/src
                     ${PROJECT_SOURCE_DIR}/3rd/assimp/assimp/include
                     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Include

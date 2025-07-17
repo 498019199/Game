@@ -24,7 +24,7 @@ class WinAPP;
 class RenderEngine;
 class RenderFactory;
 class World;
-class ResourceLoad;
+class ResLoader;
 
 class Context final
 {
@@ -33,18 +33,21 @@ public:
     ~Context() = default;
 
     void LoadConfig(const char* file_name);
-    
+    void SaveConfig(const char* file_name);
+
     static Context& Instance();
 
     WinAPP& AppInstance() noexcept;
     RenderEngine& RenderEngineInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;
     World& WorldInstance() noexcept;
-    ResourceLoad& ResourceLoadInstance() noexcept;
+    ResLoader& ResLoaderInstance() noexcept;
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
+
+
 }
 
 
