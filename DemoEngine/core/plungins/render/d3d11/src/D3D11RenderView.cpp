@@ -7,6 +7,8 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 D3D11TextureShaderResourceView::D3D11TextureShaderResourceView(TexturePtr const & texture, ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
         uint32_t first_level, uint32_t num_levels)
 {

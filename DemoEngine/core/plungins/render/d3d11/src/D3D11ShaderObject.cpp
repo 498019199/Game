@@ -63,6 +63,8 @@ private:
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 D3D11ShaderStageObject::D3D11ShaderStageObject(ShaderStage stage)
     : ShaderStageObject(stage)
 {

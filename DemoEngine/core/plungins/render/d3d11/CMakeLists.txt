@@ -36,9 +36,9 @@ add_library(ZENGINE_Render_D3D11 SHARED
 	#src/D3D11VideoMode.cpp
 	#src/D3D11VideoMode.h)
 
-target_precompile_headers(ZENGINE_Render_D3D11
-	PRIVATE
-		"${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h")
+# target_precompile_headers(ZENGINE_Render_D3D11
+# 	PRIVATE
+# 		"${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h")
 
 target_include_directories(ZENGINE_Render_D3D11
 	PUBLIC

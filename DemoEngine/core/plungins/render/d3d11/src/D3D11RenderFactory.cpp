@@ -107,5 +107,12 @@ std::unique_ptr<RenderEngine> D3D11RenderFactory::DoMakeRenderEngine()
 {
     return MakeUniquePtr<D3D11RenderEngine>();
 }
+}
 
+extern "C"
+{
+	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr)
+	{
+		ptr = CommonWorker::MakeUniquePtr<RenderWorker::D3D11RenderFactory>();
+	}
 }

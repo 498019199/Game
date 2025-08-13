@@ -1,12 +1,11 @@
 #pragma once
+#include <base/Context.h>
 #include <render/RenderLayout.h>
 #include <render/RenderEngine.h>
 #include "D3D11Util.h"
 
 namespace RenderWorker
 {
-
-struct RenderSettings;
 class D3D11RenderEngine :public RenderEngine
 {
 public:

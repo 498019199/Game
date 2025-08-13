@@ -11,28 +11,28 @@
 #include <render/RenderStateObject.h>
 namespace RenderWorker
 {
-    using ID3D11DevicePtr = com_ptr<ID3D11Device>;
-    using ID3D11DeviceContextPtr = com_ptr<ID3D11DeviceContext>;
-    using IDXGISwapChainPtr = com_ptr<IDXGISwapChain>;
-    using ID3D11BufferPtr = com_ptr<ID3D11Buffer>;
-    using ID3D11InputLayoutPtr = com_ptr<ID3D11InputLayout>;
+    using ID3D11DevicePtr = CommonWorker::com_ptr<ID3D11Device>;
+    using ID3D11DeviceContextPtr = CommonWorker::com_ptr<ID3D11DeviceContext>;
+    using IDXGISwapChainPtr = CommonWorker::com_ptr<IDXGISwapChain>;
+    using ID3D11BufferPtr = CommonWorker::com_ptr<ID3D11Buffer>;
+    using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
 
-    using ID3D11VertexShaderPtr = com_ptr<ID3D11VertexShader>;
-    using ID3D11PixelShaderPtr = com_ptr<ID3D11PixelShader>;
-    using ID3D11GeometryShaderPtr = com_ptr<ID3D11GeometryShader>;
-	using ID3D11ResourcePtr = com_ptr<ID3D11Resource>;
-	using ID3D11Texture1DPtr = com_ptr<ID3D11Texture1D>;
-	using ID3D11Texture2DPtr = com_ptr<ID3D11Texture2D>;
-	using ID3D11Texture3DPtr = com_ptr<ID3D11Texture3D>;
-	using ID3D11TextureCubePtr = com_ptr<ID3D11Texture2D>;
-    using ID3D11RenderTargetViewPtr = com_ptr<ID3D11RenderTargetView>;
-	using ID3D11DepthStencilViewPtr = com_ptr<ID3D11DepthStencilView>;
-    using ID3D11InputLayoutPtr = com_ptr<ID3D11InputLayout>;
-    using ID3D11SamplerStatePtr = com_ptr<ID3D11SamplerState>;
-	using ID3D11ShaderResourceViewPtr = com_ptr<ID3D11ShaderResourceView>;
-    using ID3D11RasterizerStatePtr = com_ptr<ID3D11RasterizerState>;
-    using ID3D11BlendStatePtr = com_ptr<ID3D11BlendState>;
-    using ID3D11DepthStencilStatePtr = com_ptr<ID3D11DepthStencilState>;
+    using ID3D11VertexShaderPtr = CommonWorker::com_ptr<ID3D11VertexShader>;
+    using ID3D11PixelShaderPtr = CommonWorker::com_ptr<ID3D11PixelShader>;
+    using ID3D11GeometryShaderPtr = CommonWorker::com_ptr<ID3D11GeometryShader>;
+	using ID3D11ResourcePtr = CommonWorker::com_ptr<ID3D11Resource>;
+	using ID3D11Texture1DPtr = CommonWorker::com_ptr<ID3D11Texture1D>;
+	using ID3D11Texture2DPtr = CommonWorker::com_ptr<ID3D11Texture2D>;
+	using ID3D11Texture3DPtr = CommonWorker::com_ptr<ID3D11Texture3D>;
+	using ID3D11TextureCubePtr = CommonWorker::com_ptr<ID3D11Texture2D>;
+    using ID3D11RenderTargetViewPtr = CommonWorker::com_ptr<ID3D11RenderTargetView>;
+	using ID3D11DepthStencilViewPtr = CommonWorker::com_ptr<ID3D11DepthStencilView>;
+    using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
+    using ID3D11SamplerStatePtr = CommonWorker::com_ptr<ID3D11SamplerState>;
+	using ID3D11ShaderResourceViewPtr = CommonWorker::com_ptr<ID3D11ShaderResourceView>;
+    using ID3D11RasterizerStatePtr = CommonWorker::com_ptr<ID3D11RasterizerState>;
+    using ID3D11BlendStatePtr = CommonWorker::com_ptr<ID3D11BlendState>;
+    using ID3D11DepthStencilStatePtr = CommonWorker::com_ptr<ID3D11DepthStencilState>;
 }
 
 namespace RenderWorker

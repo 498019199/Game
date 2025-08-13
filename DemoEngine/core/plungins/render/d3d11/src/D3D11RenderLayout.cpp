@@ -8,6 +8,7 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
 
 D3D11RenderLayout::D3D11RenderLayout() = default;
 

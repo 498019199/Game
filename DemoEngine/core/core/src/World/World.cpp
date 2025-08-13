@@ -83,3 +83,11 @@ void World::UpdateScene(float dt)
     }
 }
 }
+
+extern "C"
+{
+	void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr)
+	{
+		ptr = CommonWorker::MakeUniquePtr<RenderWorker::World>();
+	}
+}

@@ -8,6 +8,8 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 D3D11Texture::D3D11Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
     :Texture(type, sample_count, sample_quality, access_hint)
 {

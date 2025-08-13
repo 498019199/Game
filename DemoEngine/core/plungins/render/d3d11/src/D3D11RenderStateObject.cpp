@@ -5,6 +5,8 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 D3D11SamplerStateObject::D3D11SamplerStateObject(SamplerStateDesc const & desc)
     : SamplerStateObject(desc)
 {
