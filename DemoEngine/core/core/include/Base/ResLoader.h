@@ -34,6 +34,7 @@ using ResLoadingDescPtr = std::shared_ptr<ResLoadingDesc>;
 
 class ResLoader final
 {
+    friend class Context;
 public:
     ResLoader() noexcept;
     ~ResLoader() noexcept;

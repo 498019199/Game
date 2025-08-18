@@ -113,5 +113,3 @@ if(ZENGINE_IS_DEV_PLATFORM)
 		add_dependencies(ZENGINE_core D3DCompilerRedist)
 	endif()
 endif()
-
-add_subdirectory(test)

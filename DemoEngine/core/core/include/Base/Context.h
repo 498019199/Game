@@ -2,22 +2,22 @@
 #include <memory>
 #include <cstdint>
 #include <common/common.h>
+#include <base/RenderSettings.h>
 
 namespace RenderWorker
 {
 using namespace CommonWorker;
 
-struct RenderSettings
+struct ContextConfig
 {
-    bool    full_screen = false;
-    int		left = 0;
-    int		top = 0;
+    std::string render_factory_name;
+    std::string render_engine_name;
+    std::string render_world_name;
 
-    int		width;
-    int		height;
+    RenderSettings graphics_cfg;
 
-    uint32_t sample_count = 1;
-    uint32_t sample_quality = 0;
+    bool deferred_rendering;
+    bool perf_profiler;
 };
 
 class WinAPP;
@@ -33,9 +33,12 @@ public:
     ~Context() = default;
 
     void LoadConfig(const char* file_name);
-    void SaveConfig(const char* file_name);
+    void SaveConfig();
 
     static Context& Instance();
+
+    const ContextConfig& Config() const noexcept;
+    void Config(const ContextConfig& cfg) noexcept;
 
     WinAPP& AppInstance() noexcept;
     RenderEngine& RenderEngineInstance() noexcept;
@@ -46,7 +49,6 @@ private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
-
 
 }
 
