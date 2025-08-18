@@ -21,8 +21,8 @@ add_library(ZENGINE_Render_D3D11 SHARED
 	src/D3D11RenderStateObject.h
 	src/D3D11RenderView.cpp
 	src/D3D11RenderView.h
-	#src/D3D11RenderWindow.cpp
-	#src/D3D11RenderWindow.h
+	src/D3D11RenderWindow.cpp
+	src/D3D11RenderWindow.h
 	src/D3D11ShaderObject.cpp
 	src/D3D11ShaderObject.h
 	src/D3D11Texture.cpp

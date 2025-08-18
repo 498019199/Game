@@ -5,6 +5,7 @@
 #include <common/Util.h>
 #include <common/ResIdentifier.h>
 #include <common/XMLDom.h>
+#include <common/XMLDom.h>
 
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
@@ -38,8 +39,17 @@ public:
         return *context_instance_;
     }
 
+    void AppInstance(WinAPP& app) noexcept
+    {
+        app_ = &app;
+    }
+
     WinAPP& AppInstance() noexcept
-    {}
+    {
+        COMMON_ASSERT(app_);
+       // COMMON_ASSUME(app_);
+        return *app_;
+    }
 
     RenderEngine& RenderEngineInstance() noexcept
     {
@@ -101,6 +111,16 @@ public:
         MakeRenderWorld(render_world_);
     }
 
+    void Config(const ContextConfig& cfg)
+    {
+        cfg_ = cfg;
+    }
+
+    const ContextConfig& Config() const
+    {
+        return cfg_;
+    }
+
     void LoadConfig(const char* file_name)
     {
         uint32_t width = 800;
@@ -138,6 +158,15 @@ public:
         XMLNode cfg_root = LoadXml(*file);
         XMLNode const* context_node = cfg_root.FirstNode("context");
         XMLNode const* graphics_node = cfg_root.FirstNode("graphics");
+
+        if (XMLNode const* perf_profiler_node = context_node->FirstNode("perf_profiler"))
+        {
+            perf_profiler = perf_profiler_node->Attrib("enabled")->ValueInt() ? true : false;
+        }
+        if (XMLNode const* location_sensor_node = context_node->FirstNode("location_sensor"))
+        {
+            location_sensor = location_sensor_node->Attrib("enabled")->ValueInt() ? true : false;
+        }
 
         // 屏幕宽高
         XMLNode const* frame_node = graphics_node->FirstNode("frame");
@@ -249,12 +278,19 @@ private:
 	static std::mutex singleton_mutex_;
 	static std::unique_ptr<Context> context_instance_;
 
+    // 窗口实例
+    WinAPP* app_;
+
+    // 基础配置
     ContextConfig cfg_;
 
+    // 分配渲染相关对象接口
     std::unique_ptr<RenderFactory> render_factory_;
+    // 场景对象管理
     std::unique_ptr<World> render_world_;
-
+    // 载入资源管理器
     ResLoader res_loader_;
+    // 全局线程池
     ThreadPool global_thread_pool_;
 };
 
@@ -293,12 +329,12 @@ ResLoader& Context::ResLoaderInstance() noexcept
 
 const ContextConfig& Context::Config() const noexcept
 {
-    
+    return pimpl_->Config();
 }
 
 void Context::Config(const ContextConfig& cfg) noexcept
 {
-    
+    pimpl_->Config(cfg);
 }
 
 void Context::LoadConfig(const char* file_name)
