@@ -7,8 +7,8 @@
       ],
 
       "defines": [
-        "DEMOENGINE_PLATFORM_WINDOWS",
-        "PLATFORM_COMPILER_MSVC",
+        "ZENGINE_PLATFORM_WINDOWS",
+        "ZENGINE_COMPILER_MSVC",
         "_DEBUG"
       ],
       "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\bin\\Hostx64\\x64\\cl.exe",

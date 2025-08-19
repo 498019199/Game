@@ -1,6 +1,11 @@
-#include <common/common.h>
-struct IInArchive;
+#include <common/ResIdentifier.h>
+#include <string_view>
 
+struct IInArchive;
+// {23170F69-40C1-278A-1000-000110070000}
+DEFINE_GUID(CLSID_CFormat7z,
+    0x23170F69, 0x40C1, 0x278A, 0x10, 0x00, 0x00, 0x01, 0x10, 0x07, 0x00, 0x00);
+    
 namespace RenderWorker
 {
 

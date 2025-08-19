@@ -9,5 +9,8 @@ class D3D11RenderWindow:public FrameBuffer
 public:
     D3D11RenderWindow(D3D11Adapter* adapter, const std::string& name, RenderSettings const& settings);
     ~D3D11RenderWindow();
+
+private:
+	D3D11Adapter* adapter_;
 };
 }

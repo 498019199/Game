@@ -9,7 +9,7 @@ namespace RenderWorker
 class D3D11RenderEngine :public RenderEngine
 {
 public:
-    D3D11RenderEngine(HWND hwnd, const RenderSettings& settings);
+    D3D11RenderEngine();
     ~D3D11RenderEngine();
 
     void OnResize();

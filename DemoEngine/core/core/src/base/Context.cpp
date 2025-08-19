@@ -273,7 +273,10 @@ public:
         cfg_.location_sensor = location_sensor;
     }
 
-    void SaveConfig();
+    void SaveConfig()
+    {
+        
+    }
 private:
 	static std::mutex singleton_mutex_;
 	static std::unique_ptr<Context> context_instance_;

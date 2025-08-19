@@ -1,4 +1,5 @@
 #include <base/Context.h>
+#include <base/WinApp.h>
 #include <render/RenderEffect.h>
 
 #include "D3D11RenderEngine.h"
@@ -43,8 +44,11 @@ static const std::function<void(ID3D11DeviceContext*, UINT, UINT, ID3D11Buffer *
 };
 static_assert(std::size(ShaderSetConstantBuffers) == ShaderStageNum);
 
-D3D11RenderEngine::D3D11RenderEngine(HWND hwnd, const RenderSettings& settings)
+D3D11RenderEngine::D3D11RenderEngine()
 {
+	const auto& Cfg = Context::Instance().Config();
+	HWND hwnd = Context::Instance().AppInstance().GetHWND();
+
     // Create the device and device context.
     D3D_DRIVER_TYPE dev_type = D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_HARDWARE;
 	UINT createDeviceFlags = 0;
@@ -104,17 +108,17 @@ D3D11RenderEngine::D3D11RenderEngine(HWND hwnd, const RenderSettings& settings)
 	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
 
 	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width  = settings.width;
+	sd.BufferDesc.Width  = Cfg.graphics_cfg.width;
 
-	sd.BufferDesc.Height = settings.height;
+	sd.BufferDesc.Height = Cfg.graphics_cfg.height;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 
-    sd.SampleDesc.Count   = settings.sample_count;
-    sd.SampleDesc.Quality = settings.sample_quality;
+    sd.SampleDesc.Count   = Cfg.graphics_cfg.sample_count;
+    sd.SampleDesc.Quality = Cfg.graphics_cfg.sample_quality;
 
 	sd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount  = 1;
@@ -149,10 +153,10 @@ D3D11RenderEngine::D3D11RenderEngine(HWND hwnd, const RenderSettings& settings)
 	// also need to be executed every time the window is resized.  So
 	// just call the OnResize method here to avoid code duplication.
 	
-	weight_ = settings.width;
-    height_ = settings.height;
-    sample_count_ = settings.sample_count;
-    sample_quality_ = settings.sample_quality;
+	weight_ = Cfg.graphics_cfg.width;
+    height_ = Cfg.graphics_cfg.height;
+    sample_count_ = Cfg.graphics_cfg.sample_count;
+    sample_quality_ = Cfg.graphics_cfg.sample_quality;
 	OnResize();
 
 	FillRenderDeviceCaps();
@@ -574,11 +578,9 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 		ZENGINE_UNREACHABLE("Invalid feature level");
 	}
 
-	{
-		caps_.gs_support = true;
-		caps_.hs_support = true;
-		caps_.ds_support = true;
-	}
+	caps_.gs_support = true;
+	caps_.hs_support = true;
+	caps_.ds_support = true;
 }
 
 char const * D3D11RenderEngine::DefaultShaderProfile(ShaderStage stage) const

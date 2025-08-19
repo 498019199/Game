@@ -102,11 +102,17 @@ target_include_directories(ZENGINE_core
 #     PUBLIC
 # 		include/base/Context.h
 # )
-
 set_target_properties(ZENGINE_core PROPERTIES
     OUTPUT_NAME ZENGINE_core${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "ZENGINE"
 )
+
+target_link_libraries(ZENGINE_core
+    PRIVATE
+        7zxa
+        LZMA
+)
+
 
 if(ZENGINE_IS_DEV_PLATFORM)
 	if(NOT (ZENGINE_ARCH_NAME STREQUAL "arm64"))

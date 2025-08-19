@@ -36,6 +36,12 @@ add_library(ZENGINE_Render_D3D11 SHARED
 	#src/D3D11VideoMode.cpp
 	#src/D3D11VideoMode.h)
 
+if(ZENGINE_PREFERRED_LIB_TYPE STREQUAL "SHARED")
+	set_target_properties(ZENGINE_Render_D3D11 PROPERTIES
+	CXX_VISIBILITY_PRESET hidden
+	VISIBILITY_INLINES_HIDDEN ON
+	)
+endif()
 # target_precompile_headers(ZENGINE_Render_D3D11
 # 	PRIVATE
 # 		"${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h")
@@ -44,6 +50,14 @@ target_include_directories(ZENGINE_Render_D3D11
 	PUBLIC
 		${ZENGINE_ROOT_HEADER}/include
 		${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
+)
+
+target_link_libraries(ZENGINE_Render_D3D11
+	PRIVATE
+		ZENGINE_common
+		ZENGINE_core
+		dxsdk
+		d3d11 dxgi dxguid
 )
 
 set_target_properties(ZENGINE_Render_D3D11 PROPERTIES

@@ -18,6 +18,7 @@ struct ContextConfig
 
     bool deferred_rendering;
     bool perf_profiler;
+    bool location_sensor;
 };
 
 class WinAPP;
