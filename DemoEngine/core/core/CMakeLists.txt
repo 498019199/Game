@@ -93,7 +93,8 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
 
 target_include_directories(ZENGINE_core
     PUBLIC
-        ${ZENGINE_ROOT_HEADER}/include
+        ${ZENGINE_ROOT_DIR}/common/include
+        ${ZENGINE_ROOT_DIR}/core/core/include
         ${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
         ${ZENGINE_ROOT_DIR}/3rd/7z/7z
 )

@@ -26,8 +26,8 @@ class ResLoader;
 class Context final
 {
 public:
-    Context() = default;
-    ~Context() = default;
+    Context();
+    ~Context() noexcept;
 
     void LoadConfig(const char* file_name);
     void SaveConfig();

@@ -53,6 +53,14 @@ public:
 
     RenderEngine& RenderEngineInstance() noexcept
     {
+        if (!render_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!render_factory_)
+            {
+                this->LoadRenderFactory( );
+            }
+        }
         return render_factory_->RenderEngineInstance();
     }
 
@@ -63,7 +71,7 @@ public:
             std::lock_guard<std::mutex> lock(singleton_mutex_);
             if (!render_factory_)
             {
-                this->LoadRenderFactory(cfg_.render_factory_name);
+                this->LoadRenderFactory( );
             }
         }
         return *render_factory_;
@@ -76,7 +84,7 @@ public:
             std::lock_guard<std::mutex> lock(singleton_mutex_);
             if (!render_world_)
             {
-                this->LoadRenderWorld(cfg_.render_world_name);
+                this->LoadRenderWorld( );
             }
         }
         return *render_world_;
@@ -101,12 +109,12 @@ public:
         return res_loader_;
     }
 
-    void LoadRenderFactory(const std::string& name)
+    void LoadRenderFactory( )
     {
         MakeRenderFactory(render_factory_);
     }
 
-    void LoadRenderWorld(const std::string& name)
+    void LoadRenderWorld( )
     {
         MakeRenderWorld(render_world_);
     }
@@ -299,6 +307,19 @@ private:
 
 std::mutex Context::Impl::singleton_mutex_;
 std::unique_ptr<Context> Context::Impl::context_instance_;
+
+Context::Context()
+{
+#ifdef ZENGINE_COMPILER_MSVC
+#ifdef _DEBUG
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
+
+    pimpl_ = MakeUniquePtr<Impl>();
+}
+
+Context::~Context() noexcept = default;
 
 Context& Context::Instance()
 {
