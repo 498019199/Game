@@ -1,7 +1,5 @@
 include_directories( 
-    ${PROJECT_SOURCE_DIR}/core/core/include
-    ${PROJECT_SOURCE_DIR}/math/include
-    ${PROJECT_SOURCE_DIR}/common/include
+    ${ZENGINE_ROOT_HEADER}/include
     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Include
     ${PROJECT_SOURCE_DIR}/3rd/imgui
     ${PROJECT_SOURCE_DIR}/Editor/include)
@@ -28,7 +26,11 @@ add_executable(ZENGINE_editor
     ${SRC_LIST} ${IMGUI_SRC_LIST}
     ${PROJECT_SOURCE_DIR}/Editor/main.cpp)
 
-# target_link_libraries(
-#     ZENGINE_editor PUBLIC
-
-# )
+target_link_libraries(ZENGINE_editor 
+    PUBLIC
+        ${ZENGINE_ROOT_DIR}/bin/${ZENGINE_PLATFORM_NAME}/7zxa${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.dll
+        ${ZENGINE_ROOT_DIR}/bin/${ZENGINE_PLATFORM_NAME}/LZMA${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.dll
+        ${ZENGINE_ROOT_DIR}/bin/${ZENGINE_PLATFORM_NAME}/ZENGINE_common${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.dll
+        ${ZENGINE_ROOT_DIR}/bin/${ZENGINE_PLATFORM_NAME}/ZENGINE_core${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.dll
+        ${ZENGINE_ROOT_DIR}/bin/${ZENGINE_PLATFORM_NAME}/Render/ZENGINE_Render_D3D11${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.dll
+)

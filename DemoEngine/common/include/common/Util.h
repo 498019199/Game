@@ -59,7 +59,6 @@ namespace std
 #endif
 #define DO_STRINGIZE(X) #X
 #define ZENGINE_OUTPUT_SUFFIX  "_" DO_STRINGIZE(ZENGINE_COMPILER_NAME) DO_STRINGIZE(ZENGINE_COMPILER_VERSION) ZENGINE_DBG_SUFFIX
-#define ZENGINE_UNREACHABLE(msg) std::unreachable()
 
 namespace CommonWorker
 {

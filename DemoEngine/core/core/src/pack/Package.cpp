@@ -1,3 +1,4 @@
+#define INITGUID
 #include <common/Uuid.h>
 #include <common/com_ptr.h>
 #include <common/DllLoader.h>
@@ -14,6 +15,14 @@
 #include "Streams.h"
 #include <base/Package.h>
 
+#ifndef WINAPI
+	#ifdef ZENGINE_COMPILER_MSVC
+		#define WINAPI __stdcall
+	#else
+		#define WINAPI
+	#endif
+#endif
+
 DEFINE_UUID_OF(IArchiveExtractCallback);
 DEFINE_UUID_OF(IArchiveOpenCallback);
 DEFINE_UUID_OF(ICryptoGetTextPassword);
@@ -27,6 +36,10 @@ namespace
 	using namespace CommonWorker;
 	using namespace RenderWorker;
 
+	// {23170F69-40C1-278A-1000-000110070000}
+	DEFINE_GUID(CLSID_CFormat7z,
+    	0x23170F69, 0x40C1, 0x278A, 0x10, 0x00, 0x00, 0x01, 0x10, 0x07, 0x00, 0x00);
+    
 	typedef uint32_t (WINAPI *CreateObjectFunc)(const GUID* clsID, const GUID* interfaceID, void** outObject);
 
 	HRESULT GetArchiveItemPath(IInArchive* archive, uint32_t index, std::string& result)
