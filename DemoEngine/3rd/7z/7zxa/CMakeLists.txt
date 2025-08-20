@@ -1,6 +1,6 @@
-SET(LIB_NAME 7zxa)
+set(LIB_NAME 7zxa)
 
-SET(7ZIP_FILES
+set(7ZIP_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/ICoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/IDecl.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/IPassword.h
@@ -8,7 +8,7 @@ SET(7ZIP_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/IStream.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/PropID.h
 )
-SET(7ZIP_COMMON_FILES
+set(7ZIP_COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Common/CreateCoder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Common/CWrappers.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Common/FilterCoder.cpp
@@ -35,7 +35,7 @@ SET(7ZIP_COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Common/StreamObjects.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Common/StreamUtils.h
 )
-SET(ARCHIVE_7Z_FILES
+set(ARCHIVE_7Z_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z/7zCompressionMode.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z/7zDecode.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z/7zExtract.cpp
@@ -55,7 +55,7 @@ SET(ARCHIVE_7Z_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z/StdAfx.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z/StdAfx.cpp
 )
-SET(ARCHIVE_COMMON_FILES
+set(ARCHIVE_COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Common/CoderMixer2.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Common/HandlerOut.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Common/ItemNameUtils.cpp
@@ -67,10 +67,10 @@ SET(ARCHIVE_COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Common/OutStreamWithCRC.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Common/ParseProperties.h
 )
-SET(ARCHIVE_FILES
+set(ARCHIVE_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/IArchive.h
 )
-SET(C_FILES
+set(C_FILES
 	${SEVENZIP_PROJECT_DIR}/C/7zCrc.c
 	${SEVENZIP_PROJECT_DIR}/C/7zCrcOpt.c
 	${SEVENZIP_PROJECT_DIR}/C/Aes.c
@@ -109,7 +109,7 @@ SET(C_FILES
 	${SEVENZIP_PROJECT_DIR}/C/SwapBytes.h
 	${SEVENZIP_PROJECT_DIR}/C/Threads.h
 )
-SET(COMMON_FILES
+set(COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/Common/CRC.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/Common/CrcReg.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/Common/IntToString.cpp
@@ -137,7 +137,7 @@ SET(COMMON_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/Common/UTFConvert.h
 	${SEVENZIP_PROJECT_DIR}/CPP/Common/Wildcard.h
 )
-SET(7Z_COMPRESS_FILES
+set(7Z_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/Bcj2Coder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/Bcj2Register.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BcjCoder.cpp
@@ -159,14 +159,14 @@ SET(7Z_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/Lzma2Decoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/LzmaDecoder.h
 )
-SET(BIT_CODER_FILES
+set(BIT_CODER_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BitlDecoder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BitlDecoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BitlEncoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BitmDecoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BitmEncoder.h
 )
-SET(BZIP2_COMPRESS_FILES
+set(BZIP2_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BZip2Crc.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BZip2Decoder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BZip2Register.cpp
@@ -175,24 +175,24 @@ SET(BZIP2_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/BZip2Decoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/Mtf8.h
 )
-SET(PPMD_COMPRESS_FILES
+set(PPMD_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/PpmdDecoder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/PpmdRegister.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/PpmdDecoder.h
 )
-SET(ZIP_COMPRESS_FILES
+set(ZIP_COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/DeflateDecoder.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/DeflateRegister.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/DeflateConst.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/DeflateDecoder.h
 )
-SET(COMPRESS_FILES
+set(COMPRESS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/DeltaFilter.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/LzOutWindow.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/HuffmanDecoder.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Compress/LzOutWindow.h
 )
-SET(CRYPTO_FILES
+set(CRYPTO_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Crypto/7zAes.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Crypto/7zAesRegister.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Crypto/MyAes.cpp
@@ -200,12 +200,12 @@ SET(CRYPTO_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Crypto/7zAes.h
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Crypto/MyAes.h
 )
-SET(SPEC_FILES
+set(SPEC_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/Archive2.def
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/ArchiveExports.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/DllExports2.cpp
 )
-SET(WINDOWS_FILES
+set(WINDOWS_FILES
 	${SEVENZIP_PROJECT_DIR}/CPP/Windows/PropVariant.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/Windows/System.cpp
 	${SEVENZIP_PROJECT_DIR}/CPP/Windows/Defs.h

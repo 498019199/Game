@@ -1,6 +1,6 @@
 /.idea
 .vscode/settings.json
-
+/ZEngine
 /build
 /DemoEngine/example
 /DemoEngine/lib

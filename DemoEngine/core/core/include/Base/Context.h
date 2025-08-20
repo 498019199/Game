@@ -10,10 +10,6 @@ using namespace CommonWorker;
 
 struct ContextConfig
 {
-    std::string render_factory_name;
-    std::string render_engine_name;
-    std::string render_world_name;
-
     RenderSettings graphics_cfg;
 
     bool deferred_rendering;
@@ -41,6 +37,7 @@ public:
     const ContextConfig& Config() const noexcept;
     void Config(const ContextConfig& cfg) noexcept;
 
+    void AppInstance(WinAPP& app) noexcept;
     WinAPP& AppInstance() noexcept;
     RenderEngine& RenderEngineInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;

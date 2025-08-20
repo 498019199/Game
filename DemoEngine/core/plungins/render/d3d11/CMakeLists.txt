@@ -1,4 +1,4 @@
-add_library(ZENGINE_Render_D3D11 SHARED
+add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11Adapter.cpp
 	src/D3D11Adapter.h
 	src/D3D11AdapterList.cpp
@@ -61,6 +61,6 @@ target_link_libraries(ZENGINE_Render_D3D11
 )
 
 set_target_properties(ZENGINE_Render_D3D11 PROPERTIES
-		OUTPUT_NAME ZENGINE_Render_D3D11${ZENGINE_OUTPUT_SUFFIX}
-		FOLDER "ZENGINE"
-	)
+	OUTPUT_NAME ZENGINE_Render_D3D11${ZENGINE_OUTPUT_SUFFIX}
+	FOLDER "ZENGINE"
+)

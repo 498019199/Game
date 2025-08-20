@@ -20,10 +20,10 @@
             "name": "editor",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\DemoEngine\\bin\\Debug\\ZENGINE_editor.exe",
+            "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_editor.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}\\DemoEngine\\bin\\Debug",
+            "cwd": "${workspaceFolder}\\ZEngine\\bin",
             "environment": [],
             //"preLaunchTask": 
         }

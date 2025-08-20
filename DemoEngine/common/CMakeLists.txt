@@ -57,7 +57,7 @@ source_group("Base\\Header Files" FILES ${COMMON_SOURCE_FILES})
 source_group("Math\\Source Files" FILES ${MATH_SOURCE_FILES})
 source_group("Math\\Header Files" FILES ${MATH_HEADER_FILES})
 
-add_library(ZENGINE_common STATIC
+add_library(ZENGINE_common ${ZENGINE_PREFERRED_LIB_TYPE}
 	${COMMON_SOURCE_FILES} ${COMMON_HEADER_FILES}
 	${MATH_SOURCE_FILES} ${MATH_HEADER_FILES}
 )
@@ -68,7 +68,7 @@ target_link_libraries(ZENGINE_common
 		rapidxml
 )
 
-target_include_directories(ZENGINE_common
+target_include_directories(ZENGINE_common 
 	PUBLIC
 		${ZENGINE_ROOT_HEADER}/include
 		${COMMON_PROJECT_DIR}/include

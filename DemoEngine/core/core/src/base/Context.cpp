@@ -305,6 +305,11 @@ Context& Context::Instance()
     return Impl::Instance();
 }
 
+void Context::AppInstance(WinAPP& app) noexcept
+{
+    pimpl_->AppInstance(app);
+}
+
 WinAPP& Context::AppInstance() noexcept
 {
     return pimpl_->AppInstance();
