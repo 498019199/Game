@@ -21,6 +21,11 @@ public:
     // 设置当前Stream output目标
     void BindSOBuffers(const RenderLayoutPtr& rl);
 
+#if ZENGINE_IS_DEV_PLATFORM
+    virtual void* GetD3DDevice();
+    virtual void* GetD3DDeviceImmContext();
+#endif //ZENGINE_IS_DEV_PLATFORM
+
     virtual void BeginRender() const = 0;
     virtual void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) = 0;
     virtual void EndRender() const = 0;
@@ -49,10 +54,6 @@ protected:
 
     RenderDeviceCaps caps_;
 };
-
-
-
-
 
 
 }

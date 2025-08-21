@@ -4,7 +4,7 @@
 
 namespace EditorWorker
 {
-class EditorConsolePanel
+class EditorConsolePanel: public EditorPanel
 {
     
 };

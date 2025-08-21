@@ -21,6 +21,6 @@ int main()
     Context::Instance().WorldInstance().BeginWorld();
 
     app.Run();
-    //EditorManagerD3D11 edtor;
+    EditorManagerD3D11 edtor;
     return 0;
 }

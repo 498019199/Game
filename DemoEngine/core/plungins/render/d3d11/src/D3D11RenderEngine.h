@@ -14,6 +14,11 @@ public:
 
     void OnResize();
 
+#if ZENGINE_IS_DEV_PLATFORM
+    virtual void* GetD3DDevice();
+    virtual void* GetD3DDeviceImmContext();
+#endif //ZENGINE_IS_DEV_PLATFORM
+
     ID3D11Device* D3DDevice() const;
     ID3D11DeviceContext* D3DDeviceImmContext() const;
 

@@ -12,6 +12,18 @@ RenderEngine::RenderEngine()
 
 RenderEngine::~RenderEngine() noexcept = default;
 
+#if ZENGINE_IS_DEV_PLATFORM
+void* RenderEngine::GetD3DDevice()
+{
+    return nullptr;
+}
+
+void* RenderEngine::GetD3DDeviceImmContext()
+{
+    return nullptr;
+}
+#endif
+
 void RenderEngine::ForceLineMode(bool line)
 {
     if (force_line_mode_ != line)

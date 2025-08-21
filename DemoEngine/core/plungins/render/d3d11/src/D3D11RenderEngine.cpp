@@ -229,6 +229,18 @@ void D3D11RenderEngine::OnResize()
 	d3d_imm_ctx_->RSSetViewports(1, &screen_viewport_);
 }
 
+#if ZENGINE_IS_DEV_PLATFORM
+void* D3D11RenderEngine::GetD3DDevice()
+{
+	return d3d_device_.get();
+}
+
+void* D3D11RenderEngine::GetD3DDeviceImmContext()
+{
+	return d3d_imm_ctx_.get();
+}
+#endif//ZENGINE_IS_DEV_PLATFORM
+
 void D3D11RenderEngine::BeginRender() const 
 {
 	COMMON_ASSERT(d3d_imm_ctx_);

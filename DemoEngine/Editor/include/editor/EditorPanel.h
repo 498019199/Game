@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 namespace EditorWorker
 {
@@ -12,4 +13,5 @@ public:
     virtual void OnResize() = 0;
 private:
 };
+using EditorPanelPtr = std::shared_ptr<EditorPanel>;
 }

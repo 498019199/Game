@@ -12,9 +12,17 @@ public:
     EditorManagerD3D11();
     ~EditorManagerD3D11();
 
+    void Init();
+    
+    void BeginRender();
+    void Render();
+    void EndRender();
+
 private:
-    std::vector<EditorPanel> PanelList_;
+    std::vector<EditorPanelPtr> PanelList_;
 };
+
+
 
 
 }

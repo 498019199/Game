@@ -3,7 +3,7 @@
 
 namespace EditorWorker
 {
-class EditorHierarchyPanel
+class EditorHierarchyPanel: public EditorPanel
 {
     
 };
