@@ -1,6 +1,6 @@
 /.idea
 .vscode/settings.json
-/ZEngine
+
 /build
 /DemoEngine/example
 /DemoEngine/lib
@@ -17,3 +17,5 @@
 /DemoEngine/3rd/zlib/zlib
 /DemoEngine/3rd/dxsdk/dxsdk
 
+/ZEngine/bin
+/ZEngine/include
