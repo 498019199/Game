@@ -9,7 +9,7 @@ using namespace RenderWorker;
 
 int main()
 {
-    Context::Instance().ResLoaderInstance().AddPath("D:\\git\\Game\\DemoEngine\\editor\\resource");
+    Context::Instance().ResLoaderInstance().AddPath("../../Assets");
 
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
     Context::Instance().LoadConfig(cfg_path.c_str());
@@ -22,5 +22,7 @@ int main()
 
     app.Run();
     EditorManagerD3D11 edtor;
+    edtor.Init();
+    edtor.SetWindowSize(200, 200, 200);
     return 0;
 }

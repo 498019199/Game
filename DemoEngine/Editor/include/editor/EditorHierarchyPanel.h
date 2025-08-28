@@ -5,6 +5,12 @@ namespace EditorWorker
 {
 class EditorHierarchyPanel: public EditorPanel
 {
-    
+public:
+    EditorHierarchyPanel();
+    ~EditorHierarchyPanel();
+
+    virtual void OnRender(const EditorSetting& setting) override;
+    virtual void OnResize() override;
 };
+
 }

@@ -13,14 +13,17 @@ public:
     ~EditorManagerD3D11();
 
     void Init();
-    
+    void SetWindowSize(int hWidth, int pHeight, int iWidth);
+
     void BeginRender();
     void Render();
     void EndRender();
 
 private:
-    std::vector<EditorPanelPtr> PanelList_;
+    std::vector<EditorPanelPtr> panel_list_;
+    EditorSetting setting_;
 };
+
 
 
 

@@ -10,6 +10,7 @@ set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorInspectorPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorMainBarPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorManagerD3D11.cpp
+    ${PROJECT_SOURCE_DIR}/Editor/src/EditorDialogBoxManager.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorProjectPanel.cpp)
 
 set(IMGUI_SRC_LIST

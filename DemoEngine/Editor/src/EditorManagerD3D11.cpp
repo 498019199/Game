@@ -3,6 +3,7 @@
 #include <editor/EditorHierarchyPanel.h>
 #include <editor/EditorMainBarPanel.h>
 #include <editor/EditorInspectorPanel.h>
+#include <editor/EditorDialogBoxManager.h>
 
 
 #include <imgui/imgui_impl_dx11.h>
@@ -11,6 +12,7 @@
 #include <base/Context.h>
 #include <base/WinApp.h>
 #include <render/RenderEngine.h>
+#include <render/RenderFactory.h>
 
 namespace EditorWorker
 {
@@ -25,8 +27,9 @@ EditorManagerD3D11::EditorManagerD3D11()
     ImGui::StyleColorsDark();
 
     //设置平台/渲染器后端
-    ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND());
-	auto d3d11_re = Context::Instance().RenderEngineInstance();
+    ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND()); 
+    auto& rf = Context::Instance().RenderFactoryInstance();
+	auto& d3d11_re = rf.RenderEngineInstance();
     auto re = static_cast<ID3D11Device*>(d3d11_re.GetD3DDevice());
     auto ctx = static_cast<ID3D11DeviceContext*>(d3d11_re.GetD3DDeviceImmContext());
     ImGui_ImplDX11_Init(re, ctx);
@@ -41,22 +44,42 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::Init()
 {
-    PanelList_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
-    PanelList_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
-    PanelList_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
-    PanelList_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
-    PanelList_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
+}
+
+void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
+{
+    auto cfg = Context::Instance().Config();
+    int Width = cfg.graphics_cfg.width;
+    int Height = cfg.graphics_cfg.height;
+
+    setting_.hierarchyWidth = hWidth;
+    setting_.hierarchyHeight = Height;
+    setting_.consoleWidth = (Width + setting_.hierarchyWidth) / 3;
+    setting_.consoleHeight = pHeight;
+    setting_.projectWidth = Width + setting_.hierarchyWidth - setting_.consoleWidth;
+    setting_.projectHeight = pHeight;
+    setting_.inspectorWidth = iWidth;
+    setting_.inspectorHeight = Height + setting_.projectHeight;
+    setting_.mainBarWidth = Width + setting_.hierarchyWidth + setting_.inspectorWidth;
+    setting_.mainBarHeight = 58;
 }
 
 void EditorManagerD3D11::Render()
 {
-    for(auto panel : PanelList_)
+    for(auto panel : panel_list_)
     {
         if(panel)
         {
-            panel->OnRender();
+            panel->OnRender(setting_);
         }
     }
+
+    EditorDialogBoxManager::Instance().OnRender();
     ImGui::Render();
 }
 
