@@ -117,6 +117,6 @@ target_link_libraries(ZENGINE_core
 
 if(ZENGINE_IS_DEV_PLATFORM)
 	if(NOT (ZENGINE_ARCH_NAME STREQUAL "arm64"))
-		add_dependencies(ZENGINE_core D3DCompilerRedist)
+		#add_dependencies(ZENGINE_core D3DCompilerRedist)
 	endif()
 endif()

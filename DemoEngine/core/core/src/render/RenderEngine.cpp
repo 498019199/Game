@@ -24,6 +24,16 @@ void* RenderEngine::GetD3DDeviceImmContext()
 }
 #endif
 
+void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& settings)
+{
+    
+}
+
+void RenderEngine::DestroyRenderWindow()
+{
+    
+}
+
 void RenderEngine::ForceLineMode(bool line)
 {
     if (force_line_mode_ != line)

@@ -3,6 +3,7 @@
 #include <render/RenderLayout.h>
 #include <render/RenderEngine.h>
 #include "D3D11Util.h"
+#include "D3D11AdapterList.h"
 
 namespace RenderWorker
 {
@@ -12,20 +13,34 @@ public:
     D3D11RenderEngine();
     ~D3D11RenderEngine();
 
-    void OnResize();
-
 #if ZENGINE_IS_DEV_PLATFORM
     virtual void* GetD3DDevice();
     virtual void* GetD3DDeviceImmContext();
 #endif //ZENGINE_IS_DEV_PLATFORM
 
-    ID3D11Device* D3DDevice() const;
-    ID3D11DeviceContext* D3DDeviceImmContext() const;
+    IDXGIFactory2* DXGIFactory2() const noexcept;
+    IDXGIFactory3* DXGIFactory3() const noexcept;
+    IDXGIFactory4* DXGIFactory4() const noexcept;
+    IDXGIFactory5* DXGIFactory5() const noexcept;
+    IDXGIFactory6* DXGIFactory6() const noexcept;
+    uint8_t DXGISubVer() const noexcept;
+
+    ID3D11Device1* D3DDevice1() const noexcept;
+    ID3D11Device2* D3DDevice2() const noexcept;
+    ID3D11Device3* D3DDevice3() const noexcept;
+    ID3D11Device4* D3DDevice4() const noexcept;
+    ID3D11Device5* D3DDevice5() const noexcept;
+    ID3D11DeviceContext1* D3DDeviceImmContext1() const noexcept;
+    ID3D11DeviceContext2* D3DDeviceImmContext2() const noexcept;
+    ID3D11DeviceContext3* D3DDeviceImmContext3() const noexcept;
+    ID3D11DeviceContext4* D3DDeviceImmContext4() const noexcept;
+    uint8_t D3D11RuntimeSubVer() const noexcept;
+
+	D3D_FEATURE_LEVEL DeviceFeatureLevel() const noexcept;
 
     void BeginRender() const override;
     void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) override;
     void EndRender() const override;
-    void SwitchChain() const; 
 
     // 设置光栅化状态
     void RSSetState(ID3D11RasterizerState* ras);
@@ -48,23 +63,58 @@ public:
 
     // // 删除shader资源
     void DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint32_t rt_num_subres);
+
+    // 获取D3D适配器列表
+    const D3D11AdapterList& D3DAdapters() const noexcept;
+    // 获取当前适配器
+	D3D11Adapter& ActiveAdapter() const;
 private:
+	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) override;
     // 设置当前Stream output目标
     virtual void DoBindSOBuffers(const RenderLayoutPtr& rl) override;
 
     // 填充设备能力
     void FillRenderDeviceCaps();
 private:
-    int weight_{0};
-    int height_{0};
-    int sample_count_{0};
-    int sample_quality_{0};
-    
-    ID3D11DevicePtr d3d_device_;
-	ID3D11DeviceContextPtr d3d_imm_ctx_;
-    D3D_FEATURE_LEVEL d3d_feature_level_;
+	typedef HRESULT(WINAPI *CreateDXGIFactory1Func)(REFIID riid, void** ppFactory);
+    typedef HRESULT(WINAPI *CreateDXGIFactory2Func)(UINT flags, REFIID riid, void** ppFactory);
+    typedef HRESULT(WINAPI *D3D11CreateDeviceFunc)(IDXGIAdapter* pAdapter,
+        D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
+        D3D_FEATURE_LEVEL const * pFeatureLevels, UINT FeatureLevels, UINT SDKVersion,
+        ID3D11Device** ppDevice, D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext);
 
-    IDXGISwapChainPtr swap_chain_;
+    CreateDXGIFactory1Func DynamicCreateDXGIFactory1_;
+    CreateDXGIFactory2Func DynamicCreateDXGIFactory2_;
+    D3D11CreateDeviceFunc DynamicD3D11CreateDevice_;
+
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+	DllLoader mod_dxgi_;
+	DllLoader mod_d3d11_;
+#endif
+
+    IDXGIFactory2Ptr gi_factory_2_;
+	IDXGIFactory3Ptr gi_factory_3_;
+    IDXGIFactory4Ptr gi_factory_4_;
+    IDXGIFactory5Ptr gi_factory_5_;
+    IDXGIFactory6Ptr gi_factory_6_;
+    uint8_t dxgi_sub_ver_;
+
+    ID3D11Device1Ptr d3d_device_1_;
+    ID3D11Device2Ptr d3d_device_2_;
+    ID3D11Device3Ptr d3d_device_3_;
+    ID3D11Device4Ptr d3d_device_4_;
+    ID3D11Device5Ptr d3d_device_5_;
+    ID3D11DeviceContext1Ptr d3d_imm_ctx_1_;
+    ID3D11DeviceContext2Ptr d3d_imm_ctx_2_;
+    ID3D11DeviceContext3Ptr d3d_imm_ctx_3_;
+    ID3D11DeviceContext4Ptr d3d_imm_ctx_4_;
+    uint8_t d3d_11_runtime_sub_ver_;
+
+	D3D_FEATURE_LEVEL d3d_feature_level_;
+
+    // List of D3D drivers installed (video cards)
+	// Enumerates itself
+	D3D11AdapterList adapterList_;
     
     uint32_t num_primitives_just_rendered_{0};
 	uint32_t num_vertices_just_rendered_{0};

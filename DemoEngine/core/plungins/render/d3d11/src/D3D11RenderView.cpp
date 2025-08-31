@@ -15,8 +15,8 @@ D3D11TextureShaderResourceView::D3D11TextureShaderResourceView(TexturePtr const 
     COMMON_ASSERT(texture->AccessHint() & EAH_GPU_Read);
 
     auto const& re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = re.D3DDevice();
-    d3d_imm_ctx_ = re.D3DDeviceImmContext();
+    d3d_device_ = re.D3DDevice1();
+    d3d_imm_ctx_ = re.D3DDeviceImmContext1();
 
     tex_ = texture;
     pf_ = pf == EF_Unknown ? texture->Format() : pf;

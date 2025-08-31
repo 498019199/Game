@@ -132,7 +132,7 @@ namespace RenderWorker
 	{
 		if (password_is_defined_)
 		{
-#ifdef KLAYGE_PLATFORM_WINDOWS_DESKTOP
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 			*password = SysAllocString(password_.c_str());
 #else
 			*password = nullptr;

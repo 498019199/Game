@@ -1,8 +1,9 @@
 
 #pragma once
-#include <Render/RenderStateObject.h>
-#include <Render/RenderLayout.h>
-#include <Render/RenderDeviceCaps.h>
+#include <base/RenderSettings.h>
+#include <render/RenderStateObject.h>
+#include <render/RenderLayout.h>
+#include <render/RenderDeviceCaps.h>
 
 namespace RenderWorker
 {
@@ -26,6 +27,10 @@ public:
     virtual void* GetD3DDeviceImmContext();
 #endif //ZENGINE_IS_DEV_PLATFORM
 
+    // 建立渲染窗口
+	void CreateRenderWindow(std::string const & name, RenderSettings& settings);
+	void DestroyRenderWindow();
+
     virtual void BeginRender() const = 0;
     virtual void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) = 0;
     virtual void EndRender() const = 0;
@@ -42,6 +47,8 @@ public:
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;
 private:
+
+	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) = 0;
     virtual void DoBindSOBuffers(const RenderLayoutPtr& rl) = 0;
 
 protected:
@@ -54,6 +61,8 @@ protected:
 
     RenderDeviceCaps caps_;
 };
+
+
 
 
 }

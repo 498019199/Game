@@ -11,7 +11,7 @@ D3D11SamplerStateObject::D3D11SamplerStateObject(SamplerStateDesc const & desc)
     : SamplerStateObject(desc)
 {
     const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    ID3D11Device* d3d_device = d3d11_re.D3DDevice();
+    ID3D11Device1* d3d_device = d3d11_re.D3DDevice1();
 
     D3D11_SAMPLER_DESC d3d_desc;
     d3d_desc.Filter = D3D11Mapping::Mapping(desc.filter);
@@ -35,7 +35,7 @@ D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_de
     : RenderStateObject(rs_desc, dss_desc, bs_desc)
 {
     auto& re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    ID3D11Device* d3d_device = re.D3DDevice();
+    ID3D11Device1* d3d_device = re.D3DDevice1();
 
     // 光栅化状态描述
     D3D11_RASTERIZER_DESC d3d_rs_desc;

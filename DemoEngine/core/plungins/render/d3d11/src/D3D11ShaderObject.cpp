@@ -277,7 +277,7 @@ ID3D11GeometryShaderPtr D3D11ShaderStageObject::CreateGeometryShaderWithStreamOu
     COMMON_ASSERT(!code_blob.empty());
 
     const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice();
+    auto d3d_device = re.D3DDevice1();
 
     // [In]D3D11_SO_DECLARATION_ENTRY的数组
     std::vector<D3D11_SO_DECLARATION_ENTRY> d3d11_decl(so_decl.size());
@@ -336,7 +336,7 @@ void D3D11VertexShaderStageObject::ClearHwShader()
 void D3D11VertexShaderStageObject::StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
 {
     auto const& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice();
+    auto d3d_device = re.D3DDevice1();
 
     if (FAILED(d3d_device->CreateVertexShader(shader_code_.data(), shader_code_.size(), nullptr, vertex_shader_.put())))
     {
@@ -403,7 +403,7 @@ void D3D11PixelShaderStageObject::ClearHwShader()
 void D3D11PixelShaderStageObject::StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
 {
     const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice();
+    auto d3d_device = re.D3DDevice1();
     if (FAILED(d3d_device->CreatePixelShader(shader_code_.data(), shader_code_.size(), nullptr, pixel_shader_.put())))
     {
         is_validate_ = false;
@@ -429,7 +429,7 @@ void D3D11GeometryShaderStageObject::StageSpecificCreateHwShader(const RenderEff
         if (sd.so_decl.empty())
         {
             const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-            auto d3d_device = re.D3DDevice();
+            auto d3d_device = re.D3DDevice1();
 
             if (FAILED(d3d_device->CreateGeometryShader(shader_code_.data(), shader_code_.size(), nullptr, geometry_shader_.put())))
             {

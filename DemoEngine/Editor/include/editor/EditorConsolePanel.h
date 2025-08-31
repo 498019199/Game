@@ -12,6 +12,12 @@ public:
 
     virtual void OnRender(const EditorSetting& setting) override;
     virtual void OnResize() override;
+
+private:
+	const ImVec2 iconSize = ImVec2(20, 20);
+	bool showMessage = true;
+	bool showWarning = true;
+	bool showError = true;
 };
 
 

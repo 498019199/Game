@@ -1,5 +1,6 @@
 #pragma once
-#include <d3d11_1.h>
+#include <dxgi1_6.h>
+#include <d3d11_4.h>
 #include <common/com_ptr.h>
 #include <common/macro.h>
 #include <common/common.h>
@@ -9,14 +10,27 @@
 #include <render/Texture.h>
 #include <render/ShaderObject.h>
 #include <render/RenderStateObject.h>
+
 namespace RenderWorker
 {
-    using ID3D11DevicePtr = CommonWorker::com_ptr<ID3D11Device>;
-    using ID3D11DeviceContextPtr = CommonWorker::com_ptr<ID3D11DeviceContext>;
-    using IDXGISwapChainPtr = CommonWorker::com_ptr<IDXGISwapChain>;
+    using IDXGIFactory1Ptr = CommonWorker::com_ptr<IDXGIFactory1>;
+    using IDXGIFactory2Ptr = CommonWorker::com_ptr<IDXGIFactory2>;
+    using IDXGIFactory3Ptr = CommonWorker::com_ptr<IDXGIFactory3>;
+    using IDXGIFactory4Ptr = CommonWorker::com_ptr<IDXGIFactory4>;
+    using IDXGIFactory5Ptr = CommonWorker::com_ptr<IDXGIFactory5>;
+    using IDXGIFactory6Ptr = CommonWorker::com_ptr<IDXGIFactory6>;
+    using ID3D11Device1Ptr = CommonWorker::com_ptr<ID3D11Device1>;
+    using ID3D11Device2Ptr = CommonWorker::com_ptr<ID3D11Device2>;
+    using ID3D11Device3Ptr = CommonWorker::com_ptr<ID3D11Device3>;
+    using ID3D11Device4Ptr = CommonWorker::com_ptr<ID3D11Device4>;
+    using ID3D11Device5Ptr = CommonWorker::com_ptr<ID3D11Device5>;
+    using ID3D11DeviceContext1Ptr = CommonWorker::com_ptr<ID3D11DeviceContext1>;
+    using ID3D11DeviceContext2Ptr = CommonWorker::com_ptr<ID3D11DeviceContext2>;
+    using ID3D11DeviceContext3Ptr = CommonWorker::com_ptr<ID3D11DeviceContext3>;
+    using ID3D11DeviceContext4Ptr = CommonWorker::com_ptr<ID3D11DeviceContext4>;
+    using IDXGISwapChain1Ptr = CommonWorker::com_ptr<IDXGISwapChain1>;
     using ID3D11BufferPtr = CommonWorker::com_ptr<ID3D11Buffer>;
     using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
-
     using ID3D11VertexShaderPtr = CommonWorker::com_ptr<ID3D11VertexShader>;
     using ID3D11PixelShaderPtr = CommonWorker::com_ptr<ID3D11PixelShader>;
     using ID3D11GeometryShaderPtr = CommonWorker::com_ptr<ID3D11GeometryShader>;

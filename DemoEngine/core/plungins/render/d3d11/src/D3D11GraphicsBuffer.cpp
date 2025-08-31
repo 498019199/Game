@@ -13,8 +13,8 @@ D3D11GraphicsBuffer::D3D11GraphicsBuffer(BufferUsage usage, uint32_t access_hint
             :GraphicsBuffer(usage, access_hint, size_in_byte, structure_byte_stride), bind_flags_(bind_flags)
 {
     const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = d3d11_re.D3DDevice();
-    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext();
+    d3d_device_ = d3d11_re.D3DDevice1();
+    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }
 
 void D3D11GraphicsBuffer::CopyToBuffer(GraphicsBuffer& target)
