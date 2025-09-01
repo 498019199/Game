@@ -60,6 +60,9 @@ protected:
     RenderLayoutPtr so_buffers_;
 
     RenderDeviceCaps caps_;
+
+    StereoMethod stereo_method_;
+    float stereo_separation_;
 };
 
 

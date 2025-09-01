@@ -125,10 +125,6 @@ D3D11RenderEngine::D3D11RenderEngine()
 
 D3D11RenderEngine::~D3D11RenderEngine()
 {
-	render_target_view_.reset();
-	depth_stencil_view_.reset();
-	depth_stencil_buff_.reset();
-
 	if (d3d_imm_ctx_1_)
 	{
 		d3d_imm_ctx_1_->ClearState();
@@ -163,7 +159,7 @@ D3D11RenderEngine::~D3D11RenderEngine()
 #if ZENGINE_IS_DEV_PLATFORM
 void* D3D11RenderEngine::GetD3DDevice()
 {
-	return d3d_device_.get();
+	return d3d_device_1_.get();
 }
 
 void* D3D11RenderEngine::GetD3DDeviceImmContext()
@@ -174,24 +170,12 @@ void* D3D11RenderEngine::GetD3DDeviceImmContext()
 
 void D3D11RenderEngine::BeginRender() const 
 {
-	COMMON_ASSERT(d3d_imm_ctx_1_);
-	COMMON_ASSERT(swap_chain_);
-
-	Color blackColor(0.0, 0.0, 0.0f, 1.0f);
-	d3d_imm_ctx_1_->ClearRenderTargetView(render_target_view_.get(), &blackColor.r());
-	d3d_imm_ctx_1_->ClearDepthStencilView(depth_stencil_view_.get(), D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void D3D11RenderEngine::EndRender() const
 {
 
 }
-
-void D3D11RenderEngine::SwitchChain() const
-{
-    TIFHR(swap_chain_->Present(0, 0));
-}
-
 void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
 	uint32_t vertex_stream_num = rl.VertexStreamNum();
@@ -499,7 +483,7 @@ ID3D11Device2* D3D11RenderEngine::D3DDevice2() const noexcept
 
 ID3D11Device3* D3D11RenderEngine::D3DDevice3() const noexcept
 {
-	return d3d_device_1_.get();
+	return d3d_device_3_.get();
 }
 
 ID3D11Device4* D3D11RenderEngine::D3DDevice4() const noexcept
@@ -600,7 +584,7 @@ void D3D11RenderEngine::DoBindSOBuffers(const RenderLayoutPtr& rl)
 			}
 		}
 
-		d3d_imm_ctx_->SOSetTargets(static_cast<UINT>(num_buffs), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
+		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_buffs), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
 
 		num_so_buffs_ = num_buffs;
 	}
@@ -608,7 +592,7 @@ void D3D11RenderEngine::DoBindSOBuffers(const RenderLayoutPtr& rl)
 	{
 		std::vector<ID3D11Buffer*> d3d11_buffs(num_so_buffs_, nullptr);
 		std::vector<UINT> d3d11_buff_offsets(num_so_buffs_, 0);
-		d3d_imm_ctx_->SOSetTargets(static_cast<UINT>(num_so_buffs_), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
+		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_so_buffs_), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
 
 		num_so_buffs_ = num_buffs;
 	}
@@ -616,8 +600,6 @@ void D3D11RenderEngine::DoBindSOBuffers(const RenderLayoutPtr& rl)
 
 void D3D11RenderEngine::FillRenderDeviceCaps()
 {
-	COMMON_ASSERT(d3d_device_);
-
 	switch (d3d_feature_level_)
 	{
 	case D3D_FEATURE_LEVEL_12_1:

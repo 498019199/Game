@@ -1,4 +1,4 @@
-#include <base/WinApp.h>
+#include <base/Window.h>
 #include <base/Context.h>
 #include <world/World.h>
 
@@ -50,7 +50,7 @@ LRESULT WinAPP::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-bool WinAPP::CreateAppWindow(const RenderSettings& settings)
+bool WinAPP::Create()
 {
 	{    
 		HINSTANCE hInst = ::GetModuleHandle(nullptr);
@@ -116,25 +116,7 @@ bool WinAPP::CreateAppWindow(const RenderSettings& settings)
 // 更新状态
 void WinAPP::CalculateFrameStats()
 {
-	++ total_num_frames_;
 
-	// measure statistics
-	frame_time_ = static_cast<float>(timer_.elapsed());
-	++ num_frames_;
-	accumulate_time_ += frame_time_;
-	app_time_ += frame_time_;
-
-	// check if new second
-	if (accumulate_time_ > 1)
-	{
-		// new second - not 100% precise
-		fps_ = num_frames_ / accumulate_time_;
-
-		accumulate_time_ = 0;
-		num_frames_  = 0;
-	}
-
-	timer_.restart();
 }
 
 int WinAPP::Run()

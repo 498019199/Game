@@ -1,5 +1,6 @@
 #pragma once
 #include <base/Context.h>
+#include <common/DllLoader.h>
 #include <render/RenderLayout.h>
 #include <render/RenderEngine.h>
 #include "D3D11Util.h"
@@ -7,6 +8,7 @@
 
 namespace RenderWorker
 {
+
 class D3D11RenderEngine :public RenderEngine
 {
 public:
@@ -88,8 +90,8 @@ private:
     D3D11CreateDeviceFunc DynamicD3D11CreateDevice_;
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	DllLoader mod_dxgi_;
-	DllLoader mod_d3d11_;
+    CommonWorker::DllLoader mod_dxgi_;
+	CommonWorker::DllLoader mod_d3d11_;
 #endif
 
     IDXGIFactory2Ptr gi_factory_2_;
@@ -119,11 +121,6 @@ private:
     uint32_t num_primitives_just_rendered_{0};
 	uint32_t num_vertices_just_rendered_{0};
 
-    ID3D11Texture2DPtr depth_stencil_buff_;
-    ID3D11DepthStencilViewPtr depth_stencil_view_;
-
-    ID3D11RenderTargetViewPtr render_target_view_;
-    
     D3D11_VIEWPORT screen_viewport_;
 
     // 光栅状态

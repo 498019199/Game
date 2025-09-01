@@ -39,12 +39,12 @@ public:
         return *context_instance_;
     }
 
-    void AppInstance(WinAPP& app) noexcept
+    void AppInstance(App3D& app) noexcept
     {
         app_ = &app;
     }
 
-    WinAPP& AppInstance() noexcept
+    App3D& AppInstance() noexcept
     {
         COMMON_ASSERT(app_);
        // COMMON_ASSUME(app_);
@@ -62,6 +62,11 @@ public:
             }
         }
         return render_factory_->RenderEngineInstance();
+    }
+
+    bool RenderFactoryValid() const noexcept
+    {
+        return render_factory_ != nullptr;
     }
 
     RenderFactory& RenderFactoryInstance() noexcept
@@ -290,7 +295,7 @@ private:
 	static std::unique_ptr<Context> context_instance_;
 
     // 窗口实例
-    WinAPP* app_;
+    App3D* app_;
 
     // 基础配置
     ContextConfig cfg_;
@@ -326,12 +331,12 @@ Context& Context::Instance()
     return Impl::Instance();
 }
 
-void Context::AppInstance(WinAPP& app) noexcept
+void Context::AppInstance(App3D& app) noexcept
 {
     pimpl_->AppInstance(app);
 }
 
-WinAPP& Context::AppInstance() noexcept
+App3D& Context::AppInstance() noexcept
 {
     return pimpl_->AppInstance();
 }
@@ -374,6 +379,21 @@ void Context::LoadConfig(const char* file_name)
 void Context::SaveConfig()
 {
     pimpl_->SaveConfig();
+}
+
+bool Context::RenderFactoryValid() const noexcept
+{
+    return pimpl_->RenderFactoryValid();
+}
+
+void Context::Destroy() noexcept
+{
+    
+}
+
+void Context::Suspend()
+{
+    
 }
 
 }

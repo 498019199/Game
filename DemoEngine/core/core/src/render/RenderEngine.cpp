@@ -26,7 +26,14 @@ void* RenderEngine::GetD3DDeviceImmContext()
 
 void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& settings)
 {
-    
+    if (settings.stereo_method != STM_OculusVR)
+    {
+        stereo_separation_ = settings.stereo_separation;
+    }
+
+    DoCreateRenderWindow(name, settings);
+
+    const RenderDeviceCaps& caps = DeviceCaps();
 }
 
 void RenderEngine::DestroyRenderWindow()

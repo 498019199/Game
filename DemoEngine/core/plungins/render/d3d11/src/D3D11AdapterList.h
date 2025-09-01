@@ -12,7 +12,7 @@ public:
     void Destroy();
 
     size_t NumAdapter() const noexcept;
-	D3D11Adapter* Adapter(size_t index) const;
+	D3D11Adapter& Adapter(size_t index) const;
 
 	uint32_t CurrentAdapterIndex() const noexcept;
 	void CurrentAdapterIndex(uint32_t index) noexcept;

@@ -17,7 +17,7 @@ struct ContextConfig
     bool location_sensor;
 };
 
-class WinAPP;
+class App3D;
 class RenderEngine;
 class RenderFactory;
 class World;
@@ -29,25 +29,28 @@ public:
     Context();
     ~Context() noexcept;
 
+    static Context& Instance();
+    static void Destroy() noexcept;
+    void Suspend();
+    
     void LoadConfig(const char* file_name);
     void SaveConfig();
-
-    static Context& Instance();
 
     const ContextConfig& Config() const noexcept;
     void Config(const ContextConfig& cfg) noexcept;
 
-    void AppInstance(WinAPP& app) noexcept;
-    WinAPP& AppInstance() noexcept;
+    void AppInstance(App3D& app) noexcept;
+    App3D& AppInstance() noexcept;
     RenderEngine& RenderEngineInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;
     World& WorldInstance() noexcept;
     ResLoader& ResLoaderInstance() noexcept;
+
+    bool RenderFactoryValid() const noexcept;
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
-
 }
 
 

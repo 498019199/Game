@@ -7,6 +7,10 @@ externals 目录下面cmake下载lib
 [ini库](https://github.com/metayeti/mINI)
 包管理vcpkg
 
+ID3D11Device接口用于检测显示适配器功能和分配资源
+ID3D11DeviceContext接口用于设置管线状态、将资源绑定到图形管线和生成渲染命令。
+IDXGIFactory 是创建其他接口的工厂函数，可以假想为一台主机中所有与图形相关的硬件集合
+
 # 图形渲染技术：
 DX9： 支持固定功能管线和有限的可编程管线
 DX11：增加了**细分曲面、计算着色器等技术**，提高了多线程处理能力。

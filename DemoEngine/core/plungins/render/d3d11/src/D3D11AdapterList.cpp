@@ -33,18 +33,18 @@ void D3D11AdapterList::CurrentAdapterIndex(uint32_t index) noexcept
 
 // 获取显卡
 /////////////////////////////////////////////////////////////////////////////////
-D3D11Adapter* D3D11AdapterList::Adapter(size_t index) const
+D3D11Adapter& D3D11AdapterList::Adapter(size_t index) const
 {
     COMMON_ASSERT(index < adapters_.size());
-    return adapters_[index].get();
+    return *adapters_[index].get();
 }
 
 // 枚举系统显卡
 /////////////////////////////////////////////////////////////////////////////////
 void D3D11AdapterList::Enumerate(IDXGIFactory2* gi_factory)
 {
-    // 枚举系统中的适配器
-    UINT adapter_no = 0;
+    // 通过索引获取系统中的显示适配器
+    UINT adapter_no = 0;   
     IDXGIAdapter1* dxgi_adapter1;
     while (gi_factory->EnumAdapters1(adapter_no, &dxgi_adapter1) != DXGI_ERROR_NOT_FOUND)
     {
@@ -65,6 +65,7 @@ void D3D11AdapterList::Enumerate(IDXGIFactory6* gi_factory)
 {
     UINT adapter_no = 0;
 	IDXGIAdapter2* dxgi_adapter;
+    // DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE：指定偏好高性能 GPU
 	while (SUCCEEDED(gi_factory->EnumAdapterByGpuPreference(
         adapter_no, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, __uuidof(IDXGIAdapter2), PTR_PUT_VOID(dxgi_adapter))))
 	{

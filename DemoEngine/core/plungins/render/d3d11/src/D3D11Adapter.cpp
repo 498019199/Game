@@ -50,13 +50,15 @@ void D3D11Adapter::Enumerate()
     };
 
     UINT i = 0;
-    IDXGIOutput* output;
+    // 输出设备接口
+    IDXGIOutput* output; 
     while (adapter_->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
     {
         if (output != nullptr)
         {
             for (auto const & format : formats)
             {
+                // 获取指定输出设备（显示器）支持的显示模式数量
                 UINT num = 0;
 				output->GetDisplayModeList(format, DXGI_ENUM_MODES_SCALING, &num, nullptr);
                 if (num > 0)

@@ -1,3 +1,24 @@
+SOURCE_GROUP("App Layer\\Source Files" FILES ${APP_HEADER_FILES})
+SOURCE_GROUP("App Layer\\Header Files" FILES ${APP_SOURCE_FILES})
+
+set(APP_HEADER_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/App3D.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/Window.h
+)
+
+set(APP_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/src/app/App3D.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/app/Window.cpp
+)
+
+if(KLAYGE_PLATFORM_WINDOWS_DESKTOP)
+    set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
+    ${KLAYGE_PROJECT_DIR}/core/core/AppLayer/WindowWin.cpp
+    )
+elseif(KLAYGE_PLATFORM_ANDROID)
+elseif(KLAYGE_PLATFORM_IOS)
+endif()
+
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
 SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
 
@@ -8,11 +29,10 @@ set(BASE_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Package.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/ResLoader.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Thread.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/base/WinApp.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/RenderSettings.h
 )
 
 set(BASE_SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/src/app/WinApp.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/Context.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/CpuInfo.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/RenderableHelper.cpp
@@ -86,6 +106,7 @@ SOURCE_GROUP("World\\Source Files" FILES ${AUDIO_SOURCE_FILES})
 SOURCE_GROUP("World\\Header Files" FILES ${AUDIO_HEADER_FILES})
 
 add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
+    ${APP_HEADER_FILES} ${APP_SOURCE_FILES}
     ${BASE_HEADER_FILES} ${BASE_SOURCE_FILES}
     ${WORLD_HEADER_FILES} ${WORLD_SOURCE_FILES}
     ${RENDER_HEADER_FILES} ${RENDER_SOURCE_FILES}

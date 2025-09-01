@@ -27,10 +27,6 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#ifndef _KFL_DLLLOADER_HPP
-#define _KFL_DLLLOADER_HPP
-
 #pragma once
 
 #include <string>
@@ -68,4 +64,3 @@ private:
 };
 }
 
-#endif		// _KFL_DLLLOADER_HPP

@@ -1,6 +1,4 @@
 #include <base/Context.h>
-#include <base/WinApp.h>
-
 #include <world/World.h>
 
 #include <render/RenderEffect.h>
