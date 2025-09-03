@@ -29,6 +29,18 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     ID3D11Device1Ptr d3d_device = d3d11_re.D3DDevice1();
     ID3D11DeviceContext1Ptr d3d_imm_ctx;
 
+    dxgi_stereo_support_ = d3d11_re.DXGIFactory2()->IsWindowedStereoEnabled() ? true : false;
+
+    if (d3d11_re.DXGISubVer() >= 5)
+    {
+        BOOL allow_tearing = FALSE;
+        if (SUCCEEDED(d3d11_re.DXGIFactory5()->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+            &allow_tearing, sizeof(allow_tearing))))
+        {
+            dxgi_allow_tearing_ = allow_tearing ? true : false;
+        }
+    }
+    
     if (d3d_device)
     {
         d3d_imm_ctx = d3d11_re.D3DDeviceImmContext1();

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <base/SmartPtrHelper.h>
 #include "D3D11RenderEngine.h"
 #include "D3D11AdapterList.h"
 #include "D3D11FrameBuffer.h"

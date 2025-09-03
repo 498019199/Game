@@ -22,6 +22,7 @@ Window::Window(const std::string& name, const RenderSettings& settings, void* na
 {
     this->DetectsDpi();
     this->KeepScreenOn();
+	Convert(wname_, name);
 
     if(nullptr != native_wnd)
     {
@@ -30,7 +31,7 @@ Window::Window(const std::string& name, const RenderSettings& settings, void* na
     else
 	{    
 		HINSTANCE hInst = ::GetModuleHandle(nullptr);
-		std::wstring  wname = L"D3DWndClassName";
+		std::wstring  wname = wname_;
 		WNDCLASSEXW wc;
 		wc.cbSize = sizeof(wc);
 		wc.style         = CS_HREDRAW | CS_VREDRAW;

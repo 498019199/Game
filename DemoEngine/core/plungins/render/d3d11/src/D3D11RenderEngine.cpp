@@ -538,9 +538,49 @@ D3D11Adapter& D3D11RenderEngine::ActiveAdapter() const
 	return adapterList_.Adapter(adapterList_.CurrentAdapterIndex());
 }
 
+void D3D11RenderEngine::DetectD3D11Runtime(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx)
+{
+	d3d_device_1_.reset(device);
+	d3d_imm_ctx_1_.reset(imm_ctx);
+	d3d_11_runtime_sub_ver_ = 1;
+
+	if (d3d_device_1_.try_as(d3d_device_2_) && d3d_imm_ctx_1_.try_as(d3d_imm_ctx_2_))
+	{
+		d3d_11_runtime_sub_ver_ = 2;
+		if (d3d_device_1_.try_as(d3d_device_3_) && d3d_imm_ctx_1_.try_as(d3d_imm_ctx_3_))
+		{
+			d3d_11_runtime_sub_ver_ = 3;
+			if (d3d_device_1_.try_as(d3d_device_4_))
+			{
+				d3d_11_runtime_sub_ver_ = 4;
+					
+				d3d_device_1_.try_as(d3d_device_5_);
+				d3d_imm_ctx_1_.try_as(d3d_imm_ctx_4_);
+			}
+		}
+	}
+}
+
 void D3D11RenderEngine::D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx, D3D_FEATURE_LEVEL feature_level)
 {
+	this->DetectD3D11Runtime(device, imm_ctx);
 
+	d3d_feature_level_ = feature_level;
+	Verify(device != nullptr);
+
+	if (d3d_11_runtime_sub_ver_ >= 4)
+	{
+		device_lost_event_ = MakeWin32UniqueHandle(::CreateEventEx(nullptr, nullptr, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS));
+		if (device_lost_event_ != nullptr)
+		{
+			thread_pool_wait_ = MakeWin32UniquTpWait(::CreateThreadpoolWait(D3D11RenderEngine::OnDeviceLost, this, nullptr));
+			if (thread_pool_wait_ != nullptr)
+			{
+				::SetThreadpoolWait(thread_pool_wait_.get(), device_lost_event_.get(), nullptr);
+				TIFHR(d3d_device_4_->RegisterDeviceRemovedEvent(device_lost_event_.get(), &device_lost_reg_cookie_));
+			}
+		}
+	}
 }
 
 void D3D11RenderEngine::DoCreateRenderWindow(std::string const & name, RenderSettings const & settings)
@@ -636,5 +676,11 @@ HRESULT D3D11RenderEngine::D3D11CreateDevice(IDXGIAdapter* pAdapter,
 {
 	return DynamicD3D11CreateDevice_(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion,
 		ppDevice, pFeatureLevel, ppImmediateContext);
+}
+
+void D3D11RenderEngine::OnDeviceLost([[maybe_unused]] PTP_CALLBACK_INSTANCE instance, [[maybe_unused]] PVOID context,
+	[[maybe_unused]] PTP_WAIT wait, [[maybe_unused]] TP_WAIT_RESULT wait_result) noexcept
+{
+	// TODO
 }
 }

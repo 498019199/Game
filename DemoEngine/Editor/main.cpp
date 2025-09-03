@@ -13,13 +13,12 @@ public:
     EditorApp()
         :App3D("Editor App")
     {
-        Context::Instance().ResLoaderInstance().AddPath("../../Assets");
     }
 };
 
 int main()
 {
-
+    Context::Instance().ResLoaderInstance().AddPath("../../Assets");
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
     Context::Instance().LoadConfig(cfg_path.c_str());
 

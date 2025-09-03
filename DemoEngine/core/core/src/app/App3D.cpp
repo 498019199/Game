@@ -36,20 +36,12 @@ App3D::App3D(const std::string& name)
 }
 
 App3D::App3D(const std::string& name, void* native_wnd)
+    :name_(name)
 {
     Context::Instance().AppInstance(*this);
 
     ContextConfig cfg = Context::Instance().Config();
     main_wnd_ = this->MakeWindow(name_, cfg.graphics_cfg, native_wnd);
-#ifndef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    auto const & win = Context::Instance().AppInstance().MainWnd();
-    float const eff_dpi_scale = win->EffectiveDPIScale();
-    cfg.graphics_cfg.left = static_cast<uint32_t>(main_wnd_->Left() / eff_dpi_scale + 0.5f);
-    cfg.graphics_cfg.top = static_cast<uint32_t>(main_wnd_->Top() / eff_dpi_scale + 0.5f);
-    cfg.graphics_cfg.width = static_cast<uint32_t>(main_wnd_->Width() / eff_dpi_scale + 0.5f);
-    cfg.graphics_cfg.height = static_cast<uint32_t>(main_wnd_->Height() / eff_dpi_scale + 0.5f);
-    Context::Instance().Config(cfg);
-#endif
 }
 
 App3D::~App3D()
@@ -101,6 +93,11 @@ void App3D::Run()
 #elif defined ZENGINE_PLATFORM_LINUX
 #elif defined ZENGINE_PLATFORM_ANDROID
 #elif defined ZENGINE_PLATFORM_IOS
+    while (!main_wnd_->Closed())
+    {
+        Window::PumpEvents();
+        re.Refresh();
+    }
 #endif
 
     this->OnDestroy();

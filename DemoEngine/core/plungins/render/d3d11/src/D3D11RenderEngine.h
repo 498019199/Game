@@ -1,8 +1,10 @@
 #pragma once
 #include <base/Context.h>
+#include <base/SmartPtrHelper.h>
 #include <common/DllLoader.h>
 #include <render/RenderLayout.h>
 #include <render/RenderEngine.h>
+
 #include "D3D11Util.h"
 #include "D3D11AdapterList.h"
 
@@ -42,6 +44,11 @@ public:
 
 	void D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx, D3D_FEATURE_LEVEL feature_level);
 
+    // 填充设备能力
+    void FillRenderDeviceCaps();
+        
+    void DetectD3D11Runtime(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx);
+
     void BeginRender() const override;
     void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) override;
     void EndRender() const override;
@@ -76,13 +83,13 @@ public:
     HRESULT D3D11CreateDevice(IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
         D3D_FEATURE_LEVEL const* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, ID3D11Device** ppDevice,
         D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext) const;
+
+	static void CALLBACK OnDeviceLost(PTP_CALLBACK_INSTANCE instance, PVOID context, PTP_WAIT wait, TP_WAIT_RESULT wait_result) noexcept;
 private:
 	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) override;
     // 设置当前Stream output目标
     virtual void DoBindSOBuffers(const RenderLayoutPtr& rl) override;
 
-    // 填充设备能力
-    void FillRenderDeviceCaps();
 private:
 	typedef HRESULT(WINAPI *CreateDXGIFactory1Func)(REFIID riid, void** ppFactory);
     typedef HRESULT(WINAPI *CreateDXGIFactory2Func)(UINT flags, REFIID riid, void** ppFactory);
@@ -126,9 +133,6 @@ private:
     
     uint32_t num_primitives_just_rendered_{0};
 	uint32_t num_vertices_just_rendered_{0};
-
-    D3D11_VIEWPORT screen_viewport_;
-
     // 光栅状态
     ID3D11RasterizerState* rasterizer_state_cache_{nullptr};
     // 混合状态
@@ -143,9 +147,6 @@ private:
     ID3D11VertexShader* vertex_shader_cache_{nullptr};
     ID3D11PixelShader* pixel_shader_cache_{nullptr};
     ID3D11GeometryShader* geometry_shader_cache_{nullptr};
-    
-    // 默认shader 目标选项
-    char const* shader_profiles_[ShaderStageNum];
 
     std::array<std::vector<ID3D11Buffer*>, ShaderStageNum> shader_cb_ptr_cache_;
     std::array<std::vector<std::tuple<void*, uint32_t, uint32_t>>, ShaderStageNum> shader_srvsrc_cache_;
@@ -161,6 +162,13 @@ private:
     std::vector<UINT> vb_offset_cache_;
     ID3D11Buffer* ib_cache_{nullptr};
     RenderLayout::topology_type topology_type_cache_ {RenderLayout::TT_PointList};
+    
+    // 默认shader 目标选项
+    char const* shader_profiles_[ShaderStageNum];
+
+    Win32UniqueHandle device_lost_event_;
+    DWORD device_lost_reg_cookie_{0};
+    Win32UniqueTpWait thread_pool_wait_;
 };
 }
 
