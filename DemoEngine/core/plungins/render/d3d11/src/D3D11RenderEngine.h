@@ -40,6 +40,8 @@ public:
 
 	D3D_FEATURE_LEVEL DeviceFeatureLevel() const noexcept;
 
+	void D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx, D3D_FEATURE_LEVEL feature_level);
+
     void BeginRender() const override;
     void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) override;
     void EndRender() const override;
@@ -70,6 +72,10 @@ public:
     const D3D11AdapterList& D3DAdapters() const noexcept;
     // 获取当前适配器
 	D3D11Adapter& ActiveAdapter() const;
+
+    HRESULT D3D11CreateDevice(IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
+        D3D_FEATURE_LEVEL const* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, ID3D11Device** ppDevice,
+        D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext) const;
 private:
 	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) override;
     // 设置当前Stream output目标

@@ -29,8 +29,8 @@ public:
     App3D(const std::string& name, void* native_wnd);
     virtual ~App3D();
     
-    bool Create();
-    int Run();
+    void Create();
+    void Run();
     void Suspend();
     // 退出程序
     void Quit();
@@ -81,6 +81,8 @@ protected:
 
     WindowPtr main_wnd_;
 };
+
+
 
 
 

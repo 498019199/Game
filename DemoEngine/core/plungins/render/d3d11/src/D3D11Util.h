@@ -13,12 +13,12 @@
 
 namespace RenderWorker
 {
-    using IDXGIFactory1Ptr = CommonWorker::com_ptr<IDXGIFactory1>;
     using IDXGIFactory2Ptr = CommonWorker::com_ptr<IDXGIFactory2>;
     using IDXGIFactory3Ptr = CommonWorker::com_ptr<IDXGIFactory3>;
     using IDXGIFactory4Ptr = CommonWorker::com_ptr<IDXGIFactory4>;
     using IDXGIFactory5Ptr = CommonWorker::com_ptr<IDXGIFactory5>;
     using IDXGIFactory6Ptr = CommonWorker::com_ptr<IDXGIFactory6>;
+	using IDXGIAdapter2Ptr = CommonWorker::com_ptr<IDXGIAdapter2>;
     using ID3D11Device1Ptr = CommonWorker::com_ptr<ID3D11Device1>;
     using ID3D11Device2Ptr = CommonWorker::com_ptr<ID3D11Device2>;
     using ID3D11Device3Ptr = CommonWorker::com_ptr<ID3D11Device3>;
@@ -29,6 +29,9 @@ namespace RenderWorker
     using ID3D11DeviceContext3Ptr = CommonWorker::com_ptr<ID3D11DeviceContext3>;
     using ID3D11DeviceContext4Ptr = CommonWorker::com_ptr<ID3D11DeviceContext4>;
     using IDXGISwapChain1Ptr = CommonWorker::com_ptr<IDXGISwapChain1>;
+    using IDXGISwapChain2Ptr = CommonWorker::com_ptr<IDXGISwapChain2>;
+    using IDXGISwapChain3Ptr = CommonWorker::com_ptr<IDXGISwapChain3>;
+    using IDXGISwapChain4Ptr = CommonWorker::com_ptr<IDXGISwapChain4>;
     using ID3D11BufferPtr = CommonWorker::com_ptr<ID3D11Buffer>;
     using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
     using ID3D11VertexShaderPtr = CommonWorker::com_ptr<ID3D11VertexShader>;

@@ -92,7 +92,7 @@ std::wstring const D3D11Adapter::Description() const
 
 void D3D11Adapter::ResetAdapter(IDXGIAdapter2* adapter)
 {
-    adapter_ = adapter;
+    adapter_.reset(adapter);
     adapter_->GetDesc2(&adapter_desc_);
 }
 

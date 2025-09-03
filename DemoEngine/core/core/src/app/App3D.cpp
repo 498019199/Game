@@ -1,5 +1,7 @@
 #include <base/App3D.h>
+#include <base/Window.h>
 #include <base/Context.h>
+#include <base/ResLoader.h>
 #include <render/RenderFactory.h>
 #include <render/RenderEngine.h>
 
@@ -55,7 +57,7 @@ App3D::~App3D()
     Destroy();
 }
 
-bool App3D::Create()
+void App3D::Create()
 {
     ContextConfig cfg = Context::Instance().Config();
     Context::Instance().RenderFactoryInstance().RenderEngineInstance().CreateRenderWindow(name_, cfg.graphics_cfg);
@@ -64,9 +66,44 @@ bool App3D::Create()
     OnResize(cfg.graphics_cfg.width, cfg.graphics_cfg.height);
 }
 
-int App3D::Run()
+void App3D::Run()
 {
-    
+#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
+	bool gotMsg;
+    MSG msg = {0};
+	::PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE);
+
+    while(	WM_QUIT != msg.message )
+	{
+		// 如果窗口是激活的，用 PeekMessage()以便我们可以用空闲时间渲染场景
+		// 不然, 用 GetMessage() 减少 CPU 占用率
+		if ( main_wnd_->Active() )
+		{
+			gotMsg = (::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0);
+		}
+		else
+		{
+			gotMsg = (::GetMessage(&msg, nullptr, 0, 0) != 0);
+		}
+
+
+		const auto& re = Context::Instance().RenderEngineInstance();
+		if (gotMsg)
+		{
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+		else
+		{
+			re.Refresh();
+		}
+    }
+#elif defined ZENGINE_PLATFORM_LINUX
+#elif defined ZENGINE_PLATFORM_ANDROID
+#elif defined ZENGINE_PLATFORM_IOS
+#endif
+
+    this->OnDestroy();
 }
 
 void App3D::Suspend()
@@ -126,7 +163,12 @@ void App3D::OnResize(uint32_t width, uint32_t height)
 
 uint32_t App3D::Update(uint32_t pass)
 {
-    
+    if(0 == pass)
+    {
+        this->UpdateStats();
+        Context::Instance().ResLoaderInstance().Update();
+    }
+    return 0;
 }
 
 // 获取渲染目标的每秒帧数

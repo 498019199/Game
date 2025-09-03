@@ -1,5 +1,5 @@
+#include <common/Uuid.h>
 #include <base/Context.h>
-#include <base/WinApp.h>
 #include <render/RenderEffect.h>
 
 #include "D3D11RenderEngine.h"
@@ -11,6 +11,8 @@
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 static const std::function<void(ID3D11DeviceContext*, UINT, UINT, ID3D11ShaderResourceView * const *)> ShaderSetShaderResources[] =
 {
 	std::mem_fn(&ID3D11DeviceContext::VSSetShaderResources),
@@ -536,6 +538,11 @@ D3D11Adapter& D3D11RenderEngine::ActiveAdapter() const
 	return adapterList_.Adapter(adapterList_.CurrentAdapterIndex());
 }
 
+void D3D11RenderEngine::D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx, D3D_FEATURE_LEVEL feature_level)
+{
+
+}
+
 void D3D11RenderEngine::DoCreateRenderWindow(std::string const & name, RenderSettings const & settings)
 {
 	D3D11RenderWindowPtr win = MakeSharedPtr<D3D11RenderWindow>(&this->ActiveAdapter(),
@@ -620,5 +627,14 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 char const * D3D11RenderEngine::DefaultShaderProfile(ShaderStage stage) const
 {
 	return shader_profiles_[std::to_underlying(stage)];
+}
+
+HRESULT D3D11RenderEngine::D3D11CreateDevice(IDXGIAdapter* pAdapter,
+	D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
+	D3D_FEATURE_LEVEL const * pFeatureLevels, UINT FeatureLevels, UINT SDKVersion,
+	ID3D11Device** ppDevice, D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext) const
+{
+	return DynamicD3D11CreateDevice_(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion,
+		ppDevice, pFeatureLevel, ppImmediateContext);
 }
 }

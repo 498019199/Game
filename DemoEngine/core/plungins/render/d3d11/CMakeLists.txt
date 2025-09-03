@@ -5,8 +5,8 @@ add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11AdapterList.h
 	#src/D3D11Fence.cpp
 	#src/D3D11Fence.h
-	#src/D3D11FrameBuffer.cpp
-	#src/D3D11FrameBuffer.h
+	src/D3D11FrameBuffer.cpp
+	src/D3D11FrameBuffer.h
 	src/D3D11GraphicsBuffer.cpp
 	src/D3D11GraphicsBuffer.h
 	#src/D3D11Query.cpp

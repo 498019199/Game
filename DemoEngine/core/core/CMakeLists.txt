@@ -11,10 +11,10 @@ set(APP_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/app/Window.cpp
 )
 
-if(KLAYGE_PLATFORM_WINDOWS_DESKTOP)
+if(ZENGINE_PLATFORM_WINDOWS)
     set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
-    ${KLAYGE_PROJECT_DIR}/core/core/AppLayer/WindowWin.cpp
-    )
+    ${PROJECT_SOURCE_DIR}/core/core/src/app/WindowWin.cpp
+)
 elseif(KLAYGE_PLATFORM_ANDROID)
 elseif(KLAYGE_PLATFORM_IOS)
 endif()
@@ -51,56 +51,57 @@ SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
 SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
     
 set(RENDER_HEADER_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Adapter.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/AdapterList.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Camera.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/ElementFormat.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Fen.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/GraphicsBuffer.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Light.h 
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Mesh.h 
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Renderable.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderableHelper.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderDeviceCaps.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderEffect.h 
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderEngine.h 
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderFactory.h 
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderLayout.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderStateObject.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/RenderView.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/ShaderObject.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/TexCompression.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/Render/Texture.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Adapter.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/AdapterList.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Camera.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/ElementFormat.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Fen.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/GraphicsBuffer.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Light.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Mesh.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Renderable.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderableHelper.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderDeviceCaps.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderEffect.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderEngine.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderFactory.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderLayout.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderStateObject.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderView.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderObject.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompression.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Texture.h
 )
 
 set(RENDER_SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/Camera.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/GraphicsBuffer.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/Light.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/Mesh.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/Renderable.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderEffect.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderEngine.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderFactory.cpp 
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderLayout.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderStateObject.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/RenderView.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/ShaderObject.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/Render/Texture.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Camera.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/FrameBuffer.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/GraphicsBuffer.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Light.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Mesh.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Renderable.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEffect.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEngine.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderFactory.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderLayout.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderStateObject.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderView.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Texture.cpp
 )
 SOURCE_GROUP("Rendering System\\Source Files" FILES ${RENDERING_SOURCE_FILES})
 SOURCE_GROUP("Rendering System\\Header Files" FILES ${RENDERING_HEADER_FILES})
 
 set(WORLD_HEADER_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/include/World/World.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/World/Control.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/World/SceneNode.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/world/World.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/world/Control.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/world/SceneNode.h
 )
 
 set(WORLD_SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/src/World/World.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/World/Control.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/World/SceneNode.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/world/World.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/world/Control.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/world/SceneNode.cpp
 )
 SOURCE_GROUP("World\\Source Files" FILES ${AUDIO_SOURCE_FILES})
 SOURCE_GROUP("World\\Header Files" FILES ${AUDIO_HEADER_FILES})

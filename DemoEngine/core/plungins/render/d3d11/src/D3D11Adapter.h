@@ -1,7 +1,6 @@
 #pragma once
-#include <base/Context.h>
-#include <d3d11_4.h>
-#include <dxgi1_6.h>
+#include "D3D11Util.h"
+
 #define PTR_PUT_VOID(ptr) reinterpret_cast<void**>(&ptr)
 
 namespace RenderWorker
@@ -31,12 +30,26 @@ public:
     std::wstring const Description() const;
     void ResetAdapter(IDXGIAdapter2* adapter);
 
+    uint32_t AdapterNo() const noexcept
+    {
+        return adapter_no_;
+    }
+
+    IDXGIAdapter2* DXGIAdapter() const noexcept
+    {
+        return adapter_.get();
+    }
+
+    DXGI_FORMAT DesktopFormat() const noexcept
+    {
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
 private:
     // 这是第几块适配器
     uint32_t			adapter_no_;
 
     // 适配器信息
-    IDXGIAdapter2* adapter_;
+    IDXGIAdapter2Ptr adapter_;
     DXGI_ADAPTER_DESC2 adapter_desc_{};
 	
     // 显示模式列表

@@ -10,7 +10,8 @@
 #include <imgui/imgui_impl_win32.h>
 
 #include <base/Context.h>
-#include <base/WinApp.h>
+#include <base/App3D.h>
+#include <base/Window.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 
@@ -27,7 +28,7 @@ EditorManagerD3D11::EditorManagerD3D11()
     ImGui::StyleColorsDark();
 
     //设置平台/渲染器后端
-    ImGui_ImplWin32_Init(Context::Instance().AppInstance().GetHWND()); 
+    ImGui_ImplWin32_Init(Context::Instance().AppInstance().MainWnd()->GetHWND()); 
     auto& rf = Context::Instance().RenderFactoryInstance();
 	auto& d3d11_re = rf.RenderEngineInstance();
     auto re = static_cast<ID3D11Device*>(d3d11_re.GetD3DDevice());
