@@ -140,7 +140,20 @@ void D3D11Texture2D::CreateHWResource(std::span<ElementInitData const> init_data
     d3d_tex.as(d3d_texture_);
 }
 
-D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture2D::FillSRVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const
+uint32_t D3D11Texture2D::Width(uint32_t level) const noexcept 
+{
+    COMMON_ASSERT(level < mip_maps_num_);
+    return std::max(1U, width_ >> level);
+}
+
+uint32_t D3D11Texture2D::Height(uint32_t level) const noexcept 
+{
+    COMMON_ASSERT(level < mip_maps_num_);
+    return std::max(1U, height_ >> level);
+}
+
+D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture2D::FillSRVDesc(ElementFormat pf, 
+    uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const
 {
     D3D11_SHADER_RESOURCE_VIEW_DESC desc;
     switch (pf)
@@ -190,6 +203,81 @@ D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture2D::FillSRVDesc(ElementFormat pf, ui
             desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
             desc.Texture2D.MostDetailedMip = first_level;
             desc.Texture2D.MipLevels = num_levels;
+        }
+    }
+
+    return desc;
+}
+
+D3D11_RENDER_TARGET_VIEW_DESC D3D11Texture2D::FillRTVDesc(ElementFormat pf, 
+    uint32_t first_array_index, uint32_t array_size, uint32_t level) const 
+{
+    D3D11_RENDER_TARGET_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    if (array_size > 1)
+    {
+        if (sample_count_ > 1)
+        {
+            desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+            desc.Texture2DMSArray.FirstArraySlice = first_array_index;
+            desc.Texture2DMSArray.ArraySize = array_size;
+        }
+        else
+        {
+            desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+            desc.Texture2DArray.MipSlice = level;
+            desc.Texture2DArray.FirstArraySlice = first_array_index;
+            desc.Texture2DArray.ArraySize = array_size;
+        }
+    }
+    else
+    {
+        if (sample_count_ > 1)
+        {
+            desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+        }
+        else
+        {
+            desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            desc.Texture2D.MipSlice = level;
+        }
+    }
+
+    return desc;
+}
+
+D3D11_DEPTH_STENCIL_VIEW_DESC D3D11Texture2D::FillDSVDesc(ElementFormat pf, 
+    uint32_t first_array_index, uint32_t array_size, uint32_t level) const 
+{
+    D3D11_DEPTH_STENCIL_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.Flags = 0;
+    if (array_size_ > 1)
+    {
+        if (sample_count_ > 1)
+        {
+            desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+            desc.Texture2DMSArray.FirstArraySlice = first_array_index;
+            desc.Texture2DMSArray.ArraySize = array_size;
+        }
+        else
+        {
+            desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+            desc.Texture2DArray.MipSlice = level;
+            desc.Texture2DArray.FirstArraySlice = first_array_index;
+            desc.Texture2DArray.ArraySize = array_size;
+        }
+    }
+    else
+    {
+        if (sample_count_ > 1)
+        {
+            desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+        }
+        else
+        {
+            desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+            desc.Texture2D.MipSlice = level;
         }
     }
 

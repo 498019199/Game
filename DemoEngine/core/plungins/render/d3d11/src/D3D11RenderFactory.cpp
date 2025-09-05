@@ -61,11 +61,28 @@ RenderStateObjectPtr D3D11RenderFactory::MakeRenderStateObject(const RasterizerS
     return MakeSharedPtr<D3D11RenderStateObject>(rs_desc, dss_desc, bs_desc);
 }
 
-TexturePtr D3D11RenderFactory::MakeTexture2D(uint32_t width, uint32_t height, uint32_t num_mip_maps, uint32_t array_size,
+TexturePtr D3D11RenderFactory::MakeDelayCreationTexture1D(uint32_t width, uint32_t num_mip_maps, uint32_t array_size,
         ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
 {
-    TexturePtr ret =  MakeSharedPtr<D3D11Texture2D>(width, height, num_mip_maps, array_size, format, sample_count, sample_quality, access_hint);
-    return ret;
+    return MakeSharedPtr<D3D11Texture1D>(width, num_mip_maps, array_size, format, sample_count, sample_quality, access_hint);
+}
+
+TexturePtr D3D11RenderFactory::MakeDelayCreationTexture2D(uint32_t width, uint32_t height, uint32_t num_mip_maps, uint32_t array_size,
+        ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
+{
+    return MakeSharedPtr<D3D11Texture2D>(width, height, num_mip_maps, array_size, format, sample_count, sample_quality, access_hint);
+}
+
+TexturePtr D3D11RenderFactory::MakeDelayCreationTexture3D(uint32_t width, uint32_t height, uint32_t depth, uint32_t num_mip_maps, uint32_t array_size,
+        ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
+{
+    return MakeSharedPtr<D3D11Texture3D>(width, height, depth, num_mip_maps, array_size, format, sample_count, sample_quality, access_hint);
+}
+
+TexturePtr D3D11RenderFactory::MakeDelayCreationTextureCube(uint32_t size, uint32_t num_mip_maps, uint32_t array_size,
+        ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
+{
+    return MakeSharedPtr<D3D11TextureCube>(size, num_mip_maps, array_size, format, sample_count, sample_quality, access_hint);
 }
 
 SamplerStateObjectPtr D3D11RenderFactory::MakeSamplerStateObject(const SamplerStateDesc& desc)
@@ -77,6 +94,88 @@ ShaderResourceViewPtr D3D11RenderFactory::MakeTextureSrv(const TexturePtr& textu
             uint32_t array_size, uint32_t first_level, uint32_t num_levels)
 {
     return MakeSharedPtr<D3D11TextureShaderResourceView>(texture, pf, first_array_index, array_size, first_level, num_levels);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::Make1DRtv(const  TexturePtr& texture, ElementFormat pf, int first_array_index, int array_size,
+        int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeRenderTargetView>(texture, pf, first_array_index, array_size, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::Make2DRtv(const  TexturePtr& texture, ElementFormat pf, int first_array_index, int array_size,
+        int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeRenderTargetView>(texture, pf, first_array_index, array_size, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::Make2DRtv(const TexturePtr& texture, ElementFormat pf, int array_index, Texture::CubeFaces face,
+        int level)
+{
+    return MakeSharedPtr<D3D11TextureCubeFaceRenderTargetView>(texture, pf, array_index, face, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::Make2DRtv(const TexturePtr& texture, ElementFormat pf, int array_index, uint32_t slice, int level)
+{
+    return this->Make3DRtv(texture, pf, array_index, slice, 1, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::Make3DRtv(const TexturePtr& texture, ElementFormat pf, int array_index, uint32_t first_slice,
+        uint32_t num_slices, int level)
+{
+    return MakeSharedPtr<D3D11Texture3DRenderTargetView>(texture, pf, array_index, first_slice, num_slices, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::MakeCubeRtv(const TexturePtr& texture, ElementFormat pf, int array_index, int level)
+{
+    int array_size = 1;
+    return MakeSharedPtr<D3D11Texture1D2DCubeRenderTargetView>(texture, pf, array_index, array_size, level);
+}
+
+RenderTargetViewPtr D3D11RenderFactory::MakeBufferRtv(const GraphicsBufferPtr& gbuffer, ElementFormat pf, uint32_t first_elem,
+        uint32_t num_elems)
+{
+    return MakeSharedPtr<D3D11BufferRenderTargetView>(gbuffer, pf, first_elem, num_elems);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make2DDsv(uint32_t width, uint32_t height, ElementFormat pf, uint32_t sample_count,
+        uint32_t sample_quality)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeDepthStencilView>(width, height, pf, sample_count, sample_quality);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make1DDsv(const TexturePtr& texture, ElementFormat pf, int first_array_index, int array_size,
+        int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeDepthStencilView>(texture, pf, first_array_index, array_size, level);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make2DDsv(const TexturePtr& texture, ElementFormat pf, int first_array_index, int array_size,
+        int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeDepthStencilView>(texture, pf, first_array_index, array_size, level);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make2DDsv(const TexturePtr& texture, ElementFormat pf, int array_index, Texture::CubeFaces face,
+        int level)
+{
+    return MakeSharedPtr<D3D11TextureCubeFaceDepthStencilView>(texture, pf, array_index, face, level);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make2DDsv(const TexturePtr& texture, ElementFormat pf, int array_index, uint32_t slice, int level)
+{
+    return this->Make3DDsv(texture, pf, array_index, slice, 1, level);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::Make3DDsv(const TexturePtr& texture, ElementFormat pf, int array_index, uint32_t first_slice,
+        uint32_t num_slices, int level)
+{
+    return MakeSharedPtr<D3D11Texture3DDepthStencilView>(texture, pf, array_index, first_slice, num_slices, level);
+}
+
+DepthStencilViewPtr D3D11RenderFactory::MakeCubeDsv(const TexturePtr& texture, ElementFormat pf, int array_index, int level)
+{
+    int array_size = 1;
+    return MakeSharedPtr<D3D11Texture1D2DCubeDepthStencilView>(texture, pf, array_index, array_size, level);
 }
 
 GraphicsBufferPtr D3D11RenderFactory::MakeVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,

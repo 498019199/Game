@@ -2,6 +2,26 @@
 
 namespace MathWorker
 {
+    template int1 abs(int1 const & x) noexcept;
+    template int2 abs(int2 const & x) noexcept;
+    template int3 abs(int3 const & x) noexcept;
+    template int4 abs(int4 const & x) noexcept;
+    template float1 abs(float1 const & x) noexcept;
+    template float2 abs(float2 const & x) noexcept;
+    template float3 abs(float3 const & x) noexcept;
+    template float4 abs(float4 const & x) noexcept;
+
+    template <typename T, size_t N>
+    Vector_T<T, N> abs(Vector_T<T, N> const & x) noexcept
+    {
+        Vector_T<T, N> ret;
+        for (size_t i = 0; i < N; ++ i)
+        {
+            ret[i] = MathWorker::abs(x[i]);
+        }
+        return ret;
+    }
+
     float sin(float x) noexcept
     {
         return std::sin(x);
@@ -46,14 +66,6 @@ namespace MathWorker
             float const ALPHA = 0.055f;
             return pow((srgb + ALPHA) / (1 + ALPHA), 2.4f);
         }
-    }
-
-    template bool IsEqual(float X, float Y);
-    template bool IsEqual(double X, double Y);
-    template <typename T>
-    bool IsEqual(T X, T Y)
-    {
-        return std::abs(X - Y) < std::numeric_limits<T>::epsilon();
     }
 
     // From Quake III. But the magic number is from http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
@@ -401,7 +413,7 @@ namespace MathWorker
 
         // 行列式的值
         const float det(Determinant(mat));
-        if (IsEqual<float>(det, 0))
+        if (equal<float>(det, 0))
         {
             return mat;
         }
@@ -725,7 +737,7 @@ namespace MathWorker
 
                 quat.x() = s * 0.5f;
 
-                if (!IsEqual(s, 0.f))
+                if (!equal(s, 0.f))
                 {
                     s = 0.5f / s;
                 }
@@ -739,7 +751,7 @@ namespace MathWorker
                 s = sqrt((mat(1, 1) - (mat(2, 2) + mat(0, 0))) + 1);
                 quat.y() = s * 0.5f;
 
-                if (!IsEqual(s, 0.f))
+                if (!equal(s, 0.f))
                 {
                     s = 0.5f / s;
                 }
@@ -755,7 +767,7 @@ namespace MathWorker
 
                 quat.z() = s * 0.5f;
 
-                if (!IsEqual(s, 0.f))
+                if (!equal(s, 0.f))
                 {
                     s = 0.5f / s;
                 }

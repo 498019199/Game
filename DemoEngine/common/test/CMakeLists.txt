@@ -1,5 +1,5 @@
 include_directories(${PROJECT_SOURCE_DIR}/3rd/googletest/include
-    ${ZENGINE_ROOT_HEADER}/include
+    ${PROJECT_SOURCE_DIR}/common/include
 )
 
 add_executable(test_math
@@ -9,7 +9,7 @@ add_executable(test_common
     ${PROJECT_SOURCE_DIR}/common/test/test_main.cpp)
 
 target_link_libraries(test_math PRIVATE 
-    ${LIB_DIR_PATH}/ZENGINE_common${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    ZENGINE_common
 )  
 
 set_target_properties(test_math PROPERTIES
@@ -18,7 +18,7 @@ set_target_properties(test_math PROPERTIES
 )
 
 target_link_libraries(test_common PRIVATE 
-    ${LIB_DIR_PATH}/ZENGINE_common${ZENGINE_OUTPUT_SUFFIX}${CMAKE_DEBUG_POSTFIX}.lib
+    ZENGINE_common
 )  
 set_target_properties(test_common PROPERTIES
     OUTPUT_NAME test_common${ZENGINE_OUTPUT_SUFFIX}

@@ -3,8 +3,8 @@ add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11Adapter.h
 	src/D3D11AdapterList.cpp
 	src/D3D11AdapterList.h
-	#src/D3D11Fence.cpp
-	#src/D3D11Fence.h
+	src/D3D11Fence.cpp
+	src/D3D11Fence.h
 	src/D3D11FrameBuffer.cpp
 	src/D3D11FrameBuffer.h
 	src/D3D11GraphicsBuffer.cpp
@@ -27,10 +27,10 @@ add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11ShaderObject.h
 	src/D3D11Texture.cpp
 	src/D3D11Texture.h
-	#src/D3D11Texture1D.cpp
+	src/D3D11Texture1D.cpp
 	src/D3D11Texture2D.cpp
-	#src/D3D11Texture3D.cpp
-	#src/D3D11TextureCube.cpp
+	src/D3D11Texture3D.cpp
+	src/D3D11TextureCube.cpp
 	src/D3D11Util.cpp
 	src/D3D11Util.h)
 	#src/D3D11VideoMode.cpp

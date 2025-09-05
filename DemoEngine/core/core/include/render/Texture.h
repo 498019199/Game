@@ -40,6 +40,16 @@ public:
         TT_Cube
     };
 
+    enum CubeFaces
+    {
+        CF_Positive_X = 0,
+        CF_Negative_X = 1,
+        CF_Positive_Y = 2,
+        CF_Negative_Y = 3,
+        CF_Positive_Z = 4,
+        CF_Negative_Z = 5
+    };
+    
     Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint);
     virtual ~Texture() noexcept;
 

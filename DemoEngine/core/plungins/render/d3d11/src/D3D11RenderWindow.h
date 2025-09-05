@@ -12,6 +12,8 @@ public:
     D3D11RenderWindow(D3D11Adapter* adapter, const std::string& name, RenderSettings const& settings);
     ~D3D11RenderWindow();
 	
+	void Destroy();
+
 	void SwapBuffers() override;
 	void WaitOnSwapBuffers() override;
 
@@ -21,16 +23,26 @@ public:
 	void FullScreen(bool fs);
 
 private:
+	
+	void UpdateSurfacesPtrs();
 	void CreateSwapChain(ID3D11Device* d3d_device, bool try_hdr_display);
 
 private:
 	std::string name_;
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 	HWND wnd_; // Win32 Window handle
+#else
+	uwp::CoreWindow wnd_{nullptr};
+#endif//ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
 	bool is_full_screen_ {false};
 	uint32_t sync_interval_ {0};
 
 	D3D11Adapter* adapter_;
+
+	bool dxgi_stereo_support_ {false};
+	bool dxgi_allow_tearing_ {false};
+	bool dxgi_async_swap_chain_ {false};
 
     DXGI_SWAP_CHAIN_DESC1 sc_desc1_;
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
@@ -38,18 +50,17 @@ private:
 	DWORD stereo_cookie_;
 #endif
 
-	bool dxgi_stereo_support_ {false};
-	bool dxgi_allow_tearing_ {false};
-	bool dxgi_async_swap_chain_ {false};
-
 	IDXGISwapChain1Ptr swap_chain_1_;
 	bool main_wnd_  {false};
 	Win32UniqueHandle frame_latency_waitable_obj_;
 
-	ID3D11Texture2DPtr depth_stencil_buff_;
-    ID3D11DepthStencilViewPtr depth_stencil_view_;
-    ID3D11RenderTargetViewPtr render_target_view_;
-
+	TexturePtr back_buffer_;
+	TexturePtr depth_stencil_;
+    DepthStencilViewPtr depth_stencil_view_;
+    RenderTargetViewPtr render_target_view_;
+	RenderTargetViewPtr render_target_view_right_eye_;
+	DepthStencilViewPtr depth_stencil_view_right_eye_;
+	
 	DXGI_FORMAT back_buffer_format_;
 	ElementFormat depth_stencil_fmt_;
 

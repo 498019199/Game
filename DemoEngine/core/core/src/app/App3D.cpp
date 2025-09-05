@@ -122,6 +122,8 @@ void App3D::Quit()
 
 void App3D::Destroy()
 {
+    this->OnDestroy();
+    
     if (Context::Instance().RenderFactoryValid())
     {
         Context::Instance().RenderFactoryInstance().RenderEngineInstance().DestroyRenderWindow();
@@ -165,7 +167,8 @@ uint32_t App3D::Update(uint32_t pass)
         this->UpdateStats();
         Context::Instance().ResLoaderInstance().Update();
     }
-    return 0;
+
+    return DoUpdate( pass );
 }
 
 // 获取渲染目标的每秒帧数

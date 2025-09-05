@@ -24,6 +24,23 @@ using WindowPtr = std::shared_ptr<Window>;
 
 class App3D
 {
+    friend class World;
+public:
+    enum UpdateRetValue
+    {
+        URV_NeedFlush = 1UL << 0,               // 需要刷新
+        URV_Finished = 1UL << 1,                // 表示更新操作已成功完成
+        URV_Overlay = 1UL << 2,                 // 表示需要处理叠加层渲染（如 HUD、UI 叠加）。
+        URV_SkipPostProcess = 1UL << 3,         // 跳过后期处理
+        URV_OpaqueOnly = 1UL << 4,              // 表示只需要更新 / 渲染不透明物体（忽略透明物体）。
+        URV_TransparencyBackOnly = 1UL << 5,    // 表示只处理透明物体的背面渲染。
+        URV_TransparencyFrontOnly = 1UL << 6,   // 表示只处理透明物体的正面渲染。
+        URV_ReflectionOnly = 1UL << 7,          // 表示只需要更新 / 渲染反射效果（如水面反射、镜面反射）。
+        URV_SpecialShadingOnly = 1UL << 8,      // 表示只需要应用特殊着色器（如卡通渲染、体积光）。
+        URV_SimpleForwardOnly = 1UL << 9,       // 表示只使用简单的前向渲染路径（不启用复杂光照）。
+        URV_VDMOnly = 1UL << 10                 // 仅视口依赖映射（Viewport-Dependent Mapping）
+    };
+
 public:
     explicit App3D(const std::string& name);
     App3D(const std::string& name, void* native_wnd);
@@ -65,6 +82,8 @@ private:
     virtual void OnResume()
     {
     }
+
+    virtual uint32_t DoUpdate(uint32_t pass) = 0;
 
 protected:
     std::string name_;

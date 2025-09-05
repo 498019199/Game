@@ -20,6 +20,16 @@ namespace EditorWorker
 using namespace RenderWorker;
 
 EditorManagerD3D11::EditorManagerD3D11()
+    :App3D("Editor App")
+{
+}
+
+EditorManagerD3D11::~EditorManagerD3D11()
+{
+
+}
+
+void EditorManagerD3D11::OnCreate()
 {
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -34,22 +44,40 @@ EditorManagerD3D11::EditorManagerD3D11()
     auto re = static_cast<ID3D11Device*>(d3d11_re.GetD3DDevice());
     auto ctx = static_cast<ID3D11DeviceContext*>(d3d11_re.GetD3DDeviceImmContext());
     ImGui_ImplDX11_Init(re, ctx);
+    
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
 }
 
-EditorManagerD3D11::~EditorManagerD3D11()
+void EditorManagerD3D11::OnDestroy()
 {
     ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 }
 
-void EditorManagerD3D11::Init()
+uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
 {
-    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
-    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
-    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
-    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
-    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
+    ImGui_ImplDX11_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    for(auto panel : panel_list_)
+    {
+        if(panel)
+        {
+            panel->OnRender(setting_);
+        }
+    }
+
+    EditorDialogBoxManager::Instance().OnRender();
+    ImGui::Render();
+
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    return App3D::URV_Finished;
 }
 
 void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
@@ -68,32 +96,6 @@ void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
     setting_.inspectorHeight = Height + setting_.projectHeight;
     setting_.mainBarWidth = Width + setting_.hierarchyWidth + setting_.inspectorWidth;
     setting_.mainBarHeight = 58;
-}
-
-void EditorManagerD3D11::Render()
-{
-    for(auto panel : panel_list_)
-    {
-        if(panel)
-        {
-            panel->OnRender(setting_);
-        }
-    }
-
-    EditorDialogBoxManager::Instance().OnRender();
-    ImGui::Render();
-}
-
-void EditorManagerD3D11::BeginRender()
-{
-    ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
-}
-
-void EditorManagerD3D11::EndRender()
-{
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 }

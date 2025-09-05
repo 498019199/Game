@@ -1,12 +1,15 @@
 #include <common/Uuid.h>
 #include <base/Context.h>
 #include <render/RenderEffect.h>
+#include <render/RenderFactory.h>
 
 #include "D3D11RenderEngine.h"
 #include "D3D11Util.h"
 #include "D3D11GraphicsBuffer.h"
 #include "D3D11RenderLayout.h"
 #include "D3D11RenderWindow.h"
+#include "D3D11RenderStateObject.h"
+
 #include <functional>
 
 namespace RenderWorker
@@ -127,35 +130,7 @@ D3D11RenderEngine::D3D11RenderEngine()
 
 D3D11RenderEngine::~D3D11RenderEngine()
 {
-	if (d3d_imm_ctx_1_)
-	{
-		d3d_imm_ctx_1_->ClearState();
-		d3d_imm_ctx_1_->Flush();
-	}
-
-	d3d_imm_ctx_1_.reset();
-	d3d_imm_ctx_2_.reset();
-	d3d_imm_ctx_3_.reset();
-	d3d_imm_ctx_4_.reset();
-	d3d_device_1_.reset();
-	d3d_device_2_.reset();
-	d3d_device_3_.reset();
-	d3d_device_4_.reset();
-	d3d_device_5_.reset();
-	gi_factory_2_.reset();
-	gi_factory_3_.reset();
-	gi_factory_4_.reset();
-	gi_factory_5_.reset();
-	gi_factory_6_.reset();
-
-	DynamicCreateDXGIFactory1_ = nullptr;
-	DynamicCreateDXGIFactory2_ = nullptr;
-	DynamicD3D11CreateDevice_ = nullptr;
-
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	mod_d3d11_.Free();
-	mod_dxgi_.Free();
-#endif
+	this->Destroy();
 }
 
 #if ZENGINE_IS_DEV_PLATFORM
@@ -308,6 +283,50 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 	}
 }
 
+void D3D11RenderEngine::DoBindFrameBuffer([[maybe_unused]] FrameBufferPtr const & fb)
+{
+	COMMON_ASSERT(d3d_device_1_);
+	COMMON_ASSERT(fb);
+}
+
+void D3D11RenderEngine::DoBindSOBuffers(const RenderLayoutPtr& rl)
+{
+	uint32_t num_buffs = rl ? rl->VertexStreamNum() : 0;
+	if (num_buffs > 0)
+	{
+		std::vector<void*> so_src(num_buffs, nullptr);
+		std::vector<ID3D11Buffer*> d3d11_buffs(num_buffs);
+		std::vector<UINT> d3d11_buff_offsets(num_buffs, 0);
+		for (uint32_t i = 0; i < num_buffs; ++ i)
+		{
+			auto& d3d11_buf = checked_cast<D3D11GraphicsBuffer&>(*rl->GetVertexStream(i));
+
+			so_src[i] = &d3d11_buf;
+			d3d11_buffs[i] = d3d11_buf.D3DBuffer();
+		}
+
+		for (uint32_t i = 0; i < num_buffs; ++ i)
+		{
+			if (so_src[i] != nullptr)
+			{
+				DetachSRV(so_src[i], 0, 1);
+			}
+		}
+
+		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_buffs), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
+
+		num_so_buffs_ = num_buffs;
+	}
+	else if (num_so_buffs_ > 0)
+	{
+		std::vector<ID3D11Buffer*> d3d11_buffs(num_so_buffs_, nullptr);
+		std::vector<UINT> d3d11_buff_offsets(num_so_buffs_, 0);
+		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_so_buffs_), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
+
+		num_so_buffs_ = num_buffs;
+	}
+}
+
 void D3D11RenderEngine::RSSetState(ID3D11RasterizerState* ras)
 {
 	if (rasterizer_state_cache_ != ras)
@@ -405,6 +424,27 @@ void D3D11RenderEngine::SetConstantBuffers(ShaderStage stage, std::span<ID3D11Bu
 		ShaderSetConstantBuffers[stage_index](d3d_imm_ctx_1_.get(), 0, static_cast<UINT>(cbs.size()), &(cbs[0]));
 
 		shader_cb_ptr_cache_[stage_index].assign(cbs.begin(), cbs.end());
+	}
+}
+
+void D3D11RenderEngine::RSSetViewports(UINT NumViewports, D3D11_VIEWPORT const * pViewports)
+{
+	if (NumViewports > 1)
+	{
+		d3d_imm_ctx_1_->RSSetViewports(NumViewports, pViewports);
+	}
+	else
+	{
+		if (!(MathWorker::equal(pViewports->TopLeftX, viewport_cache_.TopLeftX)
+			&& MathWorker::equal(pViewports->TopLeftY, viewport_cache_.TopLeftY)
+			&& MathWorker::equal(pViewports->Width, viewport_cache_.Width)
+			&& MathWorker::equal(pViewports->Height, viewport_cache_.Height)
+			&& MathWorker::equal(pViewports->MinDepth, viewport_cache_.MinDepth)
+			&& MathWorker::equal(pViewports->MaxDepth, viewport_cache_.MaxDepth)))
+		{
+			viewport_cache_ = *pViewports;
+			d3d_imm_ctx_1_->RSSetViewports(NumViewports, pViewports);
+		}
 	}
 }
 
@@ -570,9 +610,11 @@ void D3D11RenderEngine::D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* i
 
 	if (d3d_11_runtime_sub_ver_ >= 4)
 	{
+		// 创建一个手动重置的事件对象（Event Object）
 		device_lost_event_ = MakeWin32UniqueHandle(::CreateEventEx(nullptr, nullptr, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS));
 		if (device_lost_event_ != nullptr)
 		{
+			// 创建一个等待对象（Wait Object）
 			thread_pool_wait_ = MakeWin32UniquTpWait(::CreateThreadpoolWait(D3D11RenderEngine::OnDeviceLost, this, nullptr));
 			if (thread_pool_wait_ != nullptr)
 			{
@@ -605,44 +647,121 @@ void D3D11RenderEngine::DoCreateRenderWindow(std::string const & name, RenderSet
 	default:
 		ZENGINE_UNREACHABLE("Invalid feature level");
 	}
+
+	this->ResetRenderStates();
+	this->BindFrameBuffer(win);
 }
 
-void D3D11RenderEngine::DoBindSOBuffers(const RenderLayoutPtr& rl)
+void D3D11RenderEngine::ResetRenderStates()
 {
-	uint32_t num_buffs = rl ? rl->VertexStreamNum() : 0;
-	if (num_buffs > 0)
-	{
-		std::vector<void*> so_src(num_buffs, nullptr);
-		std::vector<ID3D11Buffer*> d3d11_buffs(num_buffs);
-		std::vector<UINT> d3d11_buff_offsets(num_buffs, 0);
-		for (uint32_t i = 0; i < num_buffs; ++ i)
-		{
-			auto& d3d11_buf = checked_cast<D3D11GraphicsBuffer&>(*rl->GetVertexStream(i));
+	vertex_shader_cache_ = nullptr;
+	pixel_shader_cache_ = nullptr;
+	geometry_shader_cache_ = nullptr;
+	// compute_shader_cache_ = nullptr;
+	// hull_shader_cache_ = nullptr;
+	// domain_shader_cache_ = nullptr;
 
-			so_src[i] = &d3d11_buf;
-			d3d11_buffs[i] = d3d11_buf.D3DBuffer();
+	auto& rf = Context::Instance().RenderFactoryInstance();
+	cur_rs_obj_ = rf.MakeRenderStateObject(RasterizerStateDesc(), DepthStencilStateDesc(), BlendStateDesc());
+	auto& d3d_cur_rs_obj = checked_cast<D3D11RenderStateObject&>(*cur_rs_obj_);
+	rasterizer_state_cache_ = d3d_cur_rs_obj.D3DRasterizerState();
+	depth_stencil_state_cache_ = d3d_cur_rs_obj.D3DDepthStencilState();
+	stencil_ref_cache_ = 0;
+	blend_state_cache_ = d3d_cur_rs_obj.D3DBlendState();
+	blend_factor_cache_ = Color(1, 1, 1, 1);
+	sample_mask_cache_ = 0xFFFFFFFF;
+
+	d3d_imm_ctx_1_->RSSetState(rasterizer_state_cache_);
+	d3d_imm_ctx_1_->OMSetDepthStencilState(depth_stencil_state_cache_, stencil_ref_cache_);
+	d3d_imm_ctx_1_->OMSetBlendState(blend_state_cache_, &blend_factor_cache_.r(), sample_mask_cache_);
+
+	topology_type_cache_ = RenderLayout::TT_PointList;
+	d3d_imm_ctx_1_->IASetPrimitiveTopology(D3D11Mapping::Mapping(topology_type_cache_));
+
+	input_layout_cache_ = nullptr;
+	d3d_imm_ctx_1_->IASetInputLayout(input_layout_cache_);
+
+	viewport_cache_ = {};
+
+	if (!vb_cache_.empty())
+	{
+		vb_cache_.assign(vb_cache_.size(), nullptr);
+		vb_stride_cache_.assign(vb_stride_cache_.size(), 0);
+		vb_offset_cache_.assign(vb_offset_cache_.size(), 0);
+		d3d_imm_ctx_1_->IASetVertexBuffers(0, static_cast<UINT>(vb_cache_.size()),
+			&vb_cache_[0], &vb_stride_cache_[0], &vb_offset_cache_[0]);
+		vb_cache_.clear();
+		vb_stride_cache_.clear();
+		vb_offset_cache_.clear();
+	}
+
+	ib_cache_ = nullptr;
+	d3d_imm_ctx_1_->IASetIndexBuffer(ib_cache_, DXGI_FORMAT_R16_UINT, 0);
+
+	for (uint32_t i = 0; i < ShaderStageNum; ++i)
+	{
+		if (!shader_srv_ptr_cache_[i].empty())
+		{
+			std::fill(shader_srv_ptr_cache_[i].begin(), shader_srv_ptr_cache_[i].end(), static_cast<ID3D11ShaderResourceView*>(nullptr));
+			ShaderSetShaderResources[i](d3d_imm_ctx_1_.get(), 0, static_cast<UINT>(shader_srv_ptr_cache_[i].size()), &shader_srv_ptr_cache_[i][0]);
+			shader_srvsrc_cache_[i].clear();
+			shader_srv_ptr_cache_[i].clear();
 		}
 
-		for (uint32_t i = 0; i < num_buffs; ++ i)
+		if (!shader_sampler_ptr_cache_[i].empty())
 		{
-			if (so_src[i] != nullptr)
-			{
-				DetachSRV(so_src[i], 0, 1);
-			}
+			std::fill(shader_sampler_ptr_cache_[i].begin(), shader_sampler_ptr_cache_[i].end(), static_cast<ID3D11SamplerState*>(nullptr));
+			ShaderSetSamplers[i](d3d_imm_ctx_1_.get(), 0, static_cast<UINT>(shader_sampler_ptr_cache_[i].size()), &shader_sampler_ptr_cache_[i][0]);
+			shader_sampler_ptr_cache_[i].clear();
 		}
 
-		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_buffs), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
-
-		num_so_buffs_ = num_buffs;
+		if (!shader_cb_ptr_cache_[i].empty())
+		{
+			std::fill(shader_cb_ptr_cache_[i].begin(), shader_cb_ptr_cache_[i].end(), static_cast<ID3D11Buffer*>(nullptr));
+			ShaderSetConstantBuffers[i](d3d_imm_ctx_1_.get(), 0, static_cast<UINT>(shader_cb_ptr_cache_[i].size()), &shader_cb_ptr_cache_[i][0]);
+			shader_cb_ptr_cache_[i].clear();
+		}
 	}
-	else if (num_so_buffs_ > 0)
+}
+
+void D3D11RenderEngine::DoDestroy()
+{
+	if ((device_lost_reg_cookie_ != 0) && d3d_device_4_)
 	{
-		std::vector<ID3D11Buffer*> d3d11_buffs(num_so_buffs_, nullptr);
-		std::vector<UINT> d3d11_buff_offsets(num_so_buffs_, 0);
-		d3d_imm_ctx_1_->SOSetTargets(static_cast<UINT>(num_so_buffs_), &d3d11_buffs[0], &d3d11_buff_offsets[0]);
-
-		num_so_buffs_ = num_buffs;
+		d3d_device_4_->UnregisterDeviceRemoved(device_lost_reg_cookie_);
+		device_lost_reg_cookie_ = 0;
 	}
+
+	if (d3d_imm_ctx_1_)
+	{
+		d3d_imm_ctx_1_->ClearState();
+		d3d_imm_ctx_1_->Flush();
+	}
+
+	d3d_imm_ctx_1_.reset();
+	d3d_imm_ctx_2_.reset();
+	d3d_imm_ctx_3_.reset();
+	d3d_imm_ctx_4_.reset();
+	d3d_device_1_.reset();
+	d3d_device_2_.reset();
+	d3d_device_3_.reset();
+	d3d_device_4_.reset();
+	d3d_device_5_.reset();
+	gi_factory_2_.reset();
+	gi_factory_3_.reset();
+	gi_factory_4_.reset();
+	gi_factory_5_.reset();
+	gi_factory_6_.reset();
+
+	DynamicCreateDXGIFactory1_ = nullptr;
+	DynamicCreateDXGIFactory2_ = nullptr;
+	DynamicD3D11CreateDevice_ = nullptr;
+
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+	mod_d3d11_.Free();
+	mod_dxgi_.Free();
+#endif
+
 }
 
 void D3D11RenderEngine::FillRenderDeviceCaps()
@@ -654,7 +773,21 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 	case D3D_FEATURE_LEVEL_11_1:
 	case D3D_FEATURE_LEVEL_11_0:
 		// D3D11 feature level 12.1+ supports objects in shader model 5.1, although it doesn't support shader model 5.1 bytecode
+		// caps_.max_shader_model
+		// 	= (d3d_feature_level_ > D3D_FEATURE_LEVEL_12_0) ? ShaderModel(5, 1) : ShaderModel(5, 0);
+		caps_.max_texture_width = caps_.max_texture_height = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+		caps_.max_texture_depth = D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+		caps_.max_texture_cube_size = D3D11_REQ_TEXTURECUBE_DIMENSION;
+		caps_.max_texture_array_length = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+		caps_.max_vertex_texture_units = D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
+		caps_.max_pixel_texture_units = D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
+		caps_.max_geometry_texture_units = D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
+		caps_.max_simultaneous_rts = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
+		caps_.max_simultaneous_uavs = D3D11_PS_CS_UAV_REGISTER_COUNT;
 		caps_.cs_support = true;
+		//caps_.tess_method = TM_Hardware;
+		caps_.max_vertex_streams = D3D11_STANDARD_VERTEX_ELEMENT_COUNT;
+		caps_.max_texture_anisotropy = D3D11_MAX_MAXANISOTROPY;
 	default:
 		ZENGINE_UNREACHABLE("Invalid feature level");
 	}

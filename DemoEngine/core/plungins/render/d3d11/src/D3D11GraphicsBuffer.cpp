@@ -17,6 +17,120 @@ D3D11GraphicsBuffer::D3D11GraphicsBuffer(BufferUsage usage, uint32_t access_hint
     d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }
 
+const ID3D11ShaderResourceViewPtr& D3D11GraphicsBuffer::RetrieveD3DShaderResourceView(ElementFormat pf, uint32_t first_elem,
+    uint32_t num_elems)
+{
+    COMMON_ASSERT(pf != EF_Unknown);
+    COMMON_ASSERT(first_elem + num_elems <= size_in_byte_ / NumFormatBytes(pf));
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, first_elem);
+    HashCombine(hash_val, num_elems);
+
+    auto iter = d3d_sr_views_.find(hash_val);
+    if (iter != d3d_sr_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+        desc.Format = (access_hint_ & EAH_GPU_Structured) ? DXGI_FORMAT_UNKNOWN : D3D11Mapping::MappingFormat(pf);
+        desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+        desc.Buffer.ElementOffset = first_elem;
+        desc.Buffer.ElementWidth = num_elems;
+
+        ID3D11ShaderResourceViewPtr d3d_sr_view;
+        TIFHR(d3d_device_->CreateShaderResourceView(d3d_buffer_.get(), &desc, d3d_sr_view.put()));
+        return d3d_sr_views_.emplace(hash_val, std::move(d3d_sr_view)).first->second;
+    }
+}
+
+const ID3D11RenderTargetViewPtr& D3D11GraphicsBuffer::RetrieveD3DRenderTargetView(ElementFormat pf, uint32_t first_elem,
+    uint32_t num_elems)
+{
+    COMMON_ASSERT(pf != EF_Unknown);
+    COMMON_ASSERT(first_elem + num_elems <= size_in_byte_ / NumFormatBytes(pf));
+    COMMON_ASSERT(access_hint_ & EAH_GPU_Write);
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, first_elem);
+    HashCombine(hash_val, num_elems);
+
+    auto iter = d3d_rt_views_.find(hash_val);
+    if (iter != d3d_rt_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        D3D11_RENDER_TARGET_VIEW_DESC desc;
+        desc.Format = D3D11Mapping::MappingFormat(pf);
+        desc.ViewDimension = D3D11_RTV_DIMENSION_BUFFER;
+        desc.Buffer.ElementOffset = first_elem;
+        desc.Buffer.ElementWidth = num_elems;
+
+        ID3D11RenderTargetViewPtr d3d_rt_view;
+        TIFHR(d3d_device_->CreateRenderTargetView(d3d_buffer_.get(), &desc, d3d_rt_view.put()));
+        return d3d_rt_views_.emplace(hash_val, std::move(d3d_rt_view)).first->second;
+    }
+}
+
+const ID3D11UnorderedAccessViewPtr& D3D11GraphicsBuffer::RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t first_elem,
+    uint32_t num_elems)
+{
+    COMMON_ASSERT(pf != EF_Unknown);
+    COMMON_ASSERT(first_elem + num_elems <= size_in_byte_ / NumFormatBytes(pf));
+    COMMON_ASSERT(access_hint_ & EAH_GPU_Unordered);
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, first_elem);
+    HashCombine(hash_val, num_elems);
+
+    auto iter = d3d_ua_views_.find(hash_val);
+    if (iter != d3d_ua_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+        if (access_hint_ & EAH_Raw)
+        {
+            uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+        }
+        else if (access_hint_ & EAH_GPU_Structured)
+        {
+            uav_desc.Format = DXGI_FORMAT_UNKNOWN;
+        }
+        else
+        {
+            uav_desc.Format = D3D11Mapping::MappingFormat(pf);
+        }
+        uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+        uav_desc.Buffer.FirstElement = first_elem;
+        uav_desc.Buffer.NumElements = num_elems;
+        uav_desc.Buffer.Flags = 0;
+        if (access_hint_ & EAH_Raw)
+        {
+            uav_desc.Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_RAW;
+        }
+        if (access_hint_ & EAH_Append)
+        {
+            uav_desc.Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_APPEND;
+        }
+        if (access_hint_ & EAH_Counter)
+        {
+            uav_desc.Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_COUNTER;
+        }
+
+        ID3D11UnorderedAccessViewPtr d3d_ua_view;
+        TIFHR(d3d_device_->CreateUnorderedAccessView(d3d_buffer_.get(), &uav_desc, d3d_ua_view.put()));
+        return d3d_ua_views_.emplace(hash_val, std::move(d3d_ua_view)).first->second;
+    }
+}
+
+
 void D3D11GraphicsBuffer::CopyToBuffer(GraphicsBuffer& target)
 {
     CopyToSubBuffer(target, 0, 0, size_in_byte_);

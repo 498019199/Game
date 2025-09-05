@@ -4,6 +4,7 @@
 #include <render/RenderStateObject.h>
 #include <render/RenderLayout.h>
 #include <render/RenderDeviceCaps.h>
+#include <render/FrameBuffer.h>
 
 namespace RenderWorker
 {
@@ -32,8 +33,16 @@ public:
 	void DestroyRenderWindow();
 
     virtual void BeginRender() const = 0;
-    virtual void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) = 0;
     virtual void EndRender() const = 0;
+    void Render(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl);
+
+	void BindFrameBuffer(const FrameBufferPtr& fb);
+    // 获取当前渲染目标
+    const FrameBufferPtr& CurFrameBuffer() const;
+    // 获取默认渲染目标
+    const FrameBufferPtr& DefaultFrameBuffer() const;
+    // 获取屏幕渲染目标
+    const FrameBufferPtr& ScreenFrameBuffer() const;
 
     // For debug only, 设置为绘制线框
     void ForceLineMode(bool line);
@@ -46,12 +55,26 @@ public:
     
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;
+
+protected:
+
+	void Destroy();
+
 private:
 
 	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) = 0;
+    virtual void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) = 0;
+	virtual void DoBindFrameBuffer(FrameBufferPtr const & fb) = 0;
     virtual void DoBindSOBuffers(const RenderLayoutPtr& rl) = 0;
 
+    virtual void DoDestroy() = 0;
+
 protected:
+    FrameBufferPtr cur_frame_buffer_;
+    FrameBufferPtr screen_frame_buffer_;
+    FrameBufferPtr default_frame_buffers_[4];
+    int fb_stage_;
+    
     // 强制使用线框模式
     bool force_line_mode_ {false}; 
     RenderStateObjectPtr cur_rs_obj_;
@@ -64,6 +87,10 @@ protected:
     StereoMethod stereo_method_;
     float stereo_separation_;
 };
+
+
+
+
 
 
 

@@ -134,7 +134,7 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 	}
 
-	return 0;
+	return default_wnd_proc_(hWnd, uMsg, wParam, lParam);
 }
 
 void Window::KeepScreenOn()

@@ -1,7 +1,7 @@
 
 
 
-#include <Render/Camera.h>
+#include <render/Camera.h>
 
 namespace RenderWorker
 {

@@ -1,4 +1,5 @@
 #pragma once
+#include <base/App3D.h>
 #include <editor/EditorPanel.h>
 #include <editor/EditorProjectPanel.h>
 
@@ -6,23 +7,29 @@
 
 namespace EditorWorker
 {
-class EditorManagerD3D11
+class EditorManagerD3D11: public RenderWorker::App3D
 {
 public:
     EditorManagerD3D11();
     ~EditorManagerD3D11();
 
-    void Init();
+    virtual void OnCreate() override;
+    virtual void OnDestroy() override;
+
     void SetWindowSize(int hWidth, int pHeight, int iWidth);
 
-    void BeginRender();
-    void Render();
-    void EndRender();
+private :
+    virtual uint32_t DoUpdate(uint32_t pass) override;
 
 private:
     std::vector<EditorPanelPtr> panel_list_;
     EditorSetting setting_;
 };
+
+
+
+
+
 
 
 

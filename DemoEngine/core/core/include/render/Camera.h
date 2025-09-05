@@ -1,3 +1,5 @@
+#pragma once
+
 #include <World/SceneNode.h>
 
 namespace RenderWorker

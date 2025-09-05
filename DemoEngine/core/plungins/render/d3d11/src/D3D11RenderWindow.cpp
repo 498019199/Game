@@ -5,11 +5,13 @@
 #include "D3D11RenderWindow.h"
 #include "D3D11RenderEngine.h"
 #include "D3D11RenderFactory.h"
+#include "D3D11Texture.h"
 
 namespace RenderWorker
 {
 
 D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& name, RenderSettings const& settings)
+    :adapter_(adapter)
 {
     // Store info
     name_				= name;
@@ -19,7 +21,27 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     auto const& main_wnd = Context::Instance().AppInstance().MainWnd().get();
 	wnd_ = main_wnd->GetHWND();
 
-    adapter_ = adapter;
+    if (this->FullScreen())
+    {
+        float const dpi_scale = main_wnd->DPIScale();
+
+        left_ = 0;
+        top_ = 0;
+        width_ = static_cast<uint32_t>(settings.width * dpi_scale + 0.5f);
+        height_ = static_cast<uint32_t>(settings.height * dpi_scale + 0.5f);
+    }
+    else
+    {
+        left_ = main_wnd->Left();
+        top_ = main_wnd->Top();
+        width_ = main_wnd->Width();
+        height_ = main_wnd->Height();
+    }
+
+    viewport_->Left(0);
+    viewport_->Top(0);
+    viewport_->Width(width_);
+    viewport_->Height(height_);
 
     ElementFormat format = settings.color_fmt;
 	back_buffer_format_ = D3D11Mapping::MappingFormat(format);
@@ -30,10 +52,15 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     ID3D11DeviceContext1Ptr d3d_imm_ctx;
 
     dxgi_stereo_support_ = d3d11_re.DXGIFactory2()->IsWindowedStereoEnabled() ? true : false;
+#ifdef ZENGINE_PLATFORM_WINDOWS_STORE
+	// Async swap chain doesn't get along very well with desktop full screen
+	dxgi_async_swap_chain_ = true;
+#endif // 
 
     if (d3d11_re.DXGISubVer() >= 5)
     {
         BOOL allow_tearing = FALSE;
+        // 检查是否支持关闭垂直同步
         if (SUCCEEDED(d3d11_re.DXGIFactory5()->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,
             &allow_tearing, sizeof(allow_tearing))))
         {
@@ -41,6 +68,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
         }
     }
     
+    // create d3d_device, d3d_imm_ctx
     if (d3d_device)
     {
         d3d_imm_ctx = d3d11_re.D3DDeviceImmContext1();
@@ -151,6 +179,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
                 }
             }
 
+            // 给D3D11RenderEngine赋值
             if (SUCCEEDED(hr))
             {
                 d3d11_re.D3DDevice(d3d_device.get(), d3d_imm_ctx.get(), out_feature_level);
@@ -216,6 +245,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     //COMMON_ASSUME(d3d_device != nullptr);
     //COMMON_ASSUME(d3d_imm_ctx != nullptr);
 
+    // 创建交换链
     depth_stencil_fmt_ = settings.depth_stencil_fmt;
     if (IsDepthFormat(depth_stencil_fmt_))
     {
@@ -259,6 +289,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     sc_desc1_.BufferCount = 2;
     sc_desc1_.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    // 为Stereo 3D注册一个窗口以接收立体显示状态变化的通知消息
     d3d11_re.DXGIFactory2()->RegisterStereoStatusWindow(wnd_, WM_SIZE, &stereo_cookie_);
 
     sc_desc1_.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -304,11 +335,20 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     this->CreateSwapChain(d3d_device.get(), settings.display_output_method != DOM_sRGB);
     Verify(!!swap_chain_1_);
 
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    //DXGI 中窗口关联和全屏状态设置的操作
+	d3d11_re.DXGIFactory2()->MakeWindowAssociation(wnd_, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+	swap_chain_1_->SetFullscreenState(this->FullScreen(), nullptr);
+#endif
+
     // 启用多线程保护模式，使 Direct3D 设备能够安全地接受来自多个线程的 API 调用
     if (auto d3d_multithread = d3d_device.try_as<ID3D10Multithread>())
     {
         d3d_multithread->SetMultithreadProtected(true);
     }
+
+    // 创建渲染目标视图,深度/模板缓冲区及其视图
+    this->UpdateSurfacesPtrs();
 
 #ifdef _DEBUG
     // Direct3D 11 中用于调试的设置，主要功能是配置 Direct3D 信息队列（Info Queue），使其在遇到严重错误时触发调试断点。
@@ -325,6 +365,22 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
 D3D11RenderWindow::~D3D11RenderWindow()
 {
     
+}
+
+void D3D11RenderWindow::Destroy()
+{
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    // 释放全屏独占资源
+    if (swap_chain_1_)
+    {
+        swap_chain_1_->SetFullscreenState(false, nullptr);
+    }
+
+    RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+    auto const& d3d11_re = checked_cast<const D3D11RenderEngine&>(rf.RenderEngineInstance());
+    d3d11_re.DXGIFactory2()->UnregisterStereoStatus(stereo_cookie_);
+#else
+#endif // KLAYGE_PLATFORM_WINDOWS_DESKTOP
 }
 
 void D3D11RenderWindow::SwapBuffers()
@@ -411,12 +467,57 @@ void D3D11RenderWindow::FullScreen(bool fs)
 #endif
 }
 
+void D3D11RenderWindow::UpdateSurfacesPtrs()
+{
+    RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    if (dxgi_allow_tearing_)
+#endif
+    {
+    }
+
+    // 创建渲染目标视图
+    ID3D11Texture2DPtr back_buffer;
+    TIFHR(swap_chain_1_->GetBuffer(0, UuidOf<ID3D11Texture2D>(), back_buffer.put_void()));
+    back_buffer_ = MakeSharedPtr<D3D11Texture2D>(back_buffer);
+	render_target_view_ = rf.Make2DRtv(back_buffer_, 0, 1, 0);
+
+	bool stereo = (STM_LCDShutter == Context::Instance().Config().graphics_cfg.stereo_method) && dxgi_stereo_support_;
+    if (stereo)
+    {
+        render_target_view_right_eye_ = rf.Make2DRtv(back_buffer_, 1, 1, 0);
+    }
+
+    // 创建深度/模板缓冲区及其视图
+    if (depth_stencil_fmt_ != EF_Unknown)
+    {
+        depth_stencil_ = rf.MakeTexture2D(width_, height_, 1, stereo ? 2 : 1, depth_stencil_fmt_,
+            back_buffer_->SampleCount(), back_buffer_->SampleQuality(),
+            EAH_GPU_Read | EAH_GPU_Write);
+
+		depth_stencil_view_ = rf.Make2DDsv(depth_stencil_, 0, 1, 0);
+        
+        if (stereo)
+        {
+            depth_stencil_view_right_eye_ = rf.Make2DDsv(depth_stencil_, 1, 1, 0);
+        }
+    }
+
+    this->Attach(Attachment::Color0, render_target_view_);
+    if (depth_stencil_view_)
+    {
+        this->Attach(depth_stencil_view_);
+    }
+}
+
 void D3D11RenderWindow::CreateSwapChain(ID3D11Device* d3d_device, bool try_hdr_display)
 {
 	auto const& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    // 传统 HWND 窗口（基于 Win32 API 创建的窗口）
     d3d11_re.DXGIFactory2()->CreateSwapChainForHwnd(d3d_device, wnd_, &sc_desc1_, &sc_fs_desc_, nullptr, swap_chain_1_.put());
 #else
+    // CoreWindow 窗口（基于 UWP/WinRT 框架的窗口）
     d3d11_re.DXGIFactory2()->CreateSwapChainForCoreWindow(
         d3d_device, static_cast<IUnknown*>(uwp::get_abi(wnd_)), &sc_desc1_, nullptr, swap_chain_1_.put());
 #endif
@@ -436,6 +537,7 @@ void D3D11RenderWindow::CreateSwapChain(ID3D11Device* d3d_device, bool try_hdr_d
         if (swap_chain_1_.try_as(sc4))
         {
             UINT color_space_support;
+            // 检查系统是否支持 HDR 颜色空间
             if (SUCCEEDED(sc4->CheckColorSpaceSupport(DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, &color_space_support))
                 && (color_space_support & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT))
             {

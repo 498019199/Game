@@ -30,8 +30,11 @@ public:
     void Ready(bool ready) { ready_ = ready; }
     bool Closed() const { return closed_; }
     void Closed(bool closed) { closed_ = closed; }
-
-    float AspectRatio() const { return static_cast<float>(width_) / height_; }
+    
+    float DPIScale() const
+    {
+        return dpi_scale_;
+    }
 private:
 
 

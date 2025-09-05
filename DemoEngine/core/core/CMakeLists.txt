@@ -51,8 +51,6 @@ SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
 SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
     
 set(RENDER_HEADER_FILES
-    ${PROJECT_SOURCE_DIR}/core/core/include/render/Adapter.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/render/AdapterList.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Camera.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ElementFormat.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Fen.h
@@ -88,6 +86,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderView.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Texture.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Viewport.cpp
 )
 SOURCE_GROUP("Rendering System\\Source Files" FILES ${RENDERING_SOURCE_FILES})
 SOURCE_GROUP("Rendering System\\Header Files" FILES ${RENDERING_HEADER_FILES})

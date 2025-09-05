@@ -1,9 +1,12 @@
 #include <base/Context.h>
+#include <base/App3D.h>
 #include <world/World.h>
 
 #include <render/RenderEffect.h>
 #include <render/Renderable.h>
 #include <render/RenderEngine.h>
+#include <render/RenderFactory.h>
+#include <render/FrameBuffer.h>
 
 namespace RenderWorker
 {
@@ -14,14 +17,7 @@ World::World()
 
 World::~World()
 {
-    if(controller_)
-    {
-        controller_->DetachCamera();
-    }
-}
 
-void World::BeginWorld()
-{
 }
 
 void World::AddRenderable(Renderable* obj)
@@ -48,11 +44,8 @@ void World::AddRenderable(Renderable* obj)
     }
 }
 
-void World::UpdateScene(float dt)
+void World::Flush(uint32_t urt)
 {
-    auto& re = Context::Instance().RenderEngineInstance();
-    re.BeginRender();
-
     std::sort(render_queue_.begin(), render_queue_.end(),
     [](std::pair<const RenderTechnique*, std::vector<Renderable*>> const & lhs,
         std::pair<const RenderTechnique*, std::vector<Renderable*>> const & rhs)
@@ -62,24 +55,58 @@ void World::UpdateScene(float dt)
 
         return lhs.first->Weight() < rhs.first->Weight();
     });
-    
+
     for (auto& items : render_queue_)
     {
         for (auto const & item : items.second)
         {
             item->Render();
         }
+        num_renderables_rendered_ += static_cast<uint32_t>(items.second.size());
     }
-    re.EndRender();
+}
 
-    for (auto& items : render_queue_)
+void World::Update()
+{
+	auto& context = Context::Instance();
+    auto& app = context.AppInstance();
+    const float app_time = app.AppTime();
+    const float frame_time = app.FrameTime();
+
+    auto& re = Context::Instance().RenderEngineInstance();
+    re.BeginRender();
+
+    this->FlushScene();
+
+    FrameBuffer& fb = *re.ScreenFrameBuffer();
+    fb.SwapBuffers();
+	fb.WaitOnSwapBuffers();
+
+    re.EndRender();
+}
+
+void World::FlushScene()
+{
+    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+
+    uint32_t urt;
+    auto& app = Context::Instance().AppInstance();
+    for (uint32_t pass = 0;; ++ pass)
     {
-        for (auto const & item : items.second)
+        urt = app.Update(pass);
+
+        if (urt & App3D::URV_NeedFlush)
         {
-            item->Update(dt);
+            this->Flush(urt);
+        }
+
+        if (urt & App3D::URV_Finished)
+        {
+            break;
         }
     }
 }
+
 }
 
 extern "C"

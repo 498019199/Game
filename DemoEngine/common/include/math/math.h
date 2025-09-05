@@ -67,9 +67,38 @@ namespace MathWorker
 	float cos(float x) noexcept;
 	void SinCos(float fAnglel, float& s, float& c) noexcept;
 
-	//浮点相等        
-	template<typename T>
-	bool IsEqual(T X, T Y);
+	// 求绝对值
+	template <typename T>
+	inline T
+	abs(T const & x) noexcept
+	{
+		return x < T(0) ? -x : x;
+	}		
+	template <typename T, size_t N>
+	Vector_T<T, N> abs(Vector_T<T, N> const & x) noexcept;
+
+	// 判断两个数是否相等
+	template <typename T>
+	inline bool
+	equal(T const & lhs, T const & rhs) noexcept
+	{
+		return (lhs == rhs);
+	}
+	// 浮点版本
+	template <>
+	inline bool
+	equal<float>(float const & lhs, float const & rhs) noexcept
+	{
+		return (abs<float>(lhs - rhs)
+			<= std::numeric_limits<float>::epsilon());
+	}
+	template <>
+	inline bool
+	equal<double>(double const & lhs, double const & rhs) noexcept
+	{
+		return (abs<double>(lhs - rhs)
+			<= std::numeric_limits<double>::epsilon());
+	}
 
 	//平方根倒数速算法
 	float RecipSqrt(float number) noexcept;

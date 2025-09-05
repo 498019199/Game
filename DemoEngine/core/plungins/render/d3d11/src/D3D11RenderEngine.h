@@ -18,8 +18,8 @@ public:
     ~D3D11RenderEngine();
 
 #if ZENGINE_IS_DEV_PLATFORM
-    virtual void* GetD3DDevice();
-    virtual void* GetD3DDeviceImmContext();
+    void* GetD3DDevice() override;
+    void* GetD3DDeviceImmContext() override;
 #endif //ZENGINE_IS_DEV_PLATFORM
 
     IDXGIFactory2* DXGIFactory2() const noexcept;
@@ -50,7 +50,6 @@ public:
     void DetectD3D11Runtime(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx);
 
     void BeginRender() const override;
-    void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) override;
     void EndRender() const override;
 
     // 设置光栅化状态
@@ -69,12 +68,14 @@ public:
     void SetSamplers(ShaderStage stage, std::span<ID3D11SamplerState* const> samplers);
     // 将更新好的常量缓冲区绑定到顶点着色器和像素着色器
     void SetConstantBuffers(ShaderStage stage, std::span<ID3D11Buffer* const> cbs);
+    void RSSetViewports(UINT NumViewports, D3D11_VIEWPORT const * pViewports);
 
     char const * DefaultShaderProfile(ShaderStage stage) const;
 
     // // 删除shader资源
     void DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint32_t rt_num_subres);
 
+	void ResetRenderStates();
     // 获取D3D适配器列表
     const D3D11AdapterList& D3DAdapters() const noexcept;
     // 获取当前适配器
@@ -86,9 +87,16 @@ public:
 
 	static void CALLBACK OnDeviceLost(PTP_CALLBACK_INSTANCE instance, PVOID context, PTP_WAIT wait, TP_WAIT_RESULT wait_result) noexcept;
 private:
+    // 建立渲染窗口
 	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) override;
+    // 渲染
+    void DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl) override;
+    // 设置当前渲染目标
+	void DoBindFrameBuffer(FrameBufferPtr const & fb) override;
     // 设置当前Stream output目标
     virtual void DoBindSOBuffers(const RenderLayoutPtr& rl) override;
+
+    virtual void DoDestroy() override;
 
 private:
 	typedef HRESULT(WINAPI *CreateDXGIFactory1Func)(REFIID riid, void** ppFactory);
@@ -135,13 +143,14 @@ private:
 	uint32_t num_vertices_just_rendered_{0};
     // 光栅状态
     ID3D11RasterizerState* rasterizer_state_cache_{nullptr};
+    // 模板/深度状态
+    ID3D11DepthStencilState* depth_stencil_state_cache_{nullptr};
     // 混合状态
     ID3D11BlendState* blend_state_cache_{nullptr};
     Color blend_factor_cache_{1, 1, 1, 1};
     uint32_t sample_mask_cache_{0xFFFFFFFF};
-    // 模板/深度状态
-    ID3D11DepthStencilState* depth_stencil_state_cache_{nullptr};
     uint16_t stencil_ref_cache_{0};
+	D3D11_VIEWPORT viewport_cache_{};
     
     // 当前绑定的着色器
     ID3D11VertexShader* vertex_shader_cache_{nullptr};

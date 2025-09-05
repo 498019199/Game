@@ -81,7 +81,7 @@ void Renderable::Render()
     const auto& layout = GetRenderLayout(lod);
     const auto& tech = *GetRenderTechnique();
     auto& re = Context::Instance().RenderEngineInstance();
-    re.DoRender(effect, tech, layout);
+    re.Render(effect, tech, layout);
 }
 
 }

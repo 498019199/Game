@@ -44,6 +44,7 @@ namespace RenderWorker
 	using ID3D11TextureCubePtr = CommonWorker::com_ptr<ID3D11Texture2D>;
     using ID3D11RenderTargetViewPtr = CommonWorker::com_ptr<ID3D11RenderTargetView>;
 	using ID3D11DepthStencilViewPtr = CommonWorker::com_ptr<ID3D11DepthStencilView>;
+	using ID3D11UnorderedAccessViewPtr = CommonWorker::com_ptr<ID3D11UnorderedAccessView>;
     using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
     using ID3D11SamplerStatePtr = CommonWorker::com_ptr<ID3D11SamplerState>;
 	using ID3D11ShaderResourceViewPtr = CommonWorker::com_ptr<ID3D11ShaderResourceView>;
