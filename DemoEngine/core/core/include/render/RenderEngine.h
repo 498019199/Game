@@ -32,10 +32,12 @@ public:
 	void CreateRenderWindow(std::string const & name, RenderSettings& settings);
 	void DestroyRenderWindow();
 
-    virtual void BeginRender() const = 0;
-    virtual void EndRender() const = 0;
+    virtual void BeginFrame();
+    virtual void BeginPass();
     void Render(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl);
-
+    virtual void EndPass();
+    virtual void EndFrame();
+    
 	void BindFrameBuffer(const FrameBufferPtr& fb);
     // 获取当前渲染目标
     const FrameBufferPtr& CurFrameBuffer() const;
@@ -87,10 +89,6 @@ protected:
     StereoMethod stereo_method_;
     float stereo_separation_;
 };
-
-
-
-
 
 
 

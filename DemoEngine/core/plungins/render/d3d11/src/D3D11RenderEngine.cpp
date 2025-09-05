@@ -145,14 +145,7 @@ void* D3D11RenderEngine::GetD3DDeviceImmContext()
 }
 #endif//ZENGINE_IS_DEV_PLATFORM
 
-void D3D11RenderEngine::BeginRender() const 
-{
-}
 
-void D3D11RenderEngine::EndRender() const
-{
-
-}
 void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
 	uint32_t vertex_stream_num = rl.VertexStreamNum();
@@ -481,6 +474,73 @@ void D3D11RenderEngine::DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint3
 				d3d_imm_ctx_1_.get(), 0, static_cast<UINT>(shader_srv_ptr_cache_[stage].size()), &shader_srv_ptr_cache_[stage][0]);
 		}
 	}
+}
+
+void D3D11RenderEngine::OMSetRenderTargets(UINT num_rtvs, ID3D11RenderTargetView* const * rtvs, ID3D11DepthStencilView* dsv)
+{
+	if ((rtv_ptr_cache_.size() != num_rtvs) || (dsv_ptr_cache_ != dsv)
+		|| (memcmp(&rtv_ptr_cache_[0], rtvs, num_rtvs * sizeof(rtvs[0])) != 0))
+	{
+		d3d_imm_ctx_1_->OMSetRenderTargets(num_rtvs, rtvs, dsv);
+
+		rtv_ptr_cache_.assign(rtvs, rtvs + num_rtvs);
+		dsv_ptr_cache_ = dsv;
+	}
+}
+
+void D3D11RenderEngine::OMSetRenderTargetsAndUnorderedAccessViews(UINT num_rtvs, ID3D11RenderTargetView* const * rtvs,
+	ID3D11DepthStencilView* dsv,
+	UINT uav_start_slot, UINT num_uavs, ID3D11UnorderedAccessView* const * uavs, UINT const * uav_init_counts)
+{
+	if ((rtv_ptr_cache_.size() != num_rtvs) || (dsv_ptr_cache_ != dsv)
+		|| (render_uav_ptr_cache_.size() < uav_start_slot + num_uavs)
+		|| (memcmp(&rtv_ptr_cache_[0], rtvs, num_rtvs * sizeof(rtvs[0])) != 0)
+		|| (memcmp(&render_uav_ptr_cache_[uav_start_slot], uavs, num_uavs * sizeof(uavs[0])) != 0)
+		|| (memcmp(&render_uav_init_count_cache_[uav_start_slot], uav_init_counts, num_uavs * sizeof(uav_init_counts[0])) != 0))
+	{
+		d3d_imm_ctx_1_->OMSetRenderTargetsAndUnorderedAccessViews(num_rtvs, rtvs, dsv,
+			uav_start_slot, num_uavs, uavs, uav_init_counts);
+
+		rtv_ptr_cache_.assign(rtvs, rtvs + num_rtvs);
+		dsv_ptr_cache_ = dsv;
+
+		if (render_uav_ptr_cache_.size() < uav_start_slot + num_uavs)
+		{
+			render_uav_ptr_cache_.resize(uav_start_slot + num_uavs);
+			render_uav_init_count_cache_.resize(render_uav_ptr_cache_.size());
+		}
+		memcpy(&render_uav_ptr_cache_[uav_start_slot], uavs, num_uavs * sizeof(uavs[0]));
+		memcpy(&render_uav_init_count_cache_[uav_start_slot], uav_init_counts, num_uavs * sizeof(uav_init_counts[0]));
+	}
+}
+
+void D3D11RenderEngine::CSSetUnorderedAccessViews(UINT start_slot, UINT num_uavs, ID3D11UnorderedAccessView* const * uavs,
+	UINT const * uav_init_counts)
+{
+	if ((compute_uav_ptr_cache_.size() < start_slot + num_uavs)
+		|| (memcmp(&compute_uav_ptr_cache_[start_slot], uavs, num_uavs * sizeof(uavs[0])) != 0)
+		|| (memcmp(&compute_uav_init_count_cache_[start_slot], uav_init_counts, num_uavs * sizeof(uav_init_counts[0])) != 0))
+	{
+		d3d_imm_ctx_1_->CSSetUnorderedAccessViews(start_slot, num_uavs, uavs, uav_init_counts);
+
+		if (compute_uav_ptr_cache_.size() < start_slot + num_uavs)
+		{
+			compute_uav_ptr_cache_.resize(start_slot + num_uavs);
+			compute_uav_init_count_cache_.resize(compute_uav_ptr_cache_.size());
+		}
+		memcpy(&compute_uav_ptr_cache_[start_slot], uavs, num_uavs * sizeof(uavs[0]));
+		memcpy(&compute_uav_init_count_cache_[start_slot], uav_init_counts, num_uavs * sizeof(uav_init_counts[0]));
+	}
+}
+
+void D3D11RenderEngine::BeginFrame()
+{
+	RenderEngine::BeginFrame();
+}
+
+void D3D11RenderEngine::EndFrame()
+{
+	RenderEngine::EndFrame();
 }
 
 IDXGIFactory2* D3D11RenderEngine::DXGIFactory2() const noexcept

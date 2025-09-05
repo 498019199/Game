@@ -74,7 +74,7 @@ void World::Update()
     const float frame_time = app.FrameTime();
 
     auto& re = Context::Instance().RenderEngineInstance();
-    re.BeginRender();
+    re.BeginFrame();
 
     this->FlushScene();
 
@@ -82,7 +82,7 @@ void World::Update()
     fb.SwapBuffers();
 	fb.WaitOnSwapBuffers();
 
-    re.EndRender();
+    re.EndFrame();
 }
 
 void World::FlushScene()

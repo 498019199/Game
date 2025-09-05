@@ -54,12 +54,32 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
     this->BindFrameBuffer(default_frame_buffers_[0]);
 }
 
+void RenderEngine::BeginFrame()
+{
+    this->BindFrameBuffer(default_frame_buffers_[0]);
+}
+
+void RenderEngine::BeginPass()
+{
+    
+}
+
 void RenderEngine::Render(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
     if (tech.HWResourceReady(effect))
     {
         this->DoRender(effect, tech, rl);
     }
+}
+
+void RenderEngine::EndPass()
+{
+	
+}
+
+void RenderEngine::EndFrame()
+{
+    
 }
 
 void RenderEngine::BindFrameBuffer(const FrameBufferPtr& fb)

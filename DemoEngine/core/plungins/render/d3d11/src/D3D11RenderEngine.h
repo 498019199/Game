@@ -22,6 +22,9 @@ public:
     void* GetD3DDeviceImmContext() override;
 #endif //ZENGINE_IS_DEV_PLATFORM
 
+    void BeginFrame() override;
+    void EndFrame() override;
+
     IDXGIFactory2* DXGIFactory2() const noexcept;
     IDXGIFactory3* DXGIFactory3() const noexcept;
     IDXGIFactory4* DXGIFactory4() const noexcept;
@@ -49,9 +52,6 @@ public:
         
     void DetectD3D11Runtime(ID3D11Device1* device, ID3D11DeviceContext1* imm_ctx);
 
-    void BeginRender() const override;
-    void EndRender() const override;
-
     // 设置光栅化状态
     void RSSetState(ID3D11RasterizerState* ras);
     // 设置混合状态
@@ -69,6 +69,12 @@ public:
     // 将更新好的常量缓冲区绑定到顶点着色器和像素着色器
     void SetConstantBuffers(ShaderStage stage, std::span<ID3D11Buffer* const> cbs);
     void RSSetViewports(UINT NumViewports, D3D11_VIEWPORT const * pViewports);
+    void OMSetRenderTargets(UINT num_rtvs, ID3D11RenderTargetView* const * rtvs, ID3D11DepthStencilView* dsv);
+    void OMSetRenderTargetsAndUnorderedAccessViews(UINT num_rtvs, ID3D11RenderTargetView* const * rtvs,
+        ID3D11DepthStencilView* dsv, 
+        UINT uav_start_slot, UINT num_uavs, ID3D11UnorderedAccessView* const * uavs, UINT const * uav_init_counts);
+    void CSSetUnorderedAccessViews(UINT start_slot, UINT num_uavs, ID3D11UnorderedAccessView* const * uavs,
+        UINT const * uav_init_counts);
 
     char const * DefaultShaderProfile(ShaderStage stage) const;
 
@@ -162,6 +168,12 @@ private:
     // shader 图片绑定
     std::array<std::vector<ID3D11ShaderResourceView*>, ShaderStageNum> shader_srv_ptr_cache_;
     std::array<std::vector<ID3D11SamplerState*>, ShaderStageNum> shader_sampler_ptr_cache_;
+	std::vector<ID3D11UnorderedAccessView*> render_uav_ptr_cache_;
+	std::vector<uint32_t> render_uav_init_count_cache_;
+	std::vector<ID3D11UnorderedAccessView*> compute_uav_ptr_cache_;
+	std::vector<uint32_t> compute_uav_init_count_cache_;
+	std::vector<ID3D11RenderTargetView*> rtv_ptr_cache_;
+	ID3D11DepthStencilView* dsv_ptr_cache_{nullptr};
 
     uint32_t num_so_buffs_{0};
     // 顶点索引相关

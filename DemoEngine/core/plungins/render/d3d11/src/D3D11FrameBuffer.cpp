@@ -120,13 +120,13 @@ void D3D11FrameBuffer::OnBind()
 
     if (ua_views_.empty())
     {
-        //d3d11_re.OMSetRenderTargets(static_cast<UINT>(d3d_rt_view_.size()), d3d_rt_view_.data(), d3d_ds_view_);
+        d3d11_re.OMSetRenderTargets(static_cast<UINT>(d3d_rt_view_.size()), d3d_rt_view_.data(), d3d_ds_view_);
     }
     else
     {
-        // d3d11_re.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<UINT>(d3d_rt_view_.size()), d3d_rt_view_.data(), d3d_ds_view_,
-        //     static_cast<UINT>(d3d_rt_view_.size()), static_cast<UINT>(d3d_ua_view_.size()), d3d_ua_view_.data(),
-        //     d3d_ua_init_count_.data());
+        d3d11_re.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<UINT>(d3d_rt_view_.size()), d3d_rt_view_.data(), d3d_ds_view_,
+            static_cast<UINT>(d3d_rt_view_.size()), static_cast<UINT>(d3d_ua_view_.size()), d3d_ua_view_.data(),
+            d3d_ua_init_count_.data());
     }
 
     d3d11_re.RSSetViewports(1, &d3d_viewport_);
