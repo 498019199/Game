@@ -33,7 +33,10 @@ void EditorManagerD3D11::OnCreate()
 {
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-    
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // 允许键盘控制
+    io.ConfigWindowsMoveFromTitleBarOnly = true;              // 仅允许标题拖动
+
     // 设置Dear ImGui风格
     ImGui::StyleColorsDark();
 
@@ -73,9 +76,12 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
         }
     }
 
-    EditorDialogBoxManager::Instance().OnRender();
+    //EditorDialogBoxManager::Instance().OnRender();
+    ImGui::End();
     ImGui::Render();
 
+    // 下面这句话会触发ImGui在Direct3D的绘制
+    // 因此需要在此之前将后备缓冲区绑定到渲染管线上
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     return App3D::URV_Finished;
 }

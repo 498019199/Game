@@ -29,6 +29,10 @@ EditorDialogBoxManager& EditorDialogBoxManager::Instance()
 
 void EditorDialogBoxManager::OnRender()
 {
+    if(message_list_.empty())
+    {
+        return ;
+    }
     const MessageData& msg = message_list_.front();
 
     ImGuiIO& io = ImGui::GetIO();

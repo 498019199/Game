@@ -56,12 +56,12 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
 
             if (ImGui::BeginMenu("Assets"))
             {
-
+                ImGui::EndMenu();
             }
-
-            ImGui::EndMenu();
+            ImGui::EndMenuBar();
         }
-        ImGui::EndMenuBar();
+        
+		ImGui::End();
     }
 
     // 3个按钮从左到右的宽度

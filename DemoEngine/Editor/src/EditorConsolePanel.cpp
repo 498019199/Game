@@ -26,7 +26,6 @@ void EditorConsolePanel::OnRender(const EditorSetting& setting)
         // 默认拉到最底部
 		if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
-        ImGui::EndChild();
     }
 
     ImGui::End();
