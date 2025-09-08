@@ -45,7 +45,20 @@ public:
     const FrameBufferPtr& DefaultFrameBuffer() const;
     // 获取屏幕渲染目标
     const FrameBufferPtr& ScreenFrameBuffer() const;
+    const FrameBufferPtr& OverlayFrameBuffer() const;
 
+    StereoMethod Stereo() const;
+    void Stereo(StereoMethod method);
+    void StereoSeparation(float separation);
+    float StereoSeparation() const;
+
+    DisplayOutputMethod DisplayOutput() const;
+    void DisplayOutput(DisplayOutputMethod method);
+    void PaperWhiteNits(uint32_t nits);
+    uint32_t PaperWhiteNits() const;
+    void DisplayMaxLuminanceNits(uint32_t nits);
+    uint32_t DisplayMaxLuminanceNits() const;
+    
     // For debug only, 设置为绘制线框
     void ForceLineMode(bool line);
     bool ForceLineMode() const
@@ -75,20 +88,28 @@ protected:
     FrameBufferPtr cur_frame_buffer_;
     FrameBufferPtr screen_frame_buffer_;
     FrameBufferPtr default_frame_buffers_[4];
-    int fb_stage_;
+    int fb_stage_ {0};
+    FrameBufferPtr overlay_frame_buffer_;
     
     // 强制使用线框模式
     bool force_line_mode_ {false}; 
     RenderStateObjectPtr cur_rs_obj_;
     RenderStateObjectPtr cur_line_rs_obj_;
+    
+    DisplayOutputMethod display_output_method_;
+    uint32_t paper_white_;
+    uint32_t display_max_luminance_;
 
     RenderLayoutPtr so_buffers_;
 
     RenderDeviceCaps caps_;
 
-    StereoMethod stereo_method_;
-    float stereo_separation_;
+    StereoMethod stereo_method_ {STM_None};
+    float stereo_separation_ {0.0f};
 };
+
+
+
 
 
 

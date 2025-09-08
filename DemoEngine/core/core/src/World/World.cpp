@@ -105,6 +105,13 @@ void World::FlushScene()
             break;
         }
     }
+
+    if ((re.Stereo() != STM_None) || (re.DisplayOutput() != DOM_sRGB))
+    {
+        re.BindFrameBuffer(re.OverlayFrameBuffer());
+        re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 1.0f, 0);
+    }
+    this->Flush(App3D::URV_Overlay);
 }
 
 }

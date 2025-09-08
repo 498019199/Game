@@ -52,6 +52,11 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
     }
 
     this->BindFrameBuffer(default_frame_buffers_[0]);
+    this->Stereo(settings.stereo_method);
+    this->StereoSeparation(settings.stereo_separation);
+    this->DisplayOutput(settings.display_output_method);
+    this->PaperWhiteNits(settings.paper_white);
+    this->DisplayMaxLuminanceNits(settings.display_max_luminance);
 }
 
 void RenderEngine::BeginFrame()
@@ -121,6 +126,134 @@ const FrameBufferPtr& RenderEngine::DefaultFrameBuffer() const
 const FrameBufferPtr& RenderEngine::ScreenFrameBuffer() const
 {
     return screen_frame_buffer_;
+}
+
+const FrameBufferPtr& RenderEngine::OverlayFrameBuffer() const
+{
+	return overlay_frame_buffer_;
+}
+
+StereoMethod RenderEngine::Stereo() const
+{
+	return stereo_method_;
+}
+
+void RenderEngine::Stereo(StereoMethod method)
+{
+	stereo_method_ = method;		
+    if (stereo_method_ != STM_None)
+    {
+        std::string pp_name;
+        switch (stereo_method_)
+        {
+			case STM_ColorAnaglyph_RedCyan:
+				pp_name = "stereoscopic_red_cyan";
+				break;
+
+			case STM_ColorAnaglyph_YellowBlue:
+				pp_name = "stereoscopic_yellow_blue";
+				break;
+
+			case STM_ColorAnaglyph_GreenRed:
+				pp_name = "stereoscopic_green_red";
+				break;
+
+			case STM_HorizontalInterlacing:
+				pp_name = "stereoscopic_hor_interlacing";
+				break;
+
+			case STM_VerticalInterlacing:
+				pp_name = "stereoscopic_ver_interlacing";
+				break;
+
+			case STM_Horizontal:
+				pp_name = "stereoscopic_horizontal";
+				break;
+
+			case STM_Vertical:
+				pp_name = "stereoscopic_vertical";
+				break;
+
+			case STM_LCDShutter:
+				pp_name = "stereoscopic_lcd_shutter";
+				break;
+
+			case STM_OculusVR:
+				pp_name = "stereoscopic_oculus_vr";
+				break;
+            default:
+                ZENGINE_UNREACHABLE("Invalid stereo method");
+        }
+
+		//stereoscopic_pp_ = SyncLoadPostProcess("Stereoscopic.ppml", pp_name);
+    }
+}
+
+void RenderEngine::StereoSeparation(float separation)
+{
+	stereo_separation_ = separation;
+}
+
+float RenderEngine::StereoSeparation() const
+{
+    return stereo_separation_;
+}
+
+DisplayOutputMethod RenderEngine::DisplayOutput() const
+{
+    return display_output_method_;
+}
+
+void RenderEngine::DisplayOutput(DisplayOutputMethod method)
+{
+    display_output_method_ = method;
+
+    if (display_output_method_ != DOM_sRGB)
+    {
+        std::string pp_name;
+        switch (display_output_method_)
+        {
+        case DOM_HDR10:
+            pp_name = "DisplayHDR10";
+            break;
+
+        default:
+            ZENGINE_UNREACHABLE("Invalid display output method");
+        }
+        //hdr_display_pp_ = SyncLoadPostProcess("HDRDisplay.ppml", pp_name);
+
+        //hdr_enabled_ = true;
+        //gamma_enabled_ = false;
+        //color_grading_enabled_ = false;
+    }
+    else
+    {
+        //hdr_display_pp_.reset();
+    }
+
+    //pp_chain_dirty_ = true;
+}
+
+void RenderEngine::PaperWhiteNits(uint32_t nits)
+{
+    paper_white_ = nits;
+    //this->UpdateHDRRescale();
+}
+
+uint32_t RenderEngine::PaperWhiteNits() const
+{
+    return paper_white_;
+}
+
+void RenderEngine::DisplayMaxLuminanceNits(uint32_t nits)
+{
+    display_max_luminance_ = nits;
+    //this->UpdateHDRRescale();
+}
+
+uint32_t RenderEngine::DisplayMaxLuminanceNits() const
+{
+    return display_max_luminance_;
 }
 
 void RenderEngine::DestroyRenderWindow()

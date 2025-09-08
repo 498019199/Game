@@ -697,7 +697,7 @@ namespace RenderWorker
 		uint32_t slice_pitch;
 	};
 
-
+	// 多种立体立体显示方法
 	enum StereoMethod
 	{
 		STM_None,
