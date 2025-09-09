@@ -15,7 +15,7 @@ namespace CommonWorker
 		}
 	}
 
-#if defined(_DEBUG)
+#if defined(ZENGINE_DEBUG)
 	void UnreachableInternal(std::string_view msg, std::string_view file, uint32_t line)
 	{
 		// if (!msg.empty())

@@ -10,11 +10,11 @@
 #include <bit>
 #include <utility>
 
-#ifdef _DEBUG
+#ifdef ZENGINE_DEBUG
 	#define COMMON_ASSERT(val) assert(val)
 #else
 	#define COMMON_ASSERT(val) 
-#endif//_DEBUG
+#endif//ZENGINE_DEBUG
 
 #if defined(ZENGINE_CXX23_LIBRARY_TO_UNDERLYING_SUPPORT)
 #include <utility>
@@ -50,7 +50,7 @@ namespace std
 #endif
 
 
-#if defined(DEBUG) || defined(_DEBUG)
+#if defined(ZENGINE_DEBUG)
     #define _CRTDBG_MAP_ALLOC
     #include <crtdbg.h>
     #define ZENGINE_DBG_SUFFIX "_d"

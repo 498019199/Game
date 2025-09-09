@@ -264,6 +264,9 @@ void RenderEngine::DestroyRenderWindow()
     }
     cur_frame_buffer_.reset();
 
+    screen_frame_buffer_.reset();
+    overlay_frame_buffer_.reset();
+
     for (int i = 3; i >= 0; -- i)
     {
         default_frame_buffers_[i].reset();
@@ -272,6 +275,21 @@ void RenderEngine::DestroyRenderWindow()
 
 void RenderEngine::Destroy()
 {
+    cur_frame_buffer_.reset();
+    screen_frame_buffer_.reset();
+
+    for (int i = 0; i < 4; ++ i)
+    {
+        default_frame_buffers_[i].reset();
+    }
+
+    overlay_frame_buffer_.reset();
+
+	so_buffers_.reset();
+
+    cur_rs_obj_.reset();
+    cur_line_rs_obj_.reset();
+
     this->DoDestroy();
 }
 

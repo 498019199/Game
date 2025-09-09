@@ -405,7 +405,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 			};
 #endif
 
-#if !defined(_DEBUG)
+#if !defined(ZENGINE_DEBUG)
 			const uint32_t strip_flags = D3DCOMPILER_STRIP_REFLECTION_DATA | D3DCOMPILER_STRIP_DEBUG_INFO | D3DCOMPILER_STRIP_TEST_BLOBS |
 										 D3DCOMPILER_STRIP_PRIVATE_DATA | D3DCOMPILER_STRIP_ROOT_SIGNATURE;
 #else

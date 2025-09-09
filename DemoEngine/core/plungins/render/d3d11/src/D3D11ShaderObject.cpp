@@ -87,7 +87,7 @@ void D3D11ShaderStageObject::CompileShader(const RenderEffect& effect, const Ren
         std::vector<std::pair<char const*, char const*>> macros;
         uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
         
-    #if !defined(_DEBUG)
+    #if !defined(ZENGINE_DEBUG)
         flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
     #else
         // 设置 D3DCOMPILE_DEBUG 标志用于获取着色器调试信息。该标志可以提升调试体验，

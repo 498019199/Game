@@ -13,7 +13,7 @@ namespace CommonWorker
 	std::string CombineFileLine(std::string_view file, uint32_t line);
 	void Verify(bool x);
 
-#if defined(_DEBUG)
+#if defined(ZENGINE_DEBUG)
 	[[noreturn]] void UnreachableInternal(std::string_view msg = {}, std::string_view file = {}, uint32_t line = 0);
 #endif
 }
@@ -49,7 +49,7 @@ namespace CommonWorker
 	}
 
 
-#if defined(DEBUG) || defined(_DEBUG)
+#if defined(ZENGINE_DEBUG)
     #define ZENGINE_UNREACHABLE(msg) CommonWorker::UnreachableInternal(msg, __FILE__, __LINE__)
 #else
     #define ZENGINE_UNREACHABLE(msg) std::unreachable()

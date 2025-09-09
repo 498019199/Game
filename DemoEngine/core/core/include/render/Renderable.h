@@ -1,8 +1,8 @@
 #pragma once
 //可渲染对象类 头文件
-#include <World/SceneNode.h>
-#include <Render/RenderEffect.h>
-#include <Render/RenderLayout.h>
+#include <world/SceneNode.h>
+#include <render/RenderEffect.h>
+#include <render/RenderLayout.h>
 
 namespace RenderWorker
 {

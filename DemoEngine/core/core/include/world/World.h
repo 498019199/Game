@@ -1,11 +1,11 @@
 #pragma once
 
-#include <World/SceneNode.h>
-#include <World/Control.h>
+#include <world/SceneNode.h>
+#include <world/Control.h>
 
-#include <Render/Renderable.h>
-#include <Render/Light.h>
-#include <Render/RenderEffect.h>
+#include <render/Renderable.h>
+#include <render/Light.h>
+#include <render/RenderEffect.h>
 
 namespace RenderWorker
 {

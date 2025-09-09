@@ -1,5 +1,5 @@
 #pragma once
-#include <Render/GraphicsBuffer.h>
+#include <render/GraphicsBuffer.h>
 
 namespace RenderWorker
 {

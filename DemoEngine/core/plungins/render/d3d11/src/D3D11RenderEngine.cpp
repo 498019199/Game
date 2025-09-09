@@ -79,7 +79,7 @@ D3D11RenderEngine::D3D11RenderEngine()
 		UINT const dxgi_factory_flags = 0;
 		static UINT const available_dxgi_factory_flags[] =
 		{
-#if defined(DEBUG) || defined(_DEBUG)  
+#if defined(ZENGINE_DEBUG)
 			dxgi_factory_flags | DXGI_CREATE_FACTORY_DEBUG,
 #endif
 			dxgi_factory_flags
@@ -791,6 +791,38 @@ void D3D11RenderEngine::DoDestroy()
 		d3d_device_4_->UnregisterDeviceRemoved(device_lost_reg_cookie_);
 		device_lost_reg_cookie_ = 0;
 	}
+	device_lost_event_.reset();
+	thread_pool_wait_.reset();
+
+	adapterList_.Destroy();
+
+	rasterizer_state_cache_ = nullptr;
+	depth_stencil_state_cache_ = nullptr;
+	blend_state_cache_ = nullptr;
+	vertex_shader_cache_ = nullptr;
+	pixel_shader_cache_ = nullptr;
+	geometry_shader_cache_ = nullptr;
+	// compute_shader_cache_ = nullptr;
+	// hull_shader_cache_ = nullptr;
+	// domain_shader_cache_ = nullptr;
+	input_layout_cache_ = nullptr;
+	vb_cache_.clear();
+	ib_cache_ = nullptr;
+
+	for (size_t i = 0; i < ShaderStageNum; ++ i)
+	{
+		shader_srvsrc_cache_[i].clear();
+		shader_srv_ptr_cache_[i].clear();
+		shader_sampler_ptr_cache_[i].clear();
+		shader_cb_ptr_cache_[i].clear();
+	}
+
+	render_uav_ptr_cache_.clear();
+	render_uav_init_count_cache_.clear();
+	compute_uav_ptr_cache_.clear();
+	compute_uav_init_count_cache_.clear();
+	rtv_ptr_cache_.clear();
+	dsv_ptr_cache_ = nullptr;
 
 	if (d3d_imm_ctx_1_)
 	{

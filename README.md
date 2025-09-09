@@ -19,3 +19,10 @@ DX12：进一步优化了**多线程效率**，支持异步计算和**底层硬�
 开发日志
 2025年7月7日
 从studyrecord\Introduction to DirectX 11 3D Game Engine Programming 移植相关代码，抽象api
+
+# 新增特性
+Direct3D 11.2
+低延迟渲染：新增 IDXGISwapChain2 接口，支持 DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL 翻转模式，减少帧延迟（现代应用广泛使用）。
+HDR 显示支持：新增对高动态范围显示的色彩空间支持（如 DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020）。
+
+Direct3D 11.4

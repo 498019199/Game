@@ -29,7 +29,7 @@ DEFINE_UUID_OF(IDXGIFactory6);
 DEFINE_UUID_OF(IDXGISwapChain3);
 DEFINE_UUID_OF(IDXGISwapChain4);
 
-#if defined(DEBUG) || defined(_DEBUG)
+#if defined(ZENGINE_DEBUG)
 DEFINE_UUID_OF(ID3D11InfoQueue);
 #endif
 

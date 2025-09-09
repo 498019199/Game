@@ -95,3 +95,9 @@
 #if defined(ZENGINE_COMPILER_MSVC) || defined(ZENGINE_COMPILER_GCC) || defined(ZENGINE_COMPILER_CLANG) || defined(ZENGINE_COMPILER_CLANGCL)
 	#define ZENGINE_HAS_STRUCT_PACK
 #endif
+
+
+
+#if defined(DEBUG) | defined(_DEBUG)
+	#define ZENGINE_DEBUG
+#endif

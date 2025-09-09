@@ -316,7 +316,7 @@ std::unique_ptr<Context> Context::Impl::context_instance_;
 Context::Context()
 {
 #ifdef ZENGINE_COMPILER_MSVC
-#ifdef _DEBUG
+#ifdef ZENGINE_DEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 #endif

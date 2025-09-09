@@ -1,12 +1,12 @@
 #pragma once
 #include <common/XMLDom.h>
 
-#include <Render/GraphicsBuffer.h>
-#include <Render/ShaderObject.h>
-#include <Render/Light.h>
-#include <Render/RenderStateObject.h>
-#include <Render/Texture.h>
-#include <Render/RenderView.h>
+#include <render/GraphicsBuffer.h>
+#include <render/ShaderObject.h>
+#include <render/Light.h>
+#include <render/RenderStateObject.h>
+#include <render/Texture.h>
+#include <render/RenderView.h>
 
 #include <common/common.h>
 namespace RenderWorker

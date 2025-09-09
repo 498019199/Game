@@ -84,7 +84,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
         };
 
         std::span<UINT const> available_create_device_flags = MakeSpan(all_create_device_flags);
-#ifdef _DEBUG
+#ifdef ZENGINE_DEBUG
         available_create_device_flags = MakeSpan(all_create_device_flags);
 #else
         if (!settings.debug_context)
@@ -350,7 +350,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
     // 创建渲染目标视图,深度/模板缓冲区及其视图
     this->UpdateSurfacesPtrs();
 
-#ifdef _DEBUG
+#ifdef ZENGINE_DEBUG
     // Direct3D 11 中用于调试的设置，主要功能是配置 Direct3D 信息队列（Info Queue），使其在遇到严重错误时触发调试断点。
     if (auto d3d_info_queue = d3d_device.try_as<ID3D11InfoQueue>())
     {
@@ -380,7 +380,15 @@ void D3D11RenderWindow::Destroy()
     auto const& d3d11_re = checked_cast<const D3D11RenderEngine&>(rf.RenderEngineInstance());
     d3d11_re.DXGIFactory2()->UnregisterStereoStatus(stereo_cookie_);
 #else
-#endif // KLAYGE_PLATFORM_WINDOWS_DESKTOP
+#endif // ZENGINE_PLATFORM_WINDOWS_DESKTOP
+
+    render_target_view_right_eye_.reset();
+    depth_stencil_view_right_eye_.reset();
+    render_target_view_.reset();
+    depth_stencil_view_.reset();
+    back_buffer_.reset();
+    depth_stencil_.reset();
+    swap_chain_1_.reset();
 }
 
 void D3D11RenderWindow::SwapBuffers()
