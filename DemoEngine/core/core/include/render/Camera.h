@@ -4,7 +4,7 @@
 
 namespace RenderWorker
 {
-class Camera:public SceneNode
+class ZENGINE_CORE_API Camera: public SceneNode
 {
 public:
     Camera();

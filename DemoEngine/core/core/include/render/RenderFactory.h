@@ -10,8 +10,9 @@
 namespace RenderWorker
 {
 
-class RenderFactory
+class ZENGINE_CORE_API RenderFactory
 {
+    ZENGINE_NONCOPYABLE(RenderFactory);
 public:
     RenderFactory();
     virtual ~RenderFactory() noexcept;

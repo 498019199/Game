@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <common/common.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
@@ -9,7 +9,7 @@ class SceneNode;
 using SceneNodePtr = std::shared_ptr<SceneNode>;
 
 // 场景上对象位置描述
-class SceneNode
+class ZENGINE_CORE_API SceneNode
 {
 public:
     SceneNode* Parent() const;

@@ -1,5 +1,5 @@
 #pragma once
-#include <common/common.h>
+#include <base/ZEngine.h>
 #include <render/RenderLayout.h>
 
 #include <array>
@@ -56,8 +56,9 @@ enum class ShaderStage
 };
 uint32_t constexpr ShaderStageNum = std::to_underlying(ShaderStage::NumStages);
 
-class ShaderStageObject
+class ZENGINE_CORE_API ShaderStageObject
 {
+    ZENGINE_NONCOPYABLE(ShaderStageObject);
 public:
     explicit ShaderStageObject(ShaderStage stage) noexcept;
     virtual ~ShaderStageObject() noexcept;
@@ -105,8 +106,9 @@ using ShaderStageObjectPtr = std::shared_ptr<ShaderStageObject>;
 class ShaderObject;
 struct Immutable;
 using ShaderObjectPtr = std::shared_ptr<ShaderObject>;
-class ShaderObject
+class ZENGINE_CORE_API ShaderObject
 { 
+    ZENGINE_NONCOPYABLE(ShaderObject);
 public:
     ShaderObject();
     virtual ~ShaderObject() noexcept;

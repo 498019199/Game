@@ -1,6 +1,5 @@
 #pragma once
-#include <common/Util.h>
-#include <common/common.h>
+#include <base/ZEngine.h>
 #include <render/Texture.h>
 #include <render/FrameBuffer.h>
 #include <render/GraphicsBuffer.h>
@@ -8,8 +7,9 @@
 namespace RenderWorker
 {
 // 抽象SRV,描述着色器如何访问资源
-class ShaderResourceView
+class ZENGINE_CORE_API ShaderResourceView
 {
+    ZENGINE_NONCOPYABLE(ShaderResourceView);
 public:
     ShaderResourceView();
     virtual ~ShaderResourceView() noexcept;
@@ -71,8 +71,9 @@ using ShaderResourceViewPtr = std::shared_ptr<ShaderResourceView>;
 
 
 // 抽象RTV,用于将资源（如纹理）指定为渲染目标，使 GPU 能够将渲染结果（如像素颜色）写入该资源。
-class RenderTargetView
+class ZENGINE_CORE_API RenderTargetView
 {
+    ZENGINE_NONCOPYABLE(RenderTargetView);
 public:
     RenderTargetView();
     virtual ~RenderTargetView() noexcept;
@@ -180,8 +181,9 @@ protected:
 using RenderTargetViewPtr = std::shared_ptr<RenderTargetView>;
 
 // 抽象DSV,用于将资源（通常是深度模板缓冲区）绑定到渲染管线，以支持深度测试（Depth Testing）和模板测试（Stencil Testing）
-class DepthStencilView
+class ZENGINE_CORE_API DepthStencilView
 {
+    ZENGINE_NONCOPYABLE(DepthStencilView);
 public:
     DepthStencilView();
     virtual ~DepthStencilView() noexcept;
@@ -275,8 +277,9 @@ using DepthStencilViewPtr = std::shared_ptr<DepthStencilView>;
 
 // 抽象UAV,用于无序访问资源的接口，允许着色器（尤其是计算着色器）以非顺序方式读写资源数据，支持随机访问和并发操作。
 // 它是实现复杂并行计算（如粒子系统、物理模拟、后处理效果）的核心机制。
-class UnorderedAccessView
+class ZENGINE_CORE_API UnorderedAccessView
 {
+    ZENGINE_NONCOPYABLE(UnorderedAccessView);
 public:
     UnorderedAccessView();
     virtual ~UnorderedAccessView() noexcept;

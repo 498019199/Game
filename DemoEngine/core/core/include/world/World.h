@@ -10,7 +10,7 @@
 namespace RenderWorker
 {
 
-class World
+class ZENGINE_CORE_API World
 {
 public:
     World();

@@ -1,7 +1,7 @@
 
 #pragma once
 #include <render/ElementFormat.h>
-#include <common/common.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
@@ -24,8 +24,9 @@ enum class TextureFilter : uint32_t
     Linear,
 };
 
-class Texture
+class ZENGINE_CORE_API Texture: public std::enable_shared_from_this<Texture>
 {
+    ZENGINE_NONCOPYABLE(Texture);
 public:
     // Enum identifying the texture type
     enum TextureType
@@ -98,7 +99,7 @@ protected:
 
 using TexturePtr = std::shared_ptr<Texture>;
 
-class VirtualTexture : public Texture
+class ZENGINE_CORE_API VirtualTexture : public Texture
 {
 public:
     VirtualTexture(TextureType type, uint32_t width, uint32_t height, uint32_t depth, uint32_t num_mipmaps, uint32_t array_size,

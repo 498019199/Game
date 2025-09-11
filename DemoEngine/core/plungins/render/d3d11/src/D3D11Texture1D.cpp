@@ -1,6 +1,5 @@
 #include "D3D11Texture.h"
-#include <common/Util.h>
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <render/ElementFormat.h>
 #include "D3D11Util.h"
 #include "D3D11RenderEngine.h"

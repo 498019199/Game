@@ -7,16 +7,19 @@ namespace EditorWorker
 {
 struct EditorSetting
 {
-    int hierarchyWidth;
-    int hierarchyHeight;
-    int consoleWidth;
-    int consoleHeight;
-    int projectWidth;
-    int projectHeight;
-    int inspectorWidth;
-    int inspectorHeight;
-    int mainBarWidth;
-    int mainBarHeight;
+    int hierarchyWidth {0};
+    int hierarchyHeight {0};
+    int consoleWidth {0};
+    int consoleHeight {0};
+    int projectWidth {0};
+    int projectHeight {0};
+    int inspectorWidth {0};
+    int inspectorHeight {0};
+    int mainBarWidth {0};
+    int mainBarHeight {0};
+
+    bool is_game_started_ {false};
+    bool is_game_paused_ {false};
 };
 
 class EditorPanel

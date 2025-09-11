@@ -1,11 +1,12 @@
 #pragma once
-#include <memory>
+#include <base/ZEngine.h>
 
 // CPU 与 GPU 之间同步操作的核心机制
 namespace RenderWorker
 {
-class Fence
+class ZENGINE_CORE_API Fence
 {
+    ZENGINE_NONCOPYABLE(Fence);
 public:
     enum FenceType
     {

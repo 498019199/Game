@@ -25,6 +25,7 @@ public:
 private:
 	
 	void UpdateSurfacesPtrs();
+	// 创建交换链
 	void CreateSwapChain(ID3D11Device* d3d_device, bool try_hdr_display);
 
 private:
@@ -53,14 +54,17 @@ private:
 	IDXGISwapChain1Ptr swap_chain_1_;
 	bool main_wnd_  {false};
 	Win32UniqueHandle frame_latency_waitable_obj_;
-
+	// 目标视图
 	TexturePtr back_buffer_;
+    RenderTargetViewPtr render_target_view_;
+	// 深度/模板缓冲区及其视图
 	TexturePtr depth_stencil_;
     DepthStencilViewPtr depth_stencil_view_;
-    RenderTargetViewPtr render_target_view_;
+	// 立体渲染右眼视图
 	RenderTargetViewPtr render_target_view_right_eye_;
+	// 立体渲染深度/模板缓冲区视图
 	DepthStencilViewPtr depth_stencil_view_right_eye_;
-	
+	// 后台缓冲区像素格式
 	DXGI_FORMAT back_buffer_format_;
 	ElementFormat depth_stencil_fmt_;
 

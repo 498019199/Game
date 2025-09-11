@@ -1,6 +1,5 @@
 #define INITGUID
-#include <common/Uuid.h>
-#include <common/com_ptr.h>
+#include <base/ZEngine.h>
 #include <common/DllLoader.h>
 
 #ifdef ZENGINE_PLATFORM_WINDOWS

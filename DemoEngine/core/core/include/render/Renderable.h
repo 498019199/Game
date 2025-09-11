@@ -1,14 +1,14 @@
 #pragma once
 //可渲染对象类 头文件
-#include <world/SceneNode.h>
 #include <render/RenderEffect.h>
 #include <render/RenderLayout.h>
 
 namespace RenderWorker
 {
 
-class Renderable:public SceneNode
+class ZENGINE_CORE_API Renderable
 {
+    ZENGINE_NONCOPYABLE(Renderable);
 public:
     struct ConstantBuffer
     {

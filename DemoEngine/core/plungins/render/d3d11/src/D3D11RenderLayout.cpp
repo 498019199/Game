@@ -1,9 +1,10 @@
 
-#include <base/Context.h>
+#include <base/ZEngine.h>
 
 #include "D3D11RenderLayout.h"
 #include "D3D11GraphicsBuffer.h"
 #include "D3D11RenderEngine.h"
+#include "D3D11RenderFactory.h"
 #include "D3D11ShaderObject.h"
 
 namespace RenderWorker
@@ -55,7 +56,8 @@ ID3D11InputLayout* D3D11RenderLayout::InputLayout(const ShaderObject* so) const
         }
 
         auto vs_code = shader.VsCode();
-        const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+        const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+            Context::Instance().RenderFactoryInstance().RenderEngineInstance());
         auto d3d_device = d3d11_re.D3DDevice1();
         ID3D11InputLayoutPtr new_layout;
         TIFHR(d3d_device->CreateInputLayout(&vertex_elems_[0], static_cast<UINT>(vertex_elems_.size()),

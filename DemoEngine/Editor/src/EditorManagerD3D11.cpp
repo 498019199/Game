@@ -9,7 +9,7 @@
 #include <imgui/imgui_impl_dx11.h>
 #include <imgui/imgui_impl_win32.h>
 
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <base/App3D.h>
 #include <base/Window.h>
 #include <render/RenderEngine.h>
@@ -83,7 +83,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     // 下面这句话会触发ImGui在Direct3D的绘制
     // 因此需要在此之前将后备缓冲区绑定到渲染管线上
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    return App3D::URV_Finished;
+    return App3D::URV_NeedFlush | App3D::URV_Finished;
 }
 
 void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)

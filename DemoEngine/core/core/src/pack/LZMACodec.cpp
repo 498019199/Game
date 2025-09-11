@@ -28,8 +28,8 @@
  * from http://www.klayge.org/licensing/.
  */
 #include <base/LZMACodec.h>
-#include <common/common.h>
 #include <common/DllLoader.h>
+#include <base/ZEngine.h>
 
 #include <cstring>
 #include <mutex>

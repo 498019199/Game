@@ -1,8 +1,7 @@
-#include <base/Context.h>
-
 #include <render/Renderable.h>
-#include <render/RenderEffect.h>
-#include <render/RenderEngine.h>
+
+#include <base/ZEngine.h>
+#include <render/RenderFactory.h>
 
 namespace RenderWorker
 {
@@ -80,7 +79,7 @@ void Renderable::Render()
     const auto& effect = *GetRenderEffect();
     const auto& layout = GetRenderLayout(lod);
     const auto& tech = *GetRenderTechnique();
-    auto& re = Context::Instance().RenderEngineInstance();
+    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     re.Render(effect, tech, layout);
 }
 

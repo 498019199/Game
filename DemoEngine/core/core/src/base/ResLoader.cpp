@@ -183,6 +183,9 @@ namespace RenderWorker
 
 			paths_.emplace_back(PathInfo{CtHash(""), 0U, std::filesystem::path(), PackagePtr()});
 
+			this->AddPath("");
+			this->AddPath("..");
+			this->AddPath("../../Assets");
 			loading_thread_ = tp.QueueThread([this] { this->LoadingThreadFunc(); });
 		}
 		~Impl()

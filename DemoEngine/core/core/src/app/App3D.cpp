@@ -1,9 +1,8 @@
 #include <base/App3D.h>
 #include <base/Window.h>
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <base/ResLoader.h>
 #include <render/RenderFactory.h>
-#include <render/RenderEngine.h>
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #ifdef ZENGINE_COMPILER_MSVC
@@ -79,7 +78,7 @@ void App3D::Run()
 		}
 
 
-		const auto& re = Context::Instance().RenderEngineInstance();
+		const auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 		if (gotMsg)
 		{
 			::TranslateMessage(&msg);

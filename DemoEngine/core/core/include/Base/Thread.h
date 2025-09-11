@@ -29,7 +29,7 @@
  */
 
 #pragma once
-
+#include <base/ZEngine.h>
 #include <functional>
 #ifdef KLAYGE_COMPILER_MSVC
 #pragma warning(push)
@@ -58,6 +58,7 @@ namespace RenderWorker
 
 	class ThreadPool final
 	{
+		ZENGINE_NONCOPYABLE(ThreadPool);
 	public:
 		ThreadPool();
 		ThreadPool(uint32_t num_min_cached_threads, uint32_t num_max_cached_threads);

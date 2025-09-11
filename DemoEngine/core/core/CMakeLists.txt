@@ -120,16 +120,18 @@ target_include_directories(ZENGINE_core
         ${ZENGINE_ROOT_DIR}/3rd/7z/7z
 )
 
-# target_precompile_headers(ZENGINE_core
-#     PUBLIC
-# 		include/base/Context.h
-# )
+target_precompile_headers(ZENGINE_core
+    PUBLIC
+		include/base/ZEngine.h
+)
 set_target_properties(ZENGINE_core PROPERTIES
     OUTPUT_NAME ZENGINE_core${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "ZENGINE"
 )
 
 target_link_libraries(ZENGINE_core
+    PUBLIC
+        ZENGINE_common
     PRIVATE
         7zxa
         LZMA

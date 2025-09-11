@@ -10,8 +10,10 @@ using namespace CommonWorker;
 
 struct ContextConfig
 {
+	std::string render_factory_name;
+    // 图形配置
     RenderSettings graphics_cfg;
-
+    
     bool deferred_rendering;
     bool perf_profiler;
     bool location_sensor;
@@ -23,8 +25,10 @@ class RenderFactory;
 class World;
 class ResLoader;
 
-class Context final
+class ZENGINE_CORE_API Context final
 {
+    Context(const Context& rhs) = delete; 
+    Context& operator=(const Context& rhs) = delete;
 public:
     Context();
     ~Context() noexcept;
@@ -41,7 +45,6 @@ public:
 
     void AppInstance(App3D& app) noexcept;
     App3D& AppInstance() noexcept;
-    RenderEngine& RenderEngineInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;
     World& WorldInstance() noexcept;
     ResLoader& ResLoaderInstance() noexcept;

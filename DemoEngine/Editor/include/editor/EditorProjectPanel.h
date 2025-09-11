@@ -3,6 +3,26 @@
 
 namespace EditorWorker
 {
+
+enum class AssetType
+{
+    Other,
+    Folder,
+    Material,
+    DeferredMaterial,
+    RayTracingMaterial,
+    Prefab,
+    Script,
+    Shader,
+    Texture,
+    Scene,
+    Model,
+    RayTracingShader,
+    Audio,
+    Text,
+    Count,
+};
+
 class EditorProjectPanel: public EditorPanel
 {
 public:

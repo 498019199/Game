@@ -1,5 +1,6 @@
 #include "D3D11FrameBuffer.h"
 #include "D3D11RenderView.h"
+#include "D3D11RenderFactory.h"
 #include "D3D11RenderEngine.h"
 
 namespace RenderWorker
@@ -112,7 +113,8 @@ void D3D11FrameBuffer::OnBind()
         views_dirty_ = false;
     }
 
-    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     for (size_t i = 0; i < d3d_rt_src_.size(); ++ i)
     {
         d3d11_re.DetachSRV(d3d_rt_src_[i], d3d_rt_first_subres_[i], d3d_rt_num_subres_[i]);

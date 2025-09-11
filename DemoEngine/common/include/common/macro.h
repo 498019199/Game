@@ -96,8 +96,13 @@
 	#define ZENGINE_HAS_STRUCT_PACK
 #endif
 
-
-
-#if defined(DEBUG) | defined(_DEBUG)
-	#define ZENGINE_DEBUG
+#ifdef ZENGINE_PLATFORM_WINDOWS
+	// 在 MSVC 编译器中，__declspec(dllexport) 用于将符号导出到 DLL 中，而 __declspec(dllimport) 用于从 DLL 导入符号。
+	#define ZENGINE_SYMBOL_EXPORT __declspec(dllexport)
+	#define ZENGINE_SYMBOL_IMPORT __declspec(dllimport)
+#else
+	// 在 GCC/Clang 编译器中，该属性用于将符号设置为 “可见”，即编译共享库（.so 或 .dylib）时，这些符号会被导出到共享库中，允许外部模块访问。
+	#define ZENGINE_SYMBOL_EXPORT __attribute__((visibility("default")))
+	#define ZENGINE_SYMBOL_IMPORT
 #endif
+

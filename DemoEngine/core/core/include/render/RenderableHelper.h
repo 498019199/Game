@@ -1,6 +1,5 @@
 #pragma once
-#include <base/Context.h>
-#include <common/common.h>
+#include <base/ZEngine.h>
 #include <render/Renderable.h>
 
 namespace RenderWorker

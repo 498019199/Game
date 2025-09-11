@@ -1,3 +1,7 @@
+if(NOT ZENGINE_PLATFORM_WINDOWS)
+	return ()
+endif()
+
 add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11Adapter.cpp
 	src/D3D11Adapter.h
@@ -42,9 +46,10 @@ if(ZENGINE_PREFERRED_LIB_TYPE STREQUAL "SHARED")
 	VISIBILITY_INLINES_HIDDEN ON
 	)
 endif()
-# target_precompile_headers(ZENGINE_Render_D3D11
-# 	PRIVATE
-# 		"${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h")
+
+target_precompile_headers(ZENGINE_Render_D3D11
+	PRIVATE
+		"${PROJECT_SOURCE_DIR}/core/core/include/base/ZEngine.h")
 
 target_include_directories(ZENGINE_Render_D3D11
 	PUBLIC
@@ -63,4 +68,9 @@ target_link_libraries(ZENGINE_Render_D3D11
 set_target_properties(ZENGINE_Render_D3D11 PROPERTIES
 	OUTPUT_NAME ZENGINE_Render_D3D11${ZENGINE_OUTPUT_SUFFIX}
 	FOLDER "ZENGINE"
+)
+
+target_compile_definitions(ZENGINE_Render_D3D11
+	PRIVATE
+		-DZENGINE_EXPORTS
 )

@@ -1,11 +1,10 @@
 #pragma once
-
-#include <render/Renderable.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
 
-struct RenderDeviceCaps
+struct ZENGINE_CORE_API RenderDeviceCaps
 {
     uint32_t max_texture_width;         // 2D 纹理在 U 轴（宽度）上允许的最大尺寸
     uint32_t max_texture_height;        // 2D 纹理在 V 轴（高度）上允许的最大尺寸

@@ -1,12 +1,11 @@
-#include <base/Context.h>
-#include <common/Hash.h>
-
 #include "D3D11ShaderObject.h"
 #include "D3D11RenderFactory.h"
 #include "D3D11GraphicsBuffer.h"
 #include "D3D11RenderEngine.h"
 #include "D3D11RenderStateObject.h"
 #include "D3D11RenderView.h"
+
+#include <base/ZEngine.h>
 
 #if ZENGINE_IS_DEV_PLATFORM
 #include <d3dx11.h>
@@ -276,8 +275,9 @@ ID3D11GeometryShaderPtr D3D11ShaderStageObject::CreateGeometryShaderWithStreamOu
 {
     COMMON_ASSERT(!code_blob.empty());
 
-    const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    auto d3d_device = d3d11_re.D3DDevice1();
 
     // [In]D3D11_SO_DECLARATION_ENTRY的数组
     std::vector<D3D11_SO_DECLARATION_ENTRY> d3d11_decl(so_decl.size());
@@ -310,8 +310,8 @@ std::string_view D3D11ShaderStageObject::GetShaderProfile(RenderEffect const& ef
     {
         if (shader_profile == "auto")
         {
-            auto& re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-            shader_profile = re.DefaultShaderProfile(stage_);
+            auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+            shader_profile = d3d11_re.DefaultShaderProfile(stage_);
         }
     }
     else
@@ -335,8 +335,8 @@ void D3D11VertexShaderStageObject::ClearHwShader()
 
 void D3D11VertexShaderStageObject::StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
 {
-    auto const& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice1();
+    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    auto d3d_device = d3d11_re.D3DDevice1();
 
     if (FAILED(d3d_device->CreateVertexShader(shader_code_.data(), shader_code_.size(), nullptr, vertex_shader_.put())))
     {
@@ -345,7 +345,7 @@ void D3D11VertexShaderStageObject::StageSpecificCreateHwShader(const RenderEffec
     else
     {
 		const ShaderDesc& sd = effect.GetShaderDesc(shader_desc_ids[std::to_underlying(stage_)]);
-        const auto& caps = re.DeviceCaps();
+        const auto& caps = d3d11_re.DeviceCaps();
         if (!sd.so_decl.empty())
         {
             if (caps.gs_support)
@@ -402,8 +402,9 @@ void D3D11PixelShaderStageObject::ClearHwShader()
 
 void D3D11PixelShaderStageObject::StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
 {
-    const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
-    auto d3d_device = re.D3DDevice1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    auto d3d_device = d3d11_re.D3DDevice1();
     if (FAILED(d3d_device->CreatePixelShader(shader_code_.data(), shader_code_.size(), nullptr, pixel_shader_.put())))
     {
         is_validate_ = false;
@@ -428,7 +429,8 @@ void D3D11GeometryShaderStageObject::StageSpecificCreateHwShader(const RenderEff
         const ShaderDesc& sd = effect.GetShaderDesc(shader_desc_ids[std::to_underlying(stage_)]);
         if (sd.so_decl.empty())
         {
-            const auto& re = checked_cast<D3D11RenderEngine const&>(Context::Instance().RenderEngineInstance());
+            const auto& re = checked_cast<const D3D11RenderEngine&>(
+                Context::Instance().RenderFactoryInstance().RenderEngineInstance());
             auto d3d_device = re.D3DDevice1();
 
             if (FAILED(d3d_device->CreateGeometryShader(shader_code_.data(), shader_code_.size(), nullptr, geometry_shader_.put())))
@@ -464,13 +466,13 @@ D3D11ShaderObject::D3D11ShaderObject(std::shared_ptr<Immutable> immutable, std::
 
 void D3D11ShaderObject::Bind(const RenderEffect& effect)
 {
-    auto& re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
 
     auto const& vs_stage = Stage(ShaderStage::Vertex);
-    re.VSSetShader(vs_stage ? checked_cast<D3D11ShaderStageObject&>(*vs_stage).HwVertexShader() : nullptr);
+    d3d11_re.VSSetShader(vs_stage ? checked_cast<D3D11ShaderStageObject&>(*vs_stage).HwVertexShader() : nullptr);
 
     auto const& ps_stage = Stage(ShaderStage::Pixel);
-	re.PSSetShader(ps_stage ? checked_cast<D3D11ShaderStageObject&>(*ps_stage).HwPixelShader() : nullptr);
+	d3d11_re.PSSetShader(ps_stage ? checked_cast<D3D11ShaderStageObject&>(*ps_stage).HwPixelShader() : nullptr);
 
     ShaderStage stream_output_stage = ShaderStage::NumStages;
     if (Stage(ShaderStage::Geometry))
@@ -481,7 +483,7 @@ void D3D11ShaderObject::Bind(const RenderEffect& effect)
     {
         stream_output_stage = ShaderStage::Vertex;
     }
-    re.GSSetShader((stream_output_stage != ShaderStage::NumStages)
+    d3d11_re.GSSetShader((stream_output_stage != ShaderStage::NumStages)
         ? checked_cast<D3D11ShaderStageObject&>(*Stage(stream_output_stage)).HwGeometryShader()
         : nullptr);
 
@@ -505,13 +507,13 @@ void D3D11ShaderObject::Bind(const RenderEffect& effect)
         if (!srvs_[stage_index].empty())
         {
             // 绑定着色器资源
-            re.SetShaderResources(stage, srvsrcs_[stage_index], srvs_[stage_index]);
+            d3d11_re.SetShaderResources(stage, srvsrcs_[stage_index], srvs_[stage_index]);
         }
 
         if (!d3d_immutable_->samplers_[stage_index].empty())
         {
             // 绑定取样器
-            re.SetSamplers(stage, d3d_immutable_->samplers_[stage_index]);
+            d3d11_re.SetSamplers(stage, d3d_immutable_->samplers_[stage_index]);
         }
 
         auto const& cbuff_indices = shader_stage->CBufferIndices();
@@ -528,7 +530,7 @@ void D3D11ShaderObject::Bind(const RenderEffect& effect)
             d3d11_cbuffs[i] = checked_cast<D3D11GraphicsBuffer*>(cb->HWBuff().get())->D3DBuffer();
         }
 
-        re.SetConstantBuffers(stage, MakeSpan(d3d11_cbuffs, cbuff_indices.size()));
+        d3d11_re.SetConstantBuffers(stage, MakeSpan(d3d11_cbuffs, cbuff_indices.size()));
     }
 }
 

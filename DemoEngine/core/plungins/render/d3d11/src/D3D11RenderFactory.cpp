@@ -210,7 +210,7 @@ std::unique_ptr<RenderEngine> D3D11RenderFactory::DoMakeRenderEngine()
 
 extern "C"
 {
-	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr)
+	ZENGINE_SYMBOL_EXPORT void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr)
 	{
 		ptr = CommonWorker::MakeUniquePtr<RenderWorker::D3D11RenderFactory>();
 	}

@@ -1,6 +1,6 @@
 #include "D3D11RenderView.h"
 
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <render/RenderFactory.h>
 
 #include "D3D11RenderEngine.h"
@@ -16,9 +16,10 @@ D3D11TextureShaderResourceView::D3D11TextureShaderResourceView(TexturePtr const 
 {
     COMMON_ASSERT(texture->AccessHint() & EAH_GPU_Read);
 
-    auto const& re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = re.D3DDevice1();
-    d3d_imm_ctx_ = re.D3DDeviceImmContext1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    d3d_device_ = d3d11_re.D3DDevice1();
+    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 
     tex_ = texture;
     pf_ = pf == EF_Unknown ? texture->Format() : pf;
@@ -49,9 +50,10 @@ ID3D11ShaderResourceView* D3D11TextureShaderResourceView::RetrieveD3DShaderResou
 D3D11RenderTargetView::D3D11RenderTargetView(void* src, uint32_t first_subres, uint32_t num_subres)
     : rt_src_(src), rt_first_subres_(first_subres), rt_num_subres_(num_subres)
 {
-    auto const& re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = re.D3DDevice1();
-    d3d_imm_ctx_ = re.D3DDeviceImmContext1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    d3d_device_ = d3d11_re.D3DDevice1();
+    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }
 
 void D3D11RenderTargetView::ClearColor(Color const & clr)
@@ -235,9 +237,10 @@ ID3D11RenderTargetView* D3D11BufferRenderTargetView::RetrieveD3DRenderTargetView
 
 D3D11DepthStencilView::D3D11DepthStencilView(void* src, uint32_t first_subres, uint32_t num_subres)
 {
-    auto const& re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = re.D3DDevice1();
-    d3d_imm_ctx_ = re.D3DDeviceImmContext1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    d3d_device_ = d3d11_re.D3DDevice1();
+    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }
 
 void D3D11DepthStencilView::ClearDepth(float depth)
@@ -414,9 +417,10 @@ ID3D11DepthStencilView* D3D11TextureCubeFaceDepthStencilView::RetrieveD3DDepthSt
 D3D11UnorderedAccessView::D3D11UnorderedAccessView(void* src, uint32_t first_subres, uint32_t num_subres)
     :ua_src_(src), ua_first_subres_(first_subres), ua_num_subres_(num_subres)
 {
-    auto const& re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    d3d_device_ = re.D3DDevice1();
-    d3d_imm_ctx_ = re.D3DDeviceImmContext1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    d3d_device_ = d3d11_re.D3DDevice1();
+    d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }
 
 void D3D11UnorderedAccessView::Clear(float4 const & val)

@@ -1,4 +1,5 @@
 #pragma once
+#include <base/ZEngine.h>
 #include <common/XMLDom.h>
 
 #include <render/GraphicsBuffer.h>
@@ -8,7 +9,6 @@
 #include <render/Texture.h>
 #include <render/RenderView.h>
 
-#include <common/common.h>
 namespace RenderWorker
 {
 using namespace CommonWorker;
@@ -86,7 +86,7 @@ enum RenderEffectDataType
 };
 static_assert(REDT_count < 256);
 
-class RenderVariable
+class ZENGINE_CORE_API RenderVariable
 {
 public:
     RenderVariable() noexcept;
@@ -229,7 +229,7 @@ protected:
     };
 };
 
-class RenderShaderFragment final
+class ZENGINE_CORE_API RenderShaderFragment final
 {
 public:
 #if ZENGINE_IS_DEV_PLATFORM
@@ -262,8 +262,9 @@ private:
     std::string str_;
 };
 
-class RenderEffectStructType final
+class ZENGINE_CORE_API RenderEffectStructType final
 {
+    ZENGINE_NONCOPYABLE(RenderEffectStructType);
 public:
     RenderEffectStructType();
     RenderEffectStructType(RenderEffectStructType&& rhs) noexcept;
@@ -308,8 +309,9 @@ private:
 };
 
 
-class RenderEffectConstantBuffer final
+class ZENGINE_CORE_API RenderEffectConstantBuffer final
 {
+    ZENGINE_NONCOPYABLE(RenderEffectConstantBuffer);
 public:
     explicit RenderEffectConstantBuffer(RenderEffect& effect);
 
@@ -411,8 +413,9 @@ private:
     bool dirty_ = true;
 };
 
-class RenderEffectParameter final
+class ZENGINE_CORE_API RenderEffectParameter final
 {
+    ZENGINE_NONCOPYABLE(RenderEffectParameter);
 public:
     RenderEffectParameter();
     RenderEffectParameter(RenderEffectParameter&& rhs) noexcept;
@@ -523,8 +526,9 @@ using RenderEffectConstantBufferPtr = std::shared_ptr<RenderEffectConstantBuffer
 
 // 渲染效果
 //////////////////////////////////////////////////////////////////////////////////
-class RenderEffect final
+class ZENGINE_CORE_API RenderEffect final
 {
+    ZENGINE_NONCOPYABLE(RenderEffect);
 public:
     RenderEffect();
 
@@ -664,8 +668,9 @@ private:
 };
 
 
-class RenderTechnique final
+class ZENGINE_CORE_API RenderTechnique final
 {
+    ZENGINE_NONCOPYABLE(RenderTechnique);
 public:
     RenderTechnique();
     RenderTechnique(RenderTechnique&& rhs) noexcept;
@@ -742,8 +747,9 @@ private:
     bool has_tessellation_;
 };
 
-class RenderPass final
+class ZENGINE_CORE_API RenderPass final
 {
+    ZENGINE_NONCOPYABLE(RenderPass);
 public:
     RenderPass();
 

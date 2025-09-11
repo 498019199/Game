@@ -33,27 +33,28 @@
 
 #pragma once
 
-#include <common/common.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
-	class LZMACodec final
-	{
-	public:
-		LZMACodec() noexcept;
-		~LZMACodec() noexcept;
+class LZMACodec final
+{
+	ZENGINE_NONCOPYABLE(LZMACodec);
+public:
+	LZMACodec() noexcept;
+	~LZMACodec() noexcept;
 
-		uint64_t Encode(std::ostream& os, ResIdentifierPtr const & res, uint64_t len);
-		uint64_t Encode(std::ostream& os, std::span<uint8_t const> input);
-		void Encode(std::vector<uint8_t>& output, ResIdentifierPtr const & res, uint64_t len);
-		void Encode(std::vector<uint8_t>& output, std::span<uint8_t const> input);
+	uint64_t Encode(std::ostream& os, ResIdentifierPtr const & res, uint64_t len);
+	uint64_t Encode(std::ostream& os, std::span<uint8_t const> input);
+	void Encode(std::vector<uint8_t>& output, ResIdentifierPtr const & res, uint64_t len);
+	void Encode(std::vector<uint8_t>& output, std::span<uint8_t const> input);
 
-		uint64_t Decode(std::ostream& os, ResIdentifierPtr const & res, uint64_t len, uint64_t original_len);
-		uint64_t Decode(std::ostream& os, std::span<uint8_t const> input, uint64_t original_len);
-		void Decode(std::vector<uint8_t>& output, ResIdentifierPtr const & res, uint64_t len, uint64_t original_len);
-		void Decode(std::vector<uint8_t>& output, std::span<uint8_t const> input, uint64_t original_len);
-		void Decode(void* output, std::span<uint8_t const> input, uint64_t original_len);
-	};
+	uint64_t Decode(std::ostream& os, ResIdentifierPtr const & res, uint64_t len, uint64_t original_len);
+	uint64_t Decode(std::ostream& os, std::span<uint8_t const> input, uint64_t original_len);
+	void Decode(std::vector<uint8_t>& output, ResIdentifierPtr const & res, uint64_t len, uint64_t original_len);
+	void Decode(std::vector<uint8_t>& output, std::span<uint8_t const> input, uint64_t original_len);
+	void Decode(void* output, std::span<uint8_t const> input, uint64_t original_len);
+};
 }
 
 #endif		// KLAYGE_CORE_LZMA_CODEC_HPP

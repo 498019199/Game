@@ -1,12 +1,13 @@
 #pragma once
-#include <common/common.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
 class ThreadPool;
 
-class ResLoadingDesc
+class ZENGINE_CORE_API ResLoadingDesc
 {
+    ZENGINE_NONCOPYABLE(ResLoadingDesc);
 public:
     ResLoadingDesc() noexcept;
     virtual ~ResLoadingDesc() noexcept;
@@ -32,8 +33,9 @@ public:
 };
 using ResLoadingDescPtr = std::shared_ptr<ResLoadingDesc>;
 
-class ResLoader final
+class ZENGINE_CORE_API ResLoader final
 {
+    ZENGINE_NONCOPYABLE(ResLoader);
     friend class Context;
 public:
     ResLoader() noexcept;

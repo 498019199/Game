@@ -1,6 +1,5 @@
 #pragma once
-
-#include <common/common.h>
+#include <base/ZEngine.h>
 #include <render/ElementFormat.h>
 
 namespace RenderWorker
@@ -20,11 +19,13 @@ enum BufferAccess
     BA_Write_No_Overwrite
 };
 
-class GraphicsBuffer
+class ZENGINE_CORE_API GraphicsBuffer
 {
+    ZENGINE_NONCOPYABLE(GraphicsBuffer);
 public:
     class Mapper final
     {
+        ZENGINE_NONCOPYABLE(Mapper);
         friend class GraphicsBuffer;
     public:
         Mapper(GraphicsBuffer& buffer, BufferAccess ba)

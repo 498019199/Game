@@ -1,9 +1,7 @@
 #include "D3D11Texture.h"
-
-#include <base/Context.h>
-#include <common/Hash.h>
+#include <base/ZEngine.h>
 #include <render/ElementFormat.h>
-
+#include "D3D11RenderFactory.h"
 #include "D3D11RenderEngine.h"
 
 namespace RenderWorker
@@ -19,7 +17,8 @@ D3D11Texture::D3D11Texture(TextureType type, uint32_t sample_count, uint32_t sam
         COMMON_ASSERT(!(access_hint & EAH_CPU_Write));
     }
 
-    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     d3d_device_ = d3d11_re.D3DDevice1();
     d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }

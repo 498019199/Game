@@ -1,11 +1,9 @@
-
-
-
 #include <render/Camera.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
-class Controller
+class ZENGINE_CORE_API Controller
 {
 public:
     Controller();

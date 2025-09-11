@@ -8,6 +8,7 @@
 #include <common/ResIdentifier.h>
 #include <common/Hash.h>
 #include <common/StringUtil.h>
+#include <common/com_ptr.h>
 
 #include <vector>
 #include <map>

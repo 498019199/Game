@@ -1,4 +1,4 @@
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <base/App3D.h>
 #include <world/World.h>
 
@@ -73,7 +73,7 @@ void World::Update()
     const float app_time = app.AppTime();
     const float frame_time = app.FrameTime();
 
-    auto& re = Context::Instance().RenderEngineInstance();
+    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     re.BeginFrame();
 
     this->FlushScene();

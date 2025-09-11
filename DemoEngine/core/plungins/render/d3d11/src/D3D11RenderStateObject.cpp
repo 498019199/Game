@@ -1,7 +1,7 @@
 #include "D3D11RenderStateObject.h"
 #include "D3D11RenderEngine.h"
-
-#include <base/Context.h>
+#include "D3D11RenderFactory.h"
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
@@ -10,7 +10,8 @@ using namespace CommonWorker;
 D3D11SamplerStateObject::D3D11SamplerStateObject(SamplerStateDesc const & desc)
     : SamplerStateObject(desc)
 {
-    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     ID3D11Device1* d3d_device = d3d11_re.D3DDevice1();
 
     D3D11_SAMPLER_DESC d3d_desc;
@@ -34,8 +35,9 @@ D3D11SamplerStateObject::D3D11SamplerStateObject(SamplerStateDesc const & desc)
 D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_desc, DepthStencilStateDesc const & dss_desc,BlendStateDesc const & bs_desc)
     : RenderStateObject(rs_desc, dss_desc, bs_desc)
 {
-    auto& re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
-    ID3D11Device1* d3d_device = re.D3DDevice1();
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    ID3D11Device1* d3d_device = d3d11_re.D3DDevice1();
 
     // 光栅化状态描述
     D3D11_RASTERIZER_DESC d3d_rs_desc;
@@ -98,7 +100,7 @@ D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_de
 
 void D3D11RenderStateObject::Active()
 {
-    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     d3d11_re.RSSetState(rasterizer_state_.get());
     d3d11_re.OMSetDepthStencilState(depth_stencil_state_.get(), dss_desc_.front_stencil_ref);
     d3d11_re.OMSetBlendState(blend_state_.get(), bs_desc_.blend_factor, bs_desc_.sample_mask);

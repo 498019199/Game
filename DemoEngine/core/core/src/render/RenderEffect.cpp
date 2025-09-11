@@ -1,7 +1,7 @@
 // RenderEffect.cpp
 //////////////////////////////////////////////////////////////////////////////////
 
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <base/ResLoader.h>
 
 #include <render/RenderFactory.h>
@@ -6673,7 +6673,7 @@ namespace RenderWorker
 
 	void RenderPass::Bind(RenderEffect const & effect) const
 	{
-		RenderEngine& re = Context::Instance().RenderEngineInstance();
+		auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 		re.SetStateObject(render_state_obj_);
 
 		this->GetShaderObject(effect)->Bind(effect);

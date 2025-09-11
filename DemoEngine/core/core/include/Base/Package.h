@@ -1,12 +1,11 @@
-#include <common/ResIdentifier.h>
-#include <string_view>
+#include <base/ZEngine.h>
 
 struct IInArchive;
 
 namespace RenderWorker
 {
 
-class Package final
+class ZENGINE_CORE_API Package final
 {
 public:
     explicit Package(ResIdentifierPtr const & archive_is);

@@ -1,21 +1,35 @@
-#include <base/Context.h>
+#include <base/ZEngine.h>
+#include <common/DllLoader.h>
+
 #include <base/ResLoader.h>
 #include <base/Thread.h>
-
-#include <common/Util.h>
-#include <common/ResIdentifier.h>
-#include <common/XMLDom.h>
-#include <common/XMLDom.h>
 
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
 #include <world/World.h>
 
+#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+	//#define ZENGINE_STATIC_LINK_PLUGINS
+#endif
+
+#ifdef ZENGINE_STATIC_LINK_PLUGINS
 extern "C"
 {
+    void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
 	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+}
+#else
+extern "C"
+{
 	void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
 }
+namespace RenderWorker
+{
+	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
+}
+#define ZENGINE_DLL_PREFIX DLL_PREFIX ZENGINE_STRINGIZE(ZENGINE_NAME)
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+
 
 #include <filesystem>
 #include <fstream>
@@ -51,19 +65,6 @@ public:
         return *app_;
     }
 
-    RenderEngine& RenderEngineInstance() noexcept
-    {
-        if (!render_factory_)
-        {
-            std::lock_guard<std::mutex> lock(singleton_mutex_);
-            if (!render_factory_)
-            {
-                this->LoadRenderFactory( );
-            }
-        }
-        return render_factory_->RenderEngineInstance();
-    }
-
     bool RenderFactoryValid() const noexcept
     {
         return render_factory_ != nullptr;
@@ -76,7 +77,7 @@ public:
             std::lock_guard<std::mutex> lock(singleton_mutex_);
             if (!render_factory_)
             {
-                this->LoadRenderFactory( );
+                this->LoadRenderFactory( cfg_.render_factory_name );
             }
         }
         return *render_factory_;
@@ -114,9 +115,32 @@ public:
         return res_loader_;
     }
 
-    void LoadRenderFactory( )
+    void LoadRenderFactory( std::string const& rf_name )
     {
+        render_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        render_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string render_path = res_loader.Locate("render");
+        std::string fn = ZENGINE_DLL_PREFIX"_Render_" + rf_name + DLL_SUFFIX;
+
+        std::string path = render_path + "/" + fn;
+        render_loader_.Load(res_loader.Locate(path));
+
+        auto* mrf = reinterpret_cast<MakeRenderFactoryFunc>(render_loader_.GetProcAddress("MakeRenderFactory"));
+        if (mrf != nullptr)
+        {
+            mrf(render_factory_);
+        }
+        else
+        {
+            //LogError() << "Loading " << path << " failed" << std::endl;
+            render_loader_.Free();
+        }
+#else
+        KFL_UNUSED(rf_name);
         MakeRenderFactory(render_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
     }
 
     void LoadRenderWorld( )
@@ -136,6 +160,11 @@ public:
 
     void LoadConfig(const char* file_name)
     {
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
+        static char const* available_rfs_array[] = {"D3D11", "OpenGL", "OpenGLES", "D3D12"};
+#endif
+
+
         uint32_t width = 800;
         uint32_t height = 600;
         ElementFormat color_fmt = EF_ARGB8;
@@ -160,6 +189,8 @@ public:
         bool debug_context = false;
         bool perf_profiler = false;
         bool location_sensor = false;
+
+		std::string rf_name;
 
         auto& res_loader = ResLoaderInstance();
         ResIdentifierPtr file = res_loader.Open(file_name);
@@ -257,6 +288,13 @@ public:
             sample_quality = attr->ValueUInt();
         }
 
+        std::span<char const*> const available_rfs = available_rfs_array;
+        if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
+        {
+            rf_name = available_rfs[0];
+        }
+        cfg_.render_factory_name = std::move(rf_name);
+
         cfg_.graphics_cfg.left = cfg_.graphics_cfg.top = 0;
         cfg_.graphics_cfg.width = width;
         cfg_.graphics_cfg.height = height;
@@ -306,6 +344,9 @@ private:
     std::unique_ptr<World> render_world_;
     // 载入资源管理器
     ResLoader res_loader_;
+
+    DllLoader render_loader_;
+
     // 全局线程池
     ThreadPool global_thread_pool_;
 };
@@ -339,11 +380,6 @@ void Context::AppInstance(App3D& app) noexcept
 App3D& Context::AppInstance() noexcept
 {
     return pimpl_->AppInstance();
-}
-
-RenderEngine& Context::RenderEngineInstance() noexcept
-{
-    return pimpl_->RenderEngineInstance();
 }
 
 RenderFactory& Context::RenderFactoryInstance() noexcept

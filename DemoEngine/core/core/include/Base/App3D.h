@@ -1,5 +1,5 @@
 #pragma once
-#include <common/macro.h>
+#include <base/ZEngine.h>
 #include <common/Timer.h>
 #include <base/RenderSettings.h>
 #include <cstdint>
@@ -22,8 +22,9 @@ using WindowPtr = std::shared_ptr<Window>;
 //			DoUpdateOverlay()		- 刷新Overlay物体
 /////////////////////////////////////////////////////////////////////////////////
 
-class App3D
+class ZENGINE_CORE_API App3D
 {
+    ZENGINE_NONCOPYABLE(App3D);
     friend class World;
 public:
     enum UpdateRetValue

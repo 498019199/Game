@@ -57,8 +57,9 @@ struct VertexElement
     ElementFormat format;
 };
 
-class RenderLayout
+class ZENGINE_CORE_API RenderLayout
 {
+    ZENGINE_NONCOPYABLE(RenderLayout);
 public:
    enum topology_type
     {

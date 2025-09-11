@@ -1,5 +1,5 @@
 #pragma once
-#include <common/common.h>
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
@@ -165,7 +165,7 @@ enum LogicOperation
 #ifdef ZENGINE_HAS_STRUCT_PACK
 #pragma pack(push, 1)
 #endif
-struct RasterizerStateDesc
+struct ZENGINE_CORE_API RasterizerStateDesc
 {
     PolygonMode			polygon_mode;
     ShadeMode			shade_mode;
@@ -183,7 +183,7 @@ struct RasterizerStateDesc
 };
 static_assert(sizeof(RasterizerStateDesc) == 24);
 
-struct BlendStateDesc
+struct ZENGINE_CORE_API BlendStateDesc
 {
     Color blend_factor;
     uint32_t sample_mask;
@@ -208,7 +208,7 @@ struct BlendStateDesc
 };
 static_assert(sizeof(BlendStateDesc) == 270);
 
-struct DepthStencilStateDesc
+struct ZENGINE_CORE_API DepthStencilStateDesc
 {
     bool				depth_enable;
     bool				depth_write_mask;
@@ -239,7 +239,7 @@ struct DepthStencilStateDesc
 };
 static_assert(sizeof(DepthStencilStateDesc) == 52);
 
-struct SamplerStateDesc
+struct ZENGINE_CORE_API SamplerStateDesc
 {
     Color border_clr; // 边界外的颜色，使用D3D11_TEXTURE_BORDER_COLOR时需要指定
 
@@ -266,8 +266,9 @@ static_assert(sizeof(SamplerStateDesc) == 49);
 #pragma pack(pop)
 #endif
 
-class SamplerStateObject
+class ZENGINE_CORE_API SamplerStateObject
 {
+    ZENGINE_NONCOPYABLE(SamplerStateObject);
 public:
     explicit SamplerStateObject(SamplerStateDesc const & desc)
         : desc_(desc)
@@ -289,8 +290,9 @@ protected:
 using SamplerStateObjectPtr = std::shared_ptr<SamplerStateObject>;
 
 
-class RenderStateObject
+class ZENGINE_CORE_API RenderStateObject
 {
+    ZENGINE_NONCOPYABLE(RenderStateObject);
 public:
     RenderStateObject(const RasterizerStateDesc& rs_desc, const DepthStencilStateDesc& dss_desc, const BlendStateDesc& bs_desc);
     virtual ~RenderStateObject() noexcept;

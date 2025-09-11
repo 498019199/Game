@@ -1,5 +1,5 @@
 #pragma once
-#include <common/macro.h>
+#include <base/ZEngine.h>
 #include <base/RenderSettings.h>
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
@@ -9,8 +9,9 @@
 namespace RenderWorker
 {
 
-class Window final
+class ZENGINE_CORE_API Window final
 {
+    ZENGINE_NONCOPYABLE(Window);
 public:
     Window(const std::string& name, const RenderSettings& settings, void* native_wnd);
     ~Window();

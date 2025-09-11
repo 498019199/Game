@@ -3,8 +3,9 @@
 // 视口
 namespace RenderWorker
 {
-class Viewport final
+class ZENGINE_CORE_API Viewport final
 {
+    ZENGINE_NONCOPYABLE(Viewport);
 public:
     Viewport();
     Viewport(int left, int top, int width, int height);

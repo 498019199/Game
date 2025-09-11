@@ -1,5 +1,6 @@
 #pragma once
 #include <render/ShaderObject.h>
+#include <render/RenderEffect.h>
 #include "D3D11Util.h"
 #include <functional>
 

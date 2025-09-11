@@ -13,8 +13,9 @@ using RenderTargetViewPtr = std::shared_ptr<RenderTargetView>;
 class UnorderedAccessView;
 using UnorderedAccessViewPtr = std::shared_ptr<UnorderedAccessView>;
 
-class FrameBuffer
+class ZENGINE_CORE_API FrameBuffer
 {
+    ZENGINE_NONCOPYABLE(FrameBuffer);
 public:
     enum class Attachment : uint32_t
     {

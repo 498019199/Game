@@ -12,8 +12,9 @@ namespace RenderWorker
 class RenderEffect;
 class RenderTechnique;
 
-class RenderEngine
+class ZENGINE_CORE_API RenderEngine
 {
+    ZENGINE_NONCOPYABLE(RenderEngine);
 public:
     RenderEngine();
     virtual ~RenderEngine() noexcept;

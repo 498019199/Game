@@ -1,8 +1,9 @@
-#include <base/Context.h>
+#include <base/ZEngine.h>
 
 #include "D3D11Util.h"
 #include "D3D11GraphicsBuffer.h"
 #include "D3D11RenderEngine.h"
+#include "D3D11RenderFactory.h"
 
 namespace RenderWorker
 {
@@ -12,7 +13,8 @@ D3D11GraphicsBuffer::D3D11GraphicsBuffer(BufferUsage usage, uint32_t access_hint
             uint32_t size_in_byte, uint32_t structure_byte_stride)
             :GraphicsBuffer(usage, access_hint, size_in_byte, structure_byte_stride), bind_flags_(bind_flags)
 {
-    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(Context::Instance().RenderEngineInstance());
+    const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
+        Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     d3d_device_ = d3d11_re.D3DDevice1();
     d3d_imm_ctx_ = d3d11_re.D3DDeviceImmContext1();
 }

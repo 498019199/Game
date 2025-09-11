@@ -1,5 +1,5 @@
 #include <editor/EditorManagerD3D11.h>
-#include <base/Context.h>
+#include <base/ZEngine.h>
 #include <base/ResLoader.h>
 
 #include <world/World.h>
@@ -9,7 +9,6 @@ using namespace RenderWorker;
 
 int main()
 {
-    Context::Instance().ResLoaderInstance().AddPath("../../Assets");
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
     Context::Instance().LoadConfig(cfg_path.c_str());
 
