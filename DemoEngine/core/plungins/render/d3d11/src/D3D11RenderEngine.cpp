@@ -783,6 +783,11 @@ void D3D11RenderEngine::ResetRenderStates()
 	}
 }
 
+void D3D11RenderEngine::InvalidRTVCache()
+{
+	rtv_ptr_cache_.clear();
+}
+
 void D3D11RenderEngine::DoDestroy()
 {
 	if ((device_lost_reg_cookie_ != 0) && d3d_device_4_)

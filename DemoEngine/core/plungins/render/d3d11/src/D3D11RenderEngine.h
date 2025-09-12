@@ -80,8 +80,11 @@ public:
 
     // // 删除shader资源
     void DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint32_t rt_num_subres);
-
+    // 重置渲染状态缓存
 	void ResetRenderStates();
+    // 重置RTV缓存
+    void InvalidRTVCache();
+    
     // 获取D3D适配器列表
     const D3D11AdapterList& D3DAdapters() const noexcept;
     // 获取当前适配器

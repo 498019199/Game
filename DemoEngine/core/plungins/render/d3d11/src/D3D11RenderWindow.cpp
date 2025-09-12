@@ -402,8 +402,25 @@ void D3D11RenderWindow::SwapBuffers()
         UINT const present_flags = allow_tearing ? DXGI_PRESENT_ALLOW_TEARING : 0;
         TIFHR(swap_chain_1_->Present(sync_interval_, present_flags));
 
+        render_target_view_->Discard();
+        if (depth_stencil_view_)
+        {
+            depth_stencil_view_->Discard();
+        }
+        if (render_target_view_right_eye_)
+        {
+            render_target_view_right_eye_->Discard();
+        }
+        if (depth_stencil_view_right_eye_)
+        {
+            depth_stencil_view_right_eye_->Discard();
+        }
+
         if (DXGI_PRESENT_ALLOW_TEARING == present_flags)
         {
+            RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+            auto& d3d11_re = checked_cast<D3D11RenderEngine&>(rf.RenderEngineInstance());
+            d3d11_re.InvalidRTVCache();
             views_dirty_ = true;
         }
     }
