@@ -115,6 +115,11 @@ Window::~Window()
 
 LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if( msg_proc_ptr_ )
+	{
+		msg_proc_ptr_(hWnd, uMsg, wParam, lParam);
+	}
+	
 	switch (uMsg)
 	{
         case WM_ACTIVATE:

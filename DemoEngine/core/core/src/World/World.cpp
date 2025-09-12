@@ -88,7 +88,11 @@ void World::Update()
 void World::FlushScene()
 {
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
-
+    
+    /// 临时修改，清除屏幕
+    re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 1.0f, 0);
+    ///
+    
     uint32_t urt;
     auto& app = Context::Instance().AppInstance();
     for (uint32_t pass = 0;; ++ pass)

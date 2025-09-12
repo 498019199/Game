@@ -8,9 +8,9 @@
 #include <render/RenderFactory.h>
 #include <world/World.h>
 
-#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
-	//#define ZENGINE_STATIC_LINK_PLUGINS
-#endif
+//#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+	#define ZENGINE_STATIC_LINK_PLUGINS
+//#endif
 
 #ifdef ZENGINE_STATIC_LINK_PLUGINS
 extern "C"

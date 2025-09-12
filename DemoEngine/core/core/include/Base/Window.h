@@ -4,6 +4,7 @@
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #include <windows.h>
+using MsgProcFunc = LRESULT(*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
 namespace RenderWorker
@@ -18,6 +19,7 @@ public:
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     HWND GetHWND() const { return wnd_; }
+    void BindMsgProc(MsgProcFunc func) { msg_proc_ptr_ = func; }
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
     int32_t Left() const { return left_; }
@@ -63,6 +65,8 @@ protected:
     HWND wnd_;
     uint32_t win_style_;
     WNDPROC default_wnd_proc_;
+
+    MsgProcFunc msg_proc_ptr_ {nullptr};
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif //ZENGINE_PLATFORM_WINDOWS
 

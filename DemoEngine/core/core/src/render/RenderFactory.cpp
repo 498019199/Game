@@ -8,6 +8,7 @@ RenderFactory::RenderFactory() = default;
 
 RenderFactory::~RenderFactory() noexcept
 {
+    re_.reset();
 }
 
 RenderEngine& RenderFactory::RenderEngineInstance()
