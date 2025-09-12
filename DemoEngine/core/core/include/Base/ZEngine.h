@@ -29,3 +29,4 @@ T(T&& rhs) = delete; \
 T& operator=(T&& rhs) = delete;
 
 #include <base/Context.h>
+#include <base/ResLoader.h>

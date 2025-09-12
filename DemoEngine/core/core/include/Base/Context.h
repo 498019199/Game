@@ -24,6 +24,7 @@ class RenderEngine;
 class RenderFactory;
 class World;
 class ResLoader;
+class DevHelper;
 
 class ZENGINE_CORE_API Context final
 {
@@ -50,6 +51,12 @@ public:
     ResLoader& ResLoaderInstance() noexcept;
 
     bool RenderFactoryValid() const noexcept;
+
+#if ZENGINE_IS_DEV_PLATFORM
+	bool DevHelperValid() const noexcept;
+	DevHelper& DevHelperInstance();
+#endif
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

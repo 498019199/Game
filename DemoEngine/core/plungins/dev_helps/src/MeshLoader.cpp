@@ -1,6 +1,4 @@
-#include "MeshLoader.h"
-
-#include <core/IContext.h>
+#include <dev_helps/MeshLoader.h>
 
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
@@ -9,7 +7,7 @@
 #include <assimp/material.h>
 #include <assimp/GltfMaterial.h>
 
-namespace CoreWorker
+namespace RenderWorker
 {
 float3 Color4ToFloat3(aiColor4D const & c)
 {

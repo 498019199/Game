@@ -9,7 +9,6 @@
 #include <imgui/imgui_impl_dx11.h>
 #include <imgui/imgui_impl_win32.h>
 
-#include <base/ZEngine.h>
 #include <base/App3D.h>
 #include <base/Window.h>
 #include <render/RenderEngine.h>
@@ -20,7 +19,7 @@ namespace EditorWorker
 using namespace RenderWorker;
 
 EditorManagerD3D11::EditorManagerD3D11()
-    :App3D("Editor App")
+    :App3D("Editor App <DirectX 11>")
 {
 }
 
@@ -77,7 +76,6 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     }
 
     //EditorDialogBoxManager::Instance().OnRender();
-    ImGui::End();
     ImGui::Render();
 
     // 下面这句话会触发ImGui在Direct3D的绘制

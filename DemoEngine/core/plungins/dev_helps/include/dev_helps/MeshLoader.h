@@ -1,13 +1,12 @@
 #pragma once
 
-#include <core/define.h>
-#include <render/IRenderModel.h>
+#include <base/ZEngine.h>
 
 #include <assimp/config.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-namespace CoreWorker
+namespace RenderWorker
 {
 struct MeshMetadata
 {

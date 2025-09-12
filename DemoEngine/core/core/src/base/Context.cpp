@@ -3,7 +3,7 @@
 
 #include <base/ResLoader.h>
 #include <base/Thread.h>
-
+#include <base/DevHelper.h>
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
 #include <world/World.h>
@@ -17,6 +17,7 @@ extern "C"
 {
     void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
 	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+	void MakeDevHelper(std::unique_ptr<RenderWorker::DevHelper>& ptr);
 }
 #else
 extern "C"
@@ -26,6 +27,9 @@ extern "C"
 namespace RenderWorker
 {
 	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
+#if ZENGINE_IS_DEV_PLATFORM
+	typedef void (*MakeDevHelperFunc)(std::unique_ptr<DevHelper>& ptr);
+#endif
 }
 #define ZENGINE_DLL_PREFIX DLL_PREFIX ZENGINE_STRINGIZE(ZENGINE_NAME)
 #endif// ZENGINE_STATIC_LINK_PLUGINS
@@ -115,6 +119,25 @@ public:
         return res_loader_;
     }
 
+ #if ZENGINE_IS_DEV_PLATFORM
+    bool DevHelperValid() const noexcept
+    {
+        return dev_helper_ != nullptr;
+    }
+    DevHelper& DevHelperInstance()
+    {
+        if (!dev_helper_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!dev_helper_)
+            {
+                this->LoadDevHelper();
+            }
+        }
+        return *dev_helper_;
+    }
+#endif// KLAYGE_IS_DEV_PLATFORM
+
     void LoadRenderFactory( std::string const& rf_name )
     {
         render_factory_.reset();
@@ -147,6 +170,36 @@ public:
     {
         MakeRenderWorld(render_world_);
     }
+
+#if ZENGINE_IS_DEV_PLATFORM
+    void LoadDevHelper()
+    {
+        dev_helper_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        dev_helper_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string render_path = res_loader.Locate("render");
+        std::string fn = KLAYGE_DLL_PREFIX"_DevHelper" DLL_SUFFIX;
+
+        std::string path = render_path + "/" + fn;
+        dev_helper_loader_.Load(res_loader.Locate(path));
+
+        auto* mdh = reinterpret_cast<MakeRenderFactoryFunc>(dev_helper_loader_.GetProcAddress("MakeDevHelper"));
+        if (mdh != nullptr)
+        {
+            mdh(dev_helper_);
+        }
+        else
+        {
+            //LogError() << "Loading " << path << " failed" << std::endl;
+            dev_helper_loader_.Free();
+        }
+#else
+        MakeDevHelper(dev_helper_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+#endif// KLAYGE_IS_DEV_PLATFORM
+
 
     void Config(const ContextConfig& cfg)
     {
@@ -345,6 +398,12 @@ private:
     // 载入资源管理器
     ResLoader res_loader_;
 
+#if ZENGINE_IS_DEV_PLATFORM
+    // 开发辅助工具
+    std::unique_ptr<DevHelper> dev_helper_;
+	DllLoader dev_helper_loader_;
+#endif
+
     DllLoader render_loader_;
 
     // 全局线程池
@@ -396,6 +455,18 @@ ResLoader& Context::ResLoaderInstance() noexcept
 {
     return pimpl_->ResLoaderInstance();
 }
+
+#if KLAYGE_IS_DEV_PLATFORM
+bool Context::DevHelperValid() const noexcept;
+{
+    return pimpl_->DevHelperValid();
+}
+
+DevHelper& Context::DevHelperInstance()
+{
+    return pimpl_->DevHelperInstance();
+}
+#endif
 
 const ContextConfig& Context::Config() const noexcept
 {

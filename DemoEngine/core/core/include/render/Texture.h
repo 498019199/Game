@@ -27,6 +27,7 @@ enum class TextureFilter : uint32_t
 class ZENGINE_CORE_API Texture: public std::enable_shared_from_this<Texture>
 {
     ZENGINE_NONCOPYABLE(Texture);
+
 public:
     // Enum identifying the texture type
     enum TextureType
@@ -51,6 +52,61 @@ public:
         CF_Negative_Z = 5
     };
     
+public:
+    class ZENGINE_CORE_API Mapper final
+    {
+        ZENGINE_NONCOPYABLE(Mapper);
+        friend class Texture;
+
+    public:
+        Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma,
+            uint32_t x_offset, uint32_t width);
+        Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma,
+            uint32_t x_offset, uint32_t y_offset,
+            uint32_t width, uint32_t height);
+        Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma,
+            uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+            uint32_t width, uint32_t height, uint32_t depth);
+        Mapper(Texture& tex, uint32_t array_index, CubeFaces face, uint32_t level, TextureMapAccess tma,
+            uint32_t x_offset, uint32_t y_offset,
+            uint32_t width, uint32_t height);
+
+        ~Mapper();
+
+        template <typename T>
+        T const * Pointer() const
+        {
+            return static_cast<T*>(data_);
+        }
+        template <typename T>
+        T* Pointer()
+        {
+            return static_cast<T*>(data_);
+        }
+
+        uint32_t RowPitch() const
+        {
+            return row_pitch_;
+        }
+
+        uint32_t SlicePitch() const
+        {
+            return slice_pitch_;
+        }
+
+    private:
+        Texture& tex_;
+
+        void* data_;
+        uint32_t row_pitch_, slice_pitch_;
+
+        uint32_t mapped_array_index_;
+        CubeFaces mapped_face_;
+        uint32_t mapped_level_;
+    };
+
+public:
+
     Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint);
     virtual ~Texture() noexcept;
 
@@ -82,6 +138,24 @@ public:
     // Returns the depth of the texture (only for 3D texture).
     virtual uint32_t Depth(uint32_t level) const = 0;
 
+    virtual void Map1D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t width,
+        void*& data) = 0;
+    virtual void Map2D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+        void*& data, uint32_t& row_pitch) = 0;
+    virtual void Map3D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+        uint32_t width, uint32_t height, uint32_t depth,
+        void*& data, uint32_t& row_pitch, uint32_t& slice_pitch) = 0;
+    virtual void MapCube(uint32_t array_index, CubeFaces face, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+        void*& data, uint32_t& row_pitch) = 0;
+
+    virtual void Unmap1D(uint32_t array_index, uint32_t level) = 0;
+    virtual void Unmap2D(uint32_t array_index, uint32_t level) = 0;
+    virtual void Unmap3D(uint32_t array_index, uint32_t level) = 0;
+    virtual void UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level) = 0;
 
     virtual void CreateHWResource(std::span<ElementInitData const> init_data, float4 const * clear_value_hint) = 0;
     virtual void DeleteHWResource() = 0;
@@ -109,6 +183,25 @@ public:
 	uint32_t Height(uint32_t level) const override;
 	uint32_t Depth(uint32_t level) const override;
 
+    void Map1D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t width,
+        void*& data) override;
+    void Map2D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+        void*& data, uint32_t& row_pitch) override;
+    void Map3D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+        uint32_t width, uint32_t height, uint32_t depth,
+        void*& data, uint32_t& row_pitch, uint32_t& slice_pitch) override;
+    void MapCube(uint32_t array_index, CubeFaces face, uint32_t level, TextureMapAccess tma,
+        uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+        void*& data, uint32_t& row_pitch) override;
+
+    void Unmap1D(uint32_t array_index, uint32_t level) override;
+    void Unmap2D(uint32_t array_index, uint32_t level) override;
+    void Unmap3D(uint32_t array_index, uint32_t level) override;
+    void UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level) override;
+    
     void CreateHWResource(std::span<ElementInitData const> init_data, float4 const * clear_value_hint) override;
     void DeleteHWResource() override;
     bool HWResourceReady() const override;
@@ -135,10 +228,18 @@ private:
 
 
 
-void GetImageInfo(std::string_view tex_name, Texture::TextureType& type,
+ZENGINE_CORE_API void GetImageInfo(std::string_view tex_name, Texture::TextureType& type,
     uint32_t& width, uint32_t& height, uint32_t& depth, uint32_t& num_mipmaps, uint32_t& array_size,
     ElementFormat& format, uint32_t& row_pitch, uint32_t& slice_pitch);
     
-TexturePtr LoadVirtualTexture(std::string_view tex_name);
-TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint);
+ZENGINE_CORE_API TexturePtr LoadVirtualTexture(std::string_view tex_name);
+ZENGINE_CORE_API TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint);
+// 把纹理保存入DDS文件
+ZENGINE_CORE_API void SaveTexture(const TexturePtr& texture, const std::string& tex_name);
+
+ZENGINE_CORE_API void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format,
+    uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth,
+    void const * src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch, ElementFormat src_format,
+    uint32_t src_width, uint32_t src_height, uint32_t src_depth,
+    TextureFilter filter);
 }

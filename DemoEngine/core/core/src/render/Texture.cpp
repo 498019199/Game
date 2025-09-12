@@ -1172,6 +1172,65 @@ namespace
 
 namespace RenderWorker
 {
+	Texture::Mapper::Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma, uint32_t x_offset, uint32_t width)
+		: tex_(tex), mapped_array_index_(array_index), mapped_level_(level)
+	{
+		tex_.Map1D(array_index, level, tma, x_offset, width, data_);
+		row_pitch_ = slice_pitch_ = width * NumFormatBytes(tex.Format());
+	}
+
+	Texture::Mapper::Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma, uint32_t x_offset, uint32_t y_offset,
+		uint32_t width, uint32_t height)
+		: tex_(tex), mapped_array_index_(array_index), mapped_level_(level)
+	{
+		tex_.Map2D(array_index, level, tma, x_offset, y_offset, width, height, data_, row_pitch_);
+
+		uint32_t const block_height = BlockHeight(tex.Format());
+		slice_pitch_ = (height + block_height - 1) / block_height * row_pitch_;
+	}
+
+	Texture::Mapper::Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma, uint32_t x_offset, uint32_t y_offset,
+		uint32_t z_offset, uint32_t width, uint32_t height, uint32_t depth)
+		: tex_(tex), mapped_array_index_(array_index), mapped_level_(level)
+	{
+		tex_.Map3D(array_index, level, tma, x_offset, y_offset, z_offset, width, height, depth, data_, row_pitch_, slice_pitch_);
+	}
+
+	Texture::Mapper::Mapper(Texture& tex, uint32_t array_index, CubeFaces face, uint32_t level, TextureMapAccess tma, uint32_t x_offset,
+		uint32_t y_offset, uint32_t width, uint32_t height)
+		: tex_(tex), mapped_array_index_(array_index), mapped_face_(face), mapped_level_(level)
+	{
+		tex_.MapCube(array_index, face, level, tma, x_offset, y_offset, width, height, data_, row_pitch_);
+
+		uint32_t const block_height = BlockHeight(tex.Format());
+		slice_pitch_ = (height + block_height - 1) / block_height * row_pitch_;
+	}
+
+	Texture::Mapper::~Mapper()
+	{
+		switch (tex_.Type())
+		{
+		case TT_1D:
+			tex_.Unmap1D(mapped_array_index_, mapped_level_);
+			break;
+
+		case TT_2D:
+			tex_.Unmap2D(mapped_array_index_, mapped_level_);
+			break;
+
+		case TT_3D:
+			tex_.Unmap3D(mapped_array_index_, mapped_level_);
+			break;
+
+		case TT_Cube:
+			tex_.UnmapCube(mapped_array_index_, mapped_face_, mapped_level_);
+			break;
+		}
+	}
+} // namespace RenderWorker
+
+namespace RenderWorker
+{
 	
 Texture::Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
     : type_(type), sample_count_(sample_count), sample_quality_(sample_quality), access_hint_(access_hint)
@@ -1267,6 +1326,139 @@ uint32_t VirtualTexture::Depth(uint32_t level) const
 {
     COMMON_ASSERT(level < mip_maps_num_);
     return std::max(1U, depth_ >> level);
+}
+
+void VirtualTexture::Map1D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+	uint32_t x_offset, [[maybe_unused]] uint32_t width,
+	void*& data)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = false;
+	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	{
+		auto const & init_data = subres_data_[subres];
+		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+		data = const_cast<uint8_t*>(ptr + x_offset * NumFormatBytes(format_));
+	}
+	else
+	{
+		data = nullptr;
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::Map2D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+	uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
+	void*& data, uint32_t& row_pitch)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = false;
+	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	{
+		auto const & init_data = subres_data_[subres];
+		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+		row_pitch = init_data.row_pitch;
+		data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+	}
+	else
+	{
+		data = nullptr;
+		row_pitch = 0;
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::Map3D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+	uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+	[[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height, [[maybe_unused]] uint32_t depth,
+	void*& data, uint32_t& row_pitch, uint32_t& slice_pitch)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = false;
+	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	{
+		auto const & init_data = subres_data_[subres];
+		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+		row_pitch = init_data.row_pitch;
+		slice_pitch = init_data.slice_pitch;
+		data = const_cast<uint8_t*>(ptr + z_offset * slice_pitch + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+	}
+	else
+	{
+		data = nullptr;
+		row_pitch = 0;
+		slice_pitch = 0;
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::MapCube(uint32_t array_index, CubeFaces face, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+	uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
+	void*& data, uint32_t& row_pitch)
+{
+	size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
+
+	bool already_mapped = false;
+	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	{
+		auto const & init_data = subres_data_[subres];
+		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+		row_pitch = init_data.row_pitch;
+		data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+	}
+	else
+	{
+		data = nullptr;
+		row_pitch = 0;
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::Unmap1D(uint32_t array_index, uint32_t level)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = true;
+	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+	{
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::Unmap2D(uint32_t array_index, uint32_t level)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = true;
+	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+	{
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::Unmap3D(uint32_t array_index, uint32_t level)
+{
+	size_t const subres = array_index * mip_maps_num_ + level;
+
+	bool already_mapped = true;
+	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+	{
+		TERRC(std::errc::device_or_resource_busy);
+	}
+}
+
+void VirtualTexture::UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level)
+{
+	size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
+
+	bool already_mapped = true;
+	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+	{
+		TERRC(std::errc::device_or_resource_busy);
+	}
 }
 
 void VirtualTexture::CreateHWResource(std::span<ElementInitData const> init_data, [[maybe_unused]] const float4* clear_value_hint)
@@ -1535,4 +1727,12 @@ TexturePtr LoadVirtualTexture(std::string_view tex_name)
     return ret;
 }
 
+void SaveTexture(TexturePtr const & texture, std::string const & tex_name)
+{
+}
+
+void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format, uint32_t dst_width,
+	uint32_t dst_height, uint32_t dst_depth, void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch,
+	ElementFormat src_format, uint32_t src_width, uint32_t src_height, uint32_t src_depth, TextureFilter filter)
+{}
 }
