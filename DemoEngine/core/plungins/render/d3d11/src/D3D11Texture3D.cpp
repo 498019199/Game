@@ -1,6 +1,7 @@
 #include "D3D11Texture.h"
 #include <base/ZEngine.h>
 #include <render/ElementFormat.h>
+#include <render/TexCompression.h>
 #include "D3D11Util.h"
 #include "D3D11RenderEngine.h"
 
@@ -83,6 +84,38 @@ void D3D11Texture3D::CreateHWResource(std::span<ElementInitData const> init_data
     ID3D11Texture3DPtr d3d_tex;
     TIFHR(d3d_device_->CreateTexture3D(&desc, subres_data.data(), d3d_tex.put()));
     d3d_tex.as(d3d_texture_);
+}
+
+void D3D11Texture3D::Map3D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+    uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+    uint32_t /*width*/, uint32_t /*height*/, uint32_t /*depth*/,
+    void*& data, uint32_t& row_pitch, uint32_t& slice_pitch)
+{
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    TIFHR(d3d_imm_ctx_->Map(d3d_texture_.get(), 
+        D3D11CalcSubresource(level, array_index, mip_maps_num_), 
+        D3D11Mapping::Mapping(tma, type_, access_hint_, mip_maps_num_), 0, &mapped));
+    uint8_t* p = static_cast<uint8_t*>(mapped.pData);
+    if (IsCompressedFormat(format_))
+    {
+        uint32_t const block_width = BlockWidth(format_);
+        uint32_t const block_height = BlockHeight(format_);
+        uint32_t const block_depth = BlockDepth(format_);
+        uint32_t const block_bytes = BlockBytes(format_);
+        data = p + (z_offset / block_depth) * mapped.DepthPitch
+            + (y_offset / block_height) * mapped.RowPitch + (x_offset / block_width) * block_bytes;
+    }
+    else
+    {
+        data = p + z_offset * mapped.DepthPitch + y_offset * mapped.RowPitch + x_offset * NumFormatBytes(format_);
+    }
+    row_pitch = mapped.RowPitch;
+    slice_pitch = mapped.DepthPitch;
+}
+
+void D3D11Texture3D::Unmap3D(uint32_t array_index, uint32_t level)
+{
+    d3d_imm_ctx_->Unmap(d3d_texture_.get(), D3D11CalcSubresource(level, array_index, mip_maps_num_));
 }
 
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture3D::FillSRVDesc(ElementFormat pf, 

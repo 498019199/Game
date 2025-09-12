@@ -66,6 +66,8 @@ public:
     static D3D11_TEXTURE_ADDRESS_MODE Mapping(TexAddressingMode mode);
     static D3D11_COMPARISON_FUNC Mapping(CompareFunction func);
 
+	static D3D11_MAP Mapping(TextureMapAccess tma, Texture::TextureType type, uint32_t access_hint, uint32_t numMipMaps);
+
     static D3D11_CULL_MODE Mapping(CullMode mode);
     static D3D11_FILL_MODE Mapping(PolygonMode mode);
     

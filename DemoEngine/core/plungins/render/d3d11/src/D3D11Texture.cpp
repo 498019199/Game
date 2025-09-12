@@ -328,6 +328,55 @@ void D3D11Texture::GetD3DFlags(D3D11_USAGE& usage, UINT& bind_flags, UINT& cpu_a
     }
 }
 
+void D3D11Texture::Map1D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+    [[maybe_unused]] uint32_t x_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] void*& data)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::Map2D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+    [[maybe_unused]] uint32_t x_offset, [[maybe_unused]] uint32_t y_offset, [[maybe_unused]] uint32_t width,
+    [[maybe_unused]] uint32_t height, [[maybe_unused]] void*& data, [[maybe_unused]] uint32_t& row_pitch)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::Map3D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+    [[maybe_unused]] uint32_t x_offset, [[maybe_unused]] uint32_t y_offset, [[maybe_unused]] uint32_t z_offset,
+    [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height, [[maybe_unused]] uint32_t depth, [[maybe_unused]] void*& data,
+    [[maybe_unused]] uint32_t& row_pitch, [[maybe_unused]] uint32_t& slice_pitch)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::MapCube([[maybe_unused]] uint32_t array_index, [[maybe_unused]] CubeFaces face, [[maybe_unused]] uint32_t level,
+    [[maybe_unused]] TextureMapAccess tma, [[maybe_unused]] uint32_t x_offset, [[maybe_unused]] uint32_t y_offset,
+    [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height, [[maybe_unused]] void*& data,
+    [[maybe_unused]] uint32_t& row_pitch)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::Unmap1D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::Unmap2D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::Unmap3D([[maybe_unused]] uint32_t array_index, [[maybe_unused]] uint32_t level)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+void D3D11Texture::UnmapCube([[maybe_unused]] uint32_t array_index, [[maybe_unused]] CubeFaces face, [[maybe_unused]] uint32_t level)
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture::FillSRVDesc(ElementFormat pf, 
     uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const
 {

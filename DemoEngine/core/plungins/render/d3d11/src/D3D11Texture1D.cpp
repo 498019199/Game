@@ -1,6 +1,7 @@
 #include "D3D11Texture.h"
 #include <base/ZEngine.h>
 #include <render/ElementFormat.h>
+#include <render/TexCompression.h>
 #include "D3D11Util.h"
 #include "D3D11RenderEngine.h"
 
@@ -33,6 +34,22 @@ uint32_t D3D11Texture1D::Width(uint32_t level) const noexcept
 {
     COMMON_ASSERT(level < mip_maps_num_);
     return std::max(1U, width_ >> level);
+}
+
+void D3D11Texture1D::Map1D(uint32_t array_index, uint32_t level, TextureMapAccess tma,
+    uint32_t x_offset, uint32_t /*width*/,
+    void*& data)
+{
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    TIFHR(d3d_imm_ctx_->Map(d3d_texture_.get(), 
+        D3D11CalcSubresource(level, array_index, mip_maps_num_), 
+        D3D11Mapping::Mapping(tma, type_, access_hint_, mip_maps_num_), 0, &mapped));
+    data = static_cast<uint8_t*>(mapped.pData) + x_offset * NumFormatBytes(format_);
+}
+
+void D3D11Texture1D::Unmap1D(uint32_t array_index, uint32_t level)
+{
+    d3d_imm_ctx_->Unmap(d3d_texture_.get(), D3D11CalcSubresource(level, array_index, mip_maps_num_));
 }
 
 void D3D11Texture1D::CreateHWResource(std::span<ElementInitData const> init_data, float4 const * clear_value_hint)

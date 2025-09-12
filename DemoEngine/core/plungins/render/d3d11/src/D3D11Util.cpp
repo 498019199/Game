@@ -1026,4 +1026,30 @@ D3D11_SO_DECLARATION_ENTRY D3D11Mapping::Mapping(const ShaderDesc::StreamOutputD
     return ret;
 }
 
+D3D11_MAP D3D11Mapping::Mapping(TextureMapAccess tma, Texture::TextureType type, uint32_t access_hint, uint32_t numMipMaps)
+{
+    switch (tma)
+    {
+    case TMA_Read_Only:
+        return D3D11_MAP_READ;
+
+    case TMA_Write_Only:
+        if (((EAH_CPU_Write | EAH_GPU_Read) == access_hint)
+            || ((EAH_CPU_Write == access_hint) && (1 == numMipMaps) && (type != Texture::TT_Cube)))
+        {
+            return D3D11_MAP_WRITE_DISCARD;
+        }
+        else
+        {
+            return D3D11_MAP_WRITE;
+        }
+
+    case TMA_Read_Write:
+        return D3D11_MAP_READ_WRITE;
+
+    default:
+        ZENGINE_UNREACHABLE("Invalid texture map access mode");
+    };
+}
+
 }
