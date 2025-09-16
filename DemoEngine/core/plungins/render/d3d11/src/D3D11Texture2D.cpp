@@ -180,6 +180,131 @@ void D3D11Texture2D::Unmap2D(uint32_t array_index, uint32_t level)
     d3d_imm_ctx_->Unmap(d3d_texture_.get(), D3D11CalcSubresource(level, array_index, mip_maps_num_));
 }
 
+void D3D11Texture2D::CopyToTexture(Texture& target, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((this->Width(0) == target.Width(0)) && (this->Height(0) == target.Height(0)) && (this->Format() == target.Format())
+        && (this->ArraySize() == target.ArraySize()) && (this->MipMapsNum() == target.MipMapsNum()))
+    {
+        auto& other = checked_cast<D3D11Texture2D&>(target);
+
+        if ((this->SampleCount() > 1) && (1 == target.SampleCount()))
+        {
+            for (uint32_t l = 0; l < this->MipMapsNum(); ++ l)
+            {
+                d3d_imm_ctx_->ResolveSubresource(other.d3d_texture_.get(), D3D11CalcSubresource(l, 0, other.MipMapsNum()),
+                    d3d_texture_.get(), D3D11CalcSubresource(l, 0, this->MipMapsNum()), D3D11Mapping::MappingFormat(target.Format()));
+            }
+        }
+        else
+        {
+            d3d_imm_ctx_->CopyResource(other.d3d_texture_.get(), d3d_texture_.get());
+        }
+    }
+    else
+    {
+        uint32_t const array_size = std::min(this->ArraySize(), target.ArraySize());
+        uint32_t const num_mips = std::min(this->MipMapsNum(), target.MipMapsNum());
+        for (uint32_t index = 0; index < array_size; ++ index)
+        {
+            for (uint32_t level = 0; level < num_mips; ++ level)
+            {
+                this->ResizeTexture2D(target, index, level, 0, 0, target.Width(level), target.Height(level),
+                    index, level, 0, 0, this->Width(level), this->Height(level), filter);
+            }
+        }
+    }
+}
+
+void D3D11Texture2D::CopyToSubTexture2D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+    uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset,
+    uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((src_width == dst_width) && (src_height == dst_height) && (this->Format() == target.Format()))
+    {
+        auto& other = checked_cast<D3D11Texture&>(target);
+
+        D3D11_BOX* src_box_ptr;
+        D3D11_BOX src_box;
+        if ((sample_count_ != 1) || IsDepthFormat(format_))
+        {
+            COMMON_ASSERT(other.SampleCount() == sample_count_);
+            COMMON_ASSERT(dst_x_offset == 0);
+            COMMON_ASSERT(dst_y_offset == 0);
+
+            src_box_ptr = nullptr;
+        }
+        else
+        {
+            src_box.left = src_x_offset;
+            src_box.top = src_y_offset;
+            src_box.front = 0;
+            src_box.right = src_x_offset + src_width;
+            src_box.bottom = src_y_offset + src_height;
+            src_box.back = 1;
+
+            src_box_ptr = &src_box;
+        }
+
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(), D3D11CalcSubresource(dst_level, dst_array_index, target.MipMapsNum()),
+            dst_x_offset, dst_y_offset, 0, this->D3DResource(), D3D11CalcSubresource(src_level, src_array_index, this->MipMapsNum()),
+            src_box_ptr);
+    }
+    else
+    {
+        this->ResizeTexture2D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+            src_array_index, src_level, src_x_offset, src_y_offset, src_width, src_height, filter);
+    }
+}
+
+void D3D11Texture2D::CopyToSubTextureCube(Texture& target, uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level,
+    uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, [[maybe_unused]] CubeFaces src_face,
+    uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
+{
+    COMMON_ASSERT(TT_Cube == target.Type());
+
+    if ((src_width == dst_width) && (src_height == dst_height) && (this->Format() == target.Format()))
+    {
+        auto& other = checked_cast<D3D11Texture&>(target);
+
+        D3D11_BOX* src_box_ptr;
+        D3D11_BOX src_box;
+        if ((sample_count_ != 1) || IsDepthFormat(format_))
+        {
+            COMMON_ASSERT(other.SampleCount() == sample_count_);
+            COMMON_ASSERT(dst_x_offset == 0);
+            COMMON_ASSERT(dst_y_offset == 0);
+
+            src_box_ptr = nullptr;
+        }
+        else
+        {
+            src_box.left = src_x_offset;
+            src_box.top = src_y_offset;
+            src_box.front = 0;
+            src_box.right = src_x_offset + src_width;
+            src_box.bottom = src_y_offset + src_height;
+            src_box.back = 1;
+
+            src_box_ptr = &src_box;
+        }
+
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(),
+            D3D11CalcSubresource(dst_level, dst_array_index * 6 + dst_face - CF_Positive_X, target.MipMapsNum()),
+            dst_x_offset, dst_y_offset, 0, this->D3DResource(),
+            D3D11CalcSubresource(src_level, src_array_index, this->MipMapsNum()),
+            src_box_ptr);
+    }
+    else
+    {
+        this->ResizeTexture2D(target, dst_array_index * 6 + dst_face - CF_Positive_X, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+            src_array_index, src_level, src_x_offset, src_y_offset, src_width, src_height, filter);
+    }
+}
+
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture2D::FillSRVDesc(ElementFormat pf, 
     uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const
 {

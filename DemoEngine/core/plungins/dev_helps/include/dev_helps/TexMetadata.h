@@ -2,6 +2,7 @@
 #include <base/ZEngine.h>
 #include <render/Texture.h>
 #include <render/RenderDeviceCaps.h>
+#include <render/RenderMaterial.h>
 
 namespace RenderWorker
 {
@@ -22,14 +23,14 @@ public:
         return type_;
     }
 
-    // RenderMaterial::TextureSlot Slot() const
-    // {
-    //     return slot_;
-    // }
-    // void Slot(RenderMaterial::TextureSlot slot)
-    // {
-    //     slot_ = slot;
-    // }
+    RenderMaterial::TextureSlot Slot() const
+    {
+        return slot_;
+    }
+    void Slot(RenderMaterial::TextureSlot slot)
+    {
+        slot_ = slot;
+    }
 
     ElementFormat PreferedFormat() const
     {
@@ -157,7 +158,7 @@ public:
 private:
     Texture::TextureType type_ = Texture::TT_2D;
 
-    //RenderMaterial::TextureSlot slot_ = RenderMaterial::TS_Albedo;
+    RenderMaterial::TextureSlot slot_ = RenderMaterial::TS_Albedo;
 
     ElementFormat prefered_format_ = EF_Unknown;
     bool force_srgb_ = false;

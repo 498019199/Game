@@ -1,7 +1,7 @@
 
 #include <math/quaternion.h>
 #include <math/math.h>
-namespace MathWorker
+namespace RenderWorker
 {
 
 template <typename T>
@@ -57,7 +57,7 @@ const Quaternion_T<T>& Quaternion_T<T>::operator-=(const Quaternion_T & rhs) noe
 template <typename T>
 const Quaternion_T<T>& Quaternion_T<T>::operator*=(const Quaternion_T & rhs) noexcept
 {
-	*this = Mul(*this, rhs);
+	*this = MathWorker::mul(*this, rhs);
 	return *this;
 }
 

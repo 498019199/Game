@@ -19,11 +19,30 @@ struct ZENGINE_CORE_API RenderDeviceCaps
     uint8_t max_vertex_streams;         // 一个顶点声明（Vertex Declaration）中允许的最大顶点元素（Vertex Element）数量
     uint8_t max_texture_anisotropy;     // 各向异性过滤（Anisotropic Filtering）的最大支持级别
 
+	bool primitive_restart_support : 1;
+	bool multithread_rendering_support : 1;
+	bool multithread_res_creating_support : 1;
+	bool arbitrary_multithread_rendering_support : 1;
+
     bool gs_support : 1;
     bool cs_support : 1;
     bool hs_support : 1;
     bool ds_support : 1;
+
+	bool TextureFormatSupport(ElementFormat format) const;
+
+	void AssignTextureFormats(std::vector<ElementFormat> texture_formats);
+
+private:
+    void UpdateSupportBits();
+    
+private:
+    std::vector<ElementFormat> vertex_formats_;
+    std::vector<ElementFormat> texture_formats_;
+    std::map<ElementFormat, std::vector<uint32_t>> render_target_formats_;
+    std::vector<ElementFormat> uav_formats_;
 };
+
 
 
 }

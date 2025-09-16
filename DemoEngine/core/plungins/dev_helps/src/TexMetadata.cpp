@@ -54,7 +54,7 @@ void TexMetadata::DeviceDependentAdjustment(const RenderDeviceCaps& caps)
     //         break;
 
     //     default:
-    //         KFL_UNREACHABLE("Invalid texture slot");
+    //         ZENGINE_UNREACHABLE("Invalid texture slot");
     //     }
     // }
 }

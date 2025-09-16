@@ -91,7 +91,7 @@ namespace
 			: MemInputStreamBuf(AAsset_getBuffer(asset), AAsset_getLength(asset)),
 				asset_(asset)
 		{
-			BOOST_ASSERT(asset_ != nullptr);
+			COMMON_ASSERT(asset_ != nullptr);
 		}
 
 		~AAssetStreamBuf()

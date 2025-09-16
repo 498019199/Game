@@ -140,7 +140,7 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
 
             // 计算出局部坐标、法向量、Tangent向量和纹理坐标
             float3 pos = float3(x, y, z);
-            float3 normal = MathWorker::Normalize(pos);
+            float3 normal = MathWorker::normalize(pos);
             float4 tangent = float4(-sinf(theta), 0.0f, cosf(theta), 1.0f);
             float2 tex = float2(theta / MathWorker::PI2, phi / MathWorker::PI);
 

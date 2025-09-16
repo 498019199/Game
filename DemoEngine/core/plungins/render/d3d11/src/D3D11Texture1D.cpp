@@ -7,22 +7,22 @@
 
 namespace RenderWorker
 {
-D3D11Texture1D::D3D11Texture1D(uint32_t width, uint32_t numMipMaps, uint32_t array_size, ElementFormat format, 
+D3D11Texture1D::D3D11Texture1D(uint32_t width, uint32_t MipMapsNum, uint32_t array_size, ElementFormat format, 
         uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
     :D3D11Texture(TT_1D, sample_count, sample_quality, access_hint)
 {
-    if (0 == numMipMaps)
+    if (0 == MipMapsNum)
     {
-        numMipMaps = 1;
+        MipMapsNum = 1;
         uint32_t w = width;
         while (w != 1)
         {
-            ++ numMipMaps;
+            ++ MipMapsNum;
 
             w = std::max(1U, w / 2);
         }
     }
-    mip_maps_num_ = numMipMaps;
+    mip_maps_num_ = MipMapsNum;
 
     array_size_ = array_size;
     format_		= format;
@@ -77,6 +77,57 @@ void D3D11Texture1D::CreateHWResource(std::span<ElementInitData const> init_data
     ID3D11Texture1DPtr texture;
     TIFHR(d3d_device_->CreateTexture1D(&desc, subres_data.data(), texture.put()));
     texture.as(d3d_texture_);
+}
+
+void D3D11Texture1D::CopyToTexture(Texture& target, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((this->Width(0) == target.Width(0)) && (this->Format() == target.Format())
+        && (this->ArraySize() == target.ArraySize()) && (this->MipMapsNum() == target.MipMapsNum()))
+    {
+        auto& other = checked_cast<D3D11Texture1D&>(target);
+        d3d_imm_ctx_->CopyResource(other.d3d_texture_.get(), d3d_texture_.get());
+    }
+    else
+    {
+        uint32_t const array_size = std::min(this->ArraySize(), target.ArraySize());
+        uint32_t const num_mips = std::min(this->MipMapsNum(), target.MipMapsNum());
+        for (uint32_t index = 0; index < array_size; ++ index)
+        {
+            for (uint32_t level = 0; level < num_mips; ++ level)
+            {
+                this->ResizeTexture1D(target, index, level, 0, target.Width(level),
+                    index, level, 0, this->Width(level), filter);
+            }
+        }
+    }
+}
+
+void D3D11Texture1D::CopyToSubTexture1D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+    uint32_t dst_width, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_width, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((src_width == dst_width) && (this->Format() == target.Format()))
+    {
+        D3D11_BOX src_box;
+        src_box.left = src_x_offset;
+        src_box.top = 0;
+        src_box.front = 0;
+        src_box.right = src_x_offset + src_width;
+        src_box.bottom = 1;
+        src_box.back = 1;
+
+        auto& other = checked_cast<D3D11Texture&>(target);
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(), D3D11CalcSubresource(dst_level, dst_array_index, target.MipMapsNum()),
+            dst_x_offset, 0, 0, this->D3DResource(), D3D11CalcSubresource(src_level, src_array_index, this->MipMapsNum()), &src_box);
+    }
+    else
+    {
+        this->ResizeTexture1D(target, dst_array_index, dst_level, dst_x_offset, dst_width,
+            src_array_index, src_level, src_x_offset, src_width, filter);
+    }
 }
 
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture1D::FillSRVDesc(ElementFormat pf, 

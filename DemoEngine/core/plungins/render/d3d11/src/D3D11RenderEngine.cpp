@@ -884,13 +884,216 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 		//caps_.tess_method = TM_Hardware;
 		caps_.max_vertex_streams = D3D11_STANDARD_VERTEX_ELEMENT_COUNT;
 		caps_.max_texture_anisotropy = D3D11_MAX_MAXANISOTROPY;
+		break;
+		
 	default:
 		ZENGINE_UNREACHABLE("Invalid feature level");
+	}
+
+	// 检查 D3D11 设备是否支持多线程渲染和并发资源创建
+	caps_.primitive_restart_support = true;
+	{
+		D3D11_FEATURE_DATA_THREADING mt_feature{};
+		if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(D3D11_FEATURE_THREADING, &mt_feature, sizeof(mt_feature))))
+		{
+			// 表示驱动是否支持多线程命令列表
+			caps_.multithread_rendering_support = mt_feature.DriverCommandLists ? true : false;
+			// 表示是否支持并发创建 D3D 资源
+			caps_.multithread_res_creating_support = mt_feature.DriverConcurrentCreates ? true : false;
+			caps_.arbitrary_multithread_rendering_support = caps_.multithread_rendering_support;
+		}
+		else
+		{
+			caps_.multithread_rendering_support = false;
+			caps_.multithread_res_creating_support = false;
+			caps_.arbitrary_multithread_rendering_support = false;
+		}
 	}
 
 	caps_.gs_support = true;
 	caps_.hs_support = true;
 	caps_.ds_support = true;
+
+	std::vector<ElementFormat> vertex_formats;
+	//std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
+	std::vector<ElementFormat> texture_formats;
+	std::vector<ElementFormat> uav_formats;
+	bool check_uav_fmts = false;
+
+	std::pair<ElementFormat, DXGI_FORMAT> const fmts[] = 
+	{
+		std::make_pair(EF_A8, DXGI_FORMAT_A8_UNORM),
+		std::make_pair(EF_R5G6B5, DXGI_FORMAT_B5G6R5_UNORM),
+		std::make_pair(EF_A1RGB5, DXGI_FORMAT_B5G5R5A1_UNORM),
+		std::make_pair(EF_ARGB4, DXGI_FORMAT_B4G4R4A4_UNORM),
+		std::make_pair(EF_R8, DXGI_FORMAT_R8_UNORM),
+		std::make_pair(EF_SIGNED_R8, DXGI_FORMAT_R8_SNORM),
+		std::make_pair(EF_GR8, DXGI_FORMAT_R8G8_UNORM),
+		std::make_pair(EF_SIGNED_GR8, DXGI_FORMAT_R8G8_SNORM),
+		std::make_pair(EF_ARGB8, DXGI_FORMAT_B8G8R8A8_UNORM),
+		std::make_pair(EF_ABGR8, DXGI_FORMAT_R8G8B8A8_UNORM),
+		std::make_pair(EF_SIGNED_ABGR8, DXGI_FORMAT_R8G8B8A8_SNORM),
+		std::make_pair(EF_A2BGR10, DXGI_FORMAT_R10G10B10A2_UNORM),
+		std::make_pair(EF_SIGNED_A2BGR10, DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM),
+		std::make_pair(EF_R8UI, DXGI_FORMAT_R8_UINT),
+		std::make_pair(EF_R8I, DXGI_FORMAT_R8_SINT),
+		std::make_pair(EF_GR8UI, DXGI_FORMAT_R8G8_UINT),
+		std::make_pair(EF_GR8I, DXGI_FORMAT_R8G8_SINT),
+		std::make_pair(EF_ABGR8UI, DXGI_FORMAT_R8G8B8A8_UINT),
+		std::make_pair(EF_ABGR8I, DXGI_FORMAT_R8G8B8A8_SINT),
+		std::make_pair(EF_A2BGR10UI, DXGI_FORMAT_R10G10B10A2_UINT),
+		std::make_pair(EF_R16, DXGI_FORMAT_R16_UNORM),
+		std::make_pair(EF_SIGNED_R16, DXGI_FORMAT_R16_SNORM),
+		std::make_pair(EF_GR16, DXGI_FORMAT_R16G16_UNORM),
+		std::make_pair(EF_SIGNED_GR16, DXGI_FORMAT_R16G16_SNORM),
+		std::make_pair(EF_ABGR16, DXGI_FORMAT_R16G16B16A16_UNORM),
+		std::make_pair(EF_SIGNED_ABGR16, DXGI_FORMAT_R16G16B16A16_SNORM),
+		std::make_pair(EF_R16UI, DXGI_FORMAT_R16_UINT),
+		std::make_pair(EF_R16I, DXGI_FORMAT_R16_SINT),
+		std::make_pair(EF_GR16UI, DXGI_FORMAT_R16G16_UINT),
+		std::make_pair(EF_GR16I, DXGI_FORMAT_R16G16_SINT),
+		std::make_pair(EF_ABGR16UI, DXGI_FORMAT_R16G16B16A16_UINT),
+		std::make_pair(EF_ABGR16I, DXGI_FORMAT_R16G16B16A16_SINT),
+		std::make_pair(EF_R32UI, DXGI_FORMAT_R32_UINT),
+		std::make_pair(EF_R32I, DXGI_FORMAT_R32_SINT),
+		std::make_pair(EF_GR32UI, DXGI_FORMAT_R32G32_UINT),
+		std::make_pair(EF_GR32I, DXGI_FORMAT_R32G32_SINT),
+		std::make_pair(EF_BGR32UI, DXGI_FORMAT_R32G32B32_UINT),
+		std::make_pair(EF_BGR32I, DXGI_FORMAT_R32G32B32_SINT),
+		std::make_pair(EF_ABGR32UI, DXGI_FORMAT_R32G32B32A32_UINT),
+		std::make_pair(EF_ABGR32I, DXGI_FORMAT_R32G32B32A32_SINT),
+		std::make_pair(EF_R16F, DXGI_FORMAT_R16_FLOAT),
+		std::make_pair(EF_GR16F, DXGI_FORMAT_R16G16_FLOAT),
+		std::make_pair(EF_B10G11R11F, DXGI_FORMAT_R11G11B10_FLOAT),
+		std::make_pair(EF_ABGR16F, DXGI_FORMAT_R16G16B16A16_FLOAT),
+		std::make_pair(EF_R32F, DXGI_FORMAT_R32_FLOAT),
+		std::make_pair(EF_GR32F, DXGI_FORMAT_R32G32_FLOAT),
+		std::make_pair(EF_BGR32F, DXGI_FORMAT_R32G32B32_FLOAT),
+		std::make_pair(EF_ABGR32F, DXGI_FORMAT_R32G32B32A32_FLOAT),
+		std::make_pair(EF_BC1, DXGI_FORMAT_BC1_UNORM),
+		std::make_pair(EF_BC2, DXGI_FORMAT_BC2_UNORM),
+		std::make_pair(EF_BC3, DXGI_FORMAT_BC3_UNORM),
+		std::make_pair(EF_BC4, DXGI_FORMAT_BC4_UNORM),
+		std::make_pair(EF_SIGNED_BC4, DXGI_FORMAT_BC4_SNORM),
+		std::make_pair(EF_BC5, DXGI_FORMAT_BC5_UNORM),
+		std::make_pair(EF_SIGNED_BC5, DXGI_FORMAT_BC5_SNORM),
+		std::make_pair(EF_BC6, DXGI_FORMAT_BC6H_UF16),
+		std::make_pair(EF_SIGNED_BC6, DXGI_FORMAT_BC6H_SF16),
+		std::make_pair(EF_BC7, DXGI_FORMAT_BC7_UNORM),
+		std::make_pair(EF_D16, DXGI_FORMAT_D16_UNORM),
+		std::make_pair(EF_D24S8, DXGI_FORMAT_D24_UNORM_S8_UINT),
+		std::make_pair(EF_D32F, DXGI_FORMAT_D32_FLOAT),
+		std::make_pair(EF_ARGB8_SRGB, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB),
+		std::make_pair(EF_ABGR8_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB),
+		std::make_pair(EF_BC1_SRGB, DXGI_FORMAT_BC1_UNORM_SRGB),
+		std::make_pair(EF_BC2_SRGB, DXGI_FORMAT_BC2_UNORM_SRGB),
+		std::make_pair(EF_BC3_SRGB, DXGI_FORMAT_BC3_UNORM_SRGB),
+		std::make_pair(EF_BC7_SRGB, DXGI_FORMAT_BC7_UNORM_SRGB)
+	};
+
+	UINT s;
+	for (auto const & fmt : fmts)
+	{
+		if (/*(caps_.max_shader_model < ShaderModel(5, 0))
+			&& */((EF_BC6 == fmt.first) || (EF_SIGNED_BC6 == fmt.first)
+				|| (EF_BC7 == fmt.first) || (EF_BC7_SRGB == fmt.first)))
+		{
+			continue;
+		}
+
+		d3d_device_1_->CheckFormatSupport(fmt.second, &s);
+		if (s != 0)
+		{
+			if (IsDepthFormat(fmt.first))
+			{
+				DXGI_FORMAT depth_fmt;
+				switch (fmt.first)
+				{
+				case EF_D16:
+					depth_fmt = DXGI_FORMAT_R16_TYPELESS;
+					break;
+
+				case EF_D24S8:
+					depth_fmt = DXGI_FORMAT_R24G8_TYPELESS;
+					break;
+
+				case EF_D32F:
+				default:
+					depth_fmt = DXGI_FORMAT_R32_TYPELESS;
+					break;
+				}
+
+				UINT s1;
+				d3d_device_1_->CheckFormatSupport(depth_fmt, &s1);
+				if (s1 != 0)
+				{
+					if (s1 & D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+					{
+						vertex_formats.push_back(fmt.first);
+					}
+					if (s1 & (D3D11_FORMAT_SUPPORT_TEXTURE1D | D3D11_FORMAT_SUPPORT_TEXTURE2D
+						| D3D11_FORMAT_SUPPORT_TEXTURE3D | D3D11_FORMAT_SUPPORT_TEXTURECUBE
+						| D3D11_FORMAT_SUPPORT_SHADER_LOAD | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE))
+					{
+						texture_formats.push_back(fmt.first);
+					}
+				}
+			}
+			else
+			{
+				if (s & D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+				{
+					vertex_formats.push_back(fmt.first);
+				}
+				if ((s & (D3D11_FORMAT_SUPPORT_TEXTURE1D | D3D11_FORMAT_SUPPORT_TEXTURE2D
+					| D3D11_FORMAT_SUPPORT_TEXTURE3D | D3D11_FORMAT_SUPPORT_TEXTURECUBE))
+					&& (s & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE))
+				{
+					texture_formats.push_back(fmt.first);
+				}
+
+				if (check_uav_fmts)
+				{
+					D3D11_FEATURE_DATA_FORMAT_SUPPORT2 format_support = { fmt.second , 0};
+					if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(
+							D3D11_FEATURE_FORMAT_SUPPORT2, &format_support, sizeof(format_support))) &&
+						((format_support.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) != 0) &&
+						((format_support.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE) != 0))
+					{
+						uav_formats.push_back(fmt.first);
+					}
+				}
+			}
+
+			if (s & (D3D11_FORMAT_SUPPORT_RENDER_TARGET | D3D11_FORMAT_SUPPORT_MULTISAMPLE_RENDERTARGET
+				| D3D11_FORMAT_SUPPORT_DEPTH_STENCIL))
+			{
+				UINT count = 1;
+				UINT quality;
+				while (count <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT)
+				{
+					if (SUCCEEDED(d3d_device_1_->CheckMultisampleQualityLevels(fmt.second, count, &quality)))
+					{
+						if (quality > 0)
+						{
+							//render_target_formats[fmt.first].push_back(RenderDeviceCaps::EncodeSampleCountQuality(count, quality));
+							count <<= 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	caps_.AssignTextureFormats(std::move(texture_formats));
 }
 
 char const * D3D11RenderEngine::DefaultShaderProfile(ShaderStage stage) const

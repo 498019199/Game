@@ -26,3 +26,7 @@ Direct3D 11.2
 HDR 显示支持：新增对高动态范围显示的色彩空间支持（如 DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020）。
 
 Direct3D 11.4
+
+
+2025年9月16日
+移植klayGE 图片读取相关代码，完全没有看，仅仅移植

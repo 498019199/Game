@@ -30,6 +30,7 @@ set(BASE_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/ResLoader.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Thread.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/RenderSettings.h
+    ${PROJECT_SOURCE_DIR}/core/core/src/TableGen/Tables.h
 )
 
 set(BASE_SOURCE_FILES
@@ -45,6 +46,8 @@ set(BASE_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/LZMACodec.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/Package.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/Streams.cpp
+
+    ${PROJECT_SOURCE_DIR}/core/core/src/TableGen/Tables.cpp
 )
 
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
@@ -68,6 +71,7 @@ set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderView.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderObject.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompression.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompressionBC.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Texture.h
 )
 
@@ -78,6 +82,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Light.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Mesh.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Renderable.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderDeviceCaps.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEffect.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEngine.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderFactory.cpp 
@@ -85,6 +90,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderStateObject.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderView.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/TexCompressionBC.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Texture.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Viewport.cpp
 )

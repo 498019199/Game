@@ -1,4 +1,7 @@
 #include <editor/EditorProjectPanel.h>
+
+#include <render/Texture.h>
+
 #include <unordered_set>
 #include <string>
 #include <filesystem>
@@ -6,6 +9,8 @@
 
 namespace EditorWorker
 {
+using namespace RenderWorker;
+
 // 在Project面板中屏蔽的文件类型
 std::unordered_set<std::string> ignoreExtensions = 
 { 
@@ -39,6 +44,8 @@ EditorProjectPanel::EditorProjectPanel()
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".wav",      AssetType::Audio             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".ogg",      AssetType::Audio             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".txt",      AssetType::Text              ));
+
+    auto pattern_real_tex_ = SyncLoadTexture("EditorAssets/icon/material.png", EAH_GPU_Read | EAH_Immutable);
 
     root_ =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
     root_->parent = nullptr;

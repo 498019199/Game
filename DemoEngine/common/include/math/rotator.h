@@ -1,7 +1,7 @@
 #pragma once
 #include "math/vectorxd.h"
 
-namespace MathWorker
+namespace RenderWorker
 {
 template <typename T>
 class Rotator_T
@@ -10,13 +10,13 @@ public:
 	enum { elem_num = 3 };
 	typedef T value_type;
 
-	typedef typename MathWorker::Vector_T<T, elem_num>::pointer pointer;
-	typedef typename MathWorker::Vector_T<T, elem_num>::const_pointer const_pointer;
-	typedef typename MathWorker::Vector_T<T, elem_num>::reference reference;
-	typedef typename MathWorker::Vector_T<T, elem_num>::const_reference const_reference;
-	typedef typename MathWorker:: Vector_T<T, elem_num>::iterator iterator;
-	typedef typename MathWorker::Vector_T<T, elem_num>::const_iterator const_iterator;
-	typedef typename MathWorker::Vector_T<T, elem_num>::size_type size_type;
+	typedef typename Vector_T<T, elem_num>::pointer pointer;
+	typedef typename Vector_T<T, elem_num>::const_pointer const_pointer;
+	typedef typename Vector_T<T, elem_num>::reference reference;
+	typedef typename Vector_T<T, elem_num>::const_reference const_reference;
+	typedef typename Vector_T<T, elem_num>::iterator iterator;
+	typedef typename Vector_T<T, elem_num>::const_iterator const_iterator;
+	typedef typename Vector_T<T, elem_num>::size_type size_type;
 
 public:
     constexpr Rotator_T() noexcept
@@ -111,4 +111,5 @@ std::ostream& operator<<(std::ostream& os, const Rotator_T<U>& rhs)
     return os << rhs.rot_;
 }
 
+using rotator = Rotator_T<float>;
 }

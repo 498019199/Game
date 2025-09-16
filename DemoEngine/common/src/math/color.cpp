@@ -3,7 +3,7 @@
 #include <utility>
 #include <algorithm>
 
-namespace MathWorker
+namespace RenderWorker
 {
 
 template<typename T>
@@ -42,10 +42,10 @@ Color_T<T>::Color_T(uint32_t dw) noexcept
 template<typename T>
 void Color_T<T>::RGBA(uint8_t& R, uint8_t& G, uint8_t& B, uint8_t& A) const noexcept
 {
-    R = static_cast<uint8_t>(clamp(this->r(), T(0), T(1)) * 255 + 0.5f);
-    G = static_cast<uint8_t>(clamp(this->g(), T(0), T(1)) * 255 + 0.5f);
-    B = static_cast<uint8_t>(clamp(this->b(), T(0), T(1)) * 255 + 0.5f);
-    A = static_cast<uint8_t>(clamp(this->a(), T(0), T(1)) * 255 + 0.5f);
+    R = static_cast<uint8_t>(MathWorker::clamp(this->r(), T(0), T(1)) * 255 + 0.5f);
+    G = static_cast<uint8_t>(MathWorker::clamp(this->g(), T(0), T(1)) * 255 + 0.5f);
+    B = static_cast<uint8_t>(MathWorker::clamp(this->b(), T(0), T(1)) * 255 + 0.5f);
+    A = static_cast<uint8_t>(MathWorker::clamp(this->a(), T(0), T(1)) * 255 + 0.5f);
 }
 
 template<typename T>
@@ -124,13 +124,6 @@ bool Color_T<T>::operator==(Color_T<T> const & rhs) const noexcept
 {
 	return col_ == rhs.col_;
 }
-
-template<typename T>
-bool Color_T<T>::operator!=(Color_T<T> const & rhs) const noexcept
-{
-	return col_ != rhs.col_;	
-}
-
 
 template class Color_T<float>;
 }

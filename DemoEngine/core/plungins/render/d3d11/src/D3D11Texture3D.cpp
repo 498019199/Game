@@ -8,28 +8,28 @@
 namespace RenderWorker
 {
 
-D3D11Texture3D::D3D11Texture3D(uint32_t width, uint32_t height, uint32_t depth, uint32_t numMipMaps, uint32_t array_size, 
+D3D11Texture3D::D3D11Texture3D(uint32_t width, uint32_t height, uint32_t depth, uint32_t MipMapsNum, uint32_t array_size, 
         ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
     :D3D11Texture(TT_1D, sample_count, sample_quality, access_hint)
 {
     COMMON_ASSERT(1 == array_size);
 
-    if (0 == numMipMaps)
+    if (0 == MipMapsNum)
     {
-        numMipMaps = 1;
+        MipMapsNum = 1;
         uint32_t w = width;
         uint32_t h = height;
         uint32_t d = depth;
         while ((w != 1) || (h != 1) || (d != 1))
         {
-            ++ numMipMaps;
+            ++ MipMapsNum;
 
             w = std::max(1U, w / 2);
             h = std::max(1U, h / 2);
             d = std::max(1U, d / 2);
         }
     }
-    mip_maps_num_ = numMipMaps;
+    mip_maps_num_ = MipMapsNum;
 
     array_size_ = array_size;
     format_		= format;
@@ -116,6 +116,60 @@ void D3D11Texture3D::Map3D(uint32_t array_index, uint32_t level, TextureMapAcces
 void D3D11Texture3D::Unmap3D(uint32_t array_index, uint32_t level)
 {
     d3d_imm_ctx_->Unmap(d3d_texture_.get(), D3D11CalcSubresource(level, array_index, mip_maps_num_));
+}
+
+void D3D11Texture3D::CopyToTexture(Texture& target, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((this->Width(0) == target.Width(0)) && (this->Height(0) == target.Height(0))
+        && (this->Depth(0) == target.Depth(0)) && (this->Format() == target.Format())
+        && (this->ArraySize() == target.ArraySize()) && (this->MipMapsNum() == target.MipMapsNum()))
+    {
+        auto& other = checked_cast<D3D11Texture3D&>(target);
+        d3d_imm_ctx_->CopyResource(other.d3d_texture_.get(), d3d_texture_.get());
+    }
+    else
+    {
+        uint32_t const array_size = std::min(this->ArraySize(), target.ArraySize());
+        uint32_t const num_mips = std::min(this->MipMapsNum(), target.MipMapsNum());
+        for (uint32_t index = 0; index < array_size; ++ index)
+        {
+            for (uint32_t level = 0; level < num_mips; ++ level)
+            {
+                this->ResizeTexture3D(target, index, level, 0, 0, 0, target.Width(level), target.Height(level), target.Depth(level),
+                    index, level, 0, 0, 0, this->Width(level), this->Height(level), this->Depth(level), filter);
+            }
+        }
+    }
+}
+
+void D3D11Texture3D::CopyToSubTexture3D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+    uint32_t dst_y_offset, uint32_t dst_z_offset, uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth, uint32_t src_array_index,
+    uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_z_offset, uint32_t src_width, uint32_t src_height,
+    uint32_t src_depth, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((src_width == dst_width) && (src_height == dst_height) && (this->Format() == target.Format()))
+    {
+        D3D11_BOX src_box;
+        src_box.left = src_x_offset;
+        src_box.top = src_y_offset;
+        src_box.front = src_z_offset;
+        src_box.right = src_x_offset + src_width;
+        src_box.bottom = src_y_offset + src_height;
+        src_box.back = src_z_offset + src_depth;
+
+        auto& other = checked_cast<D3D11Texture&>(target);
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(), D3D11CalcSubresource(dst_level, dst_array_index, target.MipMapsNum()),
+            dst_x_offset, dst_y_offset, 0, this->D3DResource(), D3D11CalcSubresource(src_level, src_array_index, this->MipMapsNum()), &src_box);
+    }
+    else
+    {
+        this->ResizeTexture3D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_z_offset, dst_width, dst_height, dst_depth,
+            src_array_index, src_level, src_x_offset, src_y_offset, src_z_offset, src_width, src_height, src_depth, filter);
+    }
 }
 
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11Texture3D::FillSRVDesc(ElementFormat pf, 

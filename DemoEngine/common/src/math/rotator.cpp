@@ -1,5 +1,5 @@
 #include <math/rotator.h>
-namespace MathWorker
+namespace RenderWorker
 {
 template<typename T>
 Rotator_T<T>::Rotator_T(const Rotator_T & rhs) noexcept

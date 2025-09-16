@@ -11,13 +11,13 @@
 #pragma warning(pop)
 #endif//PLATFORM_COMPILER_MSVC
 
-namespace MathWorker
+namespace RenderWorker
 {
 
-template <typename T, int N>
-class Vector_T
+template <typename T, size_t N>
+class Vector_T final
 {
-    template<typename U, int M>
+    template<typename U, size_t M>
     friend class Vector_T;
 
 	using DetailType = std::array<T, N>;
@@ -220,13 +220,13 @@ public:
 	// operator 
 	Vector_T operator^(const Vector_T& rhs) const noexcept
 	{
-		return Cross(*this, rhs);
+		return cross(*this, rhs);
 	}
 
 	// operator 
 	T operator|(const Vector_T& rhs) const noexcept
 	{
-		return Dot(*this, rhs);
+		return dot(*this, rhs);
 	}
 
 	// operator *     
@@ -317,44 +317,44 @@ private:
 	DetailType vec_;
 };
 
-template <typename T, int N>
+template <typename T, size_t N>
 Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator+=(rhs);
 }
 
-template <typename T, int N>
+template <typename T, size_t N>
 Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator-=(rhs);
 }
 
-template <typename T, int N, typename U>
+template <typename T, size_t N, typename U>
 Vector_T<T, N> operator*(const U& lhs, const Vector_T<T, N>& rhs) noexcept
 {
     return Vector_T<T, N>(rhs).operator*=(lhs);
 }
 
-template <typename T, int N, typename U>
+template <typename T, size_t N, typename U>
 Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const U& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator*=(rhs);
 }
 
-template <typename T, int N, typename U>
+template <typename T, size_t N, typename U>
 Vector_T<T, N> operator/(const U& lhs, const Vector_T<T, N>& rhs) noexcept
 {
     return Vector_T<T, N>(rhs).operator/=(lhs);
 }
 
-template <typename T, int N, typename U>
+template <typename T, size_t N, typename U>
 Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const U& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator/=(rhs);
 }
 
 // print
-template <typename T, int N>
+template <typename T, size_t N>
 std::ostream& operator<<(std::ostream& os, const Vector_T<T, N>& vec)
 {
 	for (size_t i = 0; i < N; i++)
@@ -363,4 +363,17 @@ std::ostream& operator<<(std::ostream& os, const Vector_T<T, N>& vec)
 	}
 	return os;
 }
+
+using int1 = Vector_T<int32_t, 1>;
+using int2 = Vector_T<int32_t, 2>;
+using int3 = Vector_T<int32_t, 3>;
+using int4 = Vector_T<int32_t, 4>;
+using uint1 = Vector_T<uint32_t, 1>;
+using uint2 = Vector_T<uint32_t, 2>;
+using uint3 = Vector_T<uint32_t, 3>;
+using uint4 = Vector_T<uint32_t, 4>;
+using float1 = Vector_T<float, 1>;
+using float2 = Vector_T<float, 2>;
+using float3 = Vector_T<float, 3>;
+using float4 = Vector_T<float, 4>;
 }

@@ -1,6 +1,6 @@
 #include <math/matrix.h>
 #include <math/math.h>
-namespace MathWorker
+namespace RenderWorker
 {
 
 template <typename T>
@@ -127,7 +127,7 @@ template <typename T>
 Matrix4_T<T>& 
 Matrix4_T<T>::operator*=(const Matrix4_T& rhs) noexcept
 {
-	*this = Mul(*this, rhs);
+	*this = MathWorker::mul(*this, rhs);
 	return *this;
 }
 
@@ -146,42 +146,6 @@ Matrix4_T<T>::operator+=(const Matrix4_T<T>& rhs) noexcept
 	this->m_ += rhs.m_;
 	return *this;
 }
-
-template <typename T>
-Matrix4_T<T>
-Matrix4_T<T>::operator+(const Matrix4_T& rhs) const noexcept
-{
-	return Matrix4_T<T>(*this).operator+=(rhs);
-}
-
-template <typename T>
-Matrix4_T<T> 
-Matrix4_T<T>::operator-(const Matrix4_T& rhs) const noexcept
-{
-	return Matrix4_T<T>(*this).operator-=(rhs);
-}
-
-template <typename T>
-Matrix4_T<T>
-Matrix4_T<T>::operator*(const Matrix4_T& rhs) const noexcept
-{
-	return Matrix4_T<T>(*this).operator*=(rhs);
-}
-
-template <typename T>
-Matrix4_T<T>
-Matrix4_T<T>::operator*(value_type rhs) const noexcept
-{
-	return Matrix4_T<T>(*this).operator*=(rhs);
-}
-
-template <typename T>
-Matrix4_T<T> 
-Matrix4_T<T>::operator/(value_type rhs) const noexcept
-{
-	return Matrix4_T<T>(*this).operator/=(rhs);
-}
-
 
 template <typename T>
 const Matrix4_T<T> & 
@@ -211,11 +175,6 @@ bool Matrix4_T<T>::operator==(const Matrix4_T<T>& rhs) const noexcept
 	return m_ == rhs.m_;
 }
 
-template <typename T>
-bool Matrix4_T<T>::operator!=(const Matrix4_T<T>& rhs) const noexcept
-{
-	return !this->operator==(rhs);
-}
 
 // 实例化模板
 template class Matrix4_T<float>;

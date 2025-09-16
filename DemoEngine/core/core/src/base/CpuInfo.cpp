@@ -429,7 +429,7 @@ namespace RenderWorker
 				}
 				else
 				{
-					BOOST_ASSERT(is_amd);
+					COMMON_ASSERT(is_amd);
 
 					if (max_ext_fn >= 0x80000008)
 					{
@@ -471,7 +471,7 @@ namespace RenderWorker
 			{
 				// Since we only have 1 logical processor present on the system, we
 				// can explicitly set a single APIC ID to zero.
-				BOOST_ASSERT(1 == log_procs_per_pkg);
+				COMMON_ASSERT(1 == log_procs_per_pkg);
 				apic_ids.push_back(0);
 			}
 			else

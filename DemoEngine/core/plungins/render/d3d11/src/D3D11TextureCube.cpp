@@ -7,22 +7,22 @@
 
 namespace RenderWorker
 {
-D3D11TextureCube::D3D11TextureCube(uint32_t size, uint32_t numMipMaps, uint32_t array_size, ElementFormat format,
+D3D11TextureCube::D3D11TextureCube(uint32_t size, uint32_t MipMapsNum, uint32_t array_size, ElementFormat format,
         uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
     :D3D11Texture(TT_1D, sample_count, sample_quality, access_hint)
 {
-    if (0 == numMipMaps)
+    if (0 == MipMapsNum)
     {
-        numMipMaps = 1;
+        MipMapsNum = 1;
         uint32_t w = size;
         while (w != 1)
         {
-            ++ numMipMaps;
+            ++ MipMapsNum;
 
             w = std::max(1U, w / 2);
         }
     }
-    mip_maps_num_ = numMipMaps;
+    mip_maps_num_ = MipMapsNum;
 
     array_size_ = array_size;
     format_		= format;
@@ -115,6 +115,123 @@ void D3D11TextureCube::MapCube(uint32_t array_index, CubeFaces face, uint32_t le
 void D3D11TextureCube::UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level)
 {
     d3d_imm_ctx_->Unmap(d3d_texture_.get(), D3D11CalcSubresource(level, array_index * 6 + face - CF_Positive_X, mip_maps_num_));
+}
+
+void D3D11TextureCube::CopyToTexture(Texture& target, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((this->Width(0) == target.Width(0)) && (this->Format() == target.Format())
+        && (this->ArraySize() == target.ArraySize()) && (this->MipMapsNum() == target.MipMapsNum()))
+    {
+        auto& other = checked_cast<D3D11TextureCube&>(target);
+        d3d_imm_ctx_->CopyResource(other.d3d_texture_.get(), d3d_texture_.get());
+    }
+    else
+    {
+        uint32_t const array_size = std::min(this->ArraySize(), target.ArraySize());
+        uint32_t const num_mips = std::min(this->MipMapsNum(), target.MipMapsNum());
+        for (uint32_t index = 0; index < array_size; ++ index)
+        {
+            for (int f = 0; f < 6; ++ f)
+            {
+                CubeFaces const face = static_cast<CubeFaces>(f);
+                for (uint32_t level = 0; level < num_mips; ++ level)
+                {
+                    this->ResizeTextureCube(target, index, face, level, 0, 0, target.Width(level), target.Height(level), index, face,
+                        level, 0, 0, this->Width(level), this->Height(level), filter);
+                }
+            }
+        }
+    }
+}
+
+void D3D11TextureCube::CopyToSubTexture2D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+    uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset,
+    uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
+{
+    COMMON_ASSERT((TT_2D == target.Type()) || (TT_Cube == target.Type()));
+
+    if ((src_width == dst_width) && (src_height == dst_height) && (this->Format() == target.Format()))
+    {
+        auto& other = checked_cast<D3D11Texture&>(target);
+
+        D3D11_BOX* src_box_ptr;
+        D3D11_BOX src_box;
+        if ((sample_count_ != 1) || IsDepthFormat(format_))
+        {
+            COMMON_ASSERT(other.SampleCount() == sample_count_);
+            COMMON_ASSERT(dst_x_offset == 0);
+            COMMON_ASSERT(dst_y_offset == 0);
+
+            src_box_ptr = nullptr;
+        }
+        else
+        {
+            src_box.left = src_x_offset;
+            src_box.top = src_y_offset;
+            src_box.front = 0;
+            src_box.right = src_x_offset + src_width;
+            src_box.bottom = src_y_offset + src_height;
+            src_box.back = 1;
+
+            src_box_ptr = &src_box;
+        }
+
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(), D3D11CalcSubresource(dst_level, dst_array_index, target.MipMapsNum()),
+            dst_x_offset, dst_y_offset, 0, this->D3DResource(), D3D11CalcSubresource(src_level, src_array_index, this->MipMapsNum()),
+            src_box_ptr);
+    }
+    else
+    {
+        this->ResizeTexture2D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+            src_array_index, src_level, src_x_offset, src_y_offset, src_width, src_height, filter);
+    }
+}
+
+void D3D11TextureCube::CopyToSubTextureCube(Texture& target, uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level,
+    uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, CubeFaces src_face,
+    uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
+{
+    COMMON_ASSERT(type_ == target.Type());
+
+    if ((src_width == dst_width) && (src_height == dst_height) && (this->Format() == target.Format()))
+    {
+        auto& other = checked_cast<D3D11Texture&>(target);
+
+        D3D11_BOX* src_box_ptr;
+        D3D11_BOX src_box;
+        if ((sample_count_ != 1) || IsDepthFormat(format_))
+        {
+            COMMON_ASSERT(other.SampleCount() == sample_count_);
+            COMMON_ASSERT(dst_x_offset == 0);
+            COMMON_ASSERT(dst_y_offset == 0);
+
+            src_box_ptr = nullptr;
+        }
+        else
+        {
+            src_box.left = src_x_offset;
+            src_box.top = src_y_offset;
+            src_box.front = 0;
+            src_box.right = src_x_offset + src_width;
+            src_box.bottom = src_y_offset + src_height;
+            src_box.back = 1;
+
+            src_box_ptr = &src_box;
+        }
+
+        d3d_imm_ctx_->CopySubresourceRegion(other.D3DResource(),
+            D3D11CalcSubresource(dst_level, dst_array_index * 6 + dst_face - CF_Positive_X, target.MipMapsNum()),
+            dst_x_offset, dst_y_offset, 0, this->D3DResource(),
+            D3D11CalcSubresource(src_level, src_array_index * 6 + src_face - CF_Positive_X, this->MipMapsNum()),
+            src_box_ptr);
+    }
+    else
+    {
+        this->ResizeTextureCube(target, dst_array_index, dst_face, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+            src_array_index, src_face, src_level, src_x_offset, src_y_offset, src_width, src_height, filter);
+    }
 }
 
 D3D11_SHADER_RESOURCE_VIEW_DESC D3D11TextureCube::FillSRVDesc(ElementFormat pf,  [[maybe_unused]] uint32_t first_array_index, 

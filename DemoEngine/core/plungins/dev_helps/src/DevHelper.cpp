@@ -1,6 +1,7 @@
 #include <base/DevHelper.h>
 #include <dev_helps/TexConverter.h>
 #include <string_view>
+#include <filesystem>
 
 
 namespace RenderWorker
@@ -10,6 +11,33 @@ class DevHelperImp final : public DevHelper
 public:
     ~DevHelperImp() override
     {
+    }
+
+    TexturePtr ConvertTexture(std::string_view input_name, std::string_view metadata_name, std::string_view output_name,
+        RenderDeviceCaps const * caps) override
+    {
+        std::string metadata_name_ptr(metadata_name);
+        if (metadata_name.empty())
+        {
+            metadata_name_ptr = std::string(input_name) + ".kmeta";
+        }
+
+        auto metadata = this->LoadTexMetadata(metadata_name_ptr, caps);
+
+        TexConverter tc;
+        auto texture = tc.Load(metadata);
+
+        std::filesystem::path input_path(input_name);
+        std::filesystem::path output_path(output_name);
+        if (output_path.parent_path() == input_path.parent_path())
+        {
+            output_path = std::filesystem::path(Context::Instance().ResLoaderInstance().Locate(input_name)).parent_path() /
+                            output_path.filename();
+        }
+
+        SaveTexture(texture, output_path.string());
+
+        return texture;
     }
 
     void GetImageInfo(std::string_view input_name, std::string_view metadata_name, RenderDeviceCaps const * caps,

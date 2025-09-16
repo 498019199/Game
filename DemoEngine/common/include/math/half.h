@@ -49,7 +49,7 @@
 #pragma once
 #include <math/vectorxd.h>
 
-namespace MathWorker
+namespace RenderWorker
 {
 // 不知道这个类干什么的，跟颜色有关
 class half

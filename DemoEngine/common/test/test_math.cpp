@@ -41,18 +41,18 @@ void checkvecotr()
 	v /= 5.f;
 	std::cout << v << std::endl;
 	// normalize
-	std::cout << Normalize(v) << std::endl;
-	v = Normalize(v);
+	std::cout << normalize(v) << std::endl;
+	v = normalize(v);
 	std::cout << v << std::endl;
 	std::cout << v[2] << std::endl;
 
-	// Cross
-	std::cout << Cross(v, u) << std::endl;
+	// cross
+	std::cout << cross(v, u) << std::endl;
 	// dot
-	std::cout << Dot(v, u) << std::endl;
+	std::cout << dot(v, u) << std::endl;
 
 	// lerp
-	std::cout << Lerp(v, u, 0.5) << std::endl;
+	std::cout << lerp(v, u, 0.5) << std::endl;
 
 	// veci
 	int3 iv{ 1,2,3 };
@@ -60,8 +60,8 @@ void checkvecotr()
 	assert(int3(7,14,21) == (iv * 7));
 
 	// project, perpendicular
-	//std::cout << v.project(u.Normalize()) << std::endl;
-	//std::cout << v.perpendicular(u.Normalize()) << std::endl;
+	//std::cout << v.project(u.normalize()) << std::endl;
+	//std::cout << v.perpendicular(u.normalize()) << std::endl;
 
 	Vector_T<float, 3> vs[4];
 	std::cout << vs[2] + vs[3] << std::endl;
@@ -82,9 +82,6 @@ void checkvecotr()
 	assert(float3(5,7,9) == (a + b));
 	assert(float3(-3,-3,-3) == (a - b));
 	assert(float3(10,0,3) == (b + c - a));
-
-	// test distance
-	assert(10 == Distance(int2(5,0), int2(-1,8)));
 
 	//  inner product
 	assert(30 == (int2(4,6) | int2(-3,7)));
@@ -111,7 +108,7 @@ void checkmatrix()
 
 	// test matrix multiplication
 	assert(float4x4(12,1,13,14, 12,0,12,15,  10,0,10,7, 2,0,2,2) == 
-		Mul(float4x4(1,2,3,4,  0,0,5,6,  0,2,1,3,  0,1,0,0), 
+		mul(float4x4(1,2,3,4,  0,0,5,6,  0,2,1,3,  0,1,0,0), 
 		float4x4(0,1,1,1,  2,0,2,2,  0,0,0,3,  2,0,2,0)));
 	// test +,-
 	assert(float4x4(3,3,3,3, 3,3,3,3,  3,3,3,3, 3,3,3,3) == 

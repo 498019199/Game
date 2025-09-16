@@ -119,7 +119,7 @@ public:
         return res_loader_;
     }
 
- #if ZENGINE_IS_DEV_PLATFORM
+#if ZENGINE_IS_DEV_PLATFORM
     bool DevHelperValid() const noexcept
     {
         return dev_helper_ != nullptr;
@@ -136,7 +136,7 @@ public:
         }
         return *dev_helper_;
     }
-#endif// KLAYGE_IS_DEV_PLATFORM
+#endif// ZENGINE_IS_DEV_PLATFORM
 
     void LoadRenderFactory( std::string const& rf_name )
     {
@@ -198,7 +198,7 @@ public:
         MakeDevHelper(dev_helper_);
 #endif// ZENGINE_STATIC_LINK_PLUGINS
     }
-#endif// KLAYGE_IS_DEV_PLATFORM
+#endif// ZENGINE_IS_DEV_PLATFORM
 
 
     void Config(const ContextConfig& cfg)
@@ -456,8 +456,8 @@ ResLoader& Context::ResLoaderInstance() noexcept
     return pimpl_->ResLoaderInstance();
 }
 
-#if KLAYGE_IS_DEV_PLATFORM
-bool Context::DevHelperValid() const noexcept;
+#if ZENGINE_IS_DEV_PLATFORM
+bool Context::DevHelperValid() const noexcept
 {
     return pimpl_->DevHelperValid();
 }
@@ -466,7 +466,7 @@ DevHelper& Context::DevHelperInstance()
 {
     return pimpl_->DevHelperInstance();
 }
-#endif
+#endif// ZENGINE_IS_DEV_PLATFORM
 
 const ContextConfig& Context::Config() const noexcept
 {

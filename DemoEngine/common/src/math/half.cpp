@@ -1,7 +1,7 @@
 #include <math/half.h>
 #include <bit>
 
-namespace MathWorker
+namespace RenderWorker
 {
 half::half(float f) noexcept
 {

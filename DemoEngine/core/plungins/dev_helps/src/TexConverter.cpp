@@ -172,6 +172,285 @@ bool TexLoader::IsSupported(std::string_view input_name)
         return fif != FIF_UNKNOWN;
     }
 }
+
+bool TexLoader::Load()
+{
+    array_size_ = metadata_.ArraySize();
+
+    planes_.resize(array_size_);
+    for (uint32_t arr = 0; arr < array_size_; ++arr)
+    {
+        std::string_view const plane_file_name = metadata_.PlaneFileName(arr, 0);
+        auto& image = planes_[arr].emplace_back(MakeSharedPtr<ImagePlane>());
+        if (!image->Load(plane_file_name, metadata_))
+        {
+            //LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
+            return false;
+        }
+    }
+
+    auto& first_image = *planes_[0][0];
+    width_ = first_image.Width();
+    height_ = first_image.Height();
+    if (first_image.CompressedTex())
+    {
+        format_ = first_image.CompressedTex()->Format();
+    }
+    else
+    {
+        format_ = first_image.UncompressedTex()->Format();
+    }
+    COMMON_ASSERT(format_ != EF_Unknown);
+    if (metadata_.PreferedFormat() == EF_Unknown)
+    {
+        metadata_.PreferedFormat(format_);
+    }
+
+    if (metadata_.MipmapEnabled())
+    {
+        if (metadata_.NumMipmaps() == 0)
+        {
+            num_mipmaps_ = 1;
+            uint32_t w = width_;
+            uint32_t h = height_;
+            while ((w != 1) || (h != 1))
+            {
+                ++ num_mipmaps_;
+
+                w = std::max(1U, w / 2);
+                h = std::max(1U, h / 2);
+            }
+        }
+        else
+        {
+            num_mipmaps_ = metadata_.NumMipmaps();
+        }
+    }
+    else
+    {
+        num_mipmaps_ = 1;
+    }
+
+    bool need_gen_mipmaps = false;
+    if ((num_mipmaps_ > 1) && metadata_.AutoGenMipmap())
+    {
+        need_gen_mipmaps = true;
+
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            planes_[arr].resize(num_mipmaps_);
+            for (uint32_t m = 1; m < num_mipmaps_; ++ m)
+            {
+                planes_[arr][m] = MakeSharedPtr<ImagePlane>();
+            }
+        }
+    }
+    else
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            planes_[arr].resize(num_mipmaps_);
+
+            for (uint32_t m = 1; m < num_mipmaps_; ++ m)
+            {
+                std::string_view const plane_file_name = metadata_.PlaneFileName(arr, m);
+                planes_[arr][m] = MakeSharedPtr<ImagePlane>();
+                if (plane_file_name.empty())
+                {
+                    if (m == 0)
+                    {
+                        *planes_[arr][m] = planes_[0][0]->ResizeTo(width_, height_, false);
+                    }
+                    else
+                    {
+                        *planes_[arr][m] = planes_[arr][0]->ResizeTo(
+                            std::max(1U, width_ >> m), std::max(1U, height_ >> m), metadata_.LinearMipmap());
+                    }
+                }
+                else
+                {
+                    if (!planes_[arr][m]->Load(plane_file_name, metadata_))
+                    {
+                        //LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    if (metadata_.RgbToLum())
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            uint32_t const num = need_gen_mipmaps ? 1 : num_mipmaps_;
+            for (uint32_t m = 0; m < num; ++ m)
+            {
+                planes_[arr][m]->RgbToLum();
+            }
+        }
+    }
+
+    if (((metadata_.Slot() == RenderMaterial::TS_Normal) || (metadata_.Slot() == RenderMaterial::TS_Occlusion)) &&
+        (metadata_.BumpToNormal() || metadata_.BumpToOcclusion()))
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            uint32_t const num = need_gen_mipmaps ? 1 : num_mipmaps_;
+            for (uint32_t m = 0; m < num; ++ m)
+            {
+                planes_[arr][m]->BumpToNormal(metadata_.BumpScale(), metadata_.BumpToOcclusion() ? metadata_.OcclusionAmplitude() : 0);
+
+                if (metadata_.Slot() == RenderMaterial::TS_Occlusion)
+                {
+                    planes_[arr][m]->AlphaToLum();
+                }
+            }
+        }
+    }
+
+    if ((metadata_.Slot() == RenderMaterial::TS_Height) && metadata_.NormalToHeight())
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            uint32_t const num = need_gen_mipmaps ? 1 : num_mipmaps_;
+            for (uint32_t m = 0; m < num; ++ m)
+            {
+                planes_[arr][m]->NormalToHeight(metadata_.HeightMinZ());
+            }
+        }
+    }
+
+    if (need_gen_mipmaps)
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            uint32_t w = width_;
+            uint32_t h = height_;
+            for (uint32_t m = 0; m < num_mipmaps_ - 1; ++ m)
+            {
+                w = std::max(1U, w / 2);
+                h = std::max(1U, h / 2);
+
+                *planes_[arr][m + 1] = planes_[arr][m]->ResizeTo(w, h, metadata_.LinearMipmap());
+            }
+        }
+
+        format_ = planes_[0][0]->UncompressedTex()->Format();
+    }
+
+    bool need_normal_compression = false;
+    if (metadata_.Slot() == RenderMaterial::TS_Normal)
+    {
+        switch (metadata_.PreferedFormat())
+        {
+        case EF_BC3:
+        case EF_BC5:
+        case EF_GR8:
+            need_normal_compression = true;
+            break;
+
+        default:
+            break;
+        }
+    }
+    if (need_normal_compression)
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            for (uint32_t m = 0; m < num_mipmaps_; ++ m)
+            {
+                planes_[arr][m]->PrepareNormalCompression(metadata_.PreferedFormat());
+            }
+        }
+    }
+
+    if (format_ != metadata_.PreferedFormat())
+    {
+        for (uint32_t arr = 0; arr < array_size_; ++ arr)
+        {
+            for (uint32_t m = 0; m < num_mipmaps_; ++ m)
+            {
+                planes_[arr][m]->FormatConversion(metadata_.PreferedFormat());
+            }
+        }
+
+        format_ = metadata_.PreferedFormat();
+    }
+
+    return true;
+}
+
+TexturePtr TexLoader::StoreToTexture()
+{
+    Texture::TextureType output_type = Texture::TT_2D;
+    uint32_t output_width = width_;
+    uint32_t output_height = height_;
+    uint32_t output_depth = 1;
+    uint32_t output_num_mipmaps = num_mipmaps_;
+    uint32_t output_array_size = array_size_;
+    ElementFormat output_format = format_;
+
+    std::vector<ElementInitData> output_init_data(array_size_ * num_mipmaps_);
+    uint32_t data_size = 0;
+    for (uint32_t arr = 0; arr < array_size_; ++ arr)
+    {
+        for (uint32_t m = 0; m < num_mipmaps_; ++ m)
+        {
+            auto const & plane = *planes_[arr][m];
+            auto& out_data = output_init_data[arr * num_mipmaps_ + m];
+
+            if (IsCompressedFormat(format_))
+            {
+                Texture::Mapper mapper(*plane.CompressedTex(), 0, 0, TMA_Read_Only, 0, 0,
+                    plane.CompressedTex()->Width(0), plane.CompressedTex()->Height(0));
+                out_data.row_pitch = mapper.RowPitch();
+                out_data.slice_pitch = mapper.SlicePitch();
+            }
+            else
+            {
+                Texture::Mapper mapper(*plane.UncompressedTex(), 0, 0, TMA_Read_Only, 0, 0,
+                    plane.UncompressedTex()->Width(0), plane.UncompressedTex()->Height(0));
+                out_data.row_pitch = mapper.RowPitch();
+                out_data.slice_pitch = mapper.SlicePitch();
+            }
+            data_size += out_data.slice_pitch;
+        }
+    }
+
+    std::vector<uint8_t> output_data_block(data_size);
+    uint32_t start_index = 0;
+    for (uint32_t arr = 0; arr < array_size_; ++ arr)
+    {
+        for (uint32_t m = 0; m < num_mipmaps_; ++ m)
+        {
+            auto const & plane = *planes_[arr][m];
+            auto& out_data = output_init_data[arr * num_mipmaps_ + m];
+
+            uint8_t* dst = &output_data_block[start_index];
+            if (IsCompressedFormat(format_))
+            {
+                Texture::Mapper mapper(*plane.CompressedTex(), 0, 0, TMA_Read_Only, 0, 0,
+                    plane.CompressedTex()->Width(0), plane.CompressedTex()->Height(0));
+                std::memcpy(dst, mapper.Pointer<uint8_t>(), out_data.slice_pitch);
+            }
+            else
+            {
+                Texture::Mapper mapper(*plane.UncompressedTex(), 0, 0, TMA_Read_Only, 0, 0,
+                    plane.UncompressedTex()->Width(0), plane.UncompressedTex()->Height(0));
+                std::memcpy(dst, mapper.Pointer<uint8_t>(), out_data.slice_pitch);
+            }
+            out_data.data = dst;
+            start_index += out_data.slice_pitch;
+        }
+    }
+
+    TexturePtr ret = MakeSharedPtr<VirtualTexture>(output_type, output_width, output_height, output_depth,
+        output_num_mipmaps, output_array_size, output_format, false);
+    ret->CreateHWResource(output_init_data, nullptr);
+    return ret;
+}
+
 }
 
 namespace RenderWorker

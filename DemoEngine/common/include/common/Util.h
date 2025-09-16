@@ -11,9 +11,11 @@
 #include <utility>
 
 #ifdef ZENGINE_DEBUG
-	#define COMMON_ASSERT(val) assert(val)
+	#define COMMON_ASSERT(expr) assert(val)
+    #define COMMON_ASSERT_MSG(expr, msg) assert(val)
 #else
-	#define COMMON_ASSERT(val) 
+	#define COMMON_ASSERT(expr) 
+	#define COMMON_ASSERT_MSG(expr, msg) 
 #endif//ZENGINE_DEBUG
 
 #if defined(ZENGINE_CXX23_LIBRARY_TO_UNDERLYING_SUPPORT)

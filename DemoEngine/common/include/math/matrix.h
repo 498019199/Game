@@ -2,7 +2,7 @@
 #include <iostream>
 #include "math/vectorxd.h"
 
-namespace MathWorker
+namespace RenderWorker
 {
 template <typename T>
 class Matrix4_T
@@ -94,12 +94,6 @@ public:
     Matrix4_T& operator*=(value_type rhs) noexcept;
     Matrix4_T& operator/=(value_type rhs) noexcept;
 
-    Matrix4_T operator+(const Matrix4_T& rhs) const noexcept;
-    Matrix4_T operator-(const Matrix4_T& rhs) const noexcept;
-    Matrix4_T operator*(const Matrix4_T& rhs) const noexcept;
-    Matrix4_T operator*(value_type rhs) const noexcept;
-    Matrix4_T operator/(value_type rhs) const noexcept;
-
     Matrix4_T& operator=(const Matrix4_T& rhs) noexcept;
     Matrix4_T& operator=(Matrix4_T&& rhs) noexcept;
 
@@ -108,11 +102,46 @@ public:
     Matrix4_T operator-() const noexcept;
 
     bool operator==(const Matrix4_T& rhs) const noexcept;
-    bool operator!=(const Matrix4_T& rhs) const noexcept;
-
     // print
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const Matrix4_T<U>& rhs);
+
+    friend Matrix4_T<T> operator+(const Matrix4_T<T>& lhs, const Matrix4_T<T>& rhs) noexcept
+    {
+		Matrix4_T<T> temp(lhs);
+		return temp += rhs;
+    }
+    friend Matrix4_T<T> operator-(const Matrix4_T<T>& lhs, const Matrix4_T<T>& rhs) noexcept
+    {
+        Matrix4_T<T> temp(lhs);
+        return temp -= rhs;
+    }
+    
+    friend Matrix4_T<T> operator*(const Matrix4_T<T>& lhs, const Matrix4_T<T>& rhs) noexcept
+    {
+        Matrix4_T<T> temp(lhs);
+        return temp *= rhs;
+    }
+    friend Matrix4_T<T> operator*(const Matrix4_T<T>& lhs, const T & rhs) noexcept
+    {
+        Matrix4_T<T> temp(lhs);
+        return temp *= lhs;
+    }
+    friend Matrix4_T<T> operator*(const T & lhs, const Matrix4_T<T>& rhs) noexcept
+    {
+        return rhs * lhs;
+    }
+
+    friend Matrix4_T<T> operator/(const Matrix4_T<T>& lhs, const T & rhs) noexcept
+    {
+        Matrix4_T<T> temp(lhs);
+        return temp /= rhs;
+    }
+
+    friend bool operator!=(const Matrix4_T<T>& lhs, const Matrix4_T<T>& rhs) noexcept
+    {
+        return !(lhs == rhs);
+    }
 private:
 	Vector_T<Vector_T<T, col_num>, row_num> m_;
 };
@@ -124,4 +153,6 @@ std::ostream& operator<<(std::ostream& os, const Matrix4_T<U>& rhs)
 {
 	return os << rhs.m_;
 }
+
+using float4x4 = Matrix4_T<float>;
 }

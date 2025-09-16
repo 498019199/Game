@@ -1,7 +1,7 @@
 #pragma once
 #include <math/vectorxd.h>
 
-namespace MathWorker
+namespace RenderWorker
 {
 
 template <typename T>
@@ -99,15 +99,46 @@ public:
 	Color_T& operator/=(T rhs) noexcept;
 
 	bool operator==(Color_T<T> const & rhs) const noexcept;
-	bool operator!=(Color_T<T> const & rhs) const noexcept;
+
+	friend Color_T<T> operator+(const Color_T<T>& lhs, const Color_T<T>&  rhs) noexcept
+	{
+		Color_T<T> temp(lhs);
+		return temp += rhs;
+	}
+	friend Color_T<T> operator-(const Color_T<T>&  lhs, const Color_T<T>&  rhs) noexcept
+	{
+		Color_T<T> temp(lhs);
+		return temp -= rhs;
+	}
+
+	friend Color_T<T> operator*(const Color_T<T>&  lhs, T rhs) noexcept
+	{
+		Color_T<T> temp(lhs);
+		return temp *= rhs;
+	}
+	friend Color_T<T> operator*(T lhs, const Color_T<T>&  rhs) noexcept
+	{
+		Color_T<T> temp(rhs);
+		return temp *= lhs;
+	}
+	friend Color_T<T> operator*(const Color_T<T>&  lhs, const Color_T<T>&  rhs) noexcept
+	{
+		return lhs * rhs;
+	}
+
+	friend Color_T<T> operator/(const Color_T<T>&  lhs, T rhs) noexcept
+	{
+		Color_T<T> temp(lhs);
+		return temp /= rhs;
+	}
+
+	friend bool operator!=(const Color_T<T>&  lhs, const Color_T<T>& rhs) noexcept
+	{
+		return !(lhs.col_ == rhs.col_);	
+	}
 private:
 	Vector_T<T, elem_num> col_;
 };
 
-
-template<typename T> 
-class Half_T
-{
-	
-};
+using Color = Color_T<float>;
 }
