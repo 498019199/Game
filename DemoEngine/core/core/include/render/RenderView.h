@@ -14,6 +14,10 @@ public:
     ShaderResourceView();
     virtual ~ShaderResourceView() noexcept;
 
+#if ZENGINE_IS_DEV_PLATFORM
+    virtual void* GetShaderResourceView();
+#endif //ZENGINE_IS_DEV_PLATFORM
+
     ElementFormat Format() const
     {
         return pf_;

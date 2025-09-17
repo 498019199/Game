@@ -25,6 +25,10 @@ public:
         uint32_t first_level, uint32_t num_levels);
 
     ID3D11ShaderResourceView* RetrieveD3DShaderResourceView() const override;
+
+#if ZENGINE_IS_DEV_PLATFORM
+    virtual void* GetShaderResourceView() override;
+#endif //ZENGINE_IS_DEV_PLATFORM
 };
 
 class D3D11RenderTargetView : public RenderTargetView

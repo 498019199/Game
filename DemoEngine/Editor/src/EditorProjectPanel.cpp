@@ -1,6 +1,7 @@
 #include <editor/EditorProjectPanel.h>
 
 #include <render/Texture.h>
+#include <render/RenderFactory.h>
 
 #include <unordered_set>
 #include <string>
@@ -45,12 +46,26 @@ EditorProjectPanel::EditorProjectPanel()
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".ogg",      AssetType::Audio             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".txt",      AssetType::Text              ));
 
-    auto pattern_real_tex_ = SyncLoadTexture("EditorAssets/icon/material.png", EAH_GPU_Read | EAH_Immutable);
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    fileIcons_[(int)AssetType::Other]              = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/other.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Folder]             = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/folder.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Material]           = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::DeferredMaterial]   = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::RayTracingMaterial] = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Prefab]             = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/prefab.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Script]             = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/lua.png",     EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Shader]             = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/shader.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Texture]            = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/texture.png", EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Scene]              = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/scene.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Model]              = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/model.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::RayTracingShader]   = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/raytrace.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Audio]              = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/audio.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Text]               = rf.MakeTextureSrv(SyncLoadTexture("EditorAssets/icons/text.png",    EAH_GPU_Read | EAH_Immutable));
 
     root_ =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
     root_->parent = nullptr;
     const std::string& LocalPath = RenderWorker::Context::Instance().ResLoaderInstance().LocalFolder();
-    root_->path = (LocalPath + "../../Assets/EditorAssets");
+    root_->path = (LocalPath + "../../Assets");
     root_->name = "Assets";
     root_->extension = "";
     root_->type = AssetType::Folder;
@@ -133,9 +148,9 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
             }
 
             // 无论是否点击都必须PopStyleColor，所以没有直接写在if中
-            //std::string label = "##File" + std::to_string(i);
-            //auto icon = fileIcons[(int)node->type];
-            bool click = false;//ImGui::ImageButton(label.c_str(), icon.ImGuiID, iconSize);
+            std::string label = "##File" + std::to_string(i);
+            auto icon = fileIcons_[(int)node->type]->GetShaderResourceView();
+            bool click = ImGui::ImageButton(label.c_str(), (ImTextureID)(intptr_t)icon, iconSize);
             ImGui::PopStyleColor(1);
             if (click)
             {

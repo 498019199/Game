@@ -44,6 +44,13 @@ ID3D11ShaderResourceView* D3D11TextureShaderResourceView::RetrieveD3DShaderResou
     return d3d_sr_view_.get();
 }
 
+#if ZENGINE_IS_DEV_PLATFORM
+void* D3D11TextureShaderResourceView::GetShaderResourceView()
+{
+	return RetrieveD3DShaderResourceView();
+}
+#endif//ZENGINE_IS_DEV_PLATFORM
+
 
 
 

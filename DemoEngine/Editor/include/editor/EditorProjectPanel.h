@@ -1,6 +1,7 @@
 #pragma once
 #include <editor/EditorPanel.h>
 #include <base/ZEngine.h>
+#include <render/RenderView.h> 
 
 namespace EditorWorker
 {
@@ -63,6 +64,7 @@ private:
     EditorAssetNodePtr cur_ ;
 
     std::map<std::string, AssetType> ext_type_map_;
+    RenderWorker::ShaderResourceViewPtr fileIcons_[static_cast<std::size_t>(AssetType::Count)];
 };
 
 

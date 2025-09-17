@@ -19,3 +19,6 @@
 
 /ZEngine/bin
 /ZEngine/include
+
+
+*.png.dds
