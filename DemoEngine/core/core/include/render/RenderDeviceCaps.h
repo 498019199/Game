@@ -33,6 +33,7 @@ struct ZENGINE_CORE_API RenderDeviceCaps
 
 	void AssignTextureFormats(std::vector<ElementFormat> texture_formats);
 
+	ElementFormat BestMatchTextureFormat(std::span<const ElementFormat> formats) const;
 private:
     void UpdateSupportBits();
     
@@ -42,6 +43,7 @@ private:
     std::map<ElementFormat, std::vector<uint32_t>> render_target_formats_;
     std::vector<ElementFormat> uav_formats_;
 };
+
 
 
 

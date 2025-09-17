@@ -4,7 +4,7 @@ namespace RenderWorker
 {
 Camera::Camera()
 {
-    ProjParams(MathWorker::PI / 4, 1, 1, 1000);
+    ProjParams(PI / 4, 1, 1, 1000);
 }
 
 const float3& Camera::EyePos() const

@@ -19,6 +19,21 @@ void RenderDeviceCaps::AssignTextureFormats(std::vector<ElementFormat> texture_f
     this->UpdateSupportBits();
 }
 
+ElementFormat RenderDeviceCaps::BestMatchTextureFormat(std::span<const ElementFormat> formats) const
+{
+    ElementFormat ret = EF_Unknown;
+    for (auto fmt : formats)
+    {
+        if (this->TextureFormatSupport(fmt))
+        {
+            ret = fmt;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 void RenderDeviceCaps::UpdateSupportBits()
 {
     

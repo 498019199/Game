@@ -220,13 +220,13 @@ public:
 	// operator 
 	Vector_T operator^(const Vector_T& rhs) const noexcept
 	{
-		return cross(*this, rhs);
+		return MathWorker::cross(*this, rhs);
 	}
 
 	// operator 
 	T operator|(const Vector_T& rhs) const noexcept
 	{
-		return dot(*this, rhs);
+		return MathWorker::dot(*this, rhs);
 	}
 
 	// operator *     
@@ -322,9 +322,19 @@ Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) n
 {
     return Vector_T<T, N>(lhs).operator+=(rhs);
 }
+template <typename T, size_t N, typename U>
+Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+{
+    return Vector_T<T, N>(lhs).operator+=(rhs);
+}
 
 template <typename T, size_t N>
 Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+{
+    return Vector_T<T, N>(lhs).operator-=(rhs);
+}
+template <typename T, size_t N, typename U>
+Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const U& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator-=(rhs);
 }
@@ -337,6 +347,11 @@ Vector_T<T, N> operator*(const U& lhs, const Vector_T<T, N>& rhs) noexcept
 
 template <typename T, size_t N, typename U>
 Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+{
+    return Vector_T<T, N>(lhs).operator*=(rhs);
+}
+template <typename T, size_t N>
+Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
 {
     return Vector_T<T, N>(lhs).operator*=(rhs);
 }

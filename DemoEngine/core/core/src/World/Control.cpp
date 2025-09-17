@@ -42,9 +42,9 @@ void FirstPersonController::AttachCamera(const CameraPtr& camera)
 
     rotator rot = MathWorker::ToRotator(quat);
 
-    MathWorker::SinCos(rot.pitch() / 2, rot_x_.x(), rot_x_.y());
-    MathWorker::SinCos(rot.yaw() / 2, rot_y_.x(), rot_y_.y());
-    MathWorker::SinCos(rot.roll() / 2, rot_z_.x(), rot_z_.y());
+    MathWorker::sincos(rot.pitch() / 2, rot_x_.x(), rot_x_.y());
+    MathWorker::sincos(rot.yaw() / 2, rot_y_.x(), rot_y_.y());
+    MathWorker::sincos(rot.roll() / 2, rot_z_.x(), rot_z_.y());
 
     Controller::AttachCamera(camera);
 }
@@ -75,9 +75,9 @@ void FirstPersonController::RotateRel(float yaw, float pitch, float roll)
         roll *= -rotationScaler_ / 2;
 
         float2 delta_x, delta_y, delta_z;
-        MathWorker::SinCos(pitch, delta_x.x(), delta_x.y());
-        MathWorker::SinCos(yaw, delta_y.x(), delta_y.y());
-        MathWorker::SinCos(roll, delta_z.x(), delta_z.y());
+        MathWorker::sincos(pitch, delta_x.x(), delta_x.y());
+        MathWorker::sincos(yaw, delta_y.x(), delta_y.y());
+        MathWorker::sincos(roll, delta_z.x(), delta_z.y());
 
         quater quat_x(rot_x_.x() * delta_x.y() + rot_x_.y() * delta_x.x(), 0, 0, rot_x_.y() * delta_x.y() - rot_x_.x() * delta_x.x());
         quater quat_y(0, rot_y_.x() * delta_y.y() + rot_y_.y() * delta_y.x(), 0, rot_y_.y() * delta_y.y() - rot_y_.x() * delta_y.x());
@@ -105,9 +105,9 @@ void FirstPersonController::RotateAbs(const quater& quat)
         float yaw, pitch, roll;
         MathWorker::ToYawPitchRoll(yaw, pitch, roll, quat);
 
-        MathWorker::SinCos(pitch / 2, rot_x_.x(), rot_x_.y());
-        MathWorker::SinCos(yaw / 2, rot_y_.x(), rot_y_.y());
-        MathWorker::SinCos(roll / 2, rot_z_.x(), rot_z_.y());
+        MathWorker::sincos(pitch / 2, rot_x_.x(), rot_x_.y());
+        MathWorker::sincos(yaw / 2, rot_y_.x(), rot_y_.y());
+        MathWorker::sincos(roll / 2, rot_z_.x(), rot_z_.y());
 
         inv_rot_ = MathWorker::Inverse(quat);
         float3 view_vec = MathWorker::TransformQuat(float3(0, 0, 1), inv_rot_);

@@ -70,8 +70,8 @@ void World::Update()
 {
 	auto& context = Context::Instance();
     auto& app = context.AppInstance();
-    const float app_time = app.AppTime();
-    const float frame_time = app.FrameTime();
+    //const float app_time = app.AppTime();
+    //const float frame_time = app.FrameTime();
 
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     re.BeginFrame();

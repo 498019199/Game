@@ -34,7 +34,7 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
     }
 
     DoCreateRenderWindow(name, settings);
-    const RenderDeviceCaps& caps = DeviceCaps();
+    //const RenderDeviceCaps& caps = DeviceCaps();
 
     screen_frame_buffer_ = cur_frame_buffer_;
 

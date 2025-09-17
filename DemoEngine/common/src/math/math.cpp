@@ -34,7 +34,7 @@ namespace RenderWorker
         }
 
         
-        void SinCos(float fAnglel, float& s, float& c) noexcept
+        void sincos(float fAnglel, float& s, float& c) noexcept
         {
             s = sin(fAnglel);
             c = cos(fAnglel);
@@ -69,8 +69,13 @@ namespace RenderWorker
             }
         }
 
+        float sqrt(float x) noexcept
+		{
+			return std::sqrt(x);
+		}
+
         // From Quake III. But the magic number is from http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
-        float RecipSqrt(float number) noexcept
+        float recip_sqrt(float number) noexcept
         {
             float const threehalfs = 1.5f;
 
@@ -173,17 +178,12 @@ namespace RenderWorker
         T normalize(const T & rhs) noexcept
         {
             typename T::value_type tmp = 
-                RecipSqrt(
+                recip_sqrt(
                     length_sq(rhs));
             return rhs * tmp;
         }
 
-        template int2 lerp(const int2 &lsh, const int2 &rhs, float s);
-        template int3 lerp(const int3 &lsh, const int3 &rhs, float s);
-        template int4 lerp(const int4 &lsh, const int4 &rhs, float s);
-        template uint2 lerp(const uint2 &lsh, const uint2 &rhs, float s);
-        template uint3 lerp(const uint3 &lsh, const uint3 &rhs, float s);
-        template uint4 lerp(const uint4 &lsh, const uint4 &rhs, float s);
+        template float lerp(const float &lsh, const float &rhs, float s);
         template float2 lerp(const float2 &lsh, const float2 &rhs, float s);
         template float3 lerp(const float3 &lsh, const float3 &rhs, float s);
         template float4 lerp(const float4 &lsh, const float4 &rhs, float s);
@@ -292,7 +292,7 @@ namespace RenderWorker
         Matrix4_T<T> MatrixRotateX(T Angle)
         {
             T fs, fc;
-            SinCos(Angle, fs, fc);
+            sincos(Angle, fs, fc);
             return Matrix4_T<T>(
                 1, 0,   0,  0,
                 0, fc,  fs, 0,
@@ -305,7 +305,7 @@ namespace RenderWorker
         Matrix4_T<T> MatrixRotateY(T Angle)
         {
             T fs, fc;
-            SinCos(Angle, fs, fc);
+            sincos(Angle, fs, fc);
             return Matrix4_T<T>(
                 fc, 0, -fs, 0,
                 0, 1, 0, 0,
@@ -318,7 +318,7 @@ namespace RenderWorker
         Matrix4_T<T> MatrixRotateZ(T Angle)
         {
             T fs, fc;
-            SinCos(Angle, fs, fc);
+            sincos(Angle, fs, fc);
             return Matrix4_T<T>(
                 fc, fs, 0, 0,
                 -fs, fc, 0, 0,
@@ -331,7 +331,7 @@ namespace RenderWorker
         Matrix4_T<T> MatrixRotate(const Vector_T<T, 3>& n, T Angle)
         {
             T fs = 0.0f, fc = 0.0f;
-            SinCos(Angle, fs, fc);
+            sincos(Angle, fs, fc);
             Vector_T<T, 3> v(n.x(), n.y(), n.z());
             v = normalize(v);
 
@@ -806,9 +806,9 @@ namespace RenderWorker
             const T angX(rot.pitch() / 2), angY(rot.yaw() / 2), angZ(rot.roll() / 2);
             T sx, sy, sz;
             T cx, cy, cz;
-            SinCos(angX, sx, cx);
-            SinCos(angY, sy, cy);
-            SinCos(angZ, sz, cz);
+            sincos(angX, sx, cx);
+            sincos(angY, sy, cy);
+            sincos(angZ, sz, cz);
 
             return quater(
                 sx * cy * cz + cx * sy * sz,

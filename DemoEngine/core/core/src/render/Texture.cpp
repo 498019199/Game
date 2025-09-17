@@ -1723,6 +1723,8 @@ namespace
 
 namespace RenderWorker
 {
+	using namespace CommonWorker;
+
 	Texture::Mapper::Mapper(Texture& tex, uint32_t array_index, uint32_t level, TextureMapAccess tma, uint32_t x_offset, uint32_t width)
 		: tex_(tex), mapped_array_index_(array_index), mapped_level_(level)
 	{
@@ -1778,915 +1780,879 @@ namespace RenderWorker
 			break;
 		}
 	}
-} // namespace RenderWorker
-
-namespace RenderWorker
-{
 	
-Texture::Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
-    : type_(type), sample_count_(sample_count), sample_quality_(sample_quality), access_hint_(access_hint)
-{
-    
-}
-
-Texture::~Texture() noexcept = default;
-
-Texture::TextureType Texture::Type() const
-{
-    return type_;
-}
-
-uint32_t Texture::SampleCount() const
-{
-    return sample_count_;
-}
-
-uint32_t Texture::SampleQuality() const
-{
-    return sample_quality_;
-}
-
-uint32_t Texture::AccessHint() const
-{
-    return access_hint_;
-}
-
-uint32_t Texture::MipMapsNum() const
-{
-    return mip_maps_num_;
-}
-
-uint32_t Texture::ArraySize() const
-{
-    return array_size_;
-}
-
-ElementFormat Texture::Format() const
-{
-    return format_;
-}
-
-void Texture::ResizeTexture1D(Texture& target,
-	uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_width,
-	uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_width,
-	TextureFilter filter)
-{
-	COMMON_ASSERT(TT_1D == this->Type());
-	COMMON_ASSERT(TT_1D == target.Type());
-
-	RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-
-	TexturePtr src_cpu;
-	Texture* src_cpu_ptr;
-	uint32_t src_cpu_array_index;
-	uint32_t src_cpu_level;
-	uint32_t src_cpu_x_offset;
-	if (this->AccessHint() & EAH_CPU_Read)
+	Texture::Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
+		: type_(type), sample_count_(sample_count), sample_quality_(sample_quality), access_hint_(access_hint)
 	{
-		src_cpu_ptr = this;
-		src_cpu_array_index = src_array_index;
-		src_cpu_level = src_level;
-		src_cpu_x_offset = src_x_offset;
-	}
-	else
-	{
-		src_cpu = rf.MakeTexture1D(src_width, 1, 1,
-			this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
-		src_cpu_ptr = src_cpu.get();
-
-		this->CopyToSubTexture1D(
-			*src_cpu, 0, 0, 0, src_width, src_array_index, src_level, src_x_offset, src_width, TextureFilter::Point);
-
-		src_cpu_array_index = 0;
-		src_cpu_level = 0;
-		src_cpu_x_offset = 0;
+		
 	}
 
-	TexturePtr dst_cpu;
-	Texture* dst_cpu_ptr;
-	uint32_t dst_cpu_array_index;
-	uint32_t dst_cpu_level;
-	uint32_t dst_cpu_x_offset;
-	if (target.AccessHint() & EAH_CPU_Write)
-	{
-		dst_cpu_ptr = &target;
-		dst_cpu_array_index = dst_array_index;
-		dst_cpu_level = dst_level;
-		dst_cpu_x_offset = dst_x_offset;
-	}
-	else
-	{
-		dst_cpu = rf.MakeTexture1D(dst_width, 1, 1,
-			target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
-		dst_cpu_ptr = dst_cpu.get();
+	Texture::~Texture() noexcept = default;
 
-		dst_cpu_array_index = 0;
-		dst_cpu_level = 0;
-		dst_cpu_x_offset = 0;
+	Texture::TextureType Texture::Type() const
+	{
+		return type_;
 	}
 
+	uint32_t Texture::SampleCount() const
 	{
-		Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_width);
-		Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_width);
-		ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
-			dst_width, 1, 1,
-			src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
-			src_width, 1, 1,
-			filter);
+		return sample_count_;
 	}
 
-	if (dst_cpu_ptr != &target)
+	uint32_t Texture::SampleQuality() const
 	{
-		dst_cpu_ptr->CopyToSubTexture1D(
-			target, dst_array_index, dst_level, dst_x_offset, dst_width, 0, 0, 0, dst_width, TextureFilter::Point);
-	}
-}
-
-void Texture::ResizeTexture2D(Texture& target,
-	uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height,
-	uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height,
-	TextureFilter filter)
-{
-	COMMON_ASSERT((TT_2D == this->Type()) || (TT_Cube == this->Type()));
-	COMMON_ASSERT((TT_2D == target.Type()) || (TT_Cube == target.Type()));
-
-	RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-
-	TexturePtr src_cpu;
-	Texture* src_cpu_ptr;
-	uint32_t src_cpu_array_index;
-	uint32_t src_cpu_level;
-	uint32_t src_cpu_x_offset;
-	uint32_t src_cpu_y_offset;
-	if ((this->AccessHint() & EAH_CPU_Read))
-	{
-		src_cpu_ptr = this;
-		src_cpu_array_index = src_array_index;
-		src_cpu_level = src_level;
-		src_cpu_x_offset = src_x_offset;
-		src_cpu_y_offset = src_y_offset;
-	}
-	else
-	{
-		src_cpu = rf.MakeTexture2D(src_width, src_height, 1, 1,
-			this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read | EAH_CPU_Write);
-		src_cpu_ptr = src_cpu.get();
-
-		this->CopyToSubTexture2D(*src_cpu, 0, 0, 0, 0, src_width, src_height, src_array_index, src_level, src_x_offset, src_y_offset,
-			src_width, src_height, TextureFilter::Point);
-
-		src_cpu_array_index = 0;
-		src_cpu_level = 0;
-		src_cpu_x_offset = 0;
-		src_cpu_y_offset = 0;
+		return sample_quality_;
 	}
 
-	TexturePtr dst_cpu;
-	Texture* dst_cpu_ptr;
-	uint32_t dst_cpu_array_index;
-	uint32_t dst_cpu_level;
-	uint32_t dst_cpu_x_offset;
-	uint32_t dst_cpu_y_offset;
-	if ((target.AccessHint() & EAH_CPU_Write) && !IsCompressedFormat(target.Format()))
+	uint32_t Texture::AccessHint() const
 	{
-		dst_cpu_ptr = &target;
-		dst_cpu_array_index = dst_array_index;
-		dst_cpu_level = dst_level;
-		dst_cpu_x_offset = dst_x_offset;
-		dst_cpu_y_offset = dst_y_offset;
-	}
-	else
-	{
-		dst_cpu = rf.MakeTexture2D(dst_width, dst_height, 1, 1,
-			target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Read | EAH_CPU_Write);
-		dst_cpu_ptr = dst_cpu.get();
-
-		dst_cpu_array_index = 0;
-		dst_cpu_level = 0;
-		dst_cpu_x_offset = 0;
-		dst_cpu_y_offset = 0;
+		return access_hint_;
 	}
 
+	uint32_t Texture::MipMapsNum() const
 	{
-		Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_width, src_height);
-		Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_width, dst_height);
-		ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
-			dst_width, dst_height, 1,
-			src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
-			src_width, src_height, 1,
-			filter);
+		return mip_maps_num_;
 	}
 
-	if (dst_cpu_ptr != &target)
+	uint32_t Texture::ArraySize() const
 	{
-		dst_cpu_ptr->CopyToSubTexture2D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height, 0, 0, 0,
-			0, dst_width, dst_height, TextureFilter::Point);
-	}
-}
-
-void Texture::ResizeTexture3D(Texture& target,
-	uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_z_offset, uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth,
-	uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_z_offset, uint32_t src_width, uint32_t src_height, uint32_t src_depth,
-	TextureFilter filter)
-{
-	COMMON_ASSERT(TT_3D == this->Type());
-	COMMON_ASSERT(TT_3D == target.Type());
-
-	RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-
-	TexturePtr src_cpu;
-	Texture* src_cpu_ptr;
-	uint32_t src_cpu_array_index;
-	uint32_t src_cpu_level;
-	uint32_t src_cpu_x_offset;
-	uint32_t src_cpu_y_offset;
-	uint32_t src_cpu_z_offset;
-	if (this->AccessHint() & EAH_CPU_Read)
-	{
-		src_cpu_ptr = this;
-		src_cpu_array_index = src_array_index;
-		src_cpu_level = src_level;
-		src_cpu_x_offset = src_x_offset;
-		src_cpu_y_offset = src_y_offset;
-		src_cpu_z_offset = src_z_offset;
-	}
-	else
-	{
-		src_cpu = rf.MakeTexture3D(src_width, src_height, src_depth, 1, 1,
-			this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
-		src_cpu_ptr = src_cpu.get();
-
-		this->CopyToSubTexture3D(*src_cpu, 0, 0, 0, 0, 0, src_width, src_height, src_depth, src_array_index, src_level, src_x_offset,
-			src_y_offset, src_z_offset, src_width, src_height, src_depth, TextureFilter::Point);
-
-		src_cpu_array_index = 0;
-		src_cpu_level = 0;
-		src_cpu_x_offset = 0;
-		src_cpu_y_offset = 0;
-		src_cpu_z_offset = 0;
+		return array_size_;
 	}
 
-	TexturePtr dst_cpu;
-	Texture* dst_cpu_ptr;
-	uint32_t dst_cpu_array_index;
-	uint32_t dst_cpu_level;
-	uint32_t dst_cpu_x_offset;
-	uint32_t dst_cpu_y_offset;
-	uint32_t dst_cpu_z_offset;
-	if (target.AccessHint() & EAH_CPU_Write)
+	ElementFormat Texture::Format() const
 	{
-		dst_cpu_ptr = &target;
-		dst_cpu_array_index = dst_array_index;
-		dst_cpu_level = dst_level;
-		dst_cpu_x_offset = dst_x_offset;
-		dst_cpu_y_offset = dst_y_offset;
-		dst_cpu_z_offset = dst_z_offset;
-	}
-	else
-	{
-		dst_cpu = rf.MakeTexture3D(dst_width, dst_height, dst_depth, 1, 1,
-			target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
-		dst_cpu_ptr = dst_cpu.get();
-
-		dst_cpu_array_index = 0;
-		dst_cpu_level = 0;
-		dst_cpu_x_offset = 0;
-		dst_cpu_y_offset = 0;
-		dst_cpu_z_offset = 0;
+		return format_;
 	}
 
+	void Texture::ResizeTexture1D(Texture& target,
+		uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_width,
+		uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_width,
+		TextureFilter filter)
 	{
-		Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_cpu_z_offset, src_width, src_height, src_depth);
-		Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_cpu_z_offset, dst_width, dst_height, dst_depth);
-		ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
-			dst_width, dst_height, dst_depth,
-			src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
-			src_width, src_height, src_depth,
-			filter);
-	}
+		COMMON_ASSERT(TT_1D == this->Type());
+		COMMON_ASSERT(TT_1D == target.Type());
 
-	if (dst_cpu_ptr != &target)
-	{
-		dst_cpu_ptr->CopyToSubTexture3D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_z_offset, dst_width,
-			dst_height, dst_depth, 0, 0, 0, 0, 0, dst_width, dst_height, dst_height, TextureFilter::Point);
-	}
-}
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
 
-void Texture::ResizeTextureCube(Texture& target,
-	uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height,
-	uint32_t src_array_index, CubeFaces src_face, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height,
-	TextureFilter filter)
-{
-	COMMON_ASSERT((TT_2D == this->Type()) || (TT_Cube == this->Type()));
-	COMMON_ASSERT((TT_2D == target.Type()) || (TT_Cube == target.Type()));
-
-	RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-
-	TexturePtr src_cpu;
-	Texture* src_cpu_ptr;
-	uint32_t src_cpu_array_index;
-	uint32_t src_cpu_level;
-	uint32_t src_cpu_x_offset;
-	uint32_t src_cpu_y_offset;
-	{
-		src_cpu = rf.MakeTexture2D(src_width, src_height, 1, 1,
-			this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
-		src_cpu_ptr = src_cpu.get();
-
-		this->CopyToSubTexture2D(*src_cpu, 0, 0, 0, 0, src_width, src_height, src_array_index * 6 + src_face - CF_Positive_X, src_level,
-			src_x_offset, src_y_offset, src_width, src_height, TextureFilter::Point);
-
-		src_cpu_array_index = 0;
-		src_cpu_level = 0;
-		src_cpu_x_offset = 0;
-		src_cpu_y_offset = 0;
-	}
-
-	TexturePtr dst_cpu;
-	Texture* dst_cpu_ptr;
-	uint32_t dst_cpu_array_index;
-	uint32_t dst_cpu_level;
-	uint32_t dst_cpu_x_offset;
-	uint32_t dst_cpu_y_offset;
-	{
-		dst_cpu = rf.MakeTexture2D(dst_width, dst_height, 1, 1,
-			target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
-		dst_cpu_ptr = dst_cpu.get();
-
-		dst_cpu_array_index = 0;
-		dst_cpu_level = 0;
-		dst_cpu_x_offset = 0;
-		dst_cpu_y_offset = 0;
-	}
-
-	{
-		Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_face, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_width, src_height);
-		Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_face, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_width, dst_height);
-		ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
-			dst_width, dst_height, 1,
-			src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
-			src_width, src_height, 1,
-			filter);
-	}
-
-	{
-		dst_cpu_ptr->CopyToSubTextureCube(target, dst_array_index, dst_face, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
-			0, CF_Positive_X, 0, 0, 0, dst_width, dst_height, TextureFilter::Point);
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-VirtualTexture::VirtualTexture(TextureType type, uint32_t width, uint32_t height, uint32_t depth, uint32_t num_mipmaps, uint32_t array_size,
-    ElementFormat format, bool ref_only)
-    : Texture(type, 1, 0, EAH_CPU_Read | EAH_CPU_Write), 
-        ref_only_(ref_only), width_(width), height_(height), depth_(depth)
-{
-    if (0 == num_mipmaps)
-    {
-        num_mipmaps = 1;
-        uint32_t w = width;
-        uint32_t h = height;
-        while ((w != 1) || (h != 1))
-        {
-            ++ num_mipmaps;
-
-            w = std::max(1U, w / 2);
-            h = std::max(1U, h / 2);
-        }
-    }
-
-    mip_maps_num_ = num_mipmaps;
-    array_size_ = array_size;
-    format_ = format;
-}
-
-uint32_t VirtualTexture::Width(uint32_t level) const 
-{
-    COMMON_ASSERT(level < mip_maps_num_);
-    return std::max(1U, width_ >> level);
-}
-
-uint32_t VirtualTexture::Height(uint32_t level) const 
-{
-    COMMON_ASSERT(level < mip_maps_num_);
-    return std::max(1U, height_ >> level);
-}
-
-uint32_t VirtualTexture::Depth(uint32_t level) const 
-{
-    COMMON_ASSERT(level < mip_maps_num_);
-    return std::max(1U, depth_ >> level);
-}
-
-void VirtualTexture::CopyToTexture(Texture& target, TextureFilter filter)
-{
-	COMMON_ASSERT(type_ == target.Type());
-
-	uint32_t const num_faces = (type_ == TT_Cube) ? 6 : 1;
-	uint32_t const array_size = std::min(array_size_, target.ArraySize());
-	uint32_t const num_mip_maps = std::min(mip_maps_num_, target.MipMapsNum());
-	for (uint32_t array_index = 0; array_index < array_size; ++array_index)
-	{
-		for (uint32_t face = 0; face < num_faces; ++face)
+		TexturePtr src_cpu;
+		Texture* src_cpu_ptr;
+		uint32_t src_cpu_array_index;
+		uint32_t src_cpu_level;
+		uint32_t src_cpu_x_offset;
+		if (this->AccessHint() & EAH_CPU_Read)
 		{
-			for (uint32_t mip = 0; mip < num_mip_maps; ++mip)
+			src_cpu_ptr = this;
+			src_cpu_array_index = src_array_index;
+			src_cpu_level = src_level;
+			src_cpu_x_offset = src_x_offset;
+		}
+		else
+		{
+			src_cpu = rf.MakeTexture1D(src_width, 1, 1,
+				this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
+			src_cpu_ptr = src_cpu.get();
+
+			this->CopyToSubTexture1D(
+				*src_cpu, 0, 0, 0, src_width, src_array_index, src_level, src_x_offset, src_width, TextureFilter::Point);
+
+			src_cpu_array_index = 0;
+			src_cpu_level = 0;
+			src_cpu_x_offset = 0;
+		}
+
+		TexturePtr dst_cpu;
+		Texture* dst_cpu_ptr;
+		uint32_t dst_cpu_array_index;
+		uint32_t dst_cpu_level;
+		uint32_t dst_cpu_x_offset;
+		if (target.AccessHint() & EAH_CPU_Write)
+		{
+			dst_cpu_ptr = &target;
+			dst_cpu_array_index = dst_array_index;
+			dst_cpu_level = dst_level;
+			dst_cpu_x_offset = dst_x_offset;
+		}
+		else
+		{
+			dst_cpu = rf.MakeTexture1D(dst_width, 1, 1,
+				target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
+			dst_cpu_ptr = dst_cpu.get();
+
+			dst_cpu_array_index = 0;
+			dst_cpu_level = 0;
+			dst_cpu_x_offset = 0;
+		}
+
+		{
+			Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_width);
+			Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_width);
+			ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
+				dst_width, 1, 1,
+				src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
+				src_width, 1, 1,
+				filter);
+		}
+
+		if (dst_cpu_ptr != &target)
+		{
+			dst_cpu_ptr->CopyToSubTexture1D(
+				target, dst_array_index, dst_level, dst_x_offset, dst_width, 0, 0, 0, dst_width, TextureFilter::Point);
+		}
+	}
+
+	void Texture::ResizeTexture2D(Texture& target,
+		uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height,
+		uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height,
+		TextureFilter filter)
+	{
+		COMMON_ASSERT((TT_2D == this->Type()) || (TT_Cube == this->Type()));
+		COMMON_ASSERT((TT_2D == target.Type()) || (TT_Cube == target.Type()));
+
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+
+		TexturePtr src_cpu;
+		Texture* src_cpu_ptr;
+		uint32_t src_cpu_array_index;
+		uint32_t src_cpu_level;
+		uint32_t src_cpu_x_offset;
+		uint32_t src_cpu_y_offset;
+		if ((this->AccessHint() & EAH_CPU_Read))
+		{
+			src_cpu_ptr = this;
+			src_cpu_array_index = src_array_index;
+			src_cpu_level = src_level;
+			src_cpu_x_offset = src_x_offset;
+			src_cpu_y_offset = src_y_offset;
+		}
+		else
+		{
+			src_cpu = rf.MakeTexture2D(src_width, src_height, 1, 1,
+				this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read | EAH_CPU_Write);
+			src_cpu_ptr = src_cpu.get();
+
+			this->CopyToSubTexture2D(*src_cpu, 0, 0, 0, 0, src_width, src_height, src_array_index, src_level, src_x_offset, src_y_offset,
+				src_width, src_height, TextureFilter::Point);
+
+			src_cpu_array_index = 0;
+			src_cpu_level = 0;
+			src_cpu_x_offset = 0;
+			src_cpu_y_offset = 0;
+		}
+
+		TexturePtr dst_cpu;
+		Texture* dst_cpu_ptr;
+		uint32_t dst_cpu_array_index;
+		uint32_t dst_cpu_level;
+		uint32_t dst_cpu_x_offset;
+		uint32_t dst_cpu_y_offset;
+		if ((target.AccessHint() & EAH_CPU_Write) && !IsCompressedFormat(target.Format()))
+		{
+			dst_cpu_ptr = &target;
+			dst_cpu_array_index = dst_array_index;
+			dst_cpu_level = dst_level;
+			dst_cpu_x_offset = dst_x_offset;
+			dst_cpu_y_offset = dst_y_offset;
+		}
+		else
+		{
+			dst_cpu = rf.MakeTexture2D(dst_width, dst_height, 1, 1,
+				target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Read | EAH_CPU_Write);
+			dst_cpu_ptr = dst_cpu.get();
+
+			dst_cpu_array_index = 0;
+			dst_cpu_level = 0;
+			dst_cpu_x_offset = 0;
+			dst_cpu_y_offset = 0;
+		}
+
+		{
+			Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_width, src_height);
+			Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_width, dst_height);
+			ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
+				dst_width, dst_height, 1,
+				src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
+				src_width, src_height, 1,
+				filter);
+		}
+
+		if (dst_cpu_ptr != &target)
+		{
+			dst_cpu_ptr->CopyToSubTexture2D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height, 0, 0, 0,
+				0, dst_width, dst_height, TextureFilter::Point);
+		}
+	}
+
+	void Texture::ResizeTexture3D(Texture& target,
+		uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_z_offset, uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth,
+		uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_z_offset, uint32_t src_width, uint32_t src_height, uint32_t src_depth,
+		TextureFilter filter)
+	{
+		COMMON_ASSERT(TT_3D == this->Type());
+		COMMON_ASSERT(TT_3D == target.Type());
+
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+
+		TexturePtr src_cpu;
+		Texture* src_cpu_ptr;
+		uint32_t src_cpu_array_index;
+		uint32_t src_cpu_level;
+		uint32_t src_cpu_x_offset;
+		uint32_t src_cpu_y_offset;
+		uint32_t src_cpu_z_offset;
+		if (this->AccessHint() & EAH_CPU_Read)
+		{
+			src_cpu_ptr = this;
+			src_cpu_array_index = src_array_index;
+			src_cpu_level = src_level;
+			src_cpu_x_offset = src_x_offset;
+			src_cpu_y_offset = src_y_offset;
+			src_cpu_z_offset = src_z_offset;
+		}
+		else
+		{
+			src_cpu = rf.MakeTexture3D(src_width, src_height, src_depth, 1, 1,
+				this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
+			src_cpu_ptr = src_cpu.get();
+
+			this->CopyToSubTexture3D(*src_cpu, 0, 0, 0, 0, 0, src_width, src_height, src_depth, src_array_index, src_level, src_x_offset,
+				src_y_offset, src_z_offset, src_width, src_height, src_depth, TextureFilter::Point);
+
+			src_cpu_array_index = 0;
+			src_cpu_level = 0;
+			src_cpu_x_offset = 0;
+			src_cpu_y_offset = 0;
+			src_cpu_z_offset = 0;
+		}
+
+		TexturePtr dst_cpu;
+		Texture* dst_cpu_ptr;
+		uint32_t dst_cpu_array_index;
+		uint32_t dst_cpu_level;
+		uint32_t dst_cpu_x_offset;
+		uint32_t dst_cpu_y_offset;
+		uint32_t dst_cpu_z_offset;
+		if (target.AccessHint() & EAH_CPU_Write)
+		{
+			dst_cpu_ptr = &target;
+			dst_cpu_array_index = dst_array_index;
+			dst_cpu_level = dst_level;
+			dst_cpu_x_offset = dst_x_offset;
+			dst_cpu_y_offset = dst_y_offset;
+			dst_cpu_z_offset = dst_z_offset;
+		}
+		else
+		{
+			dst_cpu = rf.MakeTexture3D(dst_width, dst_height, dst_depth, 1, 1,
+				target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
+			dst_cpu_ptr = dst_cpu.get();
+
+			dst_cpu_array_index = 0;
+			dst_cpu_level = 0;
+			dst_cpu_x_offset = 0;
+			dst_cpu_y_offset = 0;
+			dst_cpu_z_offset = 0;
+		}
+
+		{
+			Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_cpu_z_offset, src_width, src_height, src_depth);
+			Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_cpu_z_offset, dst_width, dst_height, dst_depth);
+			ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
+				dst_width, dst_height, dst_depth,
+				src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
+				src_width, src_height, src_depth,
+				filter);
+		}
+
+		if (dst_cpu_ptr != &target)
+		{
+			dst_cpu_ptr->CopyToSubTexture3D(target, dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_z_offset, dst_width,
+				dst_height, dst_depth, 0, 0, 0, 0, 0, dst_width, dst_height, dst_height, TextureFilter::Point);
+		}
+	}
+
+	void Texture::ResizeTextureCube(Texture& target,
+		uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level, uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height,
+		uint32_t src_array_index, CubeFaces src_face, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height,
+		TextureFilter filter)
+	{
+		COMMON_ASSERT((TT_2D == this->Type()) || (TT_Cube == this->Type()));
+		COMMON_ASSERT((TT_2D == target.Type()) || (TT_Cube == target.Type()));
+
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+
+		TexturePtr src_cpu;
+		Texture* src_cpu_ptr;
+		uint32_t src_cpu_array_index;
+		uint32_t src_cpu_level;
+		uint32_t src_cpu_x_offset;
+		uint32_t src_cpu_y_offset;
+		{
+			src_cpu = rf.MakeTexture2D(src_width, src_height, 1, 1,
+				this->Format(), this->SampleCount(), this->SampleQuality(), EAH_CPU_Read);
+			src_cpu_ptr = src_cpu.get();
+
+			this->CopyToSubTexture2D(*src_cpu, 0, 0, 0, 0, src_width, src_height, src_array_index * 6 + src_face - CF_Positive_X, src_level,
+				src_x_offset, src_y_offset, src_width, src_height, TextureFilter::Point);
+
+			src_cpu_array_index = 0;
+			src_cpu_level = 0;
+			src_cpu_x_offset = 0;
+			src_cpu_y_offset = 0;
+		}
+
+		TexturePtr dst_cpu;
+		Texture* dst_cpu_ptr;
+		uint32_t dst_cpu_array_index;
+		uint32_t dst_cpu_level;
+		uint32_t dst_cpu_x_offset;
+		uint32_t dst_cpu_y_offset;
+		{
+			dst_cpu = rf.MakeTexture2D(dst_width, dst_height, 1, 1,
+				target.Format(), target.SampleCount(), target.SampleQuality(), EAH_CPU_Write);
+			dst_cpu_ptr = dst_cpu.get();
+
+			dst_cpu_array_index = 0;
+			dst_cpu_level = 0;
+			dst_cpu_x_offset = 0;
+			dst_cpu_y_offset = 0;
+		}
+
+		{
+			Mapper src_cpu_mapper(*src_cpu_ptr, src_cpu_array_index, src_face, src_cpu_level, TMA_Read_Only, src_cpu_x_offset, src_cpu_y_offset, src_width, src_height);
+			Mapper dst_cpu_mapper(*dst_cpu_ptr, dst_cpu_array_index, dst_face, dst_cpu_level, TMA_Write_Only, dst_cpu_x_offset, dst_cpu_y_offset, dst_width, dst_height);
+			ResizeTexture(dst_cpu_mapper.Pointer<uint8_t>(), dst_cpu_mapper.RowPitch(), dst_cpu_mapper.SlicePitch(), target.Format(),
+				dst_width, dst_height, 1,
+				src_cpu_mapper.Pointer<uint8_t>(), src_cpu_mapper.RowPitch(), src_cpu_mapper.SlicePitch(), this->Format(),
+				src_width, src_height, 1,
+				filter);
+		}
+
+		{
+			dst_cpu_ptr->CopyToSubTextureCube(target, dst_array_index, dst_face, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+				0, CF_Positive_X, 0, 0, 0, dst_width, dst_height, TextureFilter::Point);
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+	VirtualTexture::VirtualTexture(TextureType type, uint32_t width, uint32_t height, uint32_t depth, uint32_t num_mipmaps, uint32_t array_size,
+		ElementFormat format, bool ref_only)
+		: Texture(type, 1, 0, EAH_CPU_Read | EAH_CPU_Write), 
+			ref_only_(ref_only), width_(width), height_(height), depth_(depth)
+	{
+		if (0 == num_mipmaps)
+		{
+			num_mipmaps = 1;
+			uint32_t w = width;
+			uint32_t h = height;
+			while ((w != 1) || (h != 1))
 			{
-				switch (type_)
+				++ num_mipmaps;
+
+				w = std::max(1U, w / 2);
+				h = std::max(1U, h / 2);
+			}
+		}
+
+		mip_maps_num_ = num_mipmaps;
+		array_size_ = array_size;
+		format_ = format;
+	}
+
+	uint32_t VirtualTexture::Width(uint32_t level) const 
+	{
+		COMMON_ASSERT(level < mip_maps_num_);
+		return std::max(1U, width_ >> level);
+	}
+
+	uint32_t VirtualTexture::Height(uint32_t level) const 
+	{
+		COMMON_ASSERT(level < mip_maps_num_);
+		return std::max(1U, height_ >> level);
+	}
+
+	uint32_t VirtualTexture::Depth(uint32_t level) const 
+	{
+		COMMON_ASSERT(level < mip_maps_num_);
+		return std::max(1U, depth_ >> level);
+	}
+
+	void VirtualTexture::CopyToTexture(Texture& target, TextureFilter filter)
+	{
+		COMMON_ASSERT(type_ == target.Type());
+
+		uint32_t const num_faces = (type_ == TT_Cube) ? 6 : 1;
+		uint32_t const array_size = std::min(array_size_, target.ArraySize());
+		uint32_t const num_mip_maps = std::min(mip_maps_num_, target.MipMapsNum());
+		for (uint32_t array_index = 0; array_index < array_size; ++array_index)
+		{
+			for (uint32_t face = 0; face < num_faces; ++face)
+			{
+				for (uint32_t mip = 0; mip < num_mip_maps; ++mip)
 				{
-				case TT_1D:
-					this->CopyToSubTexture1D(
-						target, array_index, mip, 0, target.Width(mip), array_index, mip, 0, this->Width(mip), filter);
-					break;
+					switch (type_)
+					{
+					case TT_1D:
+						this->CopyToSubTexture1D(
+							target, array_index, mip, 0, target.Width(mip), array_index, mip, 0, this->Width(mip), filter);
+						break;
 
-				case TT_2D:
-					this->CopyToSubTexture2D(target, array_index, mip, 0, 0, target.Width(mip), target.Height(mip), array_index, mip, 0,
-						0, this->Width(mip), this->Height(mip), filter);
-					break;
+					case TT_2D:
+						this->CopyToSubTexture2D(target, array_index, mip, 0, 0, target.Width(mip), target.Height(mip), array_index, mip, 0,
+							0, this->Width(mip), this->Height(mip), filter);
+						break;
 
-				case TT_3D:
-					this->CopyToSubTexture3D(target, array_index, mip, 0, 0, 0, target.Width(mip), target.Height(mip),
-						target.Depth(mip), array_index, mip, 0, 0, 0, this->Width(mip), this->Height(mip), this->Depth(mip), filter);
-					break;
+					case TT_3D:
+						this->CopyToSubTexture3D(target, array_index, mip, 0, 0, 0, target.Width(mip), target.Height(mip),
+							target.Depth(mip), array_index, mip, 0, 0, 0, this->Width(mip), this->Height(mip), this->Depth(mip), filter);
+						break;
 
-				case TT_Cube:
-					this->CopyToSubTextureCube(target, array_index, static_cast<CubeFaces>(face), mip, 0, 0, target.Width(mip),
-						target.Height(mip), array_index, static_cast<CubeFaces>(face), mip, 0, 0, this->Width(mip), this->Height(mip),
-						filter);
-					break;
+					case TT_Cube:
+						this->CopyToSubTextureCube(target, array_index, static_cast<CubeFaces>(face), mip, 0, 0, target.Width(mip),
+							target.Height(mip), array_index, static_cast<CubeFaces>(face), mip, 0, 0, this->Width(mip), this->Height(mip),
+							filter);
+						break;
+					}
 				}
 			}
 		}
 	}
-}
 
-void VirtualTexture::CopyToSubTexture1D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
-	uint32_t dst_width, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_width, TextureFilter filter)
-{
-	auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
-	void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
-		+ src_x_offset * NumFormatBytes(format_);
-
-	uint32_t resized_row_pitch;
-	uint32_t resized_slice_pitch;
-	void const * resized_ptr;
-	std::vector<uint8_t> resized_data;
-	if ((src_width == dst_width) && (format_ == target.Format()))
+	void VirtualTexture::CopyToSubTexture1D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+		uint32_t dst_width, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset, uint32_t src_width, TextureFilter filter)
 	{
-		resized_row_pitch = src_data.row_pitch;
-		resized_slice_pitch = src_data.slice_pitch;
-		resized_ptr = src_ptr;
-	}
-	else
-	{
-		auto const target_format = target.Format();
-		uint32_t const block_width = BlockWidth(target_format);
-		uint32_t const block_bytes = BlockBytes(target_format);
+		auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
+		void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
+			+ src_x_offset * NumFormatBytes(format_);
 
-		resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
-		resized_slice_pitch = resized_row_pitch;
-		resized_data.resize(resized_slice_pitch);
-		resized_ptr = resized_data.data();
+		uint32_t resized_row_pitch;
+		uint32_t resized_slice_pitch;
+		void const * resized_ptr;
+		std::vector<uint8_t> resized_data;
+		if ((src_width == dst_width) && (format_ == target.Format()))
+		{
+			resized_row_pitch = src_data.row_pitch;
+			resized_slice_pitch = src_data.slice_pitch;
+			resized_ptr = src_ptr;
+		}
+		else
+		{
+			auto const target_format = target.Format();
+			uint32_t const block_width = BlockWidth(target_format);
+			uint32_t const block_bytes = BlockBytes(target_format);
 
-		ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
-			dst_width, 1, 1,
-			src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
-			src_width, 1, 1,
-			filter);
-	}
+			resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
+			resized_slice_pitch = resized_row_pitch;
+			resized_data.resize(resized_slice_pitch);
+			resized_ptr = resized_data.data();
 
-	target.UpdateSubresource1D(dst_array_index, dst_level, dst_x_offset, dst_width, resized_ptr);
-}
+			ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
+				dst_width, 1, 1,
+				src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
+				src_width, 1, 1,
+				filter);
+		}
 
-void VirtualTexture::CopyToSubTexture2D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
-	uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset,
-	uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
-{
-	auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
-	void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
-		+ src_y_offset / BlockHeight(format_) * subres_data_[src_array_index * mip_maps_num_ + src_level].row_pitch
-		+ src_x_offset * NumFormatBytes(format_);
-
-	uint32_t resized_row_pitch;
-	uint32_t resized_slice_pitch;
-	void const * resized_ptr;
-	std::vector<uint8_t> resized_data;
-	if ((src_width == dst_width) && (src_height == dst_height) && (format_ == target.Format()))
-	{
-		resized_row_pitch = src_data.row_pitch;
-		resized_slice_pitch = src_data.slice_pitch;
-		resized_ptr = src_ptr;
-	}
-	else
-	{
-		auto const target_format = target.Format();
-		uint32_t const block_width = BlockWidth(target_format);
-		uint32_t const block_height = BlockHeight(target_format);
-		uint32_t const block_bytes = BlockBytes(target_format);
-
-		resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
-		resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
-		resized_data.resize(resized_slice_pitch);
-		resized_ptr = resized_data.data();
-
-		ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target_format,
-			dst_width, dst_height, 1,
-			src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
-			src_width, src_height, 1,
-			filter);
+		target.UpdateSubresource1D(dst_array_index, dst_level, dst_x_offset, dst_width, resized_ptr);
 	}
 
-	target.UpdateSubresource2D(dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
-		resized_ptr, resized_row_pitch);
-}
-
-void VirtualTexture::CopyToSubTexture3D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
-	uint32_t dst_y_offset, uint32_t dst_z_offset, uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth, uint32_t src_array_index,
-	uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_z_offset, uint32_t src_width, uint32_t src_height,
-	uint32_t src_depth, TextureFilter filter)
-{
-	auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
-	void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
-		+ src_z_offset * src_data.slice_pitch + src_y_offset * src_data.row_pitch + src_x_offset * NumFormatBytes(format_);
-
-	uint32_t resized_row_pitch;
-	uint32_t resized_slice_pitch;
-	void const * resized_ptr;
-	std::vector<uint8_t> resized_data;
-	if ((src_width == dst_width) && (format_ == target.Format()))
+	void VirtualTexture::CopyToSubTexture2D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+		uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, uint32_t src_level, uint32_t src_x_offset,
+		uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
 	{
-		resized_row_pitch = src_data.row_pitch;
-		resized_slice_pitch = src_data.slice_pitch;
-		resized_ptr = src_ptr;
-	}
-	else
-	{
-		auto const target_format = target.Format();
-		uint32_t const block_width = BlockWidth(target_format);
-		uint32_t const block_height = BlockHeight(target_format);
-		uint32_t const block_bytes = BlockBytes(target_format);
+		auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
+		void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
+			+ src_y_offset / BlockHeight(format_) * subres_data_[src_array_index * mip_maps_num_ + src_level].row_pitch
+			+ src_x_offset * NumFormatBytes(format_);
 
-		resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
-		resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
-		resized_data.resize(resized_slice_pitch * dst_depth);
-		resized_ptr = resized_data.data();
+		uint32_t resized_row_pitch;
+		uint32_t resized_slice_pitch;
+		void const * resized_ptr;
+		std::vector<uint8_t> resized_data;
+		if ((src_width == dst_width) && (src_height == dst_height) && (format_ == target.Format()))
+		{
+			resized_row_pitch = src_data.row_pitch;
+			resized_slice_pitch = src_data.slice_pitch;
+			resized_ptr = src_ptr;
+		}
+		else
+		{
+			auto const target_format = target.Format();
+			uint32_t const block_width = BlockWidth(target_format);
+			uint32_t const block_height = BlockHeight(target_format);
+			uint32_t const block_bytes = BlockBytes(target_format);
 
-		ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
-			dst_width, dst_height, dst_depth,
-			src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
-			src_width, src_height, src_depth,
-			filter);
-	}
+			resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
+			resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
+			resized_data.resize(resized_slice_pitch);
+			resized_ptr = resized_data.data();
 
-	target.UpdateSubresource3D(dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_z_offset, dst_width, dst_height, dst_depth,
-		resized_ptr, resized_row_pitch, resized_slice_pitch);
-}
+			ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target_format,
+				dst_width, dst_height, 1,
+				src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
+				src_width, src_height, 1,
+				filter);
+		}
 
-void VirtualTexture::CopyToSubTextureCube(Texture& target, uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level,
-	uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, CubeFaces src_face,
-	uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
-{
-	auto const & src_data = subres_data_[(src_array_index * 6 + src_face) * mip_maps_num_ + src_level];
-	uint8_t const * src_ptr = static_cast<uint8_t const *>(src_data.data)
-		+ src_y_offset * src_data.row_pitch + src_x_offset * NumFormatBytes(format_);
-
-	uint32_t resized_row_pitch;
-	uint32_t resized_slice_pitch;
-	void const * resized_ptr;
-	std::vector<uint8_t> resized_data;
-	if ((src_width == dst_width) && (format_ == target.Format()))
-	{
-		resized_row_pitch = src_data.row_pitch;
-		resized_slice_pitch = src_data.slice_pitch;
-		resized_ptr = src_ptr;
-	}
-	else
-	{
-		auto const target_format = target.Format();
-		uint32_t const block_width = BlockWidth(target_format);
-		uint32_t const block_height = BlockHeight(target_format);
-		uint32_t const block_bytes = BlockBytes(target_format);
-
-		resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
-		resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
-		resized_data.resize(resized_slice_pitch);
-		resized_ptr = resized_data.data();
-
-		ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
-			dst_width, dst_height, 1,
-			src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
-			src_width, src_height, 1,
-			filter);
+		target.UpdateSubresource2D(dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+			resized_ptr, resized_row_pitch);
 	}
 
-	target.UpdateSubresourceCube(dst_array_index, dst_face, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
-		resized_ptr, resized_row_pitch);
-}
-
-void VirtualTexture::Map1D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
-	uint32_t x_offset, [[maybe_unused]] uint32_t width,
-	void*& data)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
-
-	bool already_mapped = false;
-	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	void VirtualTexture::CopyToSubTexture3D(Texture& target, uint32_t dst_array_index, uint32_t dst_level, uint32_t dst_x_offset,
+		uint32_t dst_y_offset, uint32_t dst_z_offset, uint32_t dst_width, uint32_t dst_height, uint32_t dst_depth, uint32_t src_array_index,
+		uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_z_offset, uint32_t src_width, uint32_t src_height,
+		uint32_t src_depth, TextureFilter filter)
 	{
+		auto const & src_data = subres_data_[src_array_index * mip_maps_num_ + src_level];
+		void const * src_ptr = static_cast<uint8_t const *>(src_data.data)
+			+ src_z_offset * src_data.slice_pitch + src_y_offset * src_data.row_pitch + src_x_offset * NumFormatBytes(format_);
+
+		uint32_t resized_row_pitch;
+		uint32_t resized_slice_pitch;
+		void const * resized_ptr;
+		std::vector<uint8_t> resized_data;
+		if ((src_width == dst_width) && (format_ == target.Format()))
+		{
+			resized_row_pitch = src_data.row_pitch;
+			resized_slice_pitch = src_data.slice_pitch;
+			resized_ptr = src_ptr;
+		}
+		else
+		{
+			auto const target_format = target.Format();
+			uint32_t const block_width = BlockWidth(target_format);
+			uint32_t const block_height = BlockHeight(target_format);
+			uint32_t const block_bytes = BlockBytes(target_format);
+
+			resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
+			resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
+			resized_data.resize(resized_slice_pitch * dst_depth);
+			resized_ptr = resized_data.data();
+
+			ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
+				dst_width, dst_height, dst_depth,
+				src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
+				src_width, src_height, src_depth,
+				filter);
+		}
+
+		target.UpdateSubresource3D(dst_array_index, dst_level, dst_x_offset, dst_y_offset, dst_z_offset, dst_width, dst_height, dst_depth,
+			resized_ptr, resized_row_pitch, resized_slice_pitch);
+	}
+
+	void VirtualTexture::CopyToSubTextureCube(Texture& target, uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level,
+		uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height, uint32_t src_array_index, CubeFaces src_face,
+		uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset, uint32_t src_width, uint32_t src_height, TextureFilter filter)
+	{
+		auto const & src_data = subres_data_[(src_array_index * 6 + src_face) * mip_maps_num_ + src_level];
+		uint8_t const * src_ptr = static_cast<uint8_t const *>(src_data.data)
+			+ src_y_offset * src_data.row_pitch + src_x_offset * NumFormatBytes(format_);
+
+		uint32_t resized_row_pitch;
+		uint32_t resized_slice_pitch;
+		void const * resized_ptr;
+		std::vector<uint8_t> resized_data;
+		if ((src_width == dst_width) && (format_ == target.Format()))
+		{
+			resized_row_pitch = src_data.row_pitch;
+			resized_slice_pitch = src_data.slice_pitch;
+			resized_ptr = src_ptr;
+		}
+		else
+		{
+			auto const target_format = target.Format();
+			uint32_t const block_width = BlockWidth(target_format);
+			uint32_t const block_height = BlockHeight(target_format);
+			uint32_t const block_bytes = BlockBytes(target_format);
+
+			resized_row_pitch = (dst_width + block_width - 1) / block_width * block_bytes;
+			resized_slice_pitch = (dst_height + block_height - 1) / block_height * resized_row_pitch;
+			resized_data.resize(resized_slice_pitch);
+			resized_ptr = resized_data.data();
+
+			ResizeTexture(resized_data.data(), resized_row_pitch, resized_slice_pitch, target.Format(),
+				dst_width, dst_height, 1,
+				src_ptr, src_data.row_pitch, src_data.slice_pitch, format_,
+				src_width, src_height, 1,
+				filter);
+		}
+
+		target.UpdateSubresourceCube(dst_array_index, dst_face, dst_level, dst_x_offset, dst_y_offset, dst_width, dst_height,
+			resized_ptr, resized_row_pitch);
+	}
+
+	void VirtualTexture::Map1D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+		uint32_t x_offset, [[maybe_unused]] uint32_t width,
+		void*& data)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = false;
+		if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+		{
+			auto const & init_data = subres_data_[subres];
+			uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+			data = const_cast<uint8_t*>(ptr + x_offset * NumFormatBytes(format_));
+		}
+		else
+		{
+			data = nullptr;
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::Map2D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+		uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
+		void*& data, uint32_t& row_pitch)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = false;
+		if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+		{
+			auto const & init_data = subres_data_[subres];
+			uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+			row_pitch = init_data.row_pitch;
+			data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+		}
+		else
+		{
+			data = nullptr;
+			row_pitch = 0;
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::Map3D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+		uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+		[[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height, [[maybe_unused]] uint32_t depth,
+		void*& data, uint32_t& row_pitch, uint32_t& slice_pitch)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = false;
+		if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+		{
+			auto const & init_data = subres_data_[subres];
+			uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+			row_pitch = init_data.row_pitch;
+			slice_pitch = init_data.slice_pitch;
+			data = const_cast<uint8_t*>(ptr + z_offset * slice_pitch + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+		}
+		else
+		{
+			data = nullptr;
+			row_pitch = 0;
+			slice_pitch = 0;
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::MapCube(uint32_t array_index, CubeFaces face, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
+		uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
+		void*& data, uint32_t& row_pitch)
+	{
+		size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
+
+		bool already_mapped = false;
+		if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+		{
+			auto const & init_data = subres_data_[subres];
+			uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
+			row_pitch = init_data.row_pitch;
+			data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
+		}
+		else
+		{
+			data = nullptr;
+			row_pitch = 0;
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::Unmap1D(uint32_t array_index, uint32_t level)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = true;
+		if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+		{
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::Unmap2D(uint32_t array_index, uint32_t level)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = true;
+		if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+		{
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::Unmap3D(uint32_t array_index, uint32_t level)
+	{
+		size_t const subres = array_index * mip_maps_num_ + level;
+
+		bool already_mapped = true;
+		if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+		{
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level)
+	{
+		size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
+
+		bool already_mapped = true;
+		if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
+		{
+			TERRC(std::errc::device_or_resource_busy);
+		}
+	}
+
+	void VirtualTexture::CreateHWResource(std::span<ElementInitData const> init_data, [[maybe_unused]] const float4* clear_value_hint)
+	{
+		uint32_t const num_faces = (type_ == TT_Cube) ? 6 : 1;
+		uint32_t const num_subres = mip_maps_num_ * array_size_ * num_faces;
+
+		if (init_data.empty())
+		{
+			COMMON_ASSERT(!ref_only_);
+
+			subres_data_.resize(num_subres);
+
+			uint32_t const block_width = BlockWidth(format_);
+			uint32_t const block_height = BlockHeight(format_);
+			uint32_t const block_bytes = BlockBytes(format_);
+			for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
+			{
+				for (uint32_t face = 0; face < num_faces; ++ face)
+				{
+					for (uint32_t level = 0; level < mip_maps_num_; ++ level)
+					{
+						size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
+
+						subres_data_[subres].row_pitch = (this->Width(level) + block_width - 1) / block_width * block_bytes;
+						subres_data_[subres].slice_pitch
+							= (this->Height(level) + block_height - 1) / block_height * subres_data_[subres].row_pitch;
+					}
+				}
+			}
+		}
+		else
+		{
+			COMMON_ASSERT(init_data.size() >= num_subres);
+
+			subres_data_.assign(init_data.begin(), init_data.begin() + num_subres);
+		}
+		mapped_.resize(num_subres);
+
+		for (auto& item : mapped_)
+		{
+			item = MakeUniquePtr<std::atomic<bool>>(false);
+		}
+
+		data_block_.clear();
+		if (!ref_only_)
+		{
+			uint32_t size = 0;
+			for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
+			{
+				for (uint32_t face = 0; face < num_faces; ++ face)
+				{
+					for (uint32_t level = 0; level < mip_maps_num_; ++ level)
+					{
+						size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
+						size += subres_data_[subres].slice_pitch * this->Depth(level);
+					}
+				}
+			}
+
+			data_block_.reserve(size);
+			for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
+			{
+				for (uint32_t face = 0; face < num_faces; ++ face)
+				{
+					for (uint32_t level = 0; level < mip_maps_num_; ++ level)
+					{
+						size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
+
+						subres_data_[subres].data = data_block_.data() + data_block_.size();
+						uint32_t const subres_size = subres_data_[subres].slice_pitch * this->Depth(level);
+						if (init_data.empty())
+						{
+							data_block_.resize(data_block_.size() + subres_size);
+						}
+						else
+						{
+							uint8_t const * p = static_cast<uint8_t const *>(init_data[subres].data);
+							data_block_.insert(data_block_.end(), p, p + subres_size);
+						}
+					}
+				}
+			}
+
+			if (init_data.empty())
+			{
+				std::memset(data_block_.data(), 0, data_block_.size());
+			}
+		}
+	}
+
+	void VirtualTexture::DeleteHWResource()
+	{
+		subres_data_.clear();
+		data_block_.clear();
+		mapped_.clear();
+	}
+
+	bool VirtualTexture::HWResourceReady() const 
+	{
+		return !subres_data_.empty();
+	}
+
+	void VirtualTexture::UpdateSubresource1D(uint32_t array_index, uint32_t level,
+		uint32_t x_offset, uint32_t width,
+		void const * data)
+	{
+		uint32_t const block_width = BlockWidth(format_);
+		uint32_t const block_bytes = BlockBytes(format_);
+		size_t const subres = array_index * mip_maps_num_ + level;
 		auto const & init_data = subres_data_[subres];
-		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
-		data = const_cast<uint8_t*>(ptr + x_offset * NumFormatBytes(format_));
-	}
-	else
-	{
-		data = nullptr;
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
+		uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
+			+ (x_offset + block_width - 1) / block_width * block_bytes;
 
-void VirtualTexture::Map2D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
-	uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
-	void*& data, uint32_t& row_pitch)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
+		uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
+		std::memcpy(dst_ptr, data, bytes_per_row);
+	}
 
-	bool already_mapped = false;
-	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
+	void VirtualTexture::UpdateSubresource2D(uint32_t array_index, uint32_t level,
+		uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+		void const * data, uint32_t row_pitch)
 	{
+		uint32_t const block_width = BlockWidth(format_);
+		uint32_t const block_height = BlockHeight(format_);
+		uint32_t const block_bytes = BlockBytes(format_);
+		size_t const subres = array_index * mip_maps_num_ + level;
 		auto const & init_data = subres_data_[subres];
-		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
-		row_pitch = init_data.row_pitch;
-		data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
-	}
-	else
-	{
-		data = nullptr;
-		row_pitch = 0;
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
+		uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
+			+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
+			+ (x_offset + block_width - 1) / block_width * block_bytes;
+		uint8_t const * src_ptr = static_cast<uint8_t const *>(data);
 
-void VirtualTexture::Map3D(uint32_t array_index, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
-	uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
-	[[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height, [[maybe_unused]] uint32_t depth,
-	void*& data, uint32_t& row_pitch, uint32_t& slice_pitch)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
-
-	bool already_mapped = false;
-	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
-	{
-		auto const & init_data = subres_data_[subres];
-		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
-		row_pitch = init_data.row_pitch;
-		slice_pitch = init_data.slice_pitch;
-		data = const_cast<uint8_t*>(ptr + z_offset * slice_pitch + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
-	}
-	else
-	{
-		data = nullptr;
-		row_pitch = 0;
-		slice_pitch = 0;
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::MapCube(uint32_t array_index, CubeFaces face, uint32_t level, [[maybe_unused]] TextureMapAccess tma,
-	uint32_t x_offset, uint32_t y_offset, [[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height,
-	void*& data, uint32_t& row_pitch)
-{
-	size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
-
-	bool already_mapped = false;
-	if (mapped_[subres]->compare_exchange_strong(already_mapped, true))
-	{
-		auto const & init_data = subres_data_[subres];
-		uint8_t const * ptr = static_cast<uint8_t const *>(init_data.data);
-		row_pitch = init_data.row_pitch;
-		data = const_cast<uint8_t*>(ptr + y_offset * row_pitch + x_offset * NumFormatBytes(format_));
-	}
-	else
-	{
-		data = nullptr;
-		row_pitch = 0;
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::Unmap1D(uint32_t array_index, uint32_t level)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
-
-	bool already_mapped = true;
-	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
-	{
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::Unmap2D(uint32_t array_index, uint32_t level)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
-
-	bool already_mapped = true;
-	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
-	{
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::Unmap3D(uint32_t array_index, uint32_t level)
-{
-	size_t const subres = array_index * mip_maps_num_ + level;
-
-	bool already_mapped = true;
-	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
-	{
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::UnmapCube(uint32_t array_index, CubeFaces face, uint32_t level)
-{
-	size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
-
-	bool already_mapped = true;
-	if (!mapped_[subres]->compare_exchange_strong(already_mapped, false))
-	{
-		TERRC(std::errc::device_or_resource_busy);
-	}
-}
-
-void VirtualTexture::CreateHWResource(std::span<ElementInitData const> init_data, [[maybe_unused]] const float4* clear_value_hint)
-{
-    uint32_t const num_faces = (type_ == TT_Cube) ? 6 : 1;
-    uint32_t const num_subres = mip_maps_num_ * array_size_ * num_faces;
-
-    if (init_data.empty())
-    {
-        COMMON_ASSERT(!ref_only_);
-
-        subres_data_.resize(num_subres);
-
-        uint32_t const block_width = BlockWidth(format_);
-        uint32_t const block_height = BlockHeight(format_);
-        uint32_t const block_bytes = BlockBytes(format_);
-        for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
-        {
-            for (uint32_t face = 0; face < num_faces; ++ face)
-            {
-                for (uint32_t level = 0; level < mip_maps_num_; ++ level)
-                {
-                    size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
-
-                    subres_data_[subres].row_pitch = (this->Width(level) + block_width - 1) / block_width * block_bytes;
-                    subres_data_[subres].slice_pitch
-                        = (this->Height(level) + block_height - 1) / block_height * subres_data_[subres].row_pitch;
-                }
-            }
-        }
-    }
-    else
-    {
-        COMMON_ASSERT(init_data.size() >= num_subres);
-
-        subres_data_.assign(init_data.begin(), init_data.begin() + num_subres);
-    }
-    mapped_.resize(num_subres);
-
-    for (auto& item : mapped_)
-    {
-        item = MakeUniquePtr<std::atomic<bool>>(false);
-    }
-
-    data_block_.clear();
-    if (!ref_only_)
-    {
-        uint32_t size = 0;
-        for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
-        {
-            for (uint32_t face = 0; face < num_faces; ++ face)
-            {
-                for (uint32_t level = 0; level < mip_maps_num_; ++ level)
-                {
-                    size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
-                    size += subres_data_[subres].slice_pitch * this->Depth(level);
-                }
-            }
-        }
-
-        data_block_.reserve(size);
-        for (uint32_t array_index = 0; array_index < array_size_; ++ array_index)
-        {
-            for (uint32_t face = 0; face < num_faces; ++ face)
-            {
-                for (uint32_t level = 0; level < mip_maps_num_; ++ level)
-                {
-                    size_t const subres = (array_index * num_faces + face) * mip_maps_num_ + level;
-
-                    subres_data_[subres].data = data_block_.data() + data_block_.size();
-                    uint32_t const subres_size = subres_data_[subres].slice_pitch * this->Depth(level);
-                    if (init_data.empty())
-                    {
-                        data_block_.resize(data_block_.size() + subres_size);
-                    }
-                    else
-                    {
-                        uint8_t const * p = static_cast<uint8_t const *>(init_data[subres].data);
-                        data_block_.insert(data_block_.end(), p, p + subres_size);
-                    }
-                }
-            }
-        }
-
-        if (init_data.empty())
-        {
-            std::memset(data_block_.data(), 0, data_block_.size());
-        }
-    }
-}
-
-void VirtualTexture::DeleteHWResource()
-{
-    subres_data_.clear();
-    data_block_.clear();
-    mapped_.clear();
-}
-
-bool VirtualTexture::HWResourceReady() const 
-{
-    return !subres_data_.empty();
-}
-
-void VirtualTexture::UpdateSubresource1D(uint32_t array_index, uint32_t level,
-	uint32_t x_offset, uint32_t width,
-	void const * data)
-{
-	uint32_t const block_width = BlockWidth(format_);
-	uint32_t const block_bytes = BlockBytes(format_);
-	size_t const subres = array_index * mip_maps_num_ + level;
-	auto const & init_data = subres_data_[subres];
-	uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
-		+ (x_offset + block_width - 1) / block_width * block_bytes;
-
-	uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
-	std::memcpy(dst_ptr, data, bytes_per_row);
-}
-
-void VirtualTexture::UpdateSubresource2D(uint32_t array_index, uint32_t level,
-	uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
-	void const * data, uint32_t row_pitch)
-{
-	uint32_t const block_width = BlockWidth(format_);
-	uint32_t const block_height = BlockHeight(format_);
-	uint32_t const block_bytes = BlockBytes(format_);
-	size_t const subres = array_index * mip_maps_num_ + level;
-	auto const & init_data = subres_data_[subres];
-	uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
-		+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
-		+ (x_offset + block_width - 1) / block_width * block_bytes;
-	uint8_t const * src_ptr = static_cast<uint8_t const *>(data);
-
-	uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
-	for (uint32_t y = 0; y < height; y += block_height)
-	{
-		std::memcpy(dst_ptr, src_ptr, bytes_per_row);
-
-		src_ptr += row_pitch;
-		dst_ptr += init_data.row_pitch;
-	}
-}
-
-void VirtualTexture::UpdateSubresource3D(uint32_t array_index, uint32_t level,
-	uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
-	uint32_t width, uint32_t height, uint32_t depth,
-	void const * data, uint32_t row_pitch, uint32_t slice_pitch)
-{
-	uint32_t const block_width = BlockWidth(format_);
-	uint32_t const block_height = BlockHeight(format_);
-	uint32_t const block_depth = BlockDepth(format_);
-	uint32_t const block_bytes = BlockBytes(format_);
-	size_t const subres = array_index * mip_maps_num_ + level;
-	auto const & init_data = subres_data_[subres];
-	uint8_t* dst0_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
-		+ (z_offset + block_depth - 1) / block_depth * init_data.slice_pitch
-		+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
-		+ (x_offset + block_width - 1) / block_width * block_bytes;
-	uint8_t const * src0_ptr = static_cast<uint8_t const *>(data);
-
-	uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
-	for (uint32_t z = 0; z < depth; z += block_depth)
-	{
-		uint8_t const * src_ptr = src0_ptr;
-		uint8_t* dst_ptr = dst0_ptr;
-
+		uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
 		for (uint32_t y = 0; y < height; y += block_height)
 		{
 			std::memcpy(dst_ptr, src_ptr, bytes_per_row);
@@ -2694,181 +2660,1002 @@ void VirtualTexture::UpdateSubresource3D(uint32_t array_index, uint32_t level,
 			src_ptr += row_pitch;
 			dst_ptr += init_data.row_pitch;
 		}
-
-		src0_ptr += slice_pitch;
-		dst_ptr += init_data.slice_pitch;
 	}
-}
 
-void VirtualTexture::UpdateSubresourceCube(uint32_t array_index, CubeFaces face, uint32_t level,
-	uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
-	void const * data, uint32_t row_pitch)
-{
-	uint32_t const block_width = BlockWidth(format_);
-	uint32_t const block_height = BlockHeight(format_);
-	uint32_t const block_bytes = BlockBytes(format_);
-	size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
-	auto const & init_data = subres_data_[subres];
-	uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
-		+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
-		+ (x_offset + block_width - 1) / block_width * block_bytes;
-	uint8_t const * src_ptr = static_cast<uint8_t const *>(data);
-
-	uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
-	for (uint32_t y = 0; y < height; y += block_height)
+	void VirtualTexture::UpdateSubresource3D(uint32_t array_index, uint32_t level,
+		uint32_t x_offset, uint32_t y_offset, uint32_t z_offset,
+		uint32_t width, uint32_t height, uint32_t depth,
+		void const * data, uint32_t row_pitch, uint32_t slice_pitch)
 	{
-		std::memcpy(dst_ptr, src_ptr, bytes_per_row);
+		uint32_t const block_width = BlockWidth(format_);
+		uint32_t const block_height = BlockHeight(format_);
+		uint32_t const block_depth = BlockDepth(format_);
+		uint32_t const block_bytes = BlockBytes(format_);
+		size_t const subres = array_index * mip_maps_num_ + level;
+		auto const & init_data = subres_data_[subres];
+		uint8_t* dst0_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
+			+ (z_offset + block_depth - 1) / block_depth * init_data.slice_pitch
+			+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
+			+ (x_offset + block_width - 1) / block_width * block_bytes;
+		uint8_t const * src0_ptr = static_cast<uint8_t const *>(data);
 
-		src_ptr += row_pitch;
-		dst_ptr += init_data.row_pitch;
+		uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
+		for (uint32_t z = 0; z < depth; z += block_depth)
+		{
+			uint8_t const * src_ptr = src0_ptr;
+			uint8_t* dst_ptr = dst0_ptr;
+
+			for (uint32_t y = 0; y < height; y += block_height)
+			{
+				std::memcpy(dst_ptr, src_ptr, bytes_per_row);
+
+				src_ptr += row_pitch;
+				dst_ptr += init_data.row_pitch;
+			}
+
+			src0_ptr += slice_pitch;
+			dst_ptr += init_data.slice_pitch;
+		}
+	}
+
+	void VirtualTexture::UpdateSubresourceCube(uint32_t array_index, CubeFaces face, uint32_t level,
+		uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height,
+		void const * data, uint32_t row_pitch)
+	{
+		uint32_t const block_width = BlockWidth(format_);
+		uint32_t const block_height = BlockHeight(format_);
+		uint32_t const block_bytes = BlockBytes(format_);
+		size_t const subres = (array_index * 6 + face) * mip_maps_num_ + level;
+		auto const & init_data = subres_data_[subres];
+		uint8_t* dst_ptr = static_cast<uint8_t*>(const_cast<void*>(init_data.data))
+			+ (y_offset + block_height - 1) / block_height * init_data.row_pitch
+			+ (x_offset + block_width - 1) / block_width * block_bytes;
+		uint8_t const * src_ptr = static_cast<uint8_t const *>(data);
+
+		uint32_t const bytes_per_row = (width + block_width - 1) / block_width * block_bytes;
+		for (uint32_t y = 0; y < height; y += block_height)
+		{
+			std::memcpy(dst_ptr, src_ptr, bytes_per_row);
+
+			src_ptr += row_pitch;
+			dst_ptr += init_data.row_pitch;
+		}
 	}
 }
 
-
-
-
-
-
-
-
-void GetImageInfo(std::string_view tex_name, Texture::TextureType& type,
-    uint32_t& width, uint32_t& height, uint32_t& depth, uint32_t& num_mipmaps, uint32_t& array_size,
-    ElementFormat& format, uint32_t& row_pitch, uint32_t& slice_pitch)
+namespace
 {
-	auto& res_loader = Context::Instance().ResLoaderInstance();
-	std::filesystem::path res_path(tex_name);
-    if (res_path.extension().string() != ".dds")
-    {
-#if ZENGINE_IS_DEV_PLATFORM
-	RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-	RenderDeviceCaps const & caps = rf.RenderEngineInstance().DeviceCaps();
+	void SaveTexture(const std::string& tex_name, Texture::TextureType type,
+		uint32_t width, uint32_t height, uint32_t depth, uint32_t numMipMaps, uint32_t array_size,
+		ElementFormat format, std::span<const ElementInitData> init_data)
+	{
+		std::ofstream file(tex_name.c_str(), std::ios_base::binary);
+		if (!file)
+		{
+			file.open((Context::Instance().ResLoaderInstance().LocalFolder() + tex_name).c_str(), std::ios_base::binary);
+		}
 
-	std::string const metadata_name = std::string(tex_name) + ".kmeta";
-    Context::Instance().DevHelperInstance().GetImageInfo(res_loader.Locate(tex_name), metadata_name, &caps,
-		type, width, height, depth, num_mipmaps, array_size, format, row_pitch, slice_pitch);
-#endif //ZENGINE_IS_DEV_PLATFORM
-    }
-    else
-    {
+		uint32_t magic = Native2LE(MakeFourCC<'D', 'D', 'S', ' '>::value);
+		file.write(reinterpret_cast<char*>(&magic), sizeof(magic));
+
+		DDSSURFACEDESC2 desc;
+		std::memset(&desc, 0, sizeof(desc));
+
+		desc.size = sizeof(desc);
+
+		desc.flags |= DDSD_WIDTH;
+		desc.flags |= DDSD_HEIGHT;
+
+		desc.width = width;
+		desc.height = height;
+
+		if (numMipMaps != 0)
+		{
+			desc.flags |= DDSD_MIPMAPCOUNT;
+			desc.mip_map_count = numMipMaps;
+		}
+
+		desc.pixel_format.size = sizeof(desc.pixel_format);
+
+		if (IsSRGB(format))
+		{
+			desc.reserved1[0] = 1;
+		}
+
+		if (array_size != 1)
+		{
+			desc.pixel_format.flags |= DDSPF_FOURCC;
+			desc.pixel_format.four_cc = MakeFourCC<'D', 'X', '1', '0'>::value;
+		}
+		else
+		{
+			if ((EF_ABGR16 == format)
+				|| IsFloatFormat(format) || IsCompressedFormat(format))
+			{
+				desc.pixel_format.flags |= DDSPF_FOURCC;
+
+				switch (format)
+				{
+				case EF_ABGR16:
+					desc.pixel_format.four_cc = 36;
+					break;
+
+				case EF_SIGNED_ABGR16:
+					desc.pixel_format.four_cc = 110;
+					break;
+
+				case EF_R16F:
+					desc.pixel_format.four_cc = 111;
+					break;
+
+				case EF_GR16F:
+					desc.pixel_format.four_cc = 112;
+					break;
+
+				case EF_ABGR16F:
+					desc.pixel_format.four_cc = 113;
+					break;
+
+				case EF_R32F:
+					desc.pixel_format.four_cc = 114;
+					break;
+
+				case EF_GR32F:
+					desc.pixel_format.four_cc = 115;
+					break;
+
+				case EF_ABGR32F:
+					desc.pixel_format.four_cc = 116;
+					break;
+
+				case EF_BC1:
+				case EF_BC1_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'D', 'X', 'T', '1'>::value;
+					break;
+
+				case EF_BC2:
+				case EF_BC2_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'D', 'X', 'T', '3'>::value;
+					break;
+
+				case EF_BC3:
+				case EF_BC3_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'D', 'X', 'T', '5'>::value;
+					break;
+
+				case EF_BC4:
+				case EF_BC4_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'B', 'C', '4', 'U'>::value;
+					break;
+
+				case EF_SIGNED_BC4:
+					desc.pixel_format.four_cc = MakeFourCC<'B', 'C', '4', 'S'>::value;
+					break;
+
+				case EF_BC5:
+				case EF_BC5_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'B', 'C', '5', 'U'>::value;
+					break;
+
+				case EF_SIGNED_BC5:
+					desc.pixel_format.four_cc = MakeFourCC<'B', 'C', '5', 'S'>::value;
+					break;
+
+				case EF_B10G11R11F:
+				case EF_BC6:
+				case EF_SIGNED_BC6:
+				case EF_BC7:
+				case EF_BC7_SRGB:
+				case EF_ETC1:
+				case EF_ETC2_R11:
+				case EF_SIGNED_ETC2_R11:
+				case EF_ETC2_GR11:
+				case EF_SIGNED_ETC2_GR11:
+				case EF_ETC2_BGR8:
+				case EF_ETC2_BGR8_SRGB:
+				case EF_ETC2_A1BGR8:
+				case EF_ETC2_A1BGR8_SRGB:
+				case EF_ETC2_ABGR8:
+				case EF_ETC2_ABGR8_SRGB:
+					desc.pixel_format.four_cc = MakeFourCC<'D', 'X', '1', '0'>::value;
+					break;
+
+				default:
+					ZENGINE_UNREACHABLE("Invalid element format");
+				}
+			}
+			else
+			{
+				switch (format)
+				{
+				case EF_ARGB4:
+					desc.pixel_format.flags |= DDSPF_RGB;
+					desc.pixel_format.flags |= DDSPF_ALPHAPIXELS;
+					desc.pixel_format.rgb_bit_count = 16;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x0000F000;
+					desc.pixel_format.r_bit_mask = 0x00000F00;
+					desc.pixel_format.g_bit_mask = 0x000000F0;
+					desc.pixel_format.b_bit_mask = 0x0000000F;
+					break;
+
+				case EF_GR8:
+					desc.pixel_format.flags |= DDSPF_FOURCC;
+					desc.pixel_format.four_cc = MakeFourCC<'D', 'X', '1', '0'>::value;
+					break;
+
+				case EF_SIGNED_GR8:
+					desc.pixel_format.flags |= DDSPF_BUMPDUDV;
+					desc.pixel_format.rgb_bit_count = 16;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x000000FF;
+					desc.pixel_format.g_bit_mask = 0x0000FF00;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_SIGNED_R16:
+					desc.pixel_format.flags |= DDSPF_BUMPDUDV;
+					desc.pixel_format.rgb_bit_count = 16;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x0000FFFF;
+					desc.pixel_format.g_bit_mask = 0x00000000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_ARGB8:
+				case EF_ARGB8_SRGB:
+					desc.pixel_format.flags |= DDSPF_RGB;
+					desc.pixel_format.flags |= DDSPF_ALPHAPIXELS;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0xFF000000;
+					desc.pixel_format.r_bit_mask = 0x00FF0000;
+					desc.pixel_format.g_bit_mask = 0x0000FF00;
+					desc.pixel_format.b_bit_mask = 0x000000FF;
+					break;
+
+				case EF_ABGR8:
+				case EF_ABGR8_SRGB:
+					desc.pixel_format.flags |= DDSPF_RGB;
+					desc.pixel_format.flags |= DDSPF_ALPHAPIXELS;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0xFF000000;
+					desc.pixel_format.r_bit_mask = 0x000000FF;
+					desc.pixel_format.g_bit_mask = 0x0000FF00;
+					desc.pixel_format.b_bit_mask = 0x00FF0000;
+					break;
+
+				case EF_SIGNED_ABGR8:
+					desc.pixel_format.flags |= DDSPF_BUMPDUDV;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0xFF000000;
+					desc.pixel_format.r_bit_mask = 0x000000FF;
+					desc.pixel_format.g_bit_mask = 0x0000FF00;
+					desc.pixel_format.b_bit_mask = 0x00FF0000;
+					break;
+
+				case EF_A2BGR10:
+					desc.pixel_format.flags |= DDSPF_RGB;
+					desc.pixel_format.flags |= DDSPF_ALPHAPIXELS;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0xC0000000;
+					desc.pixel_format.r_bit_mask = 0x000003FF;
+					desc.pixel_format.g_bit_mask = 0x000FFC00;
+					desc.pixel_format.b_bit_mask = 0x3FF00000;
+					break;
+
+				case EF_SIGNED_A2BGR10:
+					desc.pixel_format.flags |= DDSPF_BUMPDUDV;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0xC0000000;
+					desc.pixel_format.r_bit_mask = 0x000003FF;
+					desc.pixel_format.g_bit_mask = 0x000FFC00;
+					desc.pixel_format.b_bit_mask = 0x3FF00000;
+					break;
+
+				case EF_GR16:
+					desc.pixel_format.flags |= DDSPF_RGB;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x0000FFFF;
+					desc.pixel_format.g_bit_mask = 0xFFFF0000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_SIGNED_GR16:
+					desc.pixel_format.flags |= DDSPF_BUMPDUDV;
+					desc.pixel_format.rgb_bit_count = 32;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x0000FFFF;
+					desc.pixel_format.g_bit_mask = 0xFFFF0000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_R8:
+					desc.pixel_format.flags |= DDSPF_LUMINANCE;
+					desc.pixel_format.rgb_bit_count = 8;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x000000FF;
+					desc.pixel_format.g_bit_mask = 0x00000000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_R16:
+					desc.pixel_format.flags |= DDSPF_LUMINANCE;
+					desc.pixel_format.rgb_bit_count = 16;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x00000000;
+					desc.pixel_format.r_bit_mask = 0x0000FFFF;
+					desc.pixel_format.g_bit_mask = 0x00000000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				case EF_A8:
+					desc.pixel_format.flags |= DDSPF_ALPHA;
+					desc.pixel_format.rgb_bit_count = 8;
+
+					desc.pixel_format.rgb_alpha_bit_mask = 0x000000FF;
+					desc.pixel_format.r_bit_mask = 0x00000000;
+					desc.pixel_format.g_bit_mask = 0x00000000;
+					desc.pixel_format.b_bit_mask = 0x00000000;
+					break;
+
+				default:
+					ZENGINE_UNREACHABLE("Invalid element format");
+				}
+			}
+		}
+		
+		if (desc.pixel_format.four_cc != MakeFourCC<'D', 'X', '1', '0'>::value)
+		{
+			desc.flags |= DDSD_CAPS;
+			desc.flags |= DDSD_PIXELFORMAT;
+
+			desc.dds_caps.caps1 = DDSCAPS_TEXTURE;
+			if (numMipMaps != 1)
+			{
+				desc.dds_caps.caps1 |= DDSCAPS_MIPMAP;
+				desc.dds_caps.caps1 |= DDSCAPS_COMPLEX;
+			}
+			if (Texture::TT_3D == type)
+			{
+				desc.dds_caps.caps1 |= DDSCAPS_COMPLEX;
+				desc.dds_caps.caps2 |= DDSCAPS2_VOLUME;
+				desc.flags |= DDSD_DEPTH;
+				desc.depth = depth;
+			}
+			if (Texture::TT_Cube == type)
+			{
+				desc.dds_caps.caps1 |= DDSCAPS_COMPLEX;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
+				desc.dds_caps.caps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
+			}
+		}
+
+		uint32_t format_size = NumFormatBytes(format);
+		if (IsCompressedFormat(format))
+		{
+			uint32_t const block_size = NumFormatBytes(format) * 4;
+			uint32_t image_size = ((width + 3) / 4) * ((height + 3) / 4) * block_size;
+
+			desc.flags |= DDSD_LINEARSIZE;
+			desc.linear_size = image_size;
+		}
+
+		DDSSURFACEDESC2 desc_le = desc;
+		desc_le.size = Native2LE(desc_le.size);
+		desc_le.flags = Native2LE(desc_le.flags);
+		desc_le.height = Native2LE(desc_le.height);
+		desc_le.width = Native2LE(desc_le.width);
+		desc_le.pitch = Native2LE(desc_le.pitch);
+		desc_le.depth = Native2LE(desc_le.depth);
+		desc_le.mip_map_count = Native2LE(desc_le.mip_map_count);
+		for (uint32_t i = 0; i < std::size(desc_le.reserved1); ++ i)
+		{
+			desc_le.reserved1[i] = Native2LE(desc_le.reserved1[i]);
+		}
+		desc_le.pixel_format.size = Native2LE(desc_le.pixel_format.size);
+		desc_le.pixel_format.flags = Native2LE(desc_le.pixel_format.flags);
+		desc_le.pixel_format.four_cc = Native2LE(desc_le.pixel_format.four_cc);
+		desc_le.pixel_format.rgb_bit_count = Native2LE(desc_le.pixel_format.rgb_bit_count);
+		desc_le.pixel_format.r_bit_mask = Native2LE(desc_le.pixel_format.r_bit_mask);
+		desc_le.pixel_format.g_bit_mask = Native2LE(desc_le.pixel_format.g_bit_mask);
+		desc_le.pixel_format.b_bit_mask = Native2LE(desc_le.pixel_format.b_bit_mask);
+		desc_le.pixel_format.rgb_alpha_bit_mask = Native2LE(desc_le.pixel_format.rgb_alpha_bit_mask);
+		desc_le.dds_caps.caps1 = Native2LE(desc_le.dds_caps.caps1);
+		desc_le.dds_caps.caps2 = Native2LE(desc_le.dds_caps.caps2);
+		for (uint32_t i = 0; i < std::size(desc_le.dds_caps.reserved); ++ i)
+		{
+			desc_le.dds_caps.reserved[i] = Native2LE(desc_le.dds_caps.reserved[i]);
+		}
+		desc_le.reserved2 = Native2LE(desc_le.reserved2);
+		file.write(reinterpret_cast<char*>(&desc_le), sizeof(desc_le));
+
+		if (MakeFourCC<'D', 'X', '1', '0'>::value == desc.pixel_format.four_cc)
+		{
+			DDS_HEADER_DXT10 desc10;
+			desc10.dxgi_format = ToDXGIFormat(format);
+			desc10.misc_flag = 0;
+			switch (type)
+			{
+			case Texture::TT_1D:
+				desc10.resource_dim = D3D_RESOURCE_DIMENSION_TEXTURE1D;
+				break;
+			
+			case Texture::TT_2D:
+				desc10.resource_dim = D3D_RESOURCE_DIMENSION_TEXTURE2D;
+				break;
+			
+			case Texture::TT_3D:
+				desc10.resource_dim = D3D_RESOURCE_DIMENSION_TEXTURE3D;
+				break;
+			
+			case Texture::TT_Cube:
+				desc10.resource_dim = D3D_RESOURCE_DIMENSION_TEXTURE2D;
+				desc10.misc_flag = D3D_RESOURCE_MISC_TEXTURECUBE;
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid texture type");
+			}
+			desc10.array_size = array_size;
+			if (Texture::TT_Cube == type)
+			{
+				desc10.array_size *= 6;
+			}
+			desc10.reserved = 0;
+
+			desc10.dxgi_format = Native2LE(desc10.dxgi_format);
+			desc10.resource_dim = Native2LE(desc10.resource_dim);
+			desc10.misc_flag = Native2LE(desc10.misc_flag);
+			desc10.array_size = Native2LE(desc10.array_size);
+			desc10.reserved = Native2LE(desc10.reserved);
+			desc10.array_size = Native2LE(desc10.array_size);
+			file.write(reinterpret_cast<char*>(&desc10), sizeof(desc10));
+		}
+
+		switch (type)
+		{
+		case Texture::TT_1D:
+			{
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					for (uint32_t level = 0; level < desc.mip_map_count; ++ level)
+					{
+						size_t const index = array_index * desc.mip_map_count + level;
+						uint32_t image_size;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							image_size = ((the_width + 3) / 4) * block_size;
+						}
+						else
+						{
+							image_size = the_width * format_size;
+						}
+
+						file.write(reinterpret_cast<char const *>(init_data[index].data), static_cast<std::streamsize>(image_size));
+
+						the_width = std::max(the_width / 2, 1U);
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_2D:
+			{
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					uint32_t the_height = height;
+					for (uint32_t level = 0; level < desc.mip_map_count; ++ level)
+					{
+						size_t const index = array_index * desc.mip_map_count + level;
+						uint32_t image_size;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * block_size;
+						}
+						else
+						{
+							image_size = the_width * the_height * format_size;
+						}
+
+						file.write(reinterpret_cast<char const *>(init_data[index].data), static_cast<std::streamsize>(image_size));
+
+						the_width = std::max(the_width / 2, 1U);
+						the_height = std::max(the_height / 2, 1U);
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_3D:
+			{
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					uint32_t the_height = height;
+					uint32_t the_depth = depth;
+					for (uint32_t level = 0; level < desc.mip_map_count; ++ level)
+					{
+						size_t const index = array_index * desc.mip_map_count + level;
+						uint32_t image_size;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * the_depth * block_size;
+						}
+						else
+						{
+							image_size = the_width * the_height * the_depth * format_size;
+						}
+
+						file.write(reinterpret_cast<char const *>(init_data[index].data), static_cast<std::streamsize>(image_size));
+
+						the_width = std::max(the_width / 2, 1U);
+						the_height = std::max(the_height / 2, 1U);
+						the_depth = std::max(the_depth / 2, 1U);
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_Cube:
+			{
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t face = Texture::CF_Positive_X; face <= Texture::CF_Negative_Z; ++ face)
+					{
+						uint32_t the_width = width;
+						for (uint32_t level = 0; level < desc.mip_map_count; ++ level)
+						{
+							size_t const index = (array_index * 6 + face - Texture::CF_Positive_X) * numMipMaps + level;
+							uint32_t image_size;
+							if (IsCompressedFormat(format))
+							{
+								uint32_t const block_size = NumFormatBytes(format) * 4;
+								image_size = ((the_width + 3) / 4) * ((the_width + 3) / 4) * block_size;
+							}
+							else
+							{
+								image_size = the_width * the_width * format_size;
+							}
+
+							file.write(reinterpret_cast<char const *>(init_data[index].data), static_cast<std::streamsize>(image_size));
+
+							the_width = std::max(the_width / 2, 1U);
+						}
+					}
+				}
+			}
+			break;
+		}
+	}
+} // namespace
+
+namespace RenderWorker
+{
+	void GetImageInfo(std::string_view tex_name, Texture::TextureType& type,
+		uint32_t& width, uint32_t& height, uint32_t& depth, uint32_t& num_mipmaps, uint32_t& array_size,
+		ElementFormat& format, uint32_t& row_pitch, uint32_t& slice_pitch)
+	{
+		auto& res_loader = Context::Instance().ResLoaderInstance();
+		std::filesystem::path res_path(tex_name);
+		if (res_path.extension().string() != ".dds")
+		{
+	#if ZENGINE_IS_DEV_PLATFORM
+			RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+			RenderDeviceCaps const & caps = rf.RenderEngineInstance().DeviceCaps();
+
+			std::string const metadata_name = std::string(tex_name) + ".kmeta";
+			Context::Instance().DevHelperInstance().GetImageInfo(res_loader.Locate(tex_name), metadata_name, &caps,
+				type, width, height, depth, num_mipmaps, array_size, format, row_pitch, slice_pitch);
+	#endif //ZENGINE_IS_DEV_PLATFORM
+		}
+		else
+		{
+			ResIdentifierPtr tex_res = res_loader.Open(tex_name);
+			ReadDdsFileHeader(tex_res, type, width, height, depth, num_mipmaps, array_size, format,
+				row_pitch, slice_pitch);
+		}
+	}
+
+	TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
+	{
+		return Context::Instance().ResLoaderInstance().SyncQueryT<Texture>(MakeSharedPtr<TextureLoadingDesc>(tex_name, access_hint));
+	}
+
+	TexturePtr ASyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
+	{
+		return Context::Instance().ResLoaderInstance().ASyncQueryT<Texture>(MakeSharedPtr<TextureLoadingDesc>(tex_name, access_hint));
+	}
+
+	
+	TexturePtr LoadVirtualTexture(std::string_view tex_name)
+	{
+		auto& res_loader = Context::Instance().ResLoaderInstance();
 		ResIdentifierPtr tex_res = res_loader.Open(tex_name);
-        ReadDdsFileHeader(tex_res, type, width, height, depth, num_mipmaps, array_size, format,
-            row_pitch, slice_pitch);
-    }
-}
 
-TexturePtr SyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
-{
-	return Context::Instance().ResLoaderInstance().SyncQueryT<Texture>(MakeSharedPtr<TextureLoadingDesc>(tex_name, access_hint));
-}
+		Texture::TextureType type;
+		uint32_t width, height, depth;
+		uint32_t num_mipmaps;
+		uint32_t array_size;
+		ElementFormat format;
+		std::vector<ElementInitData> init_data;
+		std::vector<uint8_t> data_block;
+		uint32_t row_pitch, slice_pitch;
+		ReadDdsFileHeader(tex_res, type, width, height, depth, num_mipmaps, array_size, format,
+			row_pitch, slice_pitch);
 
-TexturePtr ASyncLoadTexture(std::string_view tex_name, uint32_t access_hint)
-{
-	return Context::Instance().ResLoaderInstance().ASyncQueryT<Texture>(MakeSharedPtr<TextureLoadingDesc>(tex_name, access_hint));
-}
+		uint32_t const fmt_size = NumFormatBytes(format);
+		bool padding = false;
+		if (!IsCompressedFormat(format))
+		{
+			if (row_pitch != width * fmt_size)
+			{
+				COMMON_ASSERT(row_pitch == ((width + 3) & ~3) * fmt_size);
+				padding = true;
+			}
+		}
 
-TexturePtr LoadVirtualTexture(std::string_view tex_name)
-{
-	auto& res_loader = Context::Instance().ResLoaderInstance();
-    ResIdentifierPtr tex_res = res_loader.Open(tex_name);
+		std::vector<size_t> base;
+		switch (type)
+		{
+		case Texture::TT_1D:
+			{
+			}
+			break;
 
-    Texture::TextureType type;
-    uint32_t width, height, depth;
-    uint32_t num_mipmaps;
-    uint32_t array_size;
-    ElementFormat format;
-    std::vector<ElementInitData> init_data;
-    std::vector<uint8_t> data_block;
-    uint32_t row_pitch, slice_pitch;
-    ReadDdsFileHeader(tex_res, type, width, height, depth, num_mipmaps, array_size, format,
-        row_pitch, slice_pitch);
+		case Texture::TT_2D:
+			{
+				init_data.resize(array_size * num_mipmaps);
+				base.resize(array_size * num_mipmaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					uint32_t the_height = height;
+					for (uint32_t level = 0; level < num_mipmaps; ++ level)
+					{
+						size_t const index = array_index * num_mipmaps + level;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							uint32_t image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * block_size;
 
-    uint32_t const fmt_size = NumFormatBytes(format);
-    bool padding = false;
-    if (!IsCompressedFormat(format))
-    {
-        if (row_pitch != width * fmt_size)
-        {
-            COMMON_ASSERT(row_pitch == ((width + 3) & ~3) * fmt_size);
-            padding = true;
-        }
-    }
+							base[index] = data_block.size();
+							data_block.resize(base[index] + image_size);
+							init_data[index].row_pitch = (the_width + 3) / 4 * block_size;
+							init_data[index].slice_pitch = image_size;
 
-    std::vector<size_t> base;
-    switch (type)
-    {
-    case Texture::TT_1D:
-        {
-        }
-        break;
+							tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(image_size));
+							COMMON_ASSERT(tex_res->gcount() == static_cast<int>(image_size));
+						}
+						else
+						{
+							init_data[index].row_pitch = (padding ? ((the_width + 3) & ~3) : the_width) * fmt_size;
+							init_data[index].slice_pitch = init_data[index].row_pitch * the_height;
+							base[index] = data_block.size();
+							data_block.resize(base[index] + init_data[index].slice_pitch);
 
-    case Texture::TT_2D:
-        {
-            init_data.resize(array_size * num_mipmaps);
-            base.resize(array_size * num_mipmaps);
-            for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
-            {
-                uint32_t the_width = width;
-                uint32_t the_height = height;
-                for (uint32_t level = 0; level < num_mipmaps; ++ level)
-                {
-                    size_t const index = array_index * num_mipmaps + level;
-                    if (IsCompressedFormat(format))
-                    {
-                        uint32_t const block_size = NumFormatBytes(format) * 4;
-                        uint32_t image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * block_size;
+							tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(init_data[index].slice_pitch));
+							COMMON_ASSERT(tex_res->gcount() == static_cast<int>(init_data[index].slice_pitch));
+						}
 
-                        base[index] = data_block.size();
-                        data_block.resize(base[index] + image_size);
-                        init_data[index].row_pitch = (the_width + 3) / 4 * block_size;
-                        init_data[index].slice_pitch = image_size;
+						the_width = std::max(the_width / 2, 1U);
+						the_height = std::max(the_height / 2, 1U);
+					}
+				}
+			}
+			break;
 
-                        tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(image_size));
-                        COMMON_ASSERT(tex_res->gcount() == static_cast<int>(image_size));
-                    }
-                    else
-                    {
-                        init_data[index].row_pitch = (padding ? ((the_width + 3) & ~3) : the_width) * fmt_size;
-                        init_data[index].slice_pitch = init_data[index].row_pitch * the_height;
-                        base[index] = data_block.size();
-                        data_block.resize(base[index] + init_data[index].slice_pitch);
+		case Texture::TT_3D:
+			{
+			}
+			break;    
 
-                        tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(init_data[index].slice_pitch));
-                        COMMON_ASSERT(tex_res->gcount() == static_cast<int>(init_data[index].slice_pitch));
-                    }
+		case Texture::TT_Cube:
+			{
+			}
+			break;
+		}
 
-                    the_width = std::max(the_width / 2, 1U);
-                    the_height = std::max(the_height / 2, 1U);
-                }
-            }
-        }
-        break;
+		for (size_t i = 0; i < base.size(); ++ i)
+		{
+			init_data[i].data = &data_block[base[i]];
+		}
+		auto ret = MakeSharedPtr<VirtualTexture>(type, width, height, depth, num_mipmaps, array_size, format, false);
+		ret->CreateHWResource(init_data, nullptr);
+		return ret;
+	}
 
-    case Texture::TT_3D:
-        {
-        }
-        break;    
+	void SaveTexture(const TexturePtr & texture, const std::string & tex_name)
+	{
+		ElementFormat format = texture->Format();
+		uint32_t numMipMaps = texture->MipMapsNum();
+		uint32_t array_size = texture->ArraySize();
 
-    case Texture::TT_Cube:
-        {
-        }
-        break;
-    }
+		TexturePtr texture_sys_mem;
+		if (texture->AccessHint() & EAH_CPU_Read)
+		{
+			texture_sys_mem = texture;
+		}
+		else
+		{
+			RenderFactory& renderFactory = Context::Instance().RenderFactoryInstance();
 
-    for (size_t i = 0; i < base.size(); ++ i)
-    {
-        init_data[i].data = &data_block[base[i]];
-    }
-    auto ret = MakeSharedPtr<VirtualTexture>(type, width, height, depth, num_mipmaps, array_size, format, false);
-    ret->CreateHWResource(init_data, nullptr);
-    return ret;
-}
+			switch (texture->Type())
+			{
+			case Texture::TT_1D:
+				texture_sys_mem = renderFactory.MakeTexture1D(texture->Width(0),
+					numMipMaps, array_size, format, 1, 0, EAH_CPU_Read);
+				break;
 
-void SaveTexture(TexturePtr const & texture, std::string const & tex_name)
-{
-}
+			case Texture::TT_2D:
+				texture_sys_mem = renderFactory.MakeTexture2D(texture->Width(0), texture->Height(0),
+					numMipMaps, array_size, format, 1, 0, EAH_CPU_Read);
+				break;
 
-void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format, uint32_t dst_width,
-	uint32_t dst_height, uint32_t dst_depth, void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch,
-	ElementFormat src_format, uint32_t src_width, uint32_t src_height, uint32_t src_depth, TextureFilter filter)
-{}
+			case Texture::TT_3D:
+				texture_sys_mem = renderFactory.MakeTexture3D(texture->Width(0), texture->Height(0),
+					texture->Depth(0), numMipMaps, array_size, format, 1, 0, EAH_CPU_Read);
+				break;
+
+			case Texture::TT_Cube:
+				texture_sys_mem = renderFactory.MakeTextureCube(texture->Width(0),
+					numMipMaps, array_size, format, 1, 0, EAH_CPU_Read);
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid texture type");
+			}
+			texture->CopyToTexture(*texture_sys_mem, TextureFilter::Point);
+		}
+
+		uint32_t const format_size = NumFormatBytes(format);
+
+		std::vector<ElementInitData> init_data;
+		std::vector<size_t> base;
+		std::vector<uint8_t> data_block;
+		switch (texture_sys_mem->Type())
+		{
+		case Texture::TT_1D:
+			{
+				init_data.resize(array_size * numMipMaps);
+				base.resize(array_size * numMipMaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t level = 0; level < numMipMaps; ++ level)
+					{
+						size_t const index = array_index * numMipMaps + level;
+						uint32_t const width = texture_sys_mem->Width(level);
+						uint32_t image_size;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							image_size = ((width + 3) / 4) * block_size;
+						}
+						else
+						{
+							image_size = width * format_size;
+						}
+
+						{
+							Texture::Mapper mapper(*texture_sys_mem, array_index, level, TMA_Read_Only, 0, width);
+							base[index] = data_block.size();
+							data_block.resize(data_block.size() + image_size);
+							std::memcpy(&data_block[base[index]], mapper.Pointer<char>(), image_size);
+						}
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_2D:
+			{
+				init_data.resize(array_size * numMipMaps);
+				base.resize(array_size * numMipMaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t level = 0; level < numMipMaps; ++ level)
+					{
+						size_t const index = array_index * numMipMaps + level;
+						uint32_t const width = texture_sys_mem->Width(level);
+						uint32_t const height = texture_sys_mem->Height(level);
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							uint32_t image_size = ((width + 3) / 4) * ((height + 3) / 4) * block_size;
+
+							{
+								Texture::Mapper mapper(*texture_sys_mem, array_index, level, TMA_Read_Only, 0, 0, width, height);
+								char const * data = mapper.Pointer<char>();
+
+								base[index] = data_block.size();
+								data_block.resize(data_block.size() + image_size);
+								for (uint32_t y = 0; y < (height + 3) / 4; ++ y)
+								{
+									std::memcpy(&data_block[base[index] + y * ((width + 3) / 4) * block_size], data, (width + 3) / 4 * block_size);
+									data += mapper.RowPitch();
+								}
+							}
+						}
+						else
+						{
+							Texture::Mapper mapper(*texture_sys_mem, array_index, level, TMA_Read_Only, 0, 0, width, height);
+							char const * data = mapper.Pointer<char>();
+
+							base[index] = data_block.size();
+							data_block.resize(data_block.size() + width * height * format_size);
+							for (uint32_t y = 0; y < height; ++ y)
+							{
+								std::memcpy(&data_block[base[index] + y * width * format_size], data, width * format_size);
+								data += mapper.RowPitch();
+							}
+						}
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_3D:
+			{
+				init_data.resize(array_size * numMipMaps);
+				base.resize(array_size * numMipMaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t level = 0; level < numMipMaps; ++ level)
+					{
+						size_t const index = array_index * numMipMaps + level;
+						uint32_t const width = texture_sys_mem->Width(level);
+						uint32_t const height = texture_sys_mem->Height(level);
+						uint32_t const depth = texture_sys_mem->Depth(level);
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							uint32_t image_size = ((width + 3) / 4) * ((height + 3) / 4) * depth * block_size;
+
+							{
+								Texture::Mapper mapper(*texture_sys_mem, array_index, level, TMA_Read_Only, 0, 0, width, height);
+								char const * data = mapper.Pointer<char>();
+
+								base[index] = data_block.size();
+								data_block.resize(data_block.size() + image_size);
+								for (uint32_t z = 0; z < (depth + 3) / 4; ++ z)
+								{
+									for (uint32_t y = 0; y < (height + 3) / 4; ++ y)
+									{
+										std::memcpy(&data_block[base[index] + (z * ((height + 3) / 4) + y) * ((width + 3) / 4) * block_size], data, (width + 3) / 4 * block_size);
+										data += mapper.RowPitch();
+									}
+
+									data += mapper.SlicePitch() - mapper.RowPitch() * ((height + 3) / 4);
+								}
+							}
+						}
+						else
+						{
+							Texture::Mapper mapper(*texture_sys_mem, array_index, level, TMA_Read_Only, 0, 0, 0, width, height, depth);
+							char const * data = mapper.Pointer<char>();
+
+							base[index] = data_block.size();
+							data_block.resize(data_block.size() + width * height * depth * format_size);
+							for (uint32_t z = 0; z < depth; ++ z)
+							{
+								for (uint32_t y = 0; y < height; ++ y)
+								{
+									std::memcpy(&data_block[base[index] + (z * height + y) * width * format_size], data, width * format_size);
+									data += mapper.RowPitch();
+								}
+
+								data += mapper.SlicePitch() - mapper.RowPitch() * height;
+							}
+						}
+					}
+				}
+			}
+			break;
+
+		case Texture::TT_Cube:
+			{
+				init_data.resize(array_size * 6 * numMipMaps);
+				base.resize(array_size * 6 * numMipMaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t face = Texture::CF_Positive_X; face <= Texture::CF_Negative_Z; ++ face)
+					{
+						for (uint32_t level = 0; level < numMipMaps; ++ level)
+						{
+							size_t const index = (array_index * 6 + (face - Texture::CF_Positive_X)) * numMipMaps + level;
+							uint32_t const width = texture_sys_mem->Width(level);
+							uint32_t const height = texture_sys_mem->Height(level);
+							if (IsCompressedFormat(format))
+							{
+								uint32_t const block_size = NumFormatBytes(format) * 4;
+								uint32_t image_size = ((width + 3) / 4) * ((height + 3) / 4) * block_size;
+
+								{
+									Texture::Mapper mapper(*texture_sys_mem, array_index, static_cast<Texture::CubeFaces>(face), level, TMA_Read_Only, 0, 0, width, height);
+									char const * data = mapper.Pointer<char>();
+
+									base[index] = data_block.size();
+									data_block.resize(data_block.size() + image_size);
+									for (uint32_t y = 0; y < (height + 3) / 4; ++ y)
+									{
+										std::memcpy(&data_block[base[index] + y * ((width + 3) / 4) * block_size], data, (width + 3) / 4 * block_size);
+										data += mapper.RowPitch();
+									}
+								}
+							}
+							else
+							{
+								Texture::Mapper mapper(*texture_sys_mem, array_index, static_cast<Texture::CubeFaces>(face), level, TMA_Read_Only, 0, 0, width, height);
+								char const * data = mapper.Pointer<char>();
+
+								base[index] = data_block.size();
+								data_block.resize(data_block.size() + width * height * format_size);
+								for (uint32_t y = 0; y < height; ++ y)
+								{
+									std::memcpy(&data_block[base[index] + y * width * format_size], data, width * format_size);
+									data += mapper.RowPitch();
+								}
+							}
+						}
+					}
+				}
+			}
+			break;
+		}
+
+		for (size_t i = 0; i < base.size(); ++ i)
+		{
+			init_data[i].data = &data_block[base[i]];
+		}
+
+		::SaveTexture(tex_name, texture_sys_mem->Type(),
+			texture_sys_mem->Width(0), texture_sys_mem->Height(0), texture_sys_mem->Depth(0),
+			numMipMaps, array_size, format, init_data);
+	}
+
+	
+	void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format, uint32_t dst_width,
+		uint32_t dst_height, uint32_t dst_depth, void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch,
+		ElementFormat src_format, uint32_t src_width, uint32_t src_height, uint32_t src_depth, TextureFilter filter)
+	{
+		std::vector<uint8_t> src_cpu_data_block;
+		void* src_cpu_data;
+		uint32_t src_cpu_row_pitch;
+		uint32_t src_cpu_slice_pitch;
+		ElementFormat src_cpu_format;
+		if (IsCompressedFormat(src_format))
+		{
+			// DecodeTexture(src_cpu_data_block, src_cpu_row_pitch, src_cpu_slice_pitch, src_cpu_format,
+			// 	src_data, src_row_pitch, src_slice_pitch, src_format, src_width, src_height, src_depth);
+			// src_cpu_data = static_cast<void*>(&src_cpu_data_block[0]);
+		}
+		else
+		{
+			src_cpu_data = const_cast<void*>(src_data);
+			src_cpu_row_pitch = src_row_pitch;
+			src_cpu_slice_pitch = src_slice_pitch;
+			src_cpu_format = src_format;
+		}
+	}
+
 }

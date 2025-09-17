@@ -116,8 +116,8 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
 
     int vIndex = 0, iIndex = 0;
     float phi = 0.0f, theta = 0.0f;
-    float per_phi = MathWorker::PI / levels;
-    float per_theta = MathWorker::PI2 / slices;
+    float per_phi = PI / levels;
+    float per_theta = PI2 / slices;
     float x, y, z;
 
     // 放入顶端点
@@ -142,7 +142,7 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
             float3 pos = float3(x, y, z);
             float3 normal = MathWorker::normalize(pos);
             float4 tangent = float4(-sinf(theta), 0.0f, cosf(theta), 1.0f);
-            float2 tex = float2(theta / MathWorker::PI2, phi / MathWorker::PI);
+            float2 tex = float2(theta / PI2, phi / PI);
 
             tmp.pos = pos;
             tmp.normal = normal;
