@@ -12,6 +12,11 @@ Renderable::Renderable()
 {
 }
 
+Renderable::Renderable(std::wstring_view name)
+    : name_(name), rls_(1)
+{
+}
+
 Renderable::~Renderable()
 {
 }
@@ -36,12 +41,12 @@ RenderTechnique* Renderable::GetRenderTechnique() const
     return technique_;
 }
 
-void Renderable::LodsNum(uint32_t lods)
+void Renderable::NumLods(uint32_t lods)
 {
     rls_.resize(lods);
 }
 
-uint32_t Renderable::LodsNum() const
+uint32_t Renderable::NumLods() const
 {
     return static_cast<uint32_t>(rls_.size());
 }
@@ -50,7 +55,7 @@ void Renderable::ActiveLod(int32_t lod)
 {
     if (lod >= 0)
     {
-        active_lod_ = std::min(lod, static_cast<int32_t>(LodsNum() - 1));
+        active_lod_ = std::min(lod, static_cast<int32_t>(NumLods() - 1));
     }
     else
     {
@@ -83,4 +88,8 @@ void Renderable::Render()
     re.Render(effect, tech, layout);
 }
 
+void Renderable::Material(const RenderMaterialPtr& mtl)
+{
+    
+}
 }

@@ -2,6 +2,7 @@
 //可渲染对象类 头文件
 #include <render/RenderEffect.h>
 #include <render/RenderLayout.h>
+#include <render/RenderMaterial.h>
 
 namespace RenderWorker
 {
@@ -18,6 +19,7 @@ public:
     };
 public:
     Renderable();
+	explicit Renderable(std::wstring_view name);
     ~Renderable();
     
     RenderLayout& GetRenderLayout() const;
@@ -26,13 +28,26 @@ public:
 	virtual RenderEffect* GetRenderEffect() const;
     virtual RenderTechnique* GetRenderTechnique() const;
 
-    virtual void LodsNum(uint32_t lods);
-    virtual uint32_t LodsNum() const;
+    virtual void NumLods(uint32_t lods);
+    virtual uint32_t NumLods() const;
     virtual void ActiveLod(int32_t lod);
     virtual int32_t ActiveLod() const;
 
     void Render();
-public:
+
+    virtual bool HWResourceReady() const
+    {
+        return true;
+    }
+
+    virtual void Material(const RenderMaterialPtr& mtl);
+    virtual const RenderMaterialPtr&  Material() const
+    {
+        return mtl_;
+    }
+
+protected:
+    std::wstring name_;
     int32_t active_lod_ = 0;
 
     // 布局顶点索引
@@ -40,6 +55,10 @@ public:
     // 效果参数合集
     RenderEffectPtr effect_;
     RenderTechnique* technique_ = nullptr;
+
+	RenderMaterialPtr mtl_;
 };
+
+
 using RenderablePtr = std::shared_ptr<RenderWorker::Renderable>;
 }

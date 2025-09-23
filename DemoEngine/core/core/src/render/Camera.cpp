@@ -38,7 +38,7 @@ const float3& Camera::ForwardVec() const
 
 const float4x4& Camera::ViewMatrix() const
 {
-    return InverseTransformToWorld();
+    return this->BoundSceneNode()->InverseTransformToWorld();
 }
 
 const float4x4& Camera::ProjMatrix() const
@@ -59,7 +59,7 @@ const float4x4& Camera::ViewProjMatrix() const
 
 const float4x4& Camera::InverseViewMatrix() const
 {
-    return TransformToWorld();
+    return this->BoundSceneNode()->TransformToWorld();
 }
 
 const float4x4& Camera::InverseProjMatrix() const

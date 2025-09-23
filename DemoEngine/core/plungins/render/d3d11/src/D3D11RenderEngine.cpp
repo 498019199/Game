@@ -192,7 +192,7 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 	}
 
     // 设置图元类型，设定输入布局
-	uint32_t const vertex_count = static_cast<uint32_t>(rl.UseIndices() ? rl.IndicesNum() : rl.NumVertices());
+	uint32_t const vertex_count = static_cast<uint32_t>(rl.UseIndices() ? rl.NumIndices() : rl.NumVertices());
 	D3D11RenderLayout::topology_type tt = rl.TopologyType();
 	if (topology_type_cache_ != tt)
 	{
@@ -1092,7 +1092,8 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 			}
 		}
 	}
-
+	
+	caps_.AssignVertexFormats(std::move(vertex_formats));
 	caps_.AssignTextureFormats(std::move(texture_formats));
 }
 

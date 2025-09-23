@@ -12,6 +12,7 @@ namespace RenderWorker
 {
 
 World::World()
+    :scene_root_(L"SceenRoot", SceneNode::SOA_Cullable)
 {
 }
 

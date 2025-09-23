@@ -1,10 +1,10 @@
 #pragma once
 
-#include <world/SceneNode.h>
+#include <world/SceneComponent.h>
 
 namespace RenderWorker
 {
-class ZENGINE_CORE_API Camera: public SceneNode
+class ZENGINE_CORE_API Camera: public SceneComponent
 {
 public:
     Camera();

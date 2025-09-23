@@ -134,17 +134,23 @@ public:
         return topo_type_;
     }
 
-    bool UseIndices() const;
-
     uint32_t VertexStreamNum() const;
 
-    uint32_t IndicesNum() const;
+    bool UseIndices() const;
+    void NumIndices(uint32_t n);
+    uint32_t NumIndices() const;
 
+    void NumVertices(uint32_t n);
     uint32_t NumVertices() const;
 
     const GraphicsBufferPtr& GetVertexStream(uint32_t index) const
     {
         return vertex_streams_[index].stream;
+    }
+    void SetVertexStream(uint32_t index, const GraphicsBufferPtr& gb)
+    {
+        vertex_streams_[index].stream = gb;
+        streams_dirty_ = true;
     }
 
     const GraphicsBufferPtr& GetIndexStream() const
@@ -183,8 +189,13 @@ public:
 
     void BindIndexStream(const GraphicsBufferPtr& buffer, ElementFormat format);
 
-
     void Active() const;
+
+    void StartVertexLocation(uint32_t location);
+    uint32_t StartVertexLocation() const;
+
+    void StartIndexLocation(uint32_t location);
+    uint32_t StartIndexLocation() const;
 protected:
     topology_type topo_type_;
 
@@ -195,6 +206,9 @@ protected:
 
     uint32_t force_num_vertices_{0xFFFFFFFF};
 	uint32_t force_num_indices_{0xFFFFFFFF};
+
+    uint32_t start_vertex_location_ {0};
+    uint32_t start_index_location_ {0};
 
     mutable bool streams_dirty_;
 };

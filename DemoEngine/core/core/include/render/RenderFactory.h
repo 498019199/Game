@@ -20,6 +20,13 @@ public:
     RenderEngine& RenderEngineInstance();
     virtual RenderLayoutPtr MakeRenderLayout() = 0;
 
+    virtual GraphicsBufferPtr MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+        uint32_t structure_byte_stride = 0) = 0;
+    virtual GraphicsBufferPtr MakeDelayCreationIndexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+        uint32_t structure_byte_stride = 0) = 0;
+    virtual GraphicsBufferPtr MakeDelayCreationConstantBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+        uint32_t structure_byte_stride = 0) = 0;
+        
     virtual ShaderObjectPtr MakeShaderObject() = 0;
     virtual ShaderStageObjectPtr MakeShaderStageObject(ShaderStage stage) = 0;
     virtual RenderStateObjectPtr MakeRenderStateObject(const RasterizerStateDesc& rs_desc, const DepthStencilStateDesc& dss_desc, const BlendStateDesc& bs_desc) = 0;

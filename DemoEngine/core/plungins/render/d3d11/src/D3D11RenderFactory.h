@@ -11,6 +11,13 @@ public:
 
     RenderLayoutPtr MakeRenderLayout() override;
     
+    GraphicsBufferPtr MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint,
+        uint32_t size_in_byte, uint32_t structure_byte_stride = 0) override;
+    GraphicsBufferPtr MakeDelayCreationIndexBuffer(BufferUsage usage, uint32_t access_hint,
+        uint32_t size_in_byte, uint32_t structure_byte_stride = 0) override;
+    GraphicsBufferPtr MakeDelayCreationConstantBuffer(BufferUsage usage, uint32_t access_hint,
+        uint32_t size_in_byte, uint32_t structure_byte_stride = 0) override;
+        
     ShaderObjectPtr MakeShaderObject() override;
     ShaderStageObjectPtr MakeShaderStageObject(ShaderStage stage) override;
     RenderStateObjectPtr MakeRenderStateObject(const RasterizerStateDesc& rs_desc, const DepthStencilStateDesc& dss_desc, const BlendStateDesc& bs_desc) override;

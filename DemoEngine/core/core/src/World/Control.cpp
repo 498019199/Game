@@ -38,7 +38,7 @@ void FirstPersonController::AttachCamera(const CameraPtr& camera)
     float3 scale;
     float3 translation;
     quater quat;
-    MathWorker::Decompose(scale, quat, translation, camera->TransformToParent());
+    MathWorker::Decompose(scale, quat, translation, camera->ViewMatrix());
 
     rotator rot = MathWorker::ToRotator(quat);
 
@@ -60,7 +60,9 @@ void FirstPersonController::Move(float x, float y, float z)
     {
         float3 movement(x, y, z);
         movement *= moveScaler_;
-        camera_->TransformToWorld(MathWorker::Translation(movement) * camera_->TransformToParent());
+
+        auto& camera_node = *camera_->BoundSceneNode();
+        camera_node.TransformToWorld(MathWorker::Translation(movement) * camera_node.TransformToParent());
 
         camera_->Dirty();
     }
@@ -91,9 +93,10 @@ void FirstPersonController::RotateRel(float yaw, float pitch, float roll)
         float3 view_vec = MathWorker::TransformQuat(float3(0, 0, 1), inv_rot_);
         float3 up_vec = MathWorker::TransformQuat(float3(0, 1, 0), inv_rot_);
 
-
-        camera_->TransformToWorld(
+        auto& camera_node = *camera_->BoundSceneNode();
+        camera_node.TransformToWorld(
             MathWorker::Inverse(MathWorker::LookAtLH(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
+
         camera_->Dirty();
     }
 }
@@ -113,7 +116,8 @@ void FirstPersonController::RotateAbs(const quater& quat)
         float3 view_vec = MathWorker::TransformQuat(float3(0, 0, 1), inv_rot_);
         float3 up_vec = MathWorker::TransformQuat(float3(0, 1, 0), inv_rot_);
 
-        camera_->TransformToWorld(
+        auto& camera_node = *camera_->BoundSceneNode();
+        camera_node.TransformToWorld(
             MathWorker::Inverse(MathWorker::LookAtLH(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
         camera_->Dirty();
     }

@@ -16,6 +16,24 @@ RenderLayoutPtr D3D11RenderFactory::MakeRenderLayout()
     return MakeSharedPtr<D3D11RenderLayout>();
 }
 
+GraphicsBufferPtr D3D11RenderFactory::MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint,
+    uint32_t size_in_byte, uint32_t structure_byte_stride)
+{
+    return MakeSharedPtr<D3D11GraphicsBuffer>(usage, access_hint, D3D11_BIND_VERTEX_BUFFER, size_in_byte, structure_byte_stride);
+}
+
+GraphicsBufferPtr D3D11RenderFactory::MakeDelayCreationIndexBuffer(BufferUsage usage, uint32_t access_hint,
+    uint32_t size_in_byte, uint32_t structure_byte_stride)
+{
+    return MakeSharedPtr<D3D11GraphicsBuffer>(usage, access_hint, D3D11_BIND_INDEX_BUFFER, size_in_byte, structure_byte_stride);
+}
+
+GraphicsBufferPtr D3D11RenderFactory::MakeDelayCreationConstantBuffer(BufferUsage usage, uint32_t access_hint,
+    uint32_t size_in_byte, uint32_t structure_byte_stride)
+{
+    return MakeSharedPtr<D3D11GraphicsBuffer>(usage, access_hint, D3D11_BIND_CONSTANT_BUFFER, size_in_byte, structure_byte_stride);
+}
+
 ShaderObjectPtr D3D11RenderFactory::MakeShaderObject()
 {
     return MakeSharedPtr<D3D11ShaderObject>();

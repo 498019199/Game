@@ -104,12 +104,14 @@ set(WORLD_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/world/World.h
     ${PROJECT_SOURCE_DIR}/core/core/include/world/Control.h
     ${PROJECT_SOURCE_DIR}/core/core/include/world/SceneNode.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/world/SceneComponent.h
 )
 
 set(WORLD_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/world/World.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/world/Control.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/world/SceneNode.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/world/SceneComponent.cpp
 )
 SOURCE_GROUP("World\\Source Files" FILES ${AUDIO_SOURCE_FILES})
 SOURCE_GROUP("World\\Header Files" FILES ${AUDIO_HEADER_FILES})

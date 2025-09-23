@@ -29,8 +29,12 @@ struct ZENGINE_CORE_API RenderDeviceCaps
     bool hs_support : 1;
     bool ds_support : 1;
 
+	bool VertexFormatSupport(ElementFormat format) const;
 	bool TextureFormatSupport(ElementFormat format) const;
 
+	ElementFormat BestMatchVertexFormat(std::span<ElementFormat const> formats) const;
+
+	void AssignVertexFormats(std::vector<ElementFormat> vertex_formats);
 	void AssignTextureFormats(std::vector<ElementFormat> texture_formats);
 
 	ElementFormat BestMatchTextureFormat(std::span<const ElementFormat> formats) const;
@@ -43,6 +47,9 @@ private:
     std::map<ElementFormat, std::vector<uint32_t>> render_target_formats_;
     std::vector<ElementFormat> uav_formats_;
 };
+
+
+
 
 
 

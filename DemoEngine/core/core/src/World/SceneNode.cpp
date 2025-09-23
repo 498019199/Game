@@ -2,6 +2,39 @@
 
 namespace RenderWorker
 {
+SceneNode::SceneNode(uint32_t attrib)
+    : attrib_(attrib)
+{
+}
+
+SceneNode::SceneNode(std::wstring_view name, uint32_t attrib)
+: SceneNode(attrib)
+{
+    name_ = std::wstring(name);
+}
+
+SceneNode::~SceneNode()
+{
+    if (parent_)
+    {
+        parent_->RemoveChild(this);
+    }
+}
+
+std::wstring_view SceneNode::Name() const
+{
+    return name_;
+}
+
+void SceneNode::Name(std::wstring_view name)
+{
+    name_ = std::wstring(name);
+}
+
+uint32_t SceneNode::Attrib() const
+{
+    return attrib_;
+}
 
 SceneNode* SceneNode::Parent() const
 {
@@ -36,14 +69,18 @@ void SceneNode::Traverse(const std::function<bool(SceneNode&)>& callback)
 
 void SceneNode::RemoveChild(const SceneNodePtr& node)
 {
-    auto iter = std::find_if(children_.begin(), children_.end(), [node](const SceneNodePtr& child) { return child == node; });
+    this->RemoveChild(node.get());
+}
+
+void SceneNode::RemoveChild(SceneNode* node)
+{
+    auto iter = std::find_if(children_.begin(), children_.end(), [node](const SceneNodePtr& child) { return child.get() == node; });
     if (iter != children_.end())
     {
         node->Parent(nullptr);
         children_.erase(iter);
     }
 }
-
 
 void SceneNode::TransformToParent(const float4x4& mat)
 {

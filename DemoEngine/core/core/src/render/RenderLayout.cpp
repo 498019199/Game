@@ -89,10 +89,10 @@ uint32_t RenderLayout::VertexStreamNum() const
 
 bool RenderLayout::UseIndices() const
 {
-    return this->IndicesNum() != 0;
+    return this->NumIndices() != 0;
 }
 
-uint32_t RenderLayout::IndicesNum() const
+uint32_t RenderLayout::NumIndices() const
 {
     uint32_t n = 0;
     if (index_stream_)
@@ -109,6 +109,18 @@ uint32_t RenderLayout::IndicesNum() const
     return n;
 }
 
+void RenderLayout::NumIndices(uint32_t n)
+{
+    force_num_indices_ = n;
+    streams_dirty_ = true;
+}
+
+void RenderLayout::NumVertices(uint32_t n)
+{
+    force_num_vertices_ = n;
+    streams_dirty_ = true;
+}
+
 uint32_t RenderLayout::NumVertices() const
 {
 	uint32_t n;
@@ -121,5 +133,27 @@ uint32_t RenderLayout::NumVertices() const
         n = force_num_vertices_;
     }
     return n;
+}
+
+void RenderLayout::StartVertexLocation(uint32_t location)
+{
+    start_vertex_location_ = location;
+    streams_dirty_ = true;
+}
+
+uint32_t RenderLayout::StartVertexLocation() const
+{
+    return start_vertex_location_;
+}
+
+void RenderLayout::StartIndexLocation(uint32_t location)
+{
+    start_index_location_ = location;
+    streams_dirty_ = true;
+}
+
+uint32_t RenderLayout::StartIndexLocation() const
+{
+    return start_index_location_;
 }
 }
