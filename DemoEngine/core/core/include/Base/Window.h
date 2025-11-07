@@ -39,12 +39,15 @@ public:
         return dpi_scale_;
     }
 private:
-
+    void UpdateDpiScale(float scale);
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept;
 	LRESULT MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+#if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
+		static BOOL CALLBACK EnumMonProc(HMONITOR mon, HDC dc_mon, RECT* rc_mon, LPARAM lparam) noexcept;
+#endif
     // 防止系统进入睡眠或休眠状态
     void KeepScreenOn();
 
@@ -71,6 +74,7 @@ protected:
 #endif //ZENGINE_PLATFORM_WINDOWS
 
     float dpi_scale_ = 1.f;
+    float effective_dpi_scale_ = 1.f;
 
     bool active_ = false;
 	bool ready_ = false;

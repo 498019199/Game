@@ -18,6 +18,12 @@ struct EditorSetting
     int mainBarWidth {0};
     int mainBarHeight {0};
 
+    int srcWidth {0};
+    int srcHeight {0};
+
+    int gameViewWidth {0};
+    int gameViewHeight {0};
+
     bool is_game_started_ {false};
     bool is_game_paused_ {false};
 };

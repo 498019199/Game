@@ -100,6 +100,11 @@ void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
     setting_.inspectorHeight = Height + setting_.projectHeight;
     setting_.mainBarWidth = Width + setting_.hierarchyWidth + setting_.inspectorWidth;
     setting_.mainBarHeight = 58;
+    setting_.srcWidth = setting_.mainBarWidth;
+    setting_.srcHeight = setting_.inspectorHeight + setting_.mainBarHeight;
+
+    setting_.gameViewWidth = Width;
+    setting_.gameViewHeight = Height;
 }
 
 }
