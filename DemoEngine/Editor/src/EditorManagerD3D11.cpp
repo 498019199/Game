@@ -3,6 +3,7 @@
 #include <editor/EditorHierarchyPanel.h>
 #include <editor/EditorMainBarPanel.h>
 #include <editor/EditorInspectorPanel.h>
+#include <editor/EditorGameViewPanel.h>
 #include <editor/EditorDialogBoxManager.h>
 
 
@@ -52,6 +53,7 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
+    panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
 }
 
 void EditorManagerD3D11::OnDestroy()

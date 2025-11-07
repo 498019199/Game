@@ -6,11 +6,12 @@ include_directories(
 
 set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorConsolePanel.cpp
+    ${PROJECT_SOURCE_DIR}/Editor/src/EditorDialogBoxManager.cpp
+    ${PROJECT_SOURCE_DIR}/Editor/src/EditorGameViewPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorHierarchyPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorInspectorPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorMainBarPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorManagerD3D11.cpp
-    ${PROJECT_SOURCE_DIR}/Editor/src/EditorDialogBoxManager.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorProjectPanel.cpp)
 
 set(IMGUI_SRC_LIST
