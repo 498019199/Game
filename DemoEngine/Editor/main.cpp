@@ -3,6 +3,7 @@
 #include <base/ResLoader.h>
 #include <world/World.h>
 #include <base/Window.h>
+#include <dxgi1_3.h>    // 添加 DXGI 头文件
 
 using namespace EditorWorker;
 using namespace RenderWorker;
@@ -39,5 +40,17 @@ int main()
     app->SetWindowSize(hWidth, pHeight, iWidth);
     app->Run();
 
+    // 添加 DXGI 调试报告
+#ifdef _DEBUG
+    {
+        IDXGIDebug1* debug = nullptr;
+        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug))))
+        {
+            debug->ReportLiveObjects(DXGI_DEBUG_ALL, 
+                DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_DETAIL));
+            debug->Release();
+        }
+    }
+#endif
     return 0;
 }

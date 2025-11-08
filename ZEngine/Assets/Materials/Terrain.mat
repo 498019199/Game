@@ -1,0 +1,34 @@
+{
+    "Type": "Forward",
+    "Shader": "Shaders/TerrainBlend2Layer.shader",
+    "Float":
+    [
+        {
+            "UniformName": "_Tiling",
+            "Value": 4.0
+        },
+        {
+            "UniformName": "_Height",
+            "Value": 0.1
+        }
+    ],
+    "Textures":
+    [
+        {
+            "UniformName": "_Texture1",
+            "Path": "Textures/terrain/Bric.tga"
+        },
+        {
+            "UniformName": "_Texture1N",
+            "Path": "Textures/terrain/Bric_nmp.tga"
+        },
+        {
+            "UniformName": "_Texture2",
+            "Path": "Textures/terrain/sand.tga"
+        },
+        {
+            "UniformName": "_Control",
+            "Path": "Textures/terrain/control.png"
+        }
+    ]
+}

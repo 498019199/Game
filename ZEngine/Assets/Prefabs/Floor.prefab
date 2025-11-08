@@ -1,0 +1,19 @@
+{
+    "Name": "Floor",
+    "Components":
+    [
+        {
+            "Type": "Transform",
+            "Position": [0, -10, 0],
+            "Rotation": [-90, 0, 0],
+            "Scale": [1, 1, 1]
+        },
+        {
+            "Type": "MeshRenderer",
+            "Mesh": "Models/plane.fbx",
+            "Material": "Materials/Terrain.mat",
+            "CastShadow": false,
+            "ReceiveShadow": true
+        }
+    ]
+}
