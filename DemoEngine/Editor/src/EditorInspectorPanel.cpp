@@ -6,6 +6,8 @@
 #include <common/Util.h>
 
 #include <render/RenderFactory.h>
+#include <audio/AudioFactory.h>
+
 namespace EditorWorker
 {
 
@@ -125,5 +127,40 @@ void EditorInspectorPanel::DrawTexture(const AssertBaseInfo& info)
     auto srv_ptr = rf.MakeTextureSrv( tex_info.texture );
     auto srv = srv_ptr->GetShaderResourceView();
     ImGui::Image((ImTextureID)(intptr_t)srv, ImVec2((float)width, (float)height));
+}
+
+void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
+{
+    const auto& audio_info = checked_cast<const AssetAudioInfo&>(info);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (!ImGui::CollapsingHeader("Audio"))
+        return;
+
+    ImGui::Text("Name:");
+    ImGui::SameLine(120);
+    ImGui::Text("%s", audio_info.name.c_str());
+
+    // ImGui::Text("Length:");
+    // ImGui::SameLine(120);
+    // ImGui::Text("%s", info->lengthStr.c_str());
+
+    // ImGui::Text("Size:");
+    // ImGui::SameLine(120);
+    // ImGui::Text("%s", info->sizeStr.c_str());
+
+    AudioFactory& af = Context::Instance().AudioFactoryInstance();
+	AudioEngine& ae = af.AudioEngineInstance();
+    ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
+
+    static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
+    ImGui::SetCursorPosX(80);
+    if (ImGui::Button("Play", audioBtnSize))
+    {
+        ae.Play(1, true);
+    }
+    else
+    {
+        ae.Stop(1);
+    }
 }
 }

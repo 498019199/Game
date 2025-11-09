@@ -34,7 +34,7 @@
 #pragma once
 
 #include <base/Thread.h>
-#include <KlayGE/SALWrapper.hpp>
+#include <base/SALWrapper.h>
 
 #include <vector>
 #include <windows.h>
@@ -149,11 +149,11 @@ struct X3DAUDIO_LISTENER
 #define XAUDIO2_DLL_W L"xaudio2_7.dll"
 #endif
 
-#include <KFL/com_ptr.hpp>
-#include <KFL/DllLoader.hpp>
-#include <KlayGE/Audio.hpp>
+#include <common/com_ptr.h>
+#include <common/DllLoader.h>
+#include <audio/Audio.h>
 
-namespace KlayGE
+namespace RenderWorker
 {
 	typedef std::shared_ptr<IXAudio2SourceVoice> IXAudio2SourceVoicePtr;
 

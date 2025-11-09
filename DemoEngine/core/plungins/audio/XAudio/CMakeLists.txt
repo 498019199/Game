@@ -34,3 +34,8 @@ if(ZENGINE_COMPILER_GCC)
 			xaudio2_8
 	)
 endif()
+
+set_target_properties(ZENGINE_AudioEngine_XAudio PROPERTIES
+	OUTPUT_NAME ZENGINE_AudioEngine_XAudio${ZENGINE_OUTPUT_SUFFIX}
+	FOLDER "ZENGINE"
+)

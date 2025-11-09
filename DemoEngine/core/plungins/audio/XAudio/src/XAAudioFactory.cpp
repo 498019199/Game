@@ -29,16 +29,16 @@
  */
 
 #include <base/ZEngine.h>
-#include <common/Util.hpp>
-#include <KlayGE/AudioFactory.hpp>
+#include <common/Util.h>
+#include <audio/AudioFactory.h>
 
 #include "XAAudio.h"
 
 extern "C"
 {
-	KLAYGE_SYMBOL_EXPORT void MakeAudioFactory(std::unique_ptr<KlayGE::AudioFactory>& ptr)
+	ZENGINE_CORE_API void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr)
 	{
-		ptr = KlayGE::MakeUniquePtr<KlayGE::ConcreteAudioFactory<KlayGE::XAAudioEngine,
-			KlayGE::XASoundBuffer, KlayGE::XAMusicBuffer>>(L"XAudio Audio Factory");
+		ptr = CommonWorker::MakeUniquePtr<RenderWorker::ConcreteAudioFactory<RenderWorker::XAAudioEngine,
+			RenderWorker::XASoundBuffer, RenderWorker::XAMusicBuffer>>(L"XAudio Audio Factory");
 	}
 }

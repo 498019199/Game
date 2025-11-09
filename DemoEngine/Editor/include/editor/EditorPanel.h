@@ -100,6 +100,11 @@ struct AssetModelInfo: public AssertBaseInfo
 using AssetModelInfoPtr =  std::shared_ptr<AssetModelInfo>;
 
 
+struct AssetAudioInfo: public AssertBaseInfo
+{
+    AudioBufferPtr audio_buff_;
+};
+
 class EditorPanel
 {
 public:

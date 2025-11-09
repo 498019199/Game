@@ -22,10 +22,12 @@ private:
     void DrawTexture(const AssertBaseInfo& info);
     // void DrawMaterial(AssetMaterialInfo* info);
     // void DrawModel(AssetModelInfo* info);
-    // void DrawAudio(AssetAudioInfo* info);
+    void DrawAudio(const AssertBaseInfo& info);
 
 private:
     int inspector_width_ {0};
 };
+
+
 
 }

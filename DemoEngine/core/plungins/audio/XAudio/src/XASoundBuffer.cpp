@@ -29,11 +29,8 @@
  */
 
 #include <base/ZEngine.h>
-#include <KFL/ErrorHandling.hpp>
-#include <KFL/Util.hpp>
-#include <KlayGE/Context.hpp>
-#include <KlayGE/AudioFactory.hpp>
-#include <KlayGE/AudioDataSource.hpp>
+#include <audio/AudioFactory.h>
+#include <audio/AudioDataSource.h>
 
 #include <functional>
 #include <limits>

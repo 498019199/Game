@@ -29,19 +29,18 @@
  */
 
 #include <base/ZEngine.h>
-#include <KFL/ErrorHandling.hpp>
-#include <KFL/SmartPtrHelper.hpp>
-#include <KFL/Util.hpp>
-#include <KlayGE/Context.hpp>
-#include <KlayGE/AudioFactory.hpp>
-#include <KlayGE/AudioDataSource.hpp>
+#include <base/SmartPtrHelper.h>
+#include <common/ErrorHandling.h>
+#include <common/Util.h>
+#include <audio/AudioFactory.h>
+#include <audio/AudioDataSource.h>
 
 #include <functional>
 #include <limits>
 
 #include "XAAudio.h"
 
-namespace KlayGE
+namespace RenderWorker
 {
 	class MusicVoiceContext final : public IXAudio2VoiceCallback
 	{

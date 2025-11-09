@@ -31,8 +31,7 @@
 #include <base/ZEngine.h>
 #define INITGUID
 #include <common/ErrorHandling.h>
-#include <KFL/Log.hpp>
-#include <KlayGE/AudioDataSource.h>
+#include <audio/AudioDataSource.h>
 
 #include <cmath>
 #include <cstring>
@@ -41,7 +40,7 @@
 
 #include "XAAudio.h"
 
-namespace KlayGE
+namespace RenderWorker
 {
 	WAVEFORMATEX WaveFormatEx(AudioDataSourcePtr const & data_source)
 	{
@@ -76,7 +75,7 @@ namespace KlayGE
 			break;
 
 		default:
-			KFL_UNREACHABLE("Invalid audio format");
+			ZENGINE_UNREACHABLE("Invalid audio format");
 		}
 
 		wfx.nBlockAlign		= wfx.nChannels * wfx.wBitsPerSample / 8;
