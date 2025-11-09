@@ -2,29 +2,11 @@
 #include <editor/EditorPanel.h>
 #include <base/ZEngine.h>
 #include <render/RenderView.h> 
+#include <render/RenderMaterial.h> 
+#include <map>
 
 namespace EditorWorker
 {
-
-enum class AssetType
-{
-    Other,
-    Folder,
-    Material,
-    DeferredMaterial,
-    RayTracingMaterial,
-    Prefab,
-    Script,
-    Shader,
-    Texture,
-    Scene,
-    Model,
-    RayTracingShader,
-    Audio,
-    Text,
-    Count,
-};
-
 struct EditorAssetNode;
 using EditorAssetNodePtr = std::shared_ptr<EditorAssetNode>;
 struct EditorAssetNode
@@ -37,6 +19,7 @@ struct EditorAssetNode
     EditorAssetNodePtr parent;
     std::vector<EditorAssetNodePtr> children;
 };
+
 
 class EditorProjectPanel: public EditorPanel
 {
@@ -56,7 +39,6 @@ private:
 
     void SetCurNode(const EditorAssetNodePtr& node);
     void GetChildren(const EditorAssetNodePtr& node);
-
 private:
     // 当前选中的id
     int selected_ {-1};
@@ -66,6 +48,7 @@ private:
     std::map<std::string, AssetType> ext_type_map_;
     RenderWorker::ShaderResourceViewPtr fileIcons_[static_cast<std::size_t>(AssetType::Count)];
 };
+
 
 
 

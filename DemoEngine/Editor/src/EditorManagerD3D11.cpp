@@ -12,6 +12,7 @@
 
 #include <base/App3D.h>
 #include <base/Window.h>
+#include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 
@@ -107,6 +108,97 @@ void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
 
     setting_.gameViewWidth = Width;
     setting_.gameViewHeight = Height;
+}
+
+void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
+{
+    if(selected_asset_ptr_ == pAssert.get())
+    {
+        return;
+    }
+
+    selected_asset_info_.reset();
+    selected_asset_info_ = nullptr;
+    selected_asset_ptr_ = pAssert.get();
+    switch(pAssert->type)
+    {
+    case AssetType::Script:
+    case AssetType::Text:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetScriptInfo>();
+            ptr->name = pAssert->name;
+            ptr->preview = LoadTextFile( pAssert->path );
+            selected_asset_info_ = ptr;
+        }
+        break;
+    case AssetType::Shader:
+    case AssetType::RayTracingShader:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetShaderInfo>();
+            ptr->name = pAssert->name;
+            ptr->preview = LoadTextFile( pAssert->path );
+            selected_asset_info_ = ptr;
+        }
+        break;
+
+    case AssetType::Texture:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetTextureInfo>();
+            ptr->name = pAssert->name;
+            ptr->format = pAssert->extension;
+            ptr->texture = SyncLoadTexture(pAssert->path,   EAH_GPU_Read | EAH_Immutable);
+            selected_asset_info_ = ptr;
+        }
+        break;
+    
+    case AssetType::Material:
+    case AssetType::RayTracingMaterial:
+    case AssetType::DeferredMaterial:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetMaterialInfo>();
+            ptr->name = pAssert->name;
+            selected_asset_info_ = ptr;
+        }
+        break;
+
+    case AssetType::Model:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetMaterialInfo>();
+            ptr->name = pAssert->name;
+            selected_asset_info_ = ptr;
+        }
+        break;
+
+    case AssetType::Audio:
+        break;
+    }
+}
+
+AssetType EditorManagerD3D11::GetAssertType() const
+{
+    if (selected_asset_ptr_) 
+    {
+        return selected_asset_ptr_->type;
+    }
+    return AssetType::Other;
+}
+
+std::string EditorManagerD3D11::LoadTextFile(const std::string_view& path)
+{
+    auto& res_loader = Context::Instance().ResLoaderInstance();
+    ResIdentifierPtr source = res_loader.Open( path );
+    if (!source)
+    {
+        return "";
+    }
+
+    source->seekg(0, std::ios_base::end);
+    size_t const len = static_cast<size_t>(source->tellg());
+    source->seekg(0, std::ios_base::beg);
+    auto text_src = MakeUniquePtr<char[]>(len + 1);
+    source->read(&text_src[0], len);
+    text_src[len] = 0;
+    return std::string(&text_src[0]);
 }
 
 }

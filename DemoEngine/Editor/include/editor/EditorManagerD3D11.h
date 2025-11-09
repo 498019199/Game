@@ -18,13 +18,25 @@ public:
 
     void SetWindowSize(int hWidth, int pHeight, int iWidth);
 
+    void SetSelectedAssert(const EditorAssetNodePtr node);
+    const AssertBaseInfoPtr& GetSelectedAssert() const {  return selected_asset_info_; };
+    AssetType GetAssertType() const;
+
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
+    
+    std::string LoadTextFile(const std::string_view& path);
 private:
     std::vector<EditorPanelPtr> panel_list_;
     EditorSetting setting_;
+
+    EditorAssetNode* selected_asset_ptr_ { nullptr};
+    AssertBaseInfoPtr selected_asset_info_ { nullptr };
 };
+
+
+
 
 
 

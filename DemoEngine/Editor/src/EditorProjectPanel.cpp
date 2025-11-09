@@ -1,4 +1,5 @@
 #include <editor/EditorProjectPanel.h>
+#include <editor/EditorManagerD3D11.h>
 
 #include <render/Texture.h>
 #include <render/RenderFactory.h>
@@ -28,18 +29,18 @@ std::unordered_set<std::string> ignoreExtensions =
 EditorProjectPanel::EditorProjectPanel()
 {
     ext_type_map_.insert(std::make_pair<std::string, AssetType>("",          AssetType::Folder            ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxmat",    AssetType::Material          ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxdrmat",  AssetType::DeferredMaterial  ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxrtmat",  AssetType::RayTracingMaterial));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxprefab", AssetType::Prefab            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".mat",      AssetType::Material          ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".drmat",    AssetType::DeferredMaterial  ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".rtmat",    AssetType::RayTracingMaterial));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".prefab",   AssetType::Prefab            ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".lua",      AssetType::Script            ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxshader", AssetType::Shader            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".shader",   AssetType::Shader            ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".dxr",      AssetType::RayTracingShader  ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".vkr",      AssetType::RayTracingShader  ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".png",      AssetType::Texture           ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".tga",      AssetType::Texture           ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".jpg",      AssetType::Texture           ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".zxscene",  AssetType::Scene             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".scene",    AssetType::Scene             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".obj",      AssetType::Model             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".fbx",      AssetType::Model             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".wav",      AssetType::Audio             ));
@@ -216,6 +217,9 @@ AssetType EditorProjectPanel::GetAssetType(const std::string& extension)
 void EditorProjectPanel::SetCurNode(const EditorAssetNodePtr& node)
 {
     cur_ = node;
+
+    auto& d3d_editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+    d3d_editor.SetSelectedAssert( node );
 }
 
 void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
