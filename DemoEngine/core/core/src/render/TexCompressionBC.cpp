@@ -2427,7 +2427,7 @@ namespace RenderWorker
 		WriteBits(output, start_bit, mode_info.rotation_bits, params.rotation_mode);
 		WriteBits(output, start_bit, mode_info.index_mode_bits, params.index_mode);
 
-#ifdef KLAYGE_DEBUG
+#ifdef ZENGINE_DEBUG
 		for (int i = 0; i < 16; ++ i)
 		{
 			int set = 0;
@@ -3165,7 +3165,7 @@ namespace RenderWorker
 
 		this->ClampEndpointsToGrid(mode_info, p1, p2, best_pbit_combo);
 
-#ifdef KLAYGE_DEBUG
+#ifdef ZENGINE_DEBUG  
 		uint8_t pbit_combo = best_pbit_combo;
 		float4 tp1 = p1;
 		float4 tp2 = p2;

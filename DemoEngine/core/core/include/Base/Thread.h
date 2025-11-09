@@ -31,12 +31,12 @@
 #pragma once
 #include <base/ZEngine.h>
 #include <functional>
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4355) // Ignore "this" in member initializer list
 #endif
 #include <future>
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(pop)
 #endif
 #include <thread>

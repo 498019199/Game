@@ -28,9 +28,6 @@
  * from http://www.klayge.org/licensing/.
  */
 
-#ifndef KLAYGE_CORE_LZMA_CODEC_HPP
-#define KLAYGE_CORE_LZMA_CODEC_HPP
-
 #pragma once
 
 #include <base/ZEngine.h>
@@ -56,5 +53,3 @@ public:
 	void Decode(void* output, std::span<uint8_t const> input, uint64_t original_len);
 };
 }
-
-#endif		// KLAYGE_CORE_LZMA_CODEC_HPP

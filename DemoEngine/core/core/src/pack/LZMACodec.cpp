@@ -87,7 +87,7 @@ namespace
 
 		LZMALoader()
 		{
-#if !(defined(KLAYGE_PLATFORM_ANDROID) || defined(KLAYGE_PLATFORM_IOS))
+#if !(defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS))
 			dll_loader_.Load(DLL_PREFIX "LZMA" DLL_SUFFIX);
 
 			lzma_compress_func_ = reinterpret_cast<LzmaCompressFunc>(dll_loader_.GetProcAddress("LzmaCompress"));
@@ -102,7 +102,7 @@ namespace
 		}
 
 	private:
-#if !(defined(KLAYGE_PLATFORM_ANDROID) || defined(KLAYGE_PLATFORM_IOS))
+#if !(defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS))
 		DllLoader dll_loader_;
 #endif
 		LzmaCompressFunc lzma_compress_func_;

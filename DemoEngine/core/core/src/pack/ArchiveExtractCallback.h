@@ -27,10 +27,6 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#ifndef KLAYGE_CORE_ARCHIVE_EXTRACT_CALLBACK_HPP
-#define KLAYGE_CORE_ARCHIVE_EXTRACT_CALLBACK_HPP
-
 #pragma once
 
 #include <atomic>
@@ -76,5 +72,3 @@ namespace RenderWorker
 		CommonWorker::com_ptr<ISequentialOutStream> out_file_stream_;
 	};
 }
-
-#endif		// KLAYGE_CORE_ARCHIVE_EXTRACT_CALLBACK_HPP

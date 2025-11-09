@@ -29,7 +29,7 @@
  */
 #include <common/Uuid.h>
 
-#ifdef KLAYGE_PLATFORM_WINDOWS
+#ifdef ZENGINE_PLATFORM_WINDOWS
 #include <unknwnbase.h>
 #endif
 #include <CPP/Common/MyWindows.h>

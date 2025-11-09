@@ -31,7 +31,7 @@
 #include <common/common.h>
 #include <common/Util.h>
 
-#ifdef KLAYGE_PLATFORM_WINDOWS
+#ifdef ZENGINE_PLATFORM_WINDOWS
 #include <unknwnbase.h>
 #endif
 #include <CPP/Common/MyWindows.h>

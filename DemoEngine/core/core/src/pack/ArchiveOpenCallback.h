@@ -27,10 +27,6 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#ifndef KLAYGE_CORE_ARCHIVE_OPEN_CALLBACK_HPP
-#define KLAYGE_CORE_ARCHIVE_OPEN_CALLBACK_HPP
-
 #pragma once
 
 #include <atomic>
@@ -68,5 +64,3 @@ namespace RenderWorker
 		std::wstring password_;
 	};
 }
-
-#endif		// KLAYGE_CORE_ARCHIVE_OPEN_CALLBACK_HPP

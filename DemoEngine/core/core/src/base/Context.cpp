@@ -179,7 +179,7 @@ public:
         dev_helper_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string render_path = res_loader.Locate("render");
-        std::string fn = KLAYGE_DLL_PREFIX"_DevHelper" DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_DevHelper" DLL_SUFFIX;
 
         std::string path = render_path + "/" + fn;
         dev_helper_loader_.Load(res_loader.Locate(path));

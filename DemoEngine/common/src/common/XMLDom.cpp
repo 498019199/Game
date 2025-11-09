@@ -199,59 +199,23 @@ namespace
 
 	bool TryConvertStringToValue(std::string const& value_str, int32_t& val)
 	{
-#ifdef KLAYGE_CXX17_LIBRARY_CHARCONV_SUPPORT
 		char const* str = value_str.data();
 		std::from_chars_result result = std::from_chars(str, str + value_str.size(), val);
 		return (result.ec == std::errc());
-#else
-		try
-		{
-			val = std::stol(value_str);
-			return true;
-		}
-		catch (...)
-		{
-			return false;
-		}
-#endif
 	}
 
 	bool TryConvertStringToValue(std::string const& value_str, uint32_t& val)
 	{
-#ifdef KLAYGE_CXX17_LIBRARY_CHARCONV_SUPPORT
 		char const* str = value_str.data();
 		std::from_chars_result result = std::from_chars(str, str + value_str.size(), val);
 		return (result.ec == std::errc());
-#else
-		try
-		{
-			val = std::stoul(value_str);
-			return true;
-		}
-		catch (...)
-		{
-			return false;
-		}
-#endif
 	}
 
 	bool TryConvertStringToValue(std::string const& value_str, float& val)
 	{
-#ifdef KLAYGE_CXX17_LIBRARY_CHARCONV_FP_SUPPORT
 		char const* str = value_str.data();
 		std::from_chars_result result = std::from_chars(str, str + value_str.size(), val);
 		return (result.ec == std::errc());
-#else
-		try
-		{
-			val = std::stof(value_str);
-			return true;
-		}
-		catch (...)
-		{
-			return false;
-		}
-#endif
 	}
 
 	bool TryConvertStringToValue(std::string const& value_str, bool& val)

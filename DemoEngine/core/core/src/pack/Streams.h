@@ -27,10 +27,6 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#ifndef KLAYGE_CORE_STREAMS_HPP
-#define KLAYGE_CORE_STREAMS_HPP
-
 #pragma once
 
 #include <common/common.h>
@@ -89,5 +85,3 @@ namespace RenderWorker
 		std::shared_ptr<std::ostream> os_;
 	};
 }
-
-#endif		// KLAYGE_CORE_STREAMS_HPP
