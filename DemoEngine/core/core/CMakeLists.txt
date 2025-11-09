@@ -100,6 +100,23 @@ set(RENDER_SOURCE_FILES
 SOURCE_GROUP("Rendering System\\Source Files" FILES ${RENDERING_SOURCE_FILES})
 SOURCE_GROUP("Rendering System\\Header Files" FILES ${RENDERING_HEADER_FILES})
 
+
+SET(AUDIO_HEADER_FILES
+	${PROJECT_SOURCE_DIR}/core/core/include/audio/Audio.h
+	${PROJECT_SOURCE_DIR}/core/core/include/audio/AudioDataSource.h
+	${PROJECT_SOURCE_DIR}/core/core/include/audio/AudioFactory.h
+)
+SET(AUDIO_SOURCE_FILES
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/AudioBuffer.cpp
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/AudioDataSource.cpp
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/AudioEngine.cpp
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/AudioFactory.cpp
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/SoundBuffer.cpp
+	${PROJECT_SOURCE_DIR}/core/core/src/audio/MusicBuffer.cpp
+)
+SOURCE_GROUP("Audio System\\Source Files" FILES ${AUDIO_SOURCE_FILES})
+SOURCE_GROUP("Audio System\\Header Files" FILES ${AUDIO_HEADER_FILES})
+
 set(WORLD_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/world/World.h
     ${PROJECT_SOURCE_DIR}/core/core/include/world/Control.h
@@ -121,6 +138,7 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
     ${BASE_HEADER_FILES} ${BASE_SOURCE_FILES}
     ${WORLD_HEADER_FILES} ${WORLD_SOURCE_FILES}
     ${RENDER_HEADER_FILES} ${RENDER_SOURCE_FILES}
+    ${AUDIO_HEADER_FILES} ${AUDIO_SOURCE_FILES}
 )
 
 target_include_directories(ZENGINE_core

@@ -6,6 +6,7 @@
 #include <base/DevHelper.h>
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
+#include <audio/AudioFactory.h>
 #include <world/World.h>
 
 //#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
@@ -17,6 +18,7 @@ extern "C"
 {
     void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
 	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+    void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
 	void MakeDevHelper(std::unique_ptr<RenderWorker::DevHelper>& ptr);
 }
 #else
@@ -27,6 +29,7 @@ extern "C"
 namespace RenderWorker
 {
 	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
+    typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<AudioFactory>& ptr);
 #if ZENGINE_IS_DEV_PLATFORM
 	typedef void (*MakeDevHelperFunc)(std::unique_ptr<DevHelper>& ptr);
 #endif
@@ -85,6 +88,19 @@ public:
             }
         }
         return *render_factory_;
+    }
+
+    AudioFactory& AudioFactoryInstance()
+    {
+        if (!audio_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!audio_factory_)
+            {
+                this->LoadAudioFactory(cfg_.audio_factory_name);
+            }
+        }
+        return *audio_factory_;
     }
 
     World& WorldInstance() noexcept
@@ -163,6 +179,34 @@ public:
 #else
         KFL_UNUSED(rf_name);
         MakeRenderFactory(render_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadAudioFactory( std::string const& af_name )
+    {
+        audio_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        audio_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string audio_path = res_loader.Locate("audio");
+        std::string fn = ZENGINE_DLL_PREFIX"_Audio_" + af_name + DLL_SUFFIX;
+
+        std::string path = audio_path + "/" + fn;
+        audio_loader_.Load(res_loader.Locate(path));
+
+        auto* maf = reinterpret_cast<MakeAudioFactoryFunc>(audio_loader_.GetProcAddress("MakeAudioFactory"));
+        if (maf != nullptr)
+        {
+            maf(audio_factory_);
+        }
+        else
+        {
+            //LogError() << "Loading " << path << " failed" << std::endl;
+            audio_loader_.Free();
+        }
+#else
+        KFL_UNUSED(af_name);
+        MakeAudioFactory(audio_factory_);
 #endif// ZENGINE_STATIC_LINK_PLUGINS
     }
 
@@ -397,6 +441,8 @@ private:
     std::unique_ptr<World> render_world_;
     // 载入资源管理器
     ResLoader res_loader_;
+    // 音频工厂
+    std::unique_ptr<AudioFactory> audio_factory_;
 
 #if ZENGINE_IS_DEV_PLATFORM
     // 开发辅助工具
@@ -444,6 +490,11 @@ App3D& Context::AppInstance() noexcept
 RenderFactory& Context::RenderFactoryInstance() noexcept
 {
     return pimpl_->RenderFactoryInstance();
+}
+
+AudioFactory& Context::AudioFactoryInstance()
+{
+    return pimpl_->AudioFactoryInstance();
 }
 
 World& Context::WorldInstance() noexcept

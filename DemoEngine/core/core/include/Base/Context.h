@@ -11,6 +11,7 @@ using namespace CommonWorker;
 struct ContextConfig
 {
 	std::string render_factory_name;
+    std::string audio_factory_name;
     // 图形配置
     RenderSettings graphics_cfg;
     
@@ -22,6 +23,7 @@ struct ContextConfig
 class App3D;
 class RenderEngine;
 class RenderFactory;
+class AudioFactory;
 class World;
 class ResLoader;
 class DevHelper;
@@ -47,6 +49,7 @@ public:
     void AppInstance(App3D& app) noexcept;
     App3D& AppInstance() noexcept;
     RenderFactory& RenderFactoryInstance() noexcept;
+	AudioFactory& AudioFactoryInstance();
     World& WorldInstance() noexcept;
     ResLoader& ResLoaderInstance() noexcept;
 
@@ -61,6 +64,7 @@ private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
+
 }
 
 
