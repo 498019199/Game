@@ -25,6 +25,7 @@ class RenderEngine;
 class RenderFactory;
 class AudioFactory;
 class World;
+class ThreadPool;
 class ResLoader;
 class DevHelper;
 
@@ -48,17 +49,20 @@ public:
 
     void AppInstance(App3D& app) noexcept;
     App3D& AppInstance() noexcept;
-    RenderFactory& RenderFactoryInstance() noexcept;
+    
 	AudioFactory& AudioFactoryInstance();
     World& WorldInstance() noexcept;
-    ResLoader& ResLoaderInstance() noexcept;
-
+    
+    RenderFactory& RenderFactoryInstance() noexcept;
     bool RenderFactoryValid() const noexcept;
 
 #if ZENGINE_IS_DEV_PLATFORM
 	bool DevHelperValid() const noexcept;
 	DevHelper& DevHelperInstance();
 #endif
+
+    ThreadPool& ThreadPoolInstance();
+    ResLoader& ResLoaderInstance();
 
 private:
     class Impl;

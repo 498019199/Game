@@ -81,7 +81,7 @@ namespace
 	};
 }
 
-namespace KlayGE
+namespace RenderWorker
 {
 	XASoundBuffer::XASoundBuffer(AudioDataSourcePtr const & data_source,
 									uint32_t num_sources, float volume)
@@ -134,7 +134,7 @@ namespace KlayGE
 
 	XASoundBuffer::SourceVoice& XASoundBuffer::FreeSource()
 	{
-		BOOST_ASSERT(!sources_.empty());
+		COMMON_ASSERT(!sources_.empty());
 
 		for (auto& src : sources_)
 		{

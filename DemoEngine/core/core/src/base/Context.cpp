@@ -121,7 +121,7 @@ public:
         return global_thread_pool_;
     }
 
-    ResLoader& ResLoaderInstance() noexcept
+    ResLoader& ResLoaderInstance()
     {
         if (!res_loader_.Valid())
         {
@@ -502,9 +502,14 @@ World& Context::WorldInstance() noexcept
     return pimpl_->WorldInstance();
 }
 
-ResLoader& Context::ResLoaderInstance() noexcept
+ResLoader& Context::ResLoaderInstance()
 {
     return pimpl_->ResLoaderInstance();
+}
+
+ThreadPool& Context::ThreadPoolInstance()
+{
+    return pimpl_->ThreadPoolInstance();
 }
 
 #if ZENGINE_IS_DEV_PLATFORM

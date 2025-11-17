@@ -34,4 +34,5 @@ target_link_libraries(ZENGINE_editor
         ZENGINE_core
         ZENGINE_Render_D3D11
         ZENGINE_DevHelps
+        ZENGINE_AudioEngine_XAudio
 )

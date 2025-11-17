@@ -86,10 +86,10 @@ namespace RenderWorker
 
 	XAAudioEngine::XAAudioEngine()
 	{
-#ifdef KLAYGE_PLATFORM_WINDOWS_DESKTOP
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 		if (!mod_xaudio2_.Load(XAUDIO2_DLL_A))
 		{
-			LogError() << "COULDN'T load " XAUDIO2_DLL_A << std::endl;
+			//LogError() << "COULDN'T load " XAUDIO2_DLL_A << std::endl;
 			Verify(false);
 		}
 
@@ -107,7 +107,7 @@ namespace RenderWorker
 #endif
 
 		uint32_t flags = 0;
-#if (_WIN32_WINNT <= _WIN32_WINNT_WIN7) && defined(KLAYGE_DEBUG)
+#if (_WIN32_WINNT <= _WIN32_WINNT_WIN7) && defined(ZENGINE_DEBUG)
 		flags |= XAUDIO2_DEBUG_ENGINE;
 #endif
 		TIFHR(DynamicXAudio2Create_(xaudio_.put(), flags, Processor1));
@@ -118,7 +118,7 @@ namespace RenderWorker
 
 #if (_WIN32_WINNT <= _WIN32_WINNT_WIN7)
 		XAUDIO2_DEVICE_DETAILS details;
-#ifdef KLAYGE_COMPILER_GCC
+#ifdef ZENGINE_COMPILER_GCC
 		com_ptr<IXAudio27> xaudio27 = xaudio_.as<IXAudio27>();
 		TIFHR(xaudio27->GetDeviceDetails(0, &details));
 #else
@@ -129,7 +129,7 @@ namespace RenderWorker
 		mastering_channels_ = details.OutputFormat.Format.nChannels;
 #else
 		DWORD channel_mask;
-#ifdef KLAYGE_COMPILER_GCC
+#ifdef ZENGINE_COMPILER_GCC
 		mastering_voice_->GetChannelMask(&channel_mask);
 #else
 		TIFHR(mastering_voice_->GetChannelMask(&channel_mask));
@@ -153,7 +153,7 @@ namespace RenderWorker
 		mastering_voice_.reset();
 		xaudio_.reset();
 
-#ifdef KLAYGE_PLATFORM_WINDOWS_DESKTOP
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 		mod_xaudio2_.Free();
 #endif
 	}

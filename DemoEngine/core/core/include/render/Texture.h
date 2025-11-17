@@ -5,10 +5,10 @@
 
 namespace RenderWorker
 {
-#ifdef KLAYGE_SHIP
-    #define KLAYGE_TEXTURE_DEBUG_NAME(texture)
+#ifdef ZENGINE_SHIP
+    #define ZENGINE_TEXTURE_DEBUG_NAME(texture)
 #else
-    #define KLAYGE_TEXTURE_DEBUG_NAME(texture) texture->DebugName(L ## #texture)
+    #define ZENGINE_TEXTURE_DEBUG_NAME(texture) texture->DebugName(L ## #texture)
 #endif
     
 enum TextureMapAccess
@@ -110,7 +110,7 @@ public:
     Texture(TextureType type, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint);
     virtual ~Texture() noexcept;
 
-#ifndef KLAYGE_SHIP
+#ifndef ZENGINE_SHIP
     virtual void DebugName([[maybe_unused]] std::wstring_view name)
     {
     }

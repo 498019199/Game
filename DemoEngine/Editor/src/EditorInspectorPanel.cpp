@@ -150,17 +150,17 @@ void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
 
     AudioFactory& af = Context::Instance().AudioFactoryInstance();
 	AudioEngine& ae = af.AudioEngineInstance();
-    ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
+    // ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
 
-    static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
-    ImGui::SetCursorPosX(80);
-    if (ImGui::Button("Play", audioBtnSize))
-    {
-        ae.Play(1, true);
-    }
-    else
-    {
-        ae.Stop(1);
-    }
+    // static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
+    // ImGui::SetCursorPosX(80);
+    // if (ImGui::Button("Play", audioBtnSize))
+    // {
+    //     ae.Play(1, true);
+    // }
+    // else
+    // {
+    //     ae.Stop(1);
+    // }
 }
 }

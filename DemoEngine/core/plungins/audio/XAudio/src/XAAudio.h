@@ -27,10 +27,6 @@
  * the KlayGE Proprietary License (KPL). You can obtained such a license
  * from http://www.klayge.org/licensing/.
  */
-
-#ifndef _KLAYGE_PLUGINS_AUDIO_XA_AUDIO_HPP
-#define _KLAYGE_PLUGINS_AUDIO_XA_AUDIO_HPP
-
 #pragma once
 
 #include <base/Thread.h>
@@ -40,7 +36,7 @@
 #include <windows.h>
 #include <xaudio2.h>
 
-#ifdef KLAYGE_COMPILER_GCC
+#ifdef ZENGINE_COMPILER_GCC
 #define X3DAUDIO_SPEED_OF_SOUND 343.5f
 #define X3DAUDIO_CALCULATE_MATRIX 0x00000001
 #define X3DAUDIO_CALCULATE_DOPPLER 0x00000020
@@ -134,17 +130,17 @@ struct X3DAUDIO_LISTENER
 	X3DAUDIO_CONE* pCone;
 };
 #else
-#if defined(KLAYGE_COMPILER_MSVC) && (_MSC_VER >= 1929)
+#if defined(ZENGINE_COMPILER_MSVC) && (_MSC_VER >= 1929)
 #pragma warning(push)
 #pragma warning(disable : 5246) // Turn of warnings of initializing X3DAudioDefault_LinearCurvePoints
 #endif
 #include <x3daudio.h>
-#if defined(KLAYGE_COMPILER_MSVC) && (_MSC_VER >= 1929)
+#if defined(ZENGINE_COMPILER_MSVC) && (_MSC_VER >= 1929)
 #pragma warning(pop)
 #endif
 #endif
 
-#if (_WIN32_WINNT <= _WIN32_WINNT_WIN7) || defined(KLAYGE_COMPILER_GCC)
+#if (_WIN32_WINNT <= _WIN32_WINNT_WIN7) || defined(ZENGINE_COMPILER_GCC)
 #define XAUDIO2_DLL_A  "xaudio2_7.dll"
 #define XAUDIO2_DLL_W L"xaudio2_7.dll"
 #endif
@@ -183,12 +179,12 @@ namespace RenderWorker
 		struct SourceVoice
 		{
 			IXAudio2SourceVoicePtr voice;
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable: 5205) // IXAudio2VoiceCallback doesn't have virtual destructor
 #endif
 			std::unique_ptr<IXAudio2VoiceCallback> voice_call_back;
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(pop)
 #endif
 			X3DAUDIO_DSP_SETTINGS dsp_settings;
@@ -237,12 +233,12 @@ namespace RenderWorker
 
 	private:
 		IXAudio2SourceVoicePtr source_voice_;
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable: 5205) // IXAudio2VoiceCallback doesn't have virtual destructor
 #endif
 		std::unique_ptr<IXAudio2VoiceCallback> voice_call_back_;
-#ifdef KLAYGE_COMPILER_MSVC
+#ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(pop)
 #endif
 		std::vector<uint8_t> audio_data_;
@@ -306,7 +302,7 @@ namespace RenderWorker
 		X3DAUDIO_HANDLE x3d_instance_;
 		X3DAUDIO_LISTENER listener_{};
 
-#ifdef KLAYGE_PLATFORM_WINDOWS_DESKTOP
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 		DllLoader mod_xaudio2_;
 #endif
 		typedef HRESULT (WINAPI *XAudio2CreateFunc)(IXAudio2** ppXAudio2, UINT32 flags, XAUDIO2_PROCESSOR XAudio2Processor);
@@ -318,5 +314,3 @@ namespace RenderWorker
 		X3DAudioCalculateFunc DynamicX3DAudioCalculate_;
 	};
 }
-
-#endif		// _KLAYGE_PLUGINS_AUDIO_XA_AUDIO_HPP

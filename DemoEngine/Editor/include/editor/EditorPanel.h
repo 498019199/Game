@@ -2,6 +2,7 @@
 #include <base/ZEngine.h>
 #include <render/Texture.h>
 #include <render/RenderMaterial.h>
+#include <audio/Audio.h>
 #include <render/Mesh.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx11.h>

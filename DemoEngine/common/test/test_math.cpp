@@ -7,8 +7,8 @@
 #include <math/quaternion.h>
 #include <cassert>
 
-using namespace MathWorker;
-
+using namespace RenderWorker;
+using namespace RenderWorker::MathWorker;
 void checkvecotr()
 {
 	// test contruct

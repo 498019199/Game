@@ -3,7 +3,7 @@ if (NOT ZENGINE_PLATFORM_WINDOWS)
 endif()
 
 
-ADD_LIBRARY(ZENGINE_AudioEngine_XAudio SHARED
+ADD_LIBRARY(ZENGINE_AudioEngine_XAudio ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/XAAudio.h
 	src/XAAudioEngine.cpp
 	src/XAAudioFactory.cpp
