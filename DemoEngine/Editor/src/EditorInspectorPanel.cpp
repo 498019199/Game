@@ -50,6 +50,10 @@ void EditorInspectorPanel::OnRender(const EditorSetting& setting)
                     case AssetType::Texture:
                         DrawTexture( *(pAsset.get()) );
                         break;
+
+                    case AssetType::Audio:
+                        DrawAudio( *(pAsset.get()) );
+                        break;
                 }
                 
             }
@@ -140,31 +144,40 @@ void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
     ImGui::SameLine(120);
     ImGui::Text("%s", audio_info.name.c_str());
 
-    auto& context = Context::Instance();
-    AudioDataSourceFactory& adsf = context.AudioDataSourceFactoryInstance();
-    auto& res_loader = context.ResLoaderInstance();
-    auto music_1_ = adsf.MakeAudioDataSource();
-    music_1_->Open( res_loader.Open(audio_info.name) );
-
     ImGui::Text("Format:");
     ImGui::SameLine(120);
-    ImGui::Text("%s", music_1_->Format());
-
+    switch(audio_info.audio_buff_->Format())
+    {
+        case AudioFormat::AF_Mono8:
+            ImGui::Text("%s", "AF_Mono8"); break;
+        case AudioFormat::AF_Mono16:
+            ImGui::Text("%s", "AF_Mono16"); break;
+        case AudioFormat::AF_Stereo8:
+            ImGui::Text("%s", "AF_Stereo8"); break;
+        case AudioFormat::AF_Stereo16:
+            ImGui::Text("%s", "AF_Stereo8"); break;
+        default:
+            ImGui::Text("%s", "AF_Unknown");
+    }
+    
     ImGui::Text("Size:");
     ImGui::SameLine(120);
-    ImGui::Text("%s", music_1_->Size() );
+    ImGui::Text("%d", audio_info.audio_buff_->Size() );
 
+    auto& context = Context::Instance();
     AudioFactory& af = context.AudioFactoryInstance();
 	AudioEngine& ae = af.AudioEngineInstance();
-    ae.AddBuffer(1, af.MakeMusicBuffer(music_1_, 3));
+    ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
 
-    static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
+
     ImGui::SetCursorPosX(80);
-    if (ImGui::Button("Play", audioBtnSize))
+    if (ImGui::Button("Play", ImVec2(60.0f, 20.0f)))
     {
-        ae.Play(1, true);
+        ae.Play(1, false);
     }
-    else
+    
+    ImGui::SetCursorPosX(80);
+    if (ImGui::Button("Stop", ImVec2(60.0f, 20.0f)))
     {
         ae.Stop(1);
     }

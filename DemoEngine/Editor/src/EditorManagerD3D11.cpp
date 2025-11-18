@@ -146,7 +146,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             auto ptr = CommonWorker::MakeSharedPtr<AssetTextureInfo>();
             ptr->name = pAssert->name;
             ptr->format = pAssert->extension;
-            ptr->texture = SyncLoadTexture(pAssert->path,   EAH_GPU_Read | EAH_Immutable);
+            ptr->texture = SyncLoadTexture(pAssert->path,  EAH_GPU_Read | EAH_Immutable);
             selected_asset_info_ = ptr;
         }
         break;
@@ -170,6 +170,18 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
         break;
 
     case AssetType::Audio:
+        {
+            auto ptr = CommonWorker::MakeSharedPtr<AssetAudioInfo>();
+            ptr->name = pAssert->name + pAssert->extension;
+
+            auto& context = Context::Instance();
+            AudioDataSourceFactory& adsf = context.AudioDataSourceFactoryInstance();
+            auto& res_loader = context.ResLoaderInstance();
+            ptr->audio_buff_ = adsf.MakeAudioDataSource();
+            ptr->audio_buff_->Open( res_loader.Open( pAssert->path ) );
+
+            selected_asset_info_ = ptr;
+        }
         break;
     }
 }
