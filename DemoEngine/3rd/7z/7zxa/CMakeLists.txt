@@ -273,7 +273,7 @@ target_include_directories(${LIB_NAME}
 		${SEVENZIP_PROJECT_DIR}/CPP/7zip/Archive/7z
 )
 
-SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES
+set_target_properties(${LIB_NAME} PROPERTIES
 	OUTPUT_NAME ${LIB_NAME}${ZENGINE_OUTPUT_SUFFIX}
 	FOLDER "3rd/7z"
 )

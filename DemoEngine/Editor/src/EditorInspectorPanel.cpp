@@ -140,27 +140,33 @@ void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
     ImGui::SameLine(120);
     ImGui::Text("%s", audio_info.name.c_str());
 
-    // ImGui::Text("Length:");
-    // ImGui::SameLine(120);
-    // ImGui::Text("%s", info->lengthStr.c_str());
+    auto& context = Context::Instance();
+    AudioDataSourceFactory& adsf = context.AudioDataSourceFactoryInstance();
+    auto& res_loader = context.ResLoaderInstance();
+    auto music_1_ = adsf.MakeAudioDataSource();
+    music_1_->Open( res_loader.Open(audio_info.name) );
 
-    // ImGui::Text("Size:");
-    // ImGui::SameLine(120);
-    // ImGui::Text("%s", info->sizeStr.c_str());
+    ImGui::Text("Format:");
+    ImGui::SameLine(120);
+    ImGui::Text("%s", music_1_->Format());
 
-    AudioFactory& af = Context::Instance().AudioFactoryInstance();
+    ImGui::Text("Size:");
+    ImGui::SameLine(120);
+    ImGui::Text("%s", music_1_->Size() );
+
+    AudioFactory& af = context.AudioFactoryInstance();
 	AudioEngine& ae = af.AudioEngineInstance();
-    // ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
+    ae.AddBuffer(1, af.MakeMusicBuffer(music_1_, 3));
 
-    // static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
-    // ImGui::SetCursorPosX(80);
-    // if (ImGui::Button("Play", audioBtnSize))
-    // {
-    //     ae.Play(1, true);
-    // }
-    // else
-    // {
-    //     ae.Stop(1);
-    // }
+    static const ImVec2 audioBtnSize = ImVec2(60.0f, 20.0f);
+    ImGui::SetCursorPosX(80);
+    if (ImGui::Button("Play", audioBtnSize))
+    {
+        ae.Play(1, true);
+    }
+    else
+    {
+        ae.Stop(1);
+    }
 }
 }

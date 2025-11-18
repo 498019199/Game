@@ -12,6 +12,7 @@ struct ContextConfig
 {
 	std::string render_factory_name;
     std::string audio_factory_name;
+    std::string audio_data_source_factory_name;
     // 图形配置
     RenderSettings graphics_cfg;
     
@@ -24,6 +25,7 @@ class App3D;
 class RenderEngine;
 class RenderFactory;
 class AudioFactory;
+class AudioDataSourceFactory;
 class World;
 class ThreadPool;
 class ResLoader;
@@ -55,6 +57,9 @@ public:
     
     RenderFactory& RenderFactoryInstance() noexcept;
     bool RenderFactoryValid() const noexcept;
+
+    bool AudioDataSourceFactoryValid() const noexcept;
+    AudioDataSourceFactory& AudioDataSourceFactoryInstance();
 
 #if ZENGINE_IS_DEV_PLATFORM
 	bool DevHelperValid() const noexcept;

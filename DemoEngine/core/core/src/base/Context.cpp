@@ -20,6 +20,7 @@ extern "C"
 	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
     void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
 	void MakeDevHelper(std::unique_ptr<RenderWorker::DevHelper>& ptr);
+    void MakeAudioDataSourceFactory(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr);
 }
 #else
 extern "C"
@@ -30,6 +31,7 @@ namespace RenderWorker
 {
 	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
     typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<AudioFactory>& ptr);
+    typedef void (*MakeAudioDataSourceFactoryFunc)(std::unique_ptr<AudioDataSourceFactory>& ptr);
 #if ZENGINE_IS_DEV_PLATFORM
 	typedef void (*MakeDevHelperFunc)(std::unique_ptr<DevHelper>& ptr);
 #endif
@@ -101,6 +103,23 @@ public:
             }
         }
         return *audio_factory_;
+    }
+
+    bool AudioDataSourceFactoryValid() const noexcept
+    {
+        return audio_data_src_factory_ != nullptr;
+    }
+    AudioDataSourceFactory& AudioDataSourceFactoryInstance()
+    {
+        if (!audio_data_src_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!audio_data_src_factory_)
+            {
+                this->LoadAudioDataSourceFactory(cfg_.audio_data_source_factory_name);
+            }
+        }
+        return *audio_data_src_factory_;
     }
 
     World& WorldInstance() noexcept
@@ -207,6 +226,34 @@ public:
 #else
         KFL_UNUSED(af_name);
         MakeAudioFactory(audio_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadAudioDataSourceFactory( std::string const& adsf_name )
+    {
+        audio_data_src_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        ads_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string adsf_path = res_loader.Locate("audio");
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource_" + af_name + DLL_SUFFIX;
+
+        std::string path = adsf_path + "/" + fn;
+        ads_loader_.Load(res_loader.Locate(path));
+
+        auto* madsf = reinterpret_cast<MakeAudioDataSourceFactoryFunc>(ads_loader_.GetProcAddress("MakeAudioDataSourceFactory"));
+        if (madsf != nullptr)
+        {
+            madsf(audio_factory_);
+        }
+        else
+        {
+            //LogError() << "Loading " << path << " failed" << std::endl;
+            ads_loader_.Free();
+        }
+#else
+        KFL_UNUSED(adsf_name);
+        MakeAudioDataSourceFactory(audio_data_src_factory_);
 #endif// ZENGINE_STATIC_LINK_PLUGINS
     }
 
@@ -443,7 +490,8 @@ private:
     ResLoader res_loader_;
     // 音频工厂
     std::unique_ptr<AudioFactory> audio_factory_;
-
+    // 音频解析
+    std::unique_ptr<AudioDataSourceFactory> audio_data_src_factory_;
 #if ZENGINE_IS_DEV_PLATFORM
     // 开发辅助工具
     std::unique_ptr<DevHelper> dev_helper_;
@@ -490,6 +538,21 @@ App3D& Context::AppInstance() noexcept
 RenderFactory& Context::RenderFactoryInstance() noexcept
 {
     return pimpl_->RenderFactoryInstance();
+}
+
+bool Context::RenderFactoryValid() const noexcept
+{
+    return pimpl_->RenderFactoryValid();
+}
+
+AudioDataSourceFactory& Context::AudioDataSourceFactoryInstance()
+{
+    return pimpl_->AudioDataSourceFactoryInstance();
+}
+
+bool Context::AudioDataSourceFactoryValid() const noexcept
+{
+    return pimpl_->AudioDataSourceFactoryValid();
 }
 
 AudioFactory& Context::AudioFactoryInstance()
@@ -542,11 +605,6 @@ void Context::LoadConfig(const char* file_name)
 void Context::SaveConfig()
 {
     pimpl_->SaveConfig();
-}
-
-bool Context::RenderFactoryValid() const noexcept
-{
-    return pimpl_->RenderFactoryValid();
 }
 
 void Context::Destroy() noexcept
