@@ -27,6 +27,11 @@ public:
 	Quaternion_T(Quaternion_T&& rhs) noexcept;
 	constexpr Quaternion_T(T x, T y, T z, T w) noexcept;
 
+	static constexpr size_t size() noexcept
+	{
+		return elem_num;
+	}
+
 	// ȡ    
 	iterator begin() noexcept
 	{

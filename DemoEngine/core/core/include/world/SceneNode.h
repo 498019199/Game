@@ -41,6 +41,7 @@ public:
     void RemoveChild(SceneNode* node);
     
     void Traverse(const std::function<bool(SceneNode&)>& callback);
+	void UpdatePosBoundSubtree();
 
     virtual void Update(float dt);
 
@@ -63,6 +64,7 @@ private:
     mutable float4x4 xform_to_world_ {float4x4::Identity()}; 
     mutable float4x4 inv_xform_to_world_ {float4x4::Identity()}; 
 };
+
 
 
 

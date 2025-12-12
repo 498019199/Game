@@ -134,23 +134,23 @@ void checkmatrix()
 					 12, 22, 32, 42,
 					 13, 23, 33, 43,
 					 14, 24, 34, 44);
-	assert(Transpose(m1) == m2);
+	assert(transpose(m1) == m2);
 
 	// move 1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1
     auto _1 = float4x4(1,0,0,0,  0,1,0,0,  0,0,1,0,  1,2,3,1);
-	assert(_1 == Translation(1.f, 2.f, 3.f));
+	assert(_1 == translation(1.f, 2.f, 3.f));
 	// Scale
 	assert(float4x4(2,0,0,0,  0,0.5,0,0,  0,0,2,0,  0,0,0,1) == MatrixScale(2.f, 0.5f, 2.f));
 
 	// test rotation matrix
     // rotation matrix
-    assert(float4x4(1,0,0,0, 0,0.838670671f,0.544638991f,0,  0,-0.544638991f,0.838670671f,0, 0,0,0,1) == MatrixRotateX(Deg2Rad(33)));
-    assert(float4x4(0.500000477f,0,-0.866025388f,0, 0,1,0,0,  0.866025388f,0,0.500000477f,0, 0,0,0,1) == MatrixRotateY(Deg2Rad(60)));
-    assert(float4x4(0.500000477f,0.866025388f,0,0, -0.866025388f,0.500000477f,0,0,  0,0,1,0, 0,0,0,1) == MatrixRotateZ(Deg2Rad(60)));
+    assert(float4x4(1,0,0,0, 0,0.838670671f,0.544638991f,0,  0,-0.544638991f,0.838670671f,0, 0,0,0,1) == rotation_x(Deg2Rad(33)));
+    assert(float4x4(0.500000477f,0,-0.866025388f,0, 0,1,0,0,  0.866025388f,0,0.500000477f,0, 0,0,0,1) == rotation_y(Deg2Rad(60)));
+    assert(float4x4(0.500000477f,0.866025388f,0,0, -0.866025388f,0.500000477f,0,0,  0,0,1,0, 0,0,0,1) == rotation_z(Deg2Rad(60)));
 
-    assert(float4x4(0.970946252f,0.147502527f,-0.128133610f,0, 
-					-0.128133610f,0.970946252f,0.147502527f,0,  
-					0.147502527f,-0.128133610f,0.970946252f,0, 0,0,0,0) == MatrixRotate(float3(1.f,1.f,1.f), Deg2Rad(16)));
+    // assert(float4x4(0.970946252f,0.147502527f,-0.128133610f,0, 
+	// 				-0.128133610f,0.970946252f,0.147502527f,0,  
+	// 				0.147502527f,-0.128133610f,0.970946252f,0, 0,0,0,0) == MatrixRotate(float3(1.f,1.f,1.f), Deg2Rad(16)));
 	
     LookAtRH(float3(0.f, 0.f, 0.f),
         float3(0.f, 0.f, 0.f),

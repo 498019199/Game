@@ -15,6 +15,8 @@ namespace RenderWorker
 	class Rotator_T;
 	template <typename T>
 	class Color_T;
+	template <typename T>
+	class AABBox_T;
 
 	// 常量定义
 	/////////////////////////////////////////////////////////////////////////////////
@@ -160,15 +162,15 @@ namespace RenderWorker
 
 		//四元数的逆
 		template <typename T>
-		Quaternion_T<T> Inverse(const Quaternion_T<T>& rhs) noexcept;
+		Quaternion_T<T> inverse(const Quaternion_T<T>& rhs) noexcept;
 
 
 
 		//矩形平移
 		template<typename T>
-		Matrix4_T<T> Translation(T X, T Y, T Z);
+		Matrix4_T<T> translation(T X, T Y, T Z);
 		template<typename T>
-		Matrix4_T<T> Translation(const Vector_T<T, 3>& Move);
+		Matrix4_T<T> translation(const Vector_T<T, 3>& Move);
 
 		// 矩形缩放
 		template<typename T>
@@ -178,13 +180,18 @@ namespace RenderWorker
 
 		//矩阵旋转
 		template<typename T>
-		Matrix4_T<T> MatrixRotateX(T Angle);
+		Matrix4_T<T> rotation_x(T Angle);
 		template<typename T>
-		Matrix4_T<T> MatrixRotateY(T Angle);
+		Matrix4_T<T> rotation_y(T Angle);
 		template<typename T>
-		Matrix4_T<T> MatrixRotateZ(T Angle);
+		Matrix4_T<T> rotation_z(T Angle);
+		template <typename T>
+		Matrix4_T<T> rotation_matrix_yaw_pitch_roll(const T& yaw, const T& pitch, const T& roll) noexcept;
+
+		template <typename T>
+		Matrix4_T<T> scaling(const T& sx, const T& sy, const T& sz) noexcept;
 		template<typename T>
-		Matrix4_T<T> MatrixRotate(const Vector_T<T, 3>& Pos, T Angle);
+		Matrix4_T<T> scaling(const Vector_T<T, 3>& s) noexcept;
 
 		//矩形乘法
 		template<typename T>
@@ -192,7 +199,7 @@ namespace RenderWorker
 
 		//矩阵转置
 		template<typename T>
-		Matrix4_T<T> Transpose(const Matrix4_T<T>& m);
+		Matrix4_T<T> transpose(const Matrix4_T<T>& m);
 
 		//矩阵的行列式
 		template<typename T>
@@ -200,7 +207,7 @@ namespace RenderWorker
 
 		//矩阵的逆
 		template<typename T>
-		Matrix4_T<T> Inverse(const Matrix4_T<T>& m);
+		Matrix4_T<T> inverse(const Matrix4_T<T>& m);
 
 		template <typename T>
 		Matrix4_T<T> LHToRH(Matrix4_T<T> const & rhs) noexcept;
@@ -242,13 +249,17 @@ namespace RenderWorker
 
 		// 矩阵分解
 		template<typename T>
-		void Decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m);
-		
+		void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m);
+	
+		template <typename T>
+		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
+			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept;
+
 		//相互转换
 		template<typename T>
-		Matrix4_T<T> ToMatrix(const Quaternion_T<T>& quat);
+		Matrix4_T<T> to_matrix(const Quaternion_T<T>& quat);
 		template<typename T>
-		Matrix4_T<T> ToMatrix(const Rotator_T<T>& rot);
+		Matrix4_T<T> to_matrix(const Rotator_T<T>& rot);
 
 		template<typename T>
 		Quaternion_T<T> ToQuaternion(const Matrix4_T<T>& mat);
@@ -273,3 +284,4 @@ namespace RenderWorker
 #include <math/rotator.h>
 #include <math/color.h>
 #include <math/half.h>
+#include <math/AABBox.h>

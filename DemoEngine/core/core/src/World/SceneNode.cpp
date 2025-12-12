@@ -67,6 +67,11 @@ void SceneNode::Traverse(const std::function<bool(SceneNode&)>& callback)
     }
 }
 
+void SceneNode::UpdatePosBoundSubtree()
+{
+    
+}
+
 void SceneNode::RemoveChild(const SceneNodePtr& node)
 {
     this->RemoveChild(node.get());
@@ -85,7 +90,7 @@ void SceneNode::RemoveChild(SceneNode* node)
 void SceneNode::TransformToParent(const float4x4& mat)
 {
     xform_to_parent_ = mat;
-    inv_xform_to_parent_ = MathWorker::Inverse(mat);
+    inv_xform_to_parent_ = MathWorker::inverse(mat);
 }
 
 void SceneNode::TransformToWorld(const float4x4& mat)
@@ -98,7 +103,7 @@ void SceneNode::TransformToWorld(const float4x4& mat)
     {
         xform_to_parent_ = mat;
     }
-    inv_xform_to_parent_ = MathWorker::Inverse(mat);
+    inv_xform_to_parent_ = MathWorker::inverse(mat);
 }
 
 const float4x4& SceneNode::TransformToParent() const
@@ -138,7 +143,7 @@ const float4x4& SceneNode::InverseTransformToWorld() const
     }
     else
     {
-        inv_xform_to_world_ = MathWorker::Inverse(TransformToWorld());
+        inv_xform_to_world_ = MathWorker::inverse(TransformToWorld());
         return inv_xform_to_world_;
     }
 }

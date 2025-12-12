@@ -1,10 +1,12 @@
 
+#pragma once
+
 #include <dev_helps/TexMetadata.h>
 #include <string_view>
 
 namespace RenderWorker
 {
-class TexConverter final
+class ZENGINE_CORE_API TexConverter final
 {
 public:
     TexturePtr Load(TexMetadata const& metadata);

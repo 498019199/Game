@@ -1,5 +1,7 @@
 #include <base/DevHelper.h>
 #include <dev_helps/TexConverter.h>
+#include <dev_helps/MeshMetadata.h>
+#include <dev_helps/MeshConverter.h>
 #include <string_view>
 #include <filesystem>
 
@@ -11,6 +13,41 @@ class DevHelperImp final : public DevHelper
 public:
     ~DevHelperImp() override
     {
+    }
+
+    RenderModelPtr ConvertModel(std::string_view input_name, std::string_view metadata_name, std::string_view output_name,
+        [[maybe_unused]] const RenderDeviceCaps* caps) override
+    {
+        std::string metadata_name_ptr(metadata_name);
+        if (metadata_name.empty())
+        {
+            metadata_name_ptr = std::string(input_name) + ".kmeta";
+        }
+
+        MeshMetadata metadata;
+        if (!metadata_name.empty())
+        {
+            metadata.Load(metadata_name);
+        }
+        else
+        {
+            metadata.LodFileName(0, input_name);
+        }
+
+        MeshConverter mc;
+        auto model = mc.Load(metadata);
+
+        std::filesystem::path input_path(input_name);
+        std::filesystem::path output_path(output_name);
+        if (output_path.parent_path() == input_path.parent_path())
+        {
+            output_path = std::filesystem::path(Context::Instance().ResLoaderInstance().Locate(input_name)).parent_path() /
+                            output_path.filename();
+        }
+
+        mc.Save(*model, output_path.string());
+
+        return model;
     }
 
     TexturePtr ConvertTexture(std::string_view input_name, std::string_view metadata_name, std::string_view output_name,

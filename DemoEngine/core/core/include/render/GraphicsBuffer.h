@@ -100,4 +100,32 @@ protected:
 };
 
 using GraphicsBufferPtr = std::shared_ptr<GraphicsBuffer>;
+
+
+class ZENGINE_CORE_API SoftwareGraphicsBuffer : public GraphicsBuffer
+{
+public:
+    SoftwareGraphicsBuffer(uint32_t size_in_byte, bool ref_only);
+
+    void CopyToBuffer(GraphicsBuffer& target) override;
+    void CopyToSubBuffer(GraphicsBuffer& target,
+        uint32_t dst_offset, uint32_t src_offset, uint32_t size) override;
+
+    void CreateHWResource(void const * init_data) override;
+    void DeleteHWResource() override;
+    bool HWResourceReady() const override;
+
+    void UpdateSubresource(uint32_t offset, uint32_t size, void const * data) override;
+
+private:
+    void* Map(BufferAccess ba) override;
+    void Unmap() override;
+
+private:
+    bool ref_only_;
+
+    uint8_t* subres_data_ = nullptr;
+    std::vector<uint8_t> data_block_;
+    std::atomic<bool> mapped_{false};
+};
 }

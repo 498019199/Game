@@ -324,6 +324,9 @@ public:
 	void StreamOut(std::ostream& os) const;
 #endif
 
+	RenderEffectConstantBufferPtr Clone(RenderEffect& dst_effect);
+	void Reclone(RenderEffectConstantBuffer& dst_cbuffer, RenderEffect& dst_effect);
+
     RenderEffect& OwnerEffect() noexcept
     {
         return effect_;

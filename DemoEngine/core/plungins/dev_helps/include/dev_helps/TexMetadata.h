@@ -6,7 +6,7 @@
 
 namespace RenderWorker
 {
-class TexMetadata
+class ZENGINE_CORE_API TexMetadata
 {
 public:
     TexMetadata();

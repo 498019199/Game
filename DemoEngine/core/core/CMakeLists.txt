@@ -69,6 +69,7 @@ set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderEngine.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderFactory.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderLayout.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderMaterial.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderStateObject.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderView.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderObject.h
@@ -90,6 +91,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEngine.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderFactory.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderLayout.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderMaterial.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderStateObject.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderView.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp

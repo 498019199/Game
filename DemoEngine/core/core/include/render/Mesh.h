@@ -42,6 +42,11 @@ public:
     void NumLods(uint32_t lods) override;
     using Renderable::NumLods;
 
+    virtual void PosBound(const AABBox& aabb);
+    using Renderable::PosBound;
+    virtual void TexcoordBound(const AABBox& aabb);
+    using Renderable::TexcoordBound;
+
     void NumVertices(uint32_t lod, uint32_t n)
     {
         rls_[lod]->NumVertices(n);
@@ -113,12 +118,12 @@ protected:
     bool hw_res_ready_;
 };
 
-class ZENGINE_CORE_API RenderModel: public StaticMesh
+class ZENGINE_CORE_API RenderModel
 {
     ZENGINE_NONCOPYABLE(RenderModel);
 public:
-    explicit RenderModel();
-    RenderModel(std::wstring_view name, uint32_t node_attrib);
+    explicit RenderModel(const SceneNodePtr& root_node);
+	RenderModel(std::wstring_view name, uint32_t node_attrib);
     virtual ~RenderModel() noexcept;
 
     const SceneNodePtr& RootNode() const
@@ -140,16 +145,21 @@ public:
         materials_.resize(i);
     }
 
+    template <typename ForwardIterator>
+    void AssignMeshes(ForwardIterator first, ForwardIterator last)
+    {
+        meshes_.assign(first, last);
+    }
     RenderMaterialPtr& GetMaterial(int32_t i)
     {
         return materials_[i];
     }
-    RenderMaterialPtr const & GetMaterial(int32_t i) const
+    const RenderMaterialPtr& GetMaterial(int32_t i) const
     {
         return materials_[i];
     }
 
-    RenderablePtr const & Mesh(size_t id) const
+    const RenderablePtr& Mesh(size_t id) const
     {
         return meshes_[id];
     }
@@ -158,13 +168,23 @@ public:
         return static_cast<uint32_t>(meshes_.size());
     }
     
+    void ForEachMesh(std::function<void(Renderable&)> const & callback) const;
+
+    bool HWResourceReady() const;
+    
     RenderModelPtr Clone(
         const std::function<RenderModelPtr(std::wstring_view, uint32_t)>& CreateModelFactoryFunc = CreateModelFactory<RenderModel>,
         const std::function<StaticMeshPtr(std::wstring_view)>& CreateMeshFactoryFunc = CreateMeshFactory<StaticMesh>);
     virtual void CloneDataFrom(const RenderModel& source,
         const std::function<StaticMeshPtr(std::wstring_view)>& CreateMeshFactoryFunc = CreateMeshFactory<StaticMesh>);
+
 protected:
-    SceneNodePtr root_node_;
+    virtual void DoBuildModelInfo()
+    {
+    }
+
+protected:
+	SceneNodePtr root_node_;
     std::vector<RenderablePtr> meshes_;
     std::vector<RenderMaterialPtr> materials_;
 

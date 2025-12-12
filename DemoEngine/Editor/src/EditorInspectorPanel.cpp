@@ -54,6 +54,16 @@ void EditorInspectorPanel::OnRender(const EditorSetting& setting)
                     case AssetType::Audio:
                         DrawAudio( *(pAsset.get()) );
                         break;
+
+                    case AssetType::Material:
+                    case AssetType::DeferredMaterial:
+                    case AssetType::RayTracingMaterial:
+                        DrawMaterial( *(pAsset.get()) );
+                        break;
+
+                    case AssetType::Model:
+                        DrawModel( *(pAsset.get()) );
+                        break;
                 }
                 
             }
@@ -182,4 +192,19 @@ void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
         ae.Stop(1);
     }
 }
+
+void EditorInspectorPanel::DrawModel(const AssertBaseInfo& info)
+{
+    const auto& model_info = checked_cast<const AssetModelInfo&>(info);
+
+    ImGui::Text("Name:");
+    ImGui::SameLine(120);
+    ImGui::Text("%s", model_info.name.c_str());
+}
+
+void EditorInspectorPanel::DrawMaterial(const AssertBaseInfo& info)
+{
+    
+}
+
 }

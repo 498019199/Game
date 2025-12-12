@@ -3,9 +3,13 @@ if (NOT ZENGINE_IS_DEV_PLATFORM)
 endif()
 
 add_library(ZENGINE_DevHelps ${ZENGINE_PREFERRED_LIB_TYPE}
-    src/ImagePlane.h
     src/DevHelper.cpp
     src/ImagePlane.cpp
+    src/ImagePlane.h
+    src/MeshConverter.cpp
+    src/MeshMetadata.cpp
+    src/MetadataUtil.cpp
+    src/MetadataUtil.h
     src/TexConverter.cpp
     src/TexMetadata.cpp
 )

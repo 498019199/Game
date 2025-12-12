@@ -31,6 +31,11 @@ RenderLayout& Renderable::GetRenderLayout(uint32_t lod) const
     return *rls_[lod];
 }
 
+const std::wstring& Renderable::Name() const
+{
+    return name_;
+}
+
 RenderEffect* Renderable::GetRenderEffect() const
 {       
     return effect_.get();
@@ -39,6 +44,16 @@ RenderEffect* Renderable::GetRenderEffect() const
 RenderTechnique* Renderable::GetRenderTechnique() const
 {
     return technique_;
+}
+
+const AABBox& Renderable::PosBound() const
+{
+    return pos_aabb_;
+}
+
+const AABBox& Renderable::TexcoordBound() const
+{
+    return tc_aabb_;
 }
 
 void Renderable::NumLods(uint32_t lods)

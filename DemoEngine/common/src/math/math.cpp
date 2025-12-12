@@ -251,9 +251,9 @@ namespace RenderWorker
         }
 
 
-        template float4x4 Translation(float X, float Y, float Z);
+        template float4x4 translation(float X, float Y, float Z);
         template<typename T>
-        Matrix4_T<T> Translation(T X, T Y, T Z)
+        Matrix4_T<T> translation(T X, T Y, T Z)
         {
             return Matrix4_T<T>(
                 1, 0, 0, 0,
@@ -262,11 +262,11 @@ namespace RenderWorker
                 X, Y, Z, 1);
         }
 
-        template float4x4 Translation(const float3& Move);
+        template float4x4 translation(const float3& Move);
         template<typename T>
-        Matrix4_T<T> Translation(const Vector_T<T, 3> &Move)
+        Matrix4_T<T> translation(const Vector_T<T, 3> &Move)
         {
-            return Translation(Move.x(), Move.y(), Move.z());
+            return translation(Move.x(), Move.y(), Move.z());
         }
 
         template float4x4 MatrixScale(float X, float Y, float Z);
@@ -287,9 +287,9 @@ namespace RenderWorker
             return MatrixScale(Scale.x(), Scale.y(), Scale.z());
         }
 
-        template float4x4 MatrixRotateX(float Angle);
+        template float4x4 rotation_x(float Angle);
         template<typename T>
-        Matrix4_T<T> MatrixRotateX(T Angle)
+        Matrix4_T<T> rotation_x(T Angle)
         {
             T fs, fc;
             sincos(Angle, fs, fc);
@@ -300,9 +300,9 @@ namespace RenderWorker
                 0, 0,   0,  1);
         }
 
-        template float4x4 MatrixRotateY(float Angle);
+        template float4x4 rotation_y(float Angle);
         template<typename T>
-        Matrix4_T<T> MatrixRotateY(T Angle)
+        Matrix4_T<T> rotation_y(T Angle)
         {
             T fs, fc;
             sincos(Angle, fs, fc);
@@ -313,9 +313,9 @@ namespace RenderWorker
                 0, 0, 0, 1);
         }
 
-        template float4x4 MatrixRotateZ(float Angle);
+        template float4x4 rotation_z(float Angle);
         template<typename T>
-        Matrix4_T<T> MatrixRotateZ(T Angle)
+        Matrix4_T<T> rotation_z(T Angle)
         {
             T fs, fc;
             sincos(Angle, fs, fc);
@@ -326,32 +326,33 @@ namespace RenderWorker
                 0, 0, 0, 1);
         }
 
-        template float4x4 MatrixRotate(const float3& n, float Angle);
-        template<typename T>
-        Matrix4_T<T> MatrixRotate(const Vector_T<T, 3>& n, T Angle)
-        {
-            T fs = 0.0f, fc = 0.0f;
-            sincos(Angle, fs, fc);
-            Vector_T<T, 3> v(n.x(), n.y(), n.z());
-            v = normalize(v);
+		template float4x4 rotation_matrix_yaw_pitch_roll(const float& yaw, const float& pitch, const float& roll) noexcept;
+		template <typename T>
+		Matrix4_T<T> rotation_matrix_yaw_pitch_roll(const T& yaw, const T& pitch, const T& roll) noexcept
+		{
+			Matrix4_T<T> const rotX(rotation_x(pitch));
+			Matrix4_T<T> const rotY(rotation_y(yaw));
+			Matrix4_T<T> const rotZ(rotation_z(roll));
+			return rotZ * rotX * rotY;
+		}
 
-            T a = 1.0f - fc;
-            T ax = a * v.x();
-            T ay = a * v.y();
-            T az = a * v.z();
+        template float4x4 scaling(const float& sx, const float& sy, const float& sz) noexcept;
+		template <typename T>
+		Matrix4_T<T> scaling(const T& sx, const T& sy, const T& sz) noexcept
+		{
+			return Matrix4_T<T>(
+				sx,	0,	0,	0,
+				0,	sy,	0,	0,
+				0,	0,	sz,	0,
+				0,	0,	0,	1);
+		}
 
-            Matrix4_T<T> matrix(Matrix4_T<T>::Identity());
-            matrix(0, 0) = v.x() * ax + fc;
-            matrix(0, 1) = v.x() * ay + v.z() * fs;
-            matrix(0, 2) = v.x() * az - v.y() * fs;
-            matrix(1, 0) = v.x() * ay - v.z() * fs;
-            matrix(1, 1) = v.y() * ay + fc;
-            matrix(1, 2) = v.y() * az + v.x() * fs;
-            matrix(2, 0) = v.x() * az + v.y() * fs;
-            matrix(2, 1) = v.y() * az - v.x() * fs;
-            matrix(2, 2) = v.z() * az + fc;
-            return matrix;
-        }
+		template float4x4 scaling(const float3& s) noexcept;
+		template <typename T>
+		Matrix4_T<T> scaling(const Vector_T<T, 3>& s) noexcept
+		{
+			return scaling(s.x(), s.y(), s.z());
+		}
 
         template float4x4 mul(const float4x4& lhs, const float4x4& rhs);
         template<typename T>
@@ -376,9 +377,9 @@ namespace RenderWorker
                 lhs(3, 0) * rhs(0, 3) + lhs(3, 1) * rhs(1, 3) + lhs(3, 2) * rhs(2, 3) + lhs(3, 3) * rhs(3, 3));
         }
 
-        template float4x4 Transpose(const float4x4& mat);
+        template float4x4 transpose(const float4x4& mat);
         template<typename T>
-        Matrix4_T<T> Transpose(const Matrix4_T<T> &mat)
+        Matrix4_T<T> transpose(const Matrix4_T<T> &mat)
         {
             return Matrix4_T<T>(mat(0, 0), mat(1, 0), mat(2, 0), mat(3, 0),
                         mat(0, 1), mat(1, 1), mat(2, 1), mat(3, 1),
@@ -405,9 +406,9 @@ namespace RenderWorker
         }
 
         // 矩阵的逆
-        template float4x4 Inverse(const float4x4& mat);
+        template float4x4 inverse(const float4x4& mat);
         template<typename T>
-        Matrix4_T<T> Inverse(const Matrix4_T<T>& mat)
+        Matrix4_T<T> inverse(const Matrix4_T<T>& mat)
         {
             const float _2132_2231(mat(1, 0) * mat(2, 1) - mat(1, 1) * mat(2, 0));
             const float _2133_2331(mat(1, 0) * mat(2, 2) - mat(1, 2) * mat(2, 0));
@@ -627,9 +628,9 @@ namespace RenderWorker
                 0,		0,		-(2 * Far * Near) / q,      0); 
         }
 
-        template void Decompose(float3& scale, quater& rot, float3& trans, const float4x4& m);
+        template void decompose(float3& scale, quater& rot, float3& trans, const float4x4& m);
         template<typename T>
-        void Decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m)
+        void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m)
         {
             // S=> M去掉T得m3x3矩阵，（RS）^T*RT=M3^T*M3=S*S
             scale.x() = sqrt(m(0, 0) * m(0, 0) + m(0, 1) * m(0, 1) + m(0, 2) * m(0, 2));
@@ -660,6 +661,71 @@ namespace RenderWorker
             rot = ToQuaternion(rot_mat);
         }
 
+        template float4x4 transformation(const float3* scaling_center, const quater* scaling_rotation, const float3* scale,
+			const float3* rotation_center, const quater* rotation, const float3* trans) noexcept;
+		template <typename T>
+		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
+			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept
+		{
+			Vector_T<T, 3> psc, prc, pt;
+			if (scaling_center)
+			{
+				psc = *scaling_center;
+			}
+			else
+			{
+				psc = Vector_T<T, 3>(T(0), T(0), T(0));
+			}
+			if (rotation_center)
+			{
+				prc = *rotation_center;
+			}
+			else
+			{
+				prc = Vector_T<T, 3>(T(0), T(0), T(0));
+			}
+			if (trans)
+			{
+				pt = *trans;
+			}
+			else
+			{
+				pt = Vector_T<T, 3>(T(0), T(0), T(0));
+			}
+
+			Matrix4_T<T> m1, m2, m3, m4, m5, m6, m7;
+			m1 = translation(-psc);
+			if (scaling_rotation)
+			{
+				m4 = to_matrix(*scaling_rotation);
+				m2 = inverse(m4);
+			}
+			else
+			{
+				m2 = m4 = Matrix4_T<T>::Identity();
+			}
+			if (scale)
+			{
+				m3 = scaling(*scale);
+			}
+			else
+			{
+				m3 = Matrix4_T<T>::Identity();
+			}
+			if (rotation)
+			{
+				m6 = to_matrix(*rotation);
+			}
+			else
+			{
+				m6 = Matrix4_T<T>::Identity();
+			}
+			m5 = translation(psc - prc);
+			m7 = translation(prc + pt);
+
+			return m1 * m2 * m3 * m4 * m5 * m6 * m7;
+		}
+
         template quater mul(const quater& lhs, const quater& rhs) noexcept;
         template<typename T>
         Quaternion_T<T> mul(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
@@ -678,17 +744,17 @@ namespace RenderWorker
             return Quaternion_T<T>(-rhs.x(), -rhs.y(), -rhs.z(), rhs.w());
         }
 
-        template quater Inverse(const quater& rhs) noexcept;
+        template quater inverse(const quater& rhs) noexcept;
         template <typename T>
-        Quaternion_T<T> Inverse(const Quaternion_T<T>& rhs) noexcept
+        Quaternion_T<T> inverse(const Quaternion_T<T>& rhs) noexcept
         {
             T var(T(1) / length(rhs));
             return Quaternion_T<T>(-rhs.x() * var, -rhs.y() * var, -rhs.z() * var, rhs.w() * var);
         }
 
-        template float4x4 ToMatrix(const quater &quat);
+        template float4x4 to_matrix(const quater &quat);
         template<typename T>
-        Matrix4_T<T> ToMatrix(const Quaternion_T<T>& quat)
+        Matrix4_T<T> to_matrix(const Quaternion_T<T>& quat)
         {
             // calculate coefficients
             const T x2(quat.x() + quat.x());
@@ -706,13 +772,13 @@ namespace RenderWorker
                 0,				0,				0,				1);
         }
 
-        template float4x4 ToMatrix(const rotator &rot);
+        template float4x4 to_matrix(const rotator &rot);
         template<typename T>
-        Matrix4_T<T> ToMatrix(const Rotator_T<T>& rot)
+        Matrix4_T<T> to_matrix(const Rotator_T<T>& rot)
         {
-            Matrix4_T<T> rot_x = MatrixRotateX(rot.pitch());
-            Matrix4_T<T> rot_y = MatrixRotateY(rot.yaw());
-            Matrix4_T<T> rot_z = MatrixRotateZ(rot.roll());
+            Matrix4_T<T> rot_x = rotation_x(rot.pitch());
+            Matrix4_T<T> rot_y = rotation_y(rot.yaw());
+            Matrix4_T<T> rot_z = rotation_z(rot.roll());
             return rot_x * rot_y * rot_z;
         }
 
