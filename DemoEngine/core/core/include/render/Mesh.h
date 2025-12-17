@@ -133,6 +133,11 @@ public:
 
     void BuildModelInfo();
 
+    virtual bool IsSkinned() const
+    {
+        return false;
+    }
+
     uint32_t NumLods() const;
     void ActiveLod(int32_t lod);
 
@@ -191,13 +196,104 @@ protected:
     bool hw_res_ready_;
 };
 
+class ZENGINE_CORE_API JointComponent : public SceneComponent
+{
+public:
+    NANO_RTTI_REGISTER_RUNTIME_CLASS(SceneComponent)
+
+    SceneComponentPtr Clone() const override;
+
+    void BindParams(quater const& real, quater const& dual, float scale);
+
+    quater const& BindReal() const
+    {
+        return bind_real_;
+    }
+    quater const& BindDual() const
+    {
+        return bind_dual_;
+    }
+    float BindScale() const
+    {
+        return bind_scale_;
+    }
+
+    void InverseOriginParams(quater const& real, quater const& dual, float scale);
+
+    quater const& InverseOriginReal() const
+    {
+        return inverse_origin_real_;
+    }
+    quater const& InverseOriginDual() const
+    {
+        return inverse_origin_dual_;
+    }
+    float InverseOriginScale() const
+    {
+        return inverse_origin_scale_;
+    }
+
+    void InitInverseOriginParams();
+
+private:
+    quater bind_real_;
+    quater bind_dual_;
+    float bind_scale_;
+
+    quater inverse_origin_real_;
+    quater inverse_origin_dual_;
+    float inverse_origin_scale_;
+};
+
+struct ZENGINE_CORE_API KeyFrameSet
+{
+    std::vector<uint32_t> frame_id;
+    std::vector<quater> bind_real;
+    std::vector<quater> bind_dual;
+    std::vector<float> bind_scale;
+
+    std::tuple<quater, quater, float> Frame(float frame) const;
+};
+
+struct ZENGINE_CORE_API AABBKeyFrameSet
+{
+    std::vector<uint32_t> frame_id;
+    std::vector<AABBox> bb;
+
+    AABBox Frame(float frame) const;
+};
+
+struct ZENGINE_CORE_API Animation
+{
+    std::string name;
+    uint32_t start_frame;
+    uint32_t end_frame;
+};
+
 class ZENGINE_CORE_API SkinnedModel : public RenderModel
 {
     ZENGINE_NONCOPYABLE(SkinnedModel);
 public:
-    explicit SkinnedModel();
+    explicit SkinnedModel(const SceneNodePtr& root_node);
     SkinnedModel(std::wstring_view name, uint32_t node_attrib);
  
+    bool IsSkinned() const override
+    {
+        return true;
+    }
+
+protected:
+    //std::vector<JointComponentPtr> joints_;
+    std::vector<float4> bind_reals_;
+    std::vector<float4> bind_duals_;
+
+    //std::shared_ptr<std::vector<KeyFrameSet>> key_frame_sets_;
+    float last_frame_;
+
+    uint32_t num_frames_;
+    uint32_t frame_rate_;
+
+	//std::shared_ptr<std::vector<Animation>> animations_;
 };
 
 ZENGINE_CORE_API RenderModelPtr SyncLoadModel(std::string_view model_name, uint32_t access_hint,

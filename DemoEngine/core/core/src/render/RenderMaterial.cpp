@@ -412,6 +412,8 @@ namespace
 
 namespace RenderWorker
 {
+using namespace CommonWorker;
+
 RenderMaterial::RenderMaterial()
 {
     
@@ -425,164 +427,361 @@ void RenderMaterial::Albedo(const float4& value)
     }
     else
     {
-        //PredefinedMaterialCBufferInstance().AlbedoClr(*cbuffer_) = value;
+        PredefinedMaterialCBufferInstance().AlbedoClr(*cbuffer_) = value;
         cbuffer_->Dirty(true);
     }
 }
 
 const float4& RenderMaterial::Albedo() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float4 const&>(sw_cbuffer_[sw_albedo_clr_offset_]);
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().AlbedoClr(*cbuffer_);
+	}
 }
 
 void RenderMaterial::Metalness(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float2&>(sw_cbuffer_[sw_metalness_glossiness_factor_offset_]).x() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).x() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::Metalness() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float2 const&>(sw_cbuffer_[sw_metalness_glossiness_factor_offset_]).x();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).x();
+	}
 }
 
 void RenderMaterial::Glossiness(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float2&>(sw_cbuffer_[sw_metalness_glossiness_factor_offset_]).y() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).y() = MathWorker::clamp(value, 1e-6f, 0.999f);
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::Glossiness() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float2 const&>(sw_cbuffer_[sw_metalness_glossiness_factor_offset_]).y();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).y();
+	}
 }
 
 void RenderMaterial::Emissive(float3 const& value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float3&>(sw_cbuffer_[sw_emissive_clr_offset_]) = value;
+	}
+	else
+	{
+		reinterpret_cast<float3&>(PredefinedMaterialCBufferInstance().EmissiveClr(*cbuffer_)) = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 const float3& RenderMaterial::Emissive() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float3 const&>(sw_cbuffer_[sw_emissive_clr_offset_]);
+	}
+	else
+	{
+		return reinterpret_cast<float3 const&>(PredefinedMaterialCBufferInstance().EmissiveClr(*cbuffer_));
+	}
 }
 
 void RenderMaterial::Transparent(bool value)
 {
-    
+	transparent_ = value;
 }
 
 bool RenderMaterial::Transparent() const
 {
-    
+    return transparent_;
 }
 
 void RenderMaterial::AlphaTestThreshold(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		sw_cbuffer_[sw_alpha_test_threshold_offset_] = std::bit_cast<uint32_t>(value);
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().AlphaTestThreshold(*cbuffer_) = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::AlphaTestThreshold() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return std::bit_cast<float>(sw_cbuffer_[sw_alpha_test_threshold_offset_]);
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().AlphaTestThreshold(*cbuffer_);
+	}
 }
 
 void RenderMaterial::Sss(bool value)
 {
-    
+    sss_ = value;
 }
 
 bool RenderMaterial::Sss() const
 {
-    
+    return sss_;
 }
 
 void RenderMaterial::TwoSided(bool value)
 {
-    
+    two_sided_ = value;
 }
 
 bool RenderMaterial::TwoSided() const
 {
-    
+    return two_sided_;
 }
 
 void RenderMaterial::NormalScale(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		sw_cbuffer_[sw_normal_scale_offset_] = std::bit_cast<uint32_t>(value);
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().NormalScale(*cbuffer_) = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::NormalScale() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return std::bit_cast<float>(sw_cbuffer_[sw_normal_scale_offset_]);
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().NormalScale(*cbuffer_);
+	}
 }
 
 void RenderMaterial::OcclusionStrength(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		sw_cbuffer_[sw_occlusion_strength_offset_] = std::bit_cast<uint32_t>(value);
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().OcclusionStrength(*cbuffer_) = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::OcclusionStrength() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return std::bit_cast<float>(sw_cbuffer_[sw_occlusion_strength_offset_]);
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().OcclusionStrength(*cbuffer_);
+	}
 }
 
 void RenderMaterial::HeightOffset(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float2&>(sw_cbuffer_[sw_height_offset_scale_offset_]).x() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().HeightOffsetScale(*cbuffer_).x() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::HeightOffset() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float2 const&>(sw_cbuffer_[sw_height_offset_scale_offset_]).x();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().HeightOffsetScale(*cbuffer_).x();
+	}
 }
 
 void RenderMaterial::HeightScale(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float2&>(sw_cbuffer_[sw_height_offset_scale_offset_]).y() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().HeightOffsetScale(*cbuffer_).y() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::HeightScale() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float2 const&>(sw_cbuffer_[sw_height_offset_scale_offset_]).y();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().HeightOffsetScale(*cbuffer_).y();
+	}
 }
 
 void RenderMaterial::EdgeTessHint(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float4&>(sw_cbuffer_[sw_tess_factors_offset_]).x() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).x() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::EdgeTessHint() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float4 const&>(sw_cbuffer_[sw_tess_factors_offset_]).x();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).x();
+	}
 }
 
 void RenderMaterial::InsideTessHint(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float4&>(sw_cbuffer_[sw_tess_factors_offset_]).y() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).y() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::InsideTessHint() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float4 const&>(sw_cbuffer_[sw_tess_factors_offset_]).y();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).y();
+	}
 }
 
 void RenderMaterial::MinTessFactor(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float4&>(sw_cbuffer_[sw_tess_factors_offset_]).z() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).z() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::MinTessFactor() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float4 const&>(sw_cbuffer_[sw_tess_factors_offset_]).z();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).z();
+	}
 }
 
 void RenderMaterial::MaxTessFactor(float value)
 {
-    
+	if (is_sw_mode_)
+	{
+		reinterpret_cast<float4&>(sw_cbuffer_[sw_tess_factors_offset_]).w() = value;
+	}
+	else
+	{
+		PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).w() = value;
+		cbuffer_->Dirty(true);
+	}
 }
 
 float RenderMaterial::MaxTessFactor() const
 {
-    
+	if (is_sw_mode_)
+	{
+		return reinterpret_cast<float4 const&>(sw_cbuffer_[sw_tess_factors_offset_]).w();
+	}
+	else
+	{
+		return PredefinedMaterialCBufferInstance().TessFactors(*cbuffer_).w();
+	}
+}
+
+void RenderMaterial::DetailMode(SurfaceDetailMode value)
+{
+    detail_mode_ = value;
+}
+
+RenderMaterial::SurfaceDetailMode RenderMaterial::DetailMode() const
+{
+	return detail_mode_;
 }
 
 RenderMaterialPtr RenderMaterial::Clone() const
@@ -709,4 +908,110 @@ void RenderMaterial::LoadTextureSlots()
         }
     }
 }
+
+
+
+
+
+
+
+
+
+PredefinedMaterialCBuffer::PredefinedMaterialCBuffer()
+	{
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+		predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
+
+		albedo_clr_offset_ = effect_->ParameterByName("albedo_clr")->CBufferOffset();
+		metalness_glossiness_factor_offset_ = effect_->ParameterByName("metalness_glossiness_factor")->CBufferOffset();
+		emissive_clr_offset_ = effect_->ParameterByName("emissive_clr")->CBufferOffset();
+		albedo_map_enabled_offset_ = effect_->ParameterByName("albedo_map_enabled")->CBufferOffset();
+		normal_map_enabled_offset_ = effect_->ParameterByName("normal_map_enabled")->CBufferOffset();
+		height_map_parallax_enabled_offset_ = effect_->ParameterByName("height_map_parallax_enabled")->CBufferOffset();
+		height_map_tess_enabled_offset_ = effect_->ParameterByName("height_map_tess_enabled")->CBufferOffset();
+		occlusion_map_enabled_offset_ = effect_->ParameterByName("occlusion_map_enabled")->CBufferOffset();
+		alpha_test_threshold_offset_ = effect_->ParameterByName("alpha_test_threshold")->CBufferOffset();
+		normal_scale_offset_ = effect_->ParameterByName("normal_scale")->CBufferOffset();
+		occlusion_strength_offset_ = effect_->ParameterByName("occlusion_strength")->CBufferOffset();
+		height_offset_scale_offset_ = effect_->ParameterByName("height_offset_scale")->CBufferOffset();
+		tess_factors_offset_ = effect_->ParameterByName("tess_factors")->CBufferOffset();
+
+		this->AlbedoClr(*predefined_cbuffer_) = float4(0, 0, 0, 1);
+		this->MetalnessGlossinessFactor(*predefined_cbuffer_) = float3(0, 0, 0);
+		this->EmissiveClr(*predefined_cbuffer_) = float4(0, 0, 0, 0);
+		this->AlbedoMapEnabled(*predefined_cbuffer_) = 0;
+		this->NormalMapEnabled(*predefined_cbuffer_) = 0;
+		this->HeightMapParallaxEnabled(*predefined_cbuffer_) = 0;
+		this->HeightMapTessEnabled(*predefined_cbuffer_) = 0;
+		this->OcclusionMapEnabled(*predefined_cbuffer_) = 0;
+		this->AlphaTestThreshold(*predefined_cbuffer_) = 0;
+		this->NormalScale(*predefined_cbuffer_) = 1;
+		this->OcclusionStrength(*predefined_cbuffer_) = 1;
+		this->HeightOffsetScale(*predefined_cbuffer_) = float2(-0.5f, 0.06f);
+		this->TessFactors(*predefined_cbuffer_) = float4(5, 5, 1, 9);
+	}
+
+	float4& PredefinedMaterialCBuffer::AlbedoClr(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float4>(albedo_clr_offset_);
+	}
+
+	float3& PredefinedMaterialCBuffer::MetalnessGlossinessFactor(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float3>(metalness_glossiness_factor_offset_);
+	}
+	
+	float4& PredefinedMaterialCBuffer::EmissiveClr(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float4>(emissive_clr_offset_);
+	}
+
+	int32_t& PredefinedMaterialCBuffer::AlbedoMapEnabled(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<int32_t>(albedo_map_enabled_offset_);
+	}
+	int32_t& PredefinedMaterialCBuffer::NormalMapEnabled(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<int32_t>(normal_map_enabled_offset_);
+	}
+
+	int32_t& PredefinedMaterialCBuffer::HeightMapParallaxEnabled(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<int32_t>(height_map_parallax_enabled_offset_);
+	}
+
+	int32_t& PredefinedMaterialCBuffer::HeightMapTessEnabled(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<int32_t>(height_map_tess_enabled_offset_);
+	}
+
+	int32_t& PredefinedMaterialCBuffer::OcclusionMapEnabled(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<int32_t>(occlusion_map_enabled_offset_);
+	}
+
+	float& PredefinedMaterialCBuffer::AlphaTestThreshold(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float>(alpha_test_threshold_offset_);
+	}
+
+	float& PredefinedMaterialCBuffer::NormalScale(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float>(normal_scale_offset_);
+	}
+
+	float& PredefinedMaterialCBuffer::OcclusionStrength(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float>(occlusion_strength_offset_);
+	}
+
+	float2& PredefinedMaterialCBuffer::HeightOffsetScale(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float2>(height_offset_scale_offset_);
+	}
+
+	float4& PredefinedMaterialCBuffer::TessFactors(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float4>(tess_factors_offset_);
+	}
 }

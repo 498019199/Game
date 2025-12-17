@@ -970,5 +970,47 @@ namespace RenderWorker
         {
             return v + cross(quat.GetV(), cross(quat.GetV(), v) + quat.w() * v) * T(2);
         }
+
+
+        template quater quat_trans_to_udq(quater const & q, float3 const & t) noexcept;
+		template <typename T>
+		Quaternion_T<T> quat_trans_to_udq(Quaternion_T<T> const & q, Vector_T<T, 3> const & t) noexcept
+		{
+			return mul(q, Quaternion_T<T>(T(0.5) * t.x(), T(0.5) * t.y(), T(0.5) * t.z(), T(0.0)));
+		}
+
+        template float4x4 udq_to_matrix(quater const & real, quater const & dual) noexcept;
+		template <typename T>
+		Matrix4_T<T> udq_to_matrix(Quaternion_T<T> const & real, Quaternion_T<T> const & dual) noexcept
+		{
+			Matrix4_T<T> m;
+
+			float len2 = dot(real, real);
+			float w = real.w(), x = real.x(), y = real.y(), z = real.z();
+			float t0 = dual.w(), t1 = dual.x(), t2 = dual.y(), t3 = dual.z();
+
+			m(0, 0) = w * w + x * x - y * y - z * z;
+			m(1, 0) = 2 * x * y - 2 * w * z;
+			m(2, 0) = 2 * x * z + 2 * w * y;
+			m(0, 1) = 2 * x * y + 2 * w * z;
+			m(1, 1) = w * w + y * y - x * x - z * z;
+			m(2, 1) = 2 * y * z - 2 * w * x;
+			m(0, 2) = 2 * x * z - 2 * w * y;
+			m(1, 2) = 2 * y * z + 2 * w * x;
+			m(2, 2) = w * w + z * z - x * x - y * y;
+
+			m(3, 0) = -2 * t0 * x + 2 * w * t1 - 2 * t2 * z + 2 * y * t3;
+			m(3, 1) = -2 * t0 * y + 2 * t1 * z - 2 * x * t3 + 2 * w * t2;
+			m(3, 2) = -2 * t0 * z + 2 * x * t2 + 2 * w * t3 - 2 * t1 * y;
+
+			m(0, 3) = 0;
+			m(1, 3) = 0;
+			m(2, 3) = 0;
+			m(3, 3) = len2;
+
+			m /= len2;
+
+			return m;
+		}
     }
 }

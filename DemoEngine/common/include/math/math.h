@@ -144,7 +144,15 @@ namespace RenderWorker
 		template<typename T>
 		typename T::value_type Angle(const T& from, const T& to);
 		
+		int32_t SignBit(int32_t x) noexcept
+		{
+			return (x & 0x80000000U) ? -1 : 1;
+		}
 
+		float SignBit(float x) noexcept
+		{
+			return static_cast<float>(SignBit(std::bit_cast<int32_t>(x)));
+		}
 
 
 		// Color space
@@ -247,14 +255,13 @@ namespace RenderWorker
 		template<typename T>
 		Matrix4_T<T> PerspectiveFovRH(T Fov, T Aspect, T Near, T Far);
 
+		template <typename T>
+		Quaternion_T<T> quat_trans_to_udq(Quaternion_T<T> const & q, Vector_T<T, 3> const & t) noexcept;
+
 		// 矩阵分解
 		template<typename T>
 		void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m);
 	
-		template <typename T>
-		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
-			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept;
-
 		//相互转换
 		template<typename T>
 		Matrix4_T<T> to_matrix(const Quaternion_T<T>& quat);
@@ -275,6 +282,15 @@ namespace RenderWorker
 
 		template<typename T>
 		Vector_T<T, 3> TransformQuat(const Vector_T<T, 3>& v, const Quaternion_T<T>& quat);
+
+		// Dual quaternion
+		///////////////////////////////////////////////////////////////////////////////
+		template <typename T>
+		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
+			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept;
+		
+			template <typename T>
+		Matrix4_T<T> udq_to_matrix(Quaternion_T<T> const & real, Quaternion_T<T> const & dual) noexcept;
 	}
 }
 

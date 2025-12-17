@@ -12,6 +12,8 @@
 /DemoEngine/3rd/d3dcompiler/d3dcompiler
 /DemoEngine/3rd/DirectX-Headers
 /DemoEngine/3rd/FreeImage/FreeImage
+/DemoEngine/3rd/fmt/fmt
+/DemoEngine/3rd/NanoRtti/NanoRtti
 /DemoEngine/3rd/ogg/ogg
 /DemoEngine/3rd/rapidjson/rapidjson
 /DemoEngine/3rd/rapidxml/rapidxml

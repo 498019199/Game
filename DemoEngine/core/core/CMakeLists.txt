@@ -162,6 +162,7 @@ set_target_properties(ZENGINE_core PROPERTIES
 
 target_link_libraries(ZENGINE_core
     PUBLIC
+        NanoRtti
         ZENGINE_common
     PRIVATE
         7zxa

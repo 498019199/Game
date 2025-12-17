@@ -36,6 +36,7 @@ target_link_libraries(ZENGINE_DevHelps
         PRIVATE
             assimp
             FreeImage
+            ZENGINE_common
             ZENGINE_core
     )
 

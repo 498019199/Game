@@ -19,4 +19,6 @@ public:
 
     static bool IsSupported(std::string_view input_name);
 };
+
+
 }

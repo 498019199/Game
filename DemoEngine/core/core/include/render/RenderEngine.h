@@ -5,6 +5,7 @@
 #include <render/RenderLayout.h>
 #include <render/RenderDeviceCaps.h>
 #include <render/FrameBuffer.h>
+#include <render/RenderMaterial.h>
 
 namespace RenderWorker
 {
@@ -72,6 +73,7 @@ public:
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;
 
+    PredefinedMaterialCBuffer const& PredefinedMaterialCBufferInstance() const;
 protected:
 
 	void Destroy();
@@ -107,6 +109,9 @@ protected:
 
     StereoMethod stereo_method_ {STM_None};
     float stereo_separation_ {0.0f};
+
+
+	mutable std::unique_ptr<PredefinedMaterialCBuffer> predefined_material_cb_;
 };
 
 

@@ -5,6 +5,17 @@
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 
+#include <mutex>
+namespace
+{
+	std::mutex default_mtl_instance_mutex;
+	std::mutex mtl_cb_instance_mutex;
+	std::mutex mesh_cb_instance_mutex;
+	std::mutex model_cb_instance_mutex;
+	std::mutex camera_cb_instance_mutex;
+	std::mutex mipmapper_instance_mutex;
+}
+
 namespace RenderWorker
 {
 RenderEngine::RenderEngine()
@@ -361,4 +372,16 @@ void RenderEngine::Refresh() const
     }
 }
 
+PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance() const
+{
+    if (!predefined_material_cb_)
+    {
+        std::lock_guard<std::mutex> lock(mtl_cb_instance_mutex);
+        if (!predefined_material_cb_)
+        {
+            predefined_material_cb_ = MakeUniquePtr<PredefinedMaterialCBuffer>();
+        }
+    }
+    return *predefined_material_cb_;
+}
 }

@@ -114,6 +114,8 @@ FOREACH(flag_var
 ENDFOREACH()
 
 add_subdirectory(7z)
+#add_subdirectory(fmt)
+add_subdirectory(NanoRtti)
 add_subdirectory(ogg)
 add_subdirectory(rapidjson)
 add_subdirectory(rapidxml)

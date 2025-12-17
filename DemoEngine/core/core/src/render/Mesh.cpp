@@ -590,6 +590,18 @@ namespace RenderWorker
 		root_node_->UpdatePosBoundSubtree();
 	}
 
+	SkinnedModel::SkinnedModel(const SceneNodePtr& root_node)
+		: RenderModel(root_node),
+			last_frame_(0),
+			num_frames_(0), frame_rate_(0)
+	{
+	}
+
+	SkinnedModel::SkinnedModel(std::wstring_view name, uint32_t node_attrib)
+		: SkinnedModel(MakeSharedPtr<SceneNode>(name, node_attrib))
+	{
+	}
+
     RenderModelPtr SyncLoadModel(std::string_view model_name, uint32_t access_hint, uint32_t node_attrib,
 		std::function<void(RenderModel&)> OnFinishLoading,
 		std::function<RenderModelPtr(std::wstring_view, uint32_t)> CreateModelFactoryFunc,
