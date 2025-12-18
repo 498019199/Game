@@ -36,6 +36,8 @@
 #include <map>
 #include <vector>
 
+#include <render/Mesh.h>
+#include <render/RenderMaterial.h>
 #if defined(ZENGINE_COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4619) // Ignore retired warning C4351
@@ -61,6 +63,7 @@
 
 
 using namespace std;
+using namespace RenderWorker;
 using namespace RenderWorker;
 
 namespace
@@ -318,7 +321,7 @@ namespace
 	{
 		auto const trans_mat = MathWorker::transpose(float4x4(&node->mTransformation.a1));
 		std::wstring name;
-		KlayGE::Convert(name, node->mName.C_Str());
+		CommonWorker::Convert(name, node->mName.C_Str());
 
 		int16_t index = -1;
 		if (lod == 0)
@@ -655,7 +658,7 @@ namespace
 						if (has_texcoord[tci])
 						{
 							COMMON_ASSERT(mesh->mTextureCoords[tci] != nullptr);
-							KLAYGE_ASSUME(mesh->mTextureCoords[tci] != nullptr);
+							ZENGINE_ASSUME(mesh->mTextureCoords[tci] != nullptr);
 
 							texcoords[tci][vi] = float3(&mesh->mTextureCoords[tci][vi].x);
 						}
@@ -708,7 +711,7 @@ namespace
 						for (uint32_t ji = 0; ji < joints_.size(); ++ ji)
 						{
 							std::string joint_name;
-							Convert(joint_name, joints_[ji].name);
+							CommonWorker::Convert(joint_name, joints_[ji].name);
 							if (joint_name == bone->mName.C_Str())
 							{
 								for (unsigned int wi = 0; wi < bone->mNumWeights; ++ wi)
@@ -1108,7 +1111,7 @@ namespace
 			else
 			{
 				std::wstring joint_name;
-				Convert(joint_name, joint.name);
+				CommonWorker::Convert(joint_name, joint.name);
 				for (auto& node : nodes_)
 				{
 					if (node.node->Name() == joint_name)
@@ -1356,7 +1359,7 @@ namespace
 				ai_mesh.mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
 
 				std::string name;
-				KlayGE::Convert(name, mesh.Name());
+				CommonWorker::Convert(name, mesh.Name());
 				ai_mesh.mName.Set(name.c_str());
 
 				auto const & rl = mesh.GetRenderLayout();
@@ -1364,7 +1367,7 @@ namespace
 				ai_mesh.mNumVertices = mesh.NumVertices(lod);
 				uint32_t const start_vertex = mesh.StartVertexLocation(lod);
 
-				for (uint32_t vi = 0; vi < rl.NumVertexStreams(); ++ vi)
+				for (uint32_t vi = 0; vi < rl.VertexStreamNum(); ++ vi)
 				{
 					GraphicsBuffer::Mapper mapper(*rl.GetVertexStream(vi), BA_Read_Only);
 
@@ -1410,7 +1413,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported position format.");
+							ZENGINE_UNREACHABLE("Unsupported position format.");
 						}
 						break;
 
@@ -1446,7 +1449,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported tangent frame format.");
+							ZENGINE_UNREACHABLE("Unsupported tangent frame format.");
 						}
 						break;
 
@@ -1472,7 +1475,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported normal format.");
+							ZENGINE_UNREACHABLE("Unsupported normal format.");
 						}
 						break;
 
@@ -1514,7 +1517,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported normal format.");
+							ZENGINE_UNREACHABLE("Unsupported normal format.");
 						}
 						break;
 
@@ -1556,7 +1559,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported normal format.");
+							ZENGINE_UNREACHABLE("Unsupported normal format.");
 						}
 						break;
 
@@ -1595,7 +1598,7 @@ namespace
 							}
 
 						default:
-							KFL_UNREACHABLE("Unsupported texcoord format.");
+							ZENGINE_UNREACHABLE("Unsupported texcoord format.");
 						}
 						break;
 
@@ -1606,14 +1609,14 @@ namespace
 						break;
 
 					default:
-						KFL_UNREACHABLE("Unsupported vertex format.");
+						ZENGINE_UNREACHABLE("Unsupported vertex format.");
 					}
 				}
 
 				{
 					std::vector<uint8_t> blend_indices_data;
 					std::vector<uint8_t> blend_weight_data;
-					for (uint32_t vi = 0; vi < rl.NumVertexStreams(); ++vi)
+					for (uint32_t vi = 0; vi < rl.VertexStreamNum(); ++vi)
 					{
 						auto const& ve = rl.VertexStreamFormat(vi)[0];
 						if (ve.usage == VEU_BlendIndex)
@@ -1703,7 +1706,7 @@ namespace
 							COMMON_ASSERT(mesh_node != nullptr);
 
 							std::string joint_name;
-							Convert(joint_name, joint_node->Name());
+							CommonWorker::Convert(joint_name, joint_node->Name());
 							ai_mesh.mBones[bi]->mName.Set(joint_name);
 
 							ai_mesh.mBones[bi]->mNumWeights = static_cast<uint32_t>(vertex_weights[bi].size());
@@ -1817,7 +1820,7 @@ namespace
 						auto& joint_node = *skinned_model.GetJoint(ji)->BoundSceneNode();
 
 						std::string joint_name;
-						Convert(joint_name, joint_node.Name());
+						CommonWorker::Convert(joint_name, joint_node.Name());
 						node_anim.mNodeName.Set(joint_name);
 
 						float4x4 parent_mat;
@@ -1865,7 +1868,7 @@ namespace
 				= [&convert_node_subtree, &model](aiNode& ai_node, SceneNode const & node)
 					{
 						std::string name;
-						KlayGE::Convert(name, node.Name());
+						CommonWorker::Convert(name, node.Name());
 
 						ai_node.mName.Set(name);
 
@@ -2382,7 +2385,7 @@ namespace
 		{
 			auto const name = std::string(mesh_node->Attrib("name")->ValueString());
 			std::wstring wname;
-			KlayGE::Convert(wname, name);
+			CommonWorker::Convert(wname, name);
 
 			nodes_[mesh_index].node = MakeSharedPtr<SceneNode>(wname, SceneNode::SOA_Cullable);
 			nodes_[mesh_index].mesh_indices.push_back(mesh_index);
@@ -3136,7 +3139,7 @@ namespace
 			for (size_t i = 0; i < joints_.size(); ++i)
 			{
 				std::wstring joint_name;
-				Convert(joint_name, joints_[i].name);
+				CommonWorker::Convert(joint_name, joints_[i].name);
 				NodeTransform node_transform;
 				node_transform.node = MakeSharedPtr<SceneNode>(joint_name, SceneNode::SOA_Cullable);
 				if (joints_[i].parent_id >= 0)
@@ -3763,7 +3766,7 @@ namespace
 		for (auto const & mesh : meshes_)
 		{
 			std::wstring wname;
-			KlayGE::Convert(wname, mesh.name);
+			CommonWorker::Convert(wname, mesh.name);
 
 			auto& render_mesh = render_meshes.emplace_back();
 			if (skinned)
@@ -3799,12 +3802,12 @@ namespace
 		{
 			auto& skinned_model = checked_cast<SkinnedModel&>(*render_model_);
 
-			// std::vector<JointComponentPtr> joints;
-			// for (auto& joint : joints_)
-			// {
-			// 	joint.joint->InitInverseOriginParams();
-			// 	joints.push_back(joint.joint);
-			// }
+			std::vector<JointComponentPtr> joints;
+			for (auto& joint : joints_)
+			{
+				joint.joint->InitInverseOriginParams();
+				joints.push_back(joint.joint);
+			}
 			skinned_model.AssignJoints(joints.begin(), joints.end());
 
 			// TODO: Run skinning on CPU to get the bounding box

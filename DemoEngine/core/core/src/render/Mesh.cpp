@@ -590,6 +590,41 @@ namespace RenderWorker
 		root_node_->UpdatePosBoundSubtree();
 	}
 
+	SceneComponentPtr JointComponent::Clone() const
+	{
+		auto ret = MakeSharedPtr<JointComponent>();
+
+		ret->bind_real_ = bind_real_;
+		ret->bind_dual_ = bind_dual_;
+		ret->bind_scale_ = bind_scale_;
+
+		ret->inverse_origin_real_ = inverse_origin_real_;
+		ret->inverse_origin_dual_ = inverse_origin_dual_;
+		ret->inverse_origin_scale_ = inverse_origin_scale_;
+
+		return ret;
+	}
+
+	void JointComponent::BindParams(quater const& real, quater const& dual, float scale)
+	{
+		bind_real_ = real;
+		bind_dual_ = dual;
+		bind_scale_ = scale;
+	}
+
+	void JointComponent::InverseOriginParams(quater const& real, quater const& dual, float scale)
+	{
+		inverse_origin_real_ = real;
+		inverse_origin_dual_ = dual;
+		inverse_origin_scale_ = scale;
+	}
+
+	void JointComponent::InitInverseOriginParams()
+	{
+		std::tie(inverse_origin_real_, inverse_origin_dual_) = MathWorker::inverse(bind_real_, bind_dual_);
+		inverse_origin_scale_ = 1 / bind_scale_;
+	}
+
 	SkinnedModel::SkinnedModel(const SceneNodePtr& root_node)
 		: RenderModel(root_node),
 			last_frame_(0),
@@ -600,6 +635,317 @@ namespace RenderWorker
 	SkinnedModel::SkinnedModel(std::wstring_view name, uint32_t node_attrib)
 		: SkinnedModel(MakeSharedPtr<SceneNode>(name, node_attrib))
 	{
+	}
+
+	void SkinnedModel::CloneDataFrom(RenderModel const & source,
+		std::function<StaticMeshPtr(std::wstring_view)> const & CreateMeshFactoryFunc)
+	{
+		RenderModel::CloneDataFrom(source, CreateMeshFactoryFunc);
+
+		if (source.IsSkinned())
+		{
+			auto const& src_skinned_model = checked_cast<SkinnedModel const&>(source);
+			auto& skinned_model = checked_cast<SkinnedModel&>(*this);
+
+			std::vector<JointComponentPtr> joints(src_skinned_model.NumJoints());
+			for (uint32_t i = 0; i < src_skinned_model.NumJoints(); ++ i)
+			{
+				joints[i] = checked_pointer_cast<JointComponent>(src_skinned_model.GetJoint(i)->Clone());
+			}
+			skinned_model.AssignJoints(joints.begin(), joints.end());
+			skinned_model.AttachKeyFrameSets(src_skinned_model.GetKeyFrameSets());
+
+			auto& root_node = *skinned_model.RootNode();
+			for (uint32_t i = 0; i < root_node.NumComponents(); ++i)
+			{
+				auto& component = *root_node.ComponentByIndex(i);
+				if (component.IsOfType<JointComponent>())
+				{
+					root_node.ReplaceComponent(i, joints[0]);
+					break;
+				}
+			}
+			root_node.Traverse([&joints, &src_skinned_model](SceneNode& node)
+				{
+					for (uint32_t i = 0; i < node.NumComponents(); ++i)
+					{
+						auto& component = *node.ComponentByIndex(i);
+						if (component.IsOfType<JointComponent>())
+						{
+							for (uint32_t j = 0; j < src_skinned_model.NumJoints(); ++j)
+							{
+								if (src_skinned_model.GetJoint(j)->BoundSceneNode()->Name() == node.Name())
+								{
+									node.ReplaceComponent(i, joints[j]);
+									break;
+								}
+							}
+						}
+					}
+
+					return true;
+				});
+
+			skinned_model.NumFrames(src_skinned_model.NumFrames());
+			skinned_model.FrameRate(src_skinned_model.FrameRate());
+
+			for (size_t mesh_index = 0; mesh_index < src_skinned_model.NumMeshes(); ++ mesh_index)
+			{
+				auto const& src_skinned_mesh = checked_cast<SkinnedMesh const&>(*src_skinned_model.Mesh(mesh_index));
+				auto& skinned_mesh = checked_cast<SkinnedMesh&>(*skinned_model.Mesh(mesh_index));
+				skinned_mesh.AttachFramePosBounds(src_skinned_mesh.GetFramePosBounds());
+			}
+
+			skinned_model.AttachAnimations(src_skinned_model.GetAnimations());
+		}
+	}
+
+	float SkinnedModel::GetFrame() const
+	{
+		return last_frame_;
+	}
+
+	void SkinnedModel::SetFrame(float frame)
+	{
+		if (last_frame_ != frame)
+		{
+			last_frame_ = frame;
+
+			this->BuildBones(frame);
+		}
+	}
+
+	void SkinnedModel::RebindJoints()
+	{
+		this->BuildBones(last_frame_);
+	}
+
+	void SkinnedModel::UnbindJoints()
+	{
+		for (size_t i = 0; i < bind_reals_.size(); ++ i)
+		{
+			bind_reals_[i] = float4(0, 0, 0, 1);
+			bind_duals_[i] = float4(0, 0, 0, 0);
+		}
+
+		this->SetToEffect();
+	}
+
+	void SkinnedModel::SetToEffect()
+	{
+		for (auto& renderable : meshes_)
+		{
+			auto& effect = renderable->GetRenderEffect();
+			if (effect)
+			{
+				auto* joint_reals_ep = effect->ParameterByName("joint_reals");
+				if (joint_reals_ep)
+				{
+					*joint_reals_ep = bind_reals_;
+					*(effect->ParameterByName("joint_duals")) = bind_duals_;
+				}
+			}
+		}
+	}
+
+	AABBox SkinnedModel::FramePosBound(uint32_t frame) const
+	{
+		AABBox pos_aabb(float3(0, 0, 0), float3(0, 0, 0));
+		this->ForEachMesh([&pos_aabb, frame](Renderable& mesh)
+			{
+				pos_aabb |= checked_cast<SkinnedMesh&>(mesh).FramePosBound(frame);
+			});
+
+		return pos_aabb;
+	}
+
+	void SkinnedModel::AttachAnimations(std::shared_ptr<std::vector<Animation>> const & animations)
+	{
+		animations_ = animations;
+	}
+	
+	uint32_t SkinnedModel::NumAnimations() const
+	{
+		return animations_ ? static_cast<uint32_t>(animations_->size()) : 1;
+	}
+
+	void SkinnedModel::GetAnimation(uint32_t index, std::string& name, uint32_t& start_frame, uint32_t& end_frame)
+	{
+		if (animations_)
+		{
+			COMMON_ASSERT(index < animations_->size());
+
+			name = (*animations_)[index].name;
+			start_frame = (*animations_)[index].start_frame;
+			end_frame = (*animations_)[index].end_frame;
+		}
+		else
+		{
+			COMMON_ASSERT(0 == index);
+
+			name = "root";
+			start_frame = 0;
+			end_frame = num_frames_;
+		}
+	}
+
+	void SkinnedModel::BuildBones(float frame)
+	{
+		for (size_t i = 0; i < joints_.size(); ++ i)
+		{
+			auto& joint = *joints_[i];
+			KeyFrameSet const & kf = (*key_frame_sets_)[i];
+
+			std::tuple<quater, quater, float> key_dq = kf.Frame(frame);
+
+			bool is_root = false;
+			auto* parent_node = joint.BoundSceneNode()->Parent();
+			if (parent_node)
+			{
+				auto* parent_joint = parent_node->FirstComponentOfType<JointComponent>();
+				if (parent_joint == nullptr)
+				{
+					is_root = true;
+				}
+			}
+
+			if (is_root)
+			{
+				joint.BindParams(std::get<0>(key_dq), std::get<1>(key_dq), std::get<2>(key_dq));
+			}
+			else
+			{
+				auto const& parent = *parent_node->FirstComponentOfType<JointComponent>();
+
+				if (MathWorker::dot(std::get<0>(key_dq), parent.BindReal()) < 0)
+				{
+					std::get<0>(key_dq) = -std::get<0>(key_dq);
+					std::get<1>(key_dq) = -std::get<1>(key_dq);
+				}
+
+				if ((MathWorker::SignBit(std::get<2>(key_dq)) > 0) && (MathWorker::SignBit(parent.BindScale()) > 0))
+				{
+					joint.BindParams(MathWorker::mul_real(std::get<0>(key_dq), parent.BindReal()),
+						MathWorker::mul_dual(
+							std::get<0>(key_dq), std::get<1>(key_dq) * parent.BindScale(), parent.BindReal(), parent.BindDual()),
+						std::get<2>(key_dq) * parent.BindScale());
+				}
+				else
+				{
+					float const key_scale = std::get<2>(key_dq);
+					float4x4 tmp_mat = MathWorker::scaling(MathWorker::abs(key_scale), MathWorker::abs(key_scale), key_scale)
+						* MathWorker::to_matrix(std::get<0>(key_dq))
+						* MathWorker::translation(MathWorker::udq_to_trans(std::get<0>(key_dq), std::get<1>(key_dq)))
+						* MathWorker::scaling(MathWorker::abs(parent.BindScale()), MathWorker::abs(parent.BindScale()), parent.BindScale())
+						* MathWorker::to_matrix(parent.BindReal())
+						* MathWorker::translation(MathWorker::udq_to_trans(parent.BindReal(), parent.BindDual()));
+
+					float flip = 1;
+					if (MathWorker::dot(MathWorker::cross(float3(tmp_mat(0, 0), tmp_mat(0, 1), tmp_mat(0, 2)),
+						float3(tmp_mat(1, 0), tmp_mat(1, 1), tmp_mat(1, 2))),
+						float3(tmp_mat(2, 0), tmp_mat(2, 1), tmp_mat(2, 2))) < 0)
+					{
+						tmp_mat(2, 0) = -tmp_mat(2, 0);
+						tmp_mat(2, 1) = -tmp_mat(2, 1);
+						tmp_mat(2, 2) = -tmp_mat(2, 2);
+
+						flip = -1;
+					}
+
+					float3 scale;
+					quater rot;
+					float3 trans;
+					MathWorker::decompose(scale, rot, trans, tmp_mat);
+
+					joint.BindParams(rot, MathWorker::quat_trans_to_udq(rot, trans), flip * scale.x());
+				}
+			}
+		}
+
+		this->UpdateBinds();
+	}
+
+	void SkinnedModel::UpdateBinds()
+	{
+		bind_reals_.resize(joints_.size());
+		bind_duals_.resize(joints_.size());
+		for (size_t i = 0; i < joints_.size(); ++i)
+		{
+			auto const& joint = *joints_[i];
+
+			quater bind_real, bind_dual;
+			float bind_scale;
+			if ((MathWorker::SignBit(joint.InverseOriginScale()) > 0) && (MathWorker::SignBit(joint.BindScale()) > 0))
+			{
+				bind_real = MathWorker::mul_real(joint.InverseOriginReal(), joint.BindReal());
+				bind_dual = MathWorker::mul_dual(joint.InverseOriginReal(), joint.InverseOriginDual(),
+					joint.BindReal(), joint.BindDual());
+				bind_scale = joint.InverseOriginScale() * joint.BindScale();
+
+				if (MathWorker::SignBit(bind_real.w()) < 0)
+				{
+					bind_real = -bind_real;
+					bind_dual = -bind_dual;
+				}
+			}
+			else
+			{
+				float4x4 tmp_mat = MathWorker::scaling(MathWorker::abs(joint.InverseOriginScale()), MathWorker::abs(joint.InverseOriginScale()), joint.InverseOriginScale())
+					* MathWorker::to_matrix(joint.InverseOriginReal())
+					* MathWorker::translation(MathWorker::udq_to_trans(joint.InverseOriginReal(), joint.InverseOriginDual()))
+					* MathWorker::scaling(MathWorker::abs(joint.BindScale()), MathWorker::abs(joint.BindScale()), joint.BindScale())
+					* MathWorker::to_matrix(joint.BindReal())
+					* MathWorker::translation(MathWorker::udq_to_trans(joint.BindReal(), joint.BindDual()));
+
+				float flip = 1;
+				if (MathWorker::dot(MathWorker::cross(float3(tmp_mat(0, 0), tmp_mat(0, 1), tmp_mat(0, 2)),
+					float3(tmp_mat(1, 0), tmp_mat(1, 1), tmp_mat(1, 2))),
+					float3(tmp_mat(2, 0), tmp_mat(2, 1), tmp_mat(2, 2))) < 0)
+				{
+					tmp_mat(2, 0) = -tmp_mat(2, 0);
+					tmp_mat(2, 1) = -tmp_mat(2, 1);
+					tmp_mat(2, 2) = -tmp_mat(2, 2);
+
+					flip = -1;
+				}
+
+				float3 scale;
+				quater rot;
+				float3 trans;
+				MathWorker::decompose(scale, rot, trans, tmp_mat);
+
+				bind_real = rot;
+				bind_dual = MathWorker::quat_trans_to_udq(rot, trans);
+				bind_scale = scale.x();
+
+				if (flip * MathWorker::SignBit(bind_real.w()) < 0)
+				{
+					bind_real = -bind_real;
+					bind_dual = -bind_dual;
+				}
+			}
+
+			bind_reals_[i] = float4(bind_real.x(), bind_real.y(), bind_real.z(), bind_real.w()) * bind_scale;
+			bind_duals_[i] = float4(bind_dual.x(), bind_dual.y(), bind_dual.z(), bind_dual.w());
+		}
+
+		this->SetToEffect();
+	}
+
+	SkinnedMesh::SkinnedMesh(std::wstring_view name)
+	: StaticMesh(name)
+	{
+	}
+
+	AABBox SkinnedMesh::FramePosBound(uint32_t frame) const
+	{
+		COMMON_ASSERT(frame_pos_aabbs_);
+		return frame_pos_aabbs_->Frame(static_cast<float>(frame));
+	}
+
+	void SkinnedMesh::AttachFramePosBounds(std::shared_ptr<AABBKeyFrameSet> const & frame_pos_aabbs)
+	{
+		frame_pos_aabbs_ = frame_pos_aabbs;
 	}
 
     RenderModelPtr SyncLoadModel(std::string_view model_name, uint32_t access_hint, uint32_t node_attrib,
@@ -716,12 +1062,12 @@ struct NodeInfo
 		std::vector<uint32_t> mesh_num_indices;
 		std::vector<uint32_t> mesh_start_indices;
 		std::vector<NodeInfo> nodes;
-		//std::vector<JointComponentPtr> joints;
-		//std::shared_ptr<std::vector<Animation>> animations;
-		//std::shared_ptr<std::vector<KeyFrameSet>> kfs;
+		std::vector<JointComponentPtr> joints;
+		std::shared_ptr<std::vector<Animation>> animations;
+		std::shared_ptr<std::vector<KeyFrameSet>> kfs;
 		uint32_t num_frames = 0;
 		uint32_t frame_rate = 0;
-		//std::vector<std::shared_ptr<AABBKeyFrameSet>> frame_pos_bbs;
+		std::vector<std::shared_ptr<AABBKeyFrameSet>> frame_pos_bbs;
 
 		ResIdentifierPtr runtime_file = res_loader.Open(runtime_name);
 
@@ -1004,62 +1350,62 @@ struct NodeInfo
 			node.node->TransformToParent(xform_to_parent);
 		}
 
-		// joints.resize(num_joints);
-		// for (uint32_t joint_index = 0; joint_index < num_joints; ++ joint_index)
-		// {
-		// 	joints[joint_index] = MakeSharedPtr<JointComponent>();
-		// 	JointComponent& joint = *joints[joint_index];
+		joints.resize(num_joints);
+		for (uint32_t joint_index = 0; joint_index < num_joints; ++ joint_index)
+		{
+			joints[joint_index] = MakeSharedPtr<JointComponent>();
+			JointComponent& joint = *joints[joint_index];
 
-		// 	Quaternion bind_real;
-		// 	decoded->read(&bind_real, sizeof(bind_real));
-		// 	bind_real[0] = LE2Native(bind_real[0]);
-		// 	bind_real[1] = LE2Native(bind_real[1]);
-		// 	bind_real[2] = LE2Native(bind_real[2]);
-		// 	bind_real[3] = LE2Native(bind_real[3]);
+			quater bind_real;
+			decoded->read(&bind_real, sizeof(bind_real));
+			bind_real[0] = LE2Native(bind_real[0]);
+			bind_real[1] = LE2Native(bind_real[1]);
+			bind_real[2] = LE2Native(bind_real[2]);
+			bind_real[3] = LE2Native(bind_real[3]);
 
-		// 	Quaternion bind_dual;
-		// 	decoded->read(&bind_dual, sizeof(bind_dual));
-		// 	bind_dual[0] = LE2Native(bind_dual[0]);
-		// 	bind_dual[1] = LE2Native(bind_dual[1]);
-		// 	bind_dual[2] = LE2Native(bind_dual[2]);
-		// 	bind_dual[3] = LE2Native(bind_dual[3]);
+			quater bind_dual;
+			decoded->read(&bind_dual, sizeof(bind_dual));
+			bind_dual[0] = LE2Native(bind_dual[0]);
+			bind_dual[1] = LE2Native(bind_dual[1]);
+			bind_dual[2] = LE2Native(bind_dual[2]);
+			bind_dual[3] = LE2Native(bind_dual[3]);
 
-		// 	float flip = MathLib::SignBit(bind_real.w());
+			float flip = MathWorker::SignBit(bind_real.w());
 
-		// 	float bind_scale = MathLib::length(bind_real);
-		// 	float inverse_origin_scale = 1 / bind_scale;
-		// 	bind_real *= inverse_origin_scale;
+			float bind_scale = MathWorker::length(bind_real);
+			float inverse_origin_scale = 1 / bind_scale;
+			bind_real *= inverse_origin_scale;
 
-		// 	Quaternion inverse_origin_real, inverse_origin_dual;
-		// 	if (flip > 0)
-		// 	{
-		// 		std::tie(inverse_origin_real, inverse_origin_dual) = MathLib::inverse(bind_real, bind_dual);
-		// 	}
-		// 	else
-		// 	{
-		// 		float4x4 tmp_mat = MathLib::scaling(bind_scale, bind_scale, flip * bind_scale)
-		// 			* MathLib::to_matrix(bind_real)
-		// 			* MathLib::translation(MathLib::udq_to_trans(bind_real, bind_dual));
-		// 		tmp_mat = MathLib::inverse(tmp_mat);
-		// 		tmp_mat(2, 0) = -tmp_mat(2, 0);
-		// 		tmp_mat(2, 1) = -tmp_mat(2, 1);
-		// 		tmp_mat(2, 2) = -tmp_mat(2, 2);
+			quater inverse_origin_real, inverse_origin_dual;
+			if (flip > 0)
+			{
+				std::tie(inverse_origin_real, inverse_origin_dual) = MathWorker::inverse(bind_real, bind_dual);
+			}
+			else
+			{
+				float4x4 tmp_mat = MathWorker::scaling(bind_scale, bind_scale, flip * bind_scale)
+					* MathWorker::to_matrix(bind_real)
+					* MathWorker::translation(MathWorker::udq_to_trans(bind_real, bind_dual));
+				tmp_mat = MathWorker::inverse(tmp_mat);
+				tmp_mat(2, 0) = -tmp_mat(2, 0);
+				tmp_mat(2, 1) = -tmp_mat(2, 1);
+				tmp_mat(2, 2) = -tmp_mat(2, 2);
 
-		// 		float3 scale;
-		// 		Quaternion rot;
-		// 		float3 trans;
-		// 		MathLib::decompose(scale, rot, trans, tmp_mat);
+				float3 scale;
+				quater rot;
+				float3 trans;
+				MathWorker::decompose(scale, rot, trans, tmp_mat);
 
-		// 		inverse_origin_real = rot;
-		// 		inverse_origin_dual = MathLib::quat_trans_to_udq(rot, trans);
-		// 		inverse_origin_scale = -scale.x();
-		// 	}
+				inverse_origin_real = rot;
+				inverse_origin_dual = MathWorker::quat_trans_to_udq(rot, trans);
+				inverse_origin_scale = -scale.x();
+			}
 
-		// 	bind_scale *= flip;
+			bind_scale *= flip;
 
-		// 	joint.BindParams(bind_real, bind_dual, bind_scale);
-		// 	joint.InverseOriginParams(inverse_origin_real, inverse_origin_dual, inverse_origin_scale);
-		// }
+			joint.BindParams(bind_real, bind_dual, bind_scale);
+			joint.InverseOriginParams(inverse_origin_real, inverse_origin_dual, inverse_origin_scale);
+		}
 
 		if (num_kfs > 0)
 		{
@@ -1068,95 +1414,95 @@ struct NodeInfo
 			decoded->read(&frame_rate, sizeof(frame_rate));
 			frame_rate = LE2Native(frame_rate);
 
-			// kfs = MakeSharedPtr<std::vector<KeyFrameSet>>(joints.size());
-			// for (uint32_t kf_index = 0; kf_index < num_kfs; ++ kf_index)
-			// {
-			// 	uint32_t joint_index = kf_index;
+			kfs = MakeSharedPtr<std::vector<KeyFrameSet>>(joints.size());
+			for (uint32_t kf_index = 0; kf_index < num_kfs; ++ kf_index)
+			{
+				uint32_t joint_index = kf_index;
 
-			// 	uint32_t num_kf;
-			// 	decoded->read(&num_kf, sizeof(num_kf));
-			// 	num_kf = LE2Native(num_kf);
+				uint32_t num_kf;
+				decoded->read(&num_kf, sizeof(num_kf));
+				num_kf = LE2Native(num_kf);
 
-			// 	KeyFrameSet kf;
-			// 	kf.frame_id.resize(num_kf);
-			// 	kf.bind_real.resize(num_kf);
-			// 	kf.bind_dual.resize(num_kf);
-			// 	kf.bind_scale.resize(num_kf);
-			// 	for (uint32_t k_index = 0; k_index < num_kf; ++ k_index)
-			// 	{
-			// 		decoded->read(&kf.frame_id[k_index], sizeof(kf.frame_id[k_index]));
-			// 		kf.frame_id[k_index] = LE2Native(kf.frame_id[k_index]);
-			// 		decoded->read(&kf.bind_real[k_index], sizeof(kf.bind_real[k_index]));
-			// 		kf.bind_real[k_index][0] = LE2Native(kf.bind_real[k_index][0]);
-			// 		kf.bind_real[k_index][1] = LE2Native(kf.bind_real[k_index][1]);
-			// 		kf.bind_real[k_index][2] = LE2Native(kf.bind_real[k_index][2]);
-			// 		kf.bind_real[k_index][3] = LE2Native(kf.bind_real[k_index][3]);
-			// 		decoded->read(&kf.bind_dual[k_index], sizeof(kf.bind_dual[k_index]));
-			// 		kf.bind_dual[k_index][0] = LE2Native(kf.bind_dual[k_index][0]);
-			// 		kf.bind_dual[k_index][1] = LE2Native(kf.bind_dual[k_index][1]);
-			// 		kf.bind_dual[k_index][2] = LE2Native(kf.bind_dual[k_index][2]);
-			// 		kf.bind_dual[k_index][3] = LE2Native(kf.bind_dual[k_index][3]);
+				KeyFrameSet kf;
+				kf.frame_id.resize(num_kf);
+				kf.bind_real.resize(num_kf);
+				kf.bind_dual.resize(num_kf);
+				kf.bind_scale.resize(num_kf);
+				for (uint32_t k_index = 0; k_index < num_kf; ++ k_index)
+				{
+					decoded->read(&kf.frame_id[k_index], sizeof(kf.frame_id[k_index]));
+					kf.frame_id[k_index] = LE2Native(kf.frame_id[k_index]);
+					decoded->read(&kf.bind_real[k_index], sizeof(kf.bind_real[k_index]));
+					kf.bind_real[k_index][0] = LE2Native(kf.bind_real[k_index][0]);
+					kf.bind_real[k_index][1] = LE2Native(kf.bind_real[k_index][1]);
+					kf.bind_real[k_index][2] = LE2Native(kf.bind_real[k_index][2]);
+					kf.bind_real[k_index][3] = LE2Native(kf.bind_real[k_index][3]);
+					decoded->read(&kf.bind_dual[k_index], sizeof(kf.bind_dual[k_index]));
+					kf.bind_dual[k_index][0] = LE2Native(kf.bind_dual[k_index][0]);
+					kf.bind_dual[k_index][1] = LE2Native(kf.bind_dual[k_index][1]);
+					kf.bind_dual[k_index][2] = LE2Native(kf.bind_dual[k_index][2]);
+					kf.bind_dual[k_index][3] = LE2Native(kf.bind_dual[k_index][3]);
 
-			// 		float flip = MathLib::SignBit(kf.bind_real[k_index].w());
+					float flip = MathWorker::SignBit(kf.bind_real[k_index].w());
 
-			// 		kf.bind_scale[k_index] = MathLib::length(kf.bind_real[k_index]);
-			// 		kf.bind_real[k_index] /= kf.bind_scale[k_index];
+					kf.bind_scale[k_index] = MathWorker::length(kf.bind_real[k_index]);
+					kf.bind_real[k_index] /= kf.bind_scale[k_index];
 
-			// 		kf.bind_scale[k_index] *= flip;
-			// 	}
+					kf.bind_scale[k_index] *= flip;
+				}
 
-			// 	if (joint_index < num_joints)
-			// 	{
-			// 		(*kfs)[joint_index] = kf;
-			// 	}
-			// }
+				if (joint_index < num_joints)
+				{
+					(*kfs)[joint_index] = kf;
+				}
+			}
 
-			//frame_pos_bbs.resize(num_meshes);
-			// for (uint32_t mesh_index = 0; mesh_index < num_meshes; ++ mesh_index)
-			// {
-			// 	uint32_t num_bb_kf;
-			// 	decoded->read(&num_bb_kf, sizeof(num_bb_kf));
-			// 	num_bb_kf = LE2Native(num_bb_kf);
+			frame_pos_bbs.resize(num_meshes);
+			for (uint32_t mesh_index = 0; mesh_index < num_meshes; ++ mesh_index)
+			{
+				uint32_t num_bb_kf;
+				decoded->read(&num_bb_kf, sizeof(num_bb_kf));
+				num_bb_kf = LE2Native(num_bb_kf);
 
-			// 	frame_pos_bbs[mesh_index] = MakeSharedPtr<AABBKeyFrameSet>();
-			// 	frame_pos_bbs[mesh_index]->frame_id.resize(num_bb_kf);
-			// 	frame_pos_bbs[mesh_index]->bb.resize(num_bb_kf);
+				frame_pos_bbs[mesh_index] = MakeSharedPtr<AABBKeyFrameSet>();
+				frame_pos_bbs[mesh_index]->frame_id.resize(num_bb_kf);
+				frame_pos_bbs[mesh_index]->bb.resize(num_bb_kf);
 
-			// 	for (uint32_t bb_k_index = 0; bb_k_index < num_bb_kf; ++ bb_k_index)
-			// 	{
-			// 		decoded->read(&frame_pos_bbs[mesh_index]->frame_id[bb_k_index], sizeof(frame_pos_bbs[mesh_index]->frame_id[bb_k_index]));
-			// 		frame_pos_bbs[mesh_index]->frame_id[bb_k_index] = LE2Native(frame_pos_bbs[mesh_index]->frame_id[bb_k_index]);
+				for (uint32_t bb_k_index = 0; bb_k_index < num_bb_kf; ++ bb_k_index)
+				{
+					decoded->read(&frame_pos_bbs[mesh_index]->frame_id[bb_k_index], sizeof(frame_pos_bbs[mesh_index]->frame_id[bb_k_index]));
+					frame_pos_bbs[mesh_index]->frame_id[bb_k_index] = LE2Native(frame_pos_bbs[mesh_index]->frame_id[bb_k_index]);
 
-			// 		float3 bb_min, bb_max;
-			// 		decoded->read(&bb_min, sizeof(bb_min));
-			// 		bb_min[0] = LE2Native(bb_min[0]);
-			// 		bb_min[1] = LE2Native(bb_min[1]);
-			// 		bb_min[2] = LE2Native(bb_min[2]);
-			// 		decoded->read(&bb_max, sizeof(bb_max));
-			// 		bb_max[0] = LE2Native(bb_max[0]);
-			// 		bb_max[1] = LE2Native(bb_max[1]);
-			// 		bb_max[2] = LE2Native(bb_max[2]);
-			// 		frame_pos_bbs[mesh_index]->bb[bb_k_index] = AABBox(bb_min, bb_max);
-			// 	}
-			// }
+					float3 bb_min, bb_max;
+					decoded->read(&bb_min, sizeof(bb_min));
+					bb_min[0] = LE2Native(bb_min[0]);
+					bb_min[1] = LE2Native(bb_min[1]);
+					bb_min[2] = LE2Native(bb_min[2]);
+					decoded->read(&bb_max, sizeof(bb_max));
+					bb_max[0] = LE2Native(bb_max[0]);
+					bb_max[1] = LE2Native(bb_max[1]);
+					bb_max[2] = LE2Native(bb_max[2]);
+					frame_pos_bbs[mesh_index]->bb[bb_k_index] = AABBox(bb_min, bb_max);
+				}
+			}
 
-			// if (num_animations > 0)
-			// {
-			// 	animations = MakeSharedPtr<std::vector<Animation>>(num_animations);
-			// 	for (uint32_t animation_index = 0; animation_index < num_animations; ++animation_index)
-			// 	{
-			// 		Animation animation;
-			// 		animation.name = ReadShortString(*decoded);
-			// 		decoded->read(&animation.start_frame, sizeof(animation.start_frame));
-			// 		animation.start_frame = LE2Native(animation.start_frame);
-			// 		decoded->read(&animation.end_frame, sizeof(animation.end_frame));
-			// 		animation.end_frame = LE2Native(animation.end_frame);
-			// 		(*animations)[animation_index] = animation;
-			// 	}
-			// }
+			if (num_animations > 0)
+			{
+				animations = MakeSharedPtr<std::vector<Animation>>(num_animations);
+				for (uint32_t animation_index = 0; animation_index < num_animations; ++animation_index)
+				{
+					Animation animation;
+					animation.name = ReadShortString(*decoded);
+					decoded->read(&animation.start_frame, sizeof(animation.start_frame));
+					animation.start_frame = LE2Native(animation.start_frame);
+					decoded->read(&animation.end_frame, sizeof(animation.end_frame));
+					animation.end_frame = LE2Native(animation.end_frame);
+					(*animations)[animation_index] = animation;
+				}
+			}
 		}
 
-		bool const skinned = false;//kfs && !kfs->empty();
+		bool const skinned = kfs && !kfs->empty();
 
 		RenderModelPtr model;
 		if (skinned)
@@ -1194,7 +1540,7 @@ struct NodeInfo
 
 			if (skinned)
 			{
-				//meshes[mesh_index] = MakeSharedPtr<SkinnedMesh>(wname);
+				meshes[mesh_index] = MakeSharedPtr<SkinnedMesh>(wname);
 			}
 			else
 			{
@@ -1223,41 +1569,41 @@ struct NodeInfo
 			}
 		}
 
-		// if (kfs && !kfs->empty())
-		// {
-		// 	if (!joints.empty())
-		// 	{
-		// 		SkinnedModelPtr skinned_model = checked_pointer_cast<SkinnedModel>(model);
+		if (kfs && !kfs->empty())
+		{
+			if (!joints.empty())
+			{
+				SkinnedModelPtr skinned_model = checked_pointer_cast<SkinnedModel>(model);
 
-		// 		skinned_model->AssignJoints(joints.begin(), joints.end());
-		// 		skinned_model->AttachKeyFrameSets(kfs);
+				skinned_model->AssignJoints(joints.begin(), joints.end());
+				skinned_model->AttachKeyFrameSets(kfs);
 
-		// 		skinned_model->NumFrames(num_frames);
-		// 		skinned_model->FrameRate(frame_rate);
+				skinned_model->NumFrames(num_frames);
+				skinned_model->FrameRate(frame_rate);
 
-		// 		for (size_t mesh_index = 0; mesh_index < meshes.size(); ++ mesh_index)
-		// 		{
-		// 			SkinnedMeshPtr skinned_mesh = checked_pointer_cast<SkinnedMesh>(meshes[mesh_index]);
-		// 			skinned_mesh->AttachFramePosBounds(frame_pos_bbs[mesh_index]);
-		// 		}
+				for (size_t mesh_index = 0; mesh_index < meshes.size(); ++ mesh_index)
+				{
+					SkinnedMeshPtr skinned_mesh = checked_pointer_cast<SkinnedMesh>(meshes[mesh_index]);
+					skinned_mesh->AttachFramePosBounds(frame_pos_bbs[mesh_index]);
+				}
 
-		// 		skinned_model->AttachAnimations(animations);
-		// 	}
-		// }
+				skinned_model->AttachAnimations(animations);
+			}
+		}
 
-		// model->AssignMeshes(meshes.begin(), meshes.end());
-		// for (auto const& node : nodes)
-		// {
-		// 	for (auto const mesh_index : node.mesh_indices)
-		// 	{
-		// 		node.node->AddComponent(MakeSharedPtr<RenderableComponent>(meshes[mesh_index]));
-		// 	}
+		model->AssignMeshes(meshes.begin(), meshes.end());
+		for (auto const& node : nodes)
+		{
+			for (auto const mesh_index : node.mesh_indices)
+			{
+				node.node->AddComponent(MakeSharedPtr<RenderableComponent>(meshes[mesh_index]));
+			}
 
-		// 	if (node.joint_index >= 0)
-		// 	{
-		// 		node.node->AddComponent(joints[node.joint_index]);
-		// 	}
-		// }
+			if (node.joint_index >= 0)
+			{
+				node.node->AddComponent(joints[node.joint_index]);
+			}
+		}
 
 		model->RootNode()->UpdatePosBoundSubtree();
 
@@ -1402,37 +1748,37 @@ struct NodeInfo
 			renderables.push_back(model.Mesh(mesh_index).get());
 		}
 
-		// std::vector<JointComponent const*> joints;
-		// std::shared_ptr<std::vector<Animation>> animations;
-		// std::shared_ptr<std::vector<KeyFrameSet>> kfs;
-		// uint32_t num_frame = 0;
-		// uint32_t frame_rate = 0;
-		// std::vector<std::shared_ptr<AABBKeyFrameSet>> frame_pos_bbs;
-		// if (model.IsSkinned())
-		// {
-		// 	auto const& skinned_model = checked_cast<SkinnedModel const&>(model);
+		std::vector<JointComponent const*> joints;
+		std::shared_ptr<std::vector<Animation>> animations;
+		std::shared_ptr<std::vector<KeyFrameSet>> kfs;
+		uint32_t num_frame = 0;
+		uint32_t frame_rate = 0;
+		std::vector<std::shared_ptr<AABBKeyFrameSet>> frame_pos_bbs;
+		if (model.IsSkinned())
+		{
+			auto const& skinned_model = checked_cast<SkinnedModel const&>(model);
 
-		// 	uint32_t num_joints = skinned_model.NumJoints();
-		// 	joints.resize(num_joints);
-		// 	for (uint32_t i = 0; i < num_joints; ++ i)
-		// 	{
-		// 		joints[i] = skinned_model.GetJoint(i).get();
-		// 	}
+			uint32_t num_joints = skinned_model.NumJoints();
+			joints.resize(num_joints);
+			for (uint32_t i = 0; i < num_joints; ++ i)
+			{
+				joints[i] = skinned_model.GetJoint(i).get();
+			}
 
-		// 	animations = skinned_model.GetAnimations();
+			animations = skinned_model.GetAnimations();
 
-		// 	num_frame = skinned_model.NumFrames();
-		// 	frame_rate = skinned_model.FrameRate();
+			num_frame = skinned_model.NumFrames();
+			frame_rate = skinned_model.FrameRate();
 
-		// 	kfs = skinned_model.GetKeyFrameSets();
+			kfs = skinned_model.GetKeyFrameSets();
 
-		// 	frame_pos_bbs.resize(mesh_names.size());
-		// 	for (uint32_t mesh_index = 0; mesh_index < mesh_names.size(); ++ mesh_index)
-		// 	{
-		// 		auto& skinned_mesh = checked_cast<SkinnedMesh&>(*skinned_model.Mesh(mesh_index));
-		// 		frame_pos_bbs[mesh_index] = skinned_mesh.GetFramePosBounds();
-		// 	}
-		// }
+			frame_pos_bbs.resize(mesh_names.size());
+			for (uint32_t mesh_index = 0; mesh_index < mesh_names.size(); ++ mesh_index)
+			{
+				auto& skinned_mesh = checked_cast<SkinnedMesh&>(*skinned_model.Mesh(mesh_index));
+				frame_pos_bbs[mesh_index] = skinned_mesh.GetFramePosBounds();
+			}
+		}
 
 #if ZENGINE_IS_DEV_PLATFORM
 		if (need_conversion)
@@ -1444,7 +1790,7 @@ struct NodeInfo
 				caps = &rf.RenderEngineInstance().DeviceCaps();
 			}
 
-			//Context::Instance().DevHelperInstance().ConvertModel(output_path.string(), "", model_name, caps);
+			Context::Instance().DevHelperInstance().ConvertModel(output_path.string(), "", model_name, caps);
 		}
 #endif
     }

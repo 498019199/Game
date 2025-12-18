@@ -109,8 +109,18 @@ public:
 	Quaternion_T const operator+() const noexcept;
 	Quaternion_T const operator-() const noexcept;
      
-	const Vector_T<T, 3> GetV() const noexcept;
-	void SetV(Vector_T<T, 3> const & rhs) noexcept;
+	// 取方向向量
+	constexpr Vector_T<T, 3> const& v() const noexcept
+	{
+		return quat_.template AsVector<3>();
+	}
+	void v(Vector_T<T, 3> const & rhs) noexcept;
+
+	constexpr Vector_T<T, 4> const& AsVector4() const noexcept
+	{
+		return quat_;
+	}
+
 
 	bool operator==(Quaternion_T<T> const & rhs) const noexcept;
 	bool operator!=(Quaternion_T<T> const & rhs) const noexcept;
@@ -129,5 +139,38 @@ std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs)
 	return os << rhs.quat_;
 }
 
+template <typename T>
+Quaternion_T<T> operator+(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+{
+    return Quaternion_T<T>(lhs).operator+=(rhs);
+}
+
+template <typename T>
+Quaternion_T<T> operator-(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+{
+    return Quaternion_T<T>(lhs).operator-=(rhs);
+}
+
+template <typename T>
+Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+{
+    return Quaternion_T<T>(lhs).operator*=(rhs);
+}
+template <typename T>
+Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, T rhs) noexcept
+{
+    return Quaternion_T<T>(lhs).operator*=(rhs);
+}
+template <typename T>
+Quaternion_T<T> operator*(T lhs, const Quaternion_T<T>& rhs) noexcept
+{
+    return Quaternion_T<T>(rhs).operator*=(lhs);
+}
+
+template <typename T>
+Quaternion_T<T> operator/(const Quaternion_T<T>& lhs, T rhs) noexcept
+{
+    return Quaternion_T<T>(lhs).operator/=(rhs);
+}
 using quater = Quaternion_T<float>;
 }

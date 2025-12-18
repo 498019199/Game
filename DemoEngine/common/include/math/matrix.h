@@ -39,11 +39,7 @@ public:
     {
         return m_[row][col];
     }
-	size_type size() noexcept
-	{
-		return elem_num;
-	}
-    size_type size() const noexcept
+    static constexpr size_type size() noexcept
     {
         return elem_num;
     }

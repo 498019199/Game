@@ -2,6 +2,8 @@
 #include <render/Renderable.h>
 #include <render/RenderLayout.h>
 #include <render/RenderMaterial.h>
+#include <world/SceneNode.h>
+
 #include <string_view>
 #include <functional>
 
@@ -244,6 +246,7 @@ private:
     quater inverse_origin_dual_;
     float inverse_origin_scale_;
 };
+using JointComponentPtr = std::shared_ptr<JointComponent>;
 
 struct ZENGINE_CORE_API KeyFrameSet
 {
@@ -282,19 +285,107 @@ public:
         return true;
     }
 
+    void CloneDataFrom(RenderModel const & source,
+        std::function<StaticMeshPtr(std::wstring_view)> const & CreateMeshFactoryFunc = CreateMeshFactory<StaticMesh>) override;
+
+    JointComponentPtr& GetJoint(uint32_t index)
+    {
+        return joints_[index];
+    }
+    JointComponentPtr const& GetJoint(uint32_t index) const
+    {
+        return joints_[index];
+    }
+    uint32_t NumJoints() const
+    {
+        return static_cast<uint32_t>(joints_.size());
+    }
+
+    template <typename ForwardIterator>
+    void AssignJoints(ForwardIterator first, ForwardIterator last)
+    {
+        joints_.assign(first, last);
+        this->UpdateBinds();
+    }
+
+    void AttachKeyFrameSets(std::shared_ptr<std::vector<KeyFrameSet>> const & kf)
+    {
+        key_frame_sets_ = kf;
+    }
+    std::shared_ptr<std::vector<KeyFrameSet>> const & GetKeyFrameSets() const
+    {
+        return key_frame_sets_;
+    }
+
+    uint32_t NumFrames() const
+    {
+        return num_frames_;
+    }
+    void NumFrames(uint32_t nf)
+    {
+        num_frames_ = nf;
+    }
+    uint32_t FrameRate() const
+    {
+        return frame_rate_;
+    }
+    void FrameRate(uint32_t fr)
+    {
+        frame_rate_ = fr;
+    }
+
+    float GetFrame() const;
+    void SetFrame(float frame);
+
+    void RebindJoints();
+    void UnbindJoints();
+
+    AABBox FramePosBound(uint32_t frame) const;
+
+    void AttachAnimations(std::shared_ptr<std::vector<Animation>> const & animations);
+    std::shared_ptr<std::vector<Animation>> const & GetAnimations() const
+    {
+        return animations_;
+    }
+    uint32_t NumAnimations() const;
+    void GetAnimation(uint32_t index, std::string& name, uint32_t& start_frame, uint32_t& end_frame);
+
 protected:
-    //std::vector<JointComponentPtr> joints_;
+    void BuildBones(float frame);
+    void UpdateBinds();
+    void SetToEffect();
+
+protected:
+    std::vector<JointComponentPtr> joints_;
     std::vector<float4> bind_reals_;
     std::vector<float4> bind_duals_;
 
-    //std::shared_ptr<std::vector<KeyFrameSet>> key_frame_sets_;
+    std::shared_ptr<std::vector<KeyFrameSet>> key_frame_sets_;
     float last_frame_;
 
     uint32_t num_frames_;
     uint32_t frame_rate_;
 
-	//std::shared_ptr<std::vector<Animation>> animations_;
+	std::shared_ptr<std::vector<Animation>> animations_;
 };
+using SkinnedModelPtr = std::shared_ptr<SkinnedModel>;
+
+class ZENGINE_CORE_API SkinnedMesh : public StaticMesh
+{
+public:
+    explicit SkinnedMesh(std::wstring_view name);
+
+    AABBox FramePosBound(uint32_t frame) const;
+    void AttachFramePosBounds(std::shared_ptr<AABBKeyFrameSet> const & frame_pos_aabbs);
+    std::shared_ptr<AABBKeyFrameSet> const & GetFramePosBounds() const
+    {
+        return frame_pos_aabbs_;
+    }
+
+private:
+    std::shared_ptr<AABBKeyFrameSet> frame_pos_aabbs_;
+};
+using SkinnedMeshPtr = std::shared_ptr<SkinnedMesh>;
 
 ZENGINE_CORE_API RenderModelPtr SyncLoadModel(std::string_view model_name, uint32_t access_hint,
     uint32_t node_attrib,

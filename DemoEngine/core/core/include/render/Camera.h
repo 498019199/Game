@@ -7,7 +7,10 @@ namespace RenderWorker
 class ZENGINE_CORE_API Camera: public SceneComponent
 {
 public:
+    NANO_RTTI_REGISTER_RUNTIME_CLASS(SceneComponent)
     Camera();
+    
+    SceneComponentPtr Clone() const override;
     
     const float3& EyePos() const;
     float3 LookAt() const;

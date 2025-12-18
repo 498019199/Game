@@ -143,21 +143,6 @@ Quaternion_T<T> const Quaternion_T<T>::operator-() const noexcept
 }
 
 template <typename T>
-const Vector_T<T, 3> Quaternion_T<T>::GetV() const noexcept
-{
-	return Vector_T<T, 3>(this->x(), this->y(), this->z());
-}
-
-template <typename T>
-void Quaternion_T<T>::SetV(Vector_T<T, 3> const & rhs) noexcept
-{
-	this->quat_[0] = rhs[0];
-	this->quat_[1] = rhs[1];
-	this->quat_[2] = rhs[2];
-}
-
-
-template <typename T>
 bool Quaternion_T<T>::operator==(Quaternion_T<T> const & rhs) const noexcept
 {
 	return this->quat_ == rhs.quat_;

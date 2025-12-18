@@ -18,6 +18,16 @@ public:
     {
     }
 
+    AABBox_T<T>& operator+=(Vector_T<T, 3> const & rhs) noexcept;
+    AABBox_T<T>& operator-=(Vector_T<T, 3> const & rhs) noexcept;
+    AABBox_T<T>& operator*=(T const& rhs) noexcept;
+    AABBox_T<T>& operator/=(T const& rhs) noexcept;
+    AABBox_T<T>& operator&=(AABBox_T<T> const & rhs) noexcept;
+    AABBox_T<T>& operator|=(AABBox_T<T> const & rhs) noexcept;
+
+    AABBox_T<T>& operator=(AABBox_T<T> const & rhs) noexcept;
+    AABBox_T<T>& operator=(AABBox_T<T>&& rhs) noexcept;
+
     constexpr Vector_T<T, 3>& Min() noexcept
     {
         return min_;
@@ -35,8 +45,12 @@ public:
         return max_;
     }
 
-    AABBox_T<T>& operator=(const AABBox_T<T>& rhs) noexcept;
-	AABBox_T<T>& operator=(AABBox_T<T>&& rhs) noexcept;
+    Vector_T<T, 3> Center() const noexcept;
+    Vector_T<T, 3> HalfSize() const noexcept;
+    
+    Vector_T<T, 3> Corner(size_t index) const noexcept;
+
+    bool operator==(AABBox_T<T> const & rhs) const noexcept;
 private:
 	Vector_T<T, 3> min_, max_;
 };

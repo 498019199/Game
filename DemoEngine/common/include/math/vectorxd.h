@@ -313,6 +313,12 @@ public:
 		return !(this->operator==(rhs));
 	}
 
+	template <size_t M>
+	constexpr Vector_T<T, M> const& AsVector() const noexcept
+	{
+		static_assert(M <= N, "Could not get a larger vector.");
+		return reinterpret_cast<Vector_T<T, M> const&>(*this);
+	}
 private:
 	DetailType vec_;
 };

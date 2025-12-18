@@ -18,6 +18,14 @@
 	#define COMMON_ASSERT_MSG(expr, msg) 
 #endif//ZENGINE_DEBUG
 
+#if defined(ZENGINE_COMPILER_MSVC)
+	#define ZENGINE_ASSUME(expr) __assume(expr)
+#elif defined(ZENGINE_COMPILER_CLANG) || defined(ZENGINE_COMPILER_CLANGCL)
+	#define ZENGINE_ASSUME(expr) { const auto b = (expr); __builtin_assume(b); }
+#elif defined(KLAYGE_COMPILER_GCC)
+	#define ZENGINE_ASSUME(expr) if (!(expr)) { __builtin_unreachable(); }
+#endif
+
 #if defined(ZENGINE_CXX23_LIBRARY_TO_UNDERLYING_SUPPORT)
 #include <utility>
 #else
@@ -66,8 +74,11 @@ namespace std
 namespace CommonWorker
 {
 
-    std::string& Convert(std::string& dest, std::wstring_view src);
-    std::wstring& Convert(std::wstring& dest, std::string_view src);
+	// Unicode函数, 用于string, wstring之间的转换
+	std::string& Convert(std::string& dest, std::string_view src);
+	std::string& Convert(std::string& dest, std::wstring_view src);
+	std::wstring& Convert(std::wstring& dest, std::string_view src);
+	std::wstring& Convert(std::wstring& dest, std::wstring_view src);
 
     // 产生FourCC常量
     template <unsigned char ch0, unsigned char ch1, unsigned char ch2, unsigned char ch3>

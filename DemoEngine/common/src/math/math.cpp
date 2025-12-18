@@ -1,4 +1,5 @@
 #include <math/math.h>
+#include <vector>
 
 namespace RenderWorker
 {
@@ -23,6 +24,25 @@ namespace RenderWorker
             return ret;
         }
 
+        template int1 sgn(int1 const & x) noexcept;
+		template int2 sgn(int2 const & x) noexcept;
+		template int3 sgn(int3 const & x) noexcept;
+		template int4 sgn(int4 const & x) noexcept;
+		template float1 sgn(float1 const & x) noexcept;
+		template float2 sgn(float2 const & x) noexcept;
+		template float3 sgn(float3 const & x) noexcept;
+		template float4 sgn(float4 const & x) noexcept;
+		template <typename T, size_t N>
+		Vector_T<T, N> sgn(Vector_T<T, N> const & x) noexcept
+		{
+			Vector_T<T, N> ret;
+			for (size_t i = 0; i < N; ++ i)
+			{
+				ret[i] = MathWorker::sgn(x[i]);
+			}
+			return ret;
+		}
+
         float sin(float x) noexcept
         {
             return std::sin(x);
@@ -40,6 +60,16 @@ namespace RenderWorker
             c = cos(fAnglel);
         }
         
+        int32_t SignBit(int32_t x) noexcept
+		{
+			return (x & 0x80000000U) ? -1 : 1;
+		}
+
+		float SignBit(float x) noexcept
+		{
+			return static_cast<float>(SignBit(std::bit_cast<int32_t>(x)));
+		}
+
         // 线性颜色值转换为 sRGB 颜色值的操作
         // 线性颜色空间更适合于计算和物理模拟，而 sRGB 空间则是常见的显示设备所使用的颜色空间。
         // 根据线性颜色值的大小，使用不同的公式将其转换为 sRGB 颜色值。
@@ -125,6 +155,13 @@ namespace RenderWorker
                 (lhs.x() * rhs.y() - lhs.y() * rhs.x()),
                 1);
         }
+
+        template float3 transform_quat(float3 const & v, quater const & quat) noexcept;
+		template <typename T>
+		Vector_T<T, 3> transform_quat(Vector_T<T, 3> const & v, Quaternion_T<T> const & quat) noexcept
+		{
+			return v + cross(quat.v(), cross(quat.v(), v) + quat.w() * v) * T(2);
+		}
 
         template int32_t dot(const int2 & lhs, const int2 & rhs) noexcept;
         template int32_t dot(const int3 & lhs, const int3 & rhs) noexcept;
@@ -236,6 +273,26 @@ namespace RenderWorker
         {
             return MathHelper::transform_helper<typename T::value_type, T::elem_num>::Do(v, mat);
         }
+
+        template float2 transform_coord(float2 const & v, float4x4 const & mat) noexcept;
+		template float3 transform_coord(float3 const & v, float4x4 const & mat) noexcept;
+		template <typename T>
+		T transform_coord(T const & v, Matrix4_T<typename T::value_type> const & mat) noexcept
+		{
+			static_assert(T::elem_num < 4, "Must be at most 4D vector.");
+
+			Vector_T<typename T::value_type, 4> temp(MathHelper::transform_helper<typename T::value_type, T::elem_num>::Do(v, mat));
+			Vector_T<typename T::value_type, T::elem_num> ret(&temp[0]);
+			if (equal(temp.w(), typename T::value_type(0)))
+			{
+				ret = T::Zero();
+			}
+			else
+			{
+				ret /= temp.w();
+			}
+			return ret;
+		}
 
         template float Angle(const float2 &lsh, const float2 &rhs);
         template float Angle(const float3 &lsh, const float3 &rhs);
@@ -658,7 +715,7 @@ namespace RenderWorker
             rot_mat(3, 1) = 0;
             rot_mat(3, 2) = 0;
             rot_mat(3, 3) = 1;
-            rot = ToQuaternion(rot_mat);
+            rot = to_quaternion(rot_mat);
         }
 
         template float4x4 transformation(const float3* scaling_center, const quater* scaling_rotation, const float3* scale,
@@ -737,12 +794,19 @@ namespace RenderWorker
                 lhs.w() * rhs.w() - lhs.x() * rhs.x() - lhs.y() * rhs.y() - lhs.z() * rhs.z());
         }
 
-        template quater Conjugate(quater const & rhs) noexcept;
+        template quater conjugate(const  quater& rhs) noexcept;
         template <typename T>
-        Quaternion_T<T> Conjugate(Quaternion_T<T> const & rhs) noexcept
+        Quaternion_T<T> conjugate(const Quaternion_T<T>&rhs) noexcept
         {
             return Quaternion_T<T>(-rhs.x(), -rhs.y(), -rhs.z(), rhs.w());
         }
+
+        template std::pair<quater, quater> conjugate(const quater& real, const quater& dual) noexcept;
+		template <typename T>
+		std::pair<Quaternion_T<T>, Quaternion_T<T>> conjugate(const Quaternion_T<T>&real, const Quaternion_T<T>& dual) noexcept
+		{
+			return std::make_pair(conjugate(real), conjugate(dual));
+		}
 
         template quater inverse(const quater& rhs) noexcept;
         template <typename T>
@@ -751,6 +815,54 @@ namespace RenderWorker
             T var(T(1) / length(rhs));
             return Quaternion_T<T>(-rhs.x() * var, -rhs.y() * var, -rhs.z() * var, rhs.w() * var);
         }
+
+		template std::pair<quater, quater> inverse(const  quater& real, const  quater& dual) noexcept;
+        template <typename T>
+		std::pair<Quaternion_T<T>, Quaternion_T<T>> inverse(const Quaternion_T<T>& real, const Quaternion_T<T>& dual) noexcept
+		{
+			float const sqr_len_0 = dot(real, real);
+			float const sqr_len_e = 2.0f * dot(real, dual);
+			float const inv_sqr_len_0 = 1.0f / sqr_len_0;
+			float const inv_sqr_len_e = -sqr_len_e / (sqr_len_0 * sqr_len_0);
+			std::pair<Quaternion_T<T>, Quaternion_T<T>> conj = conjugate(real, dual);
+			return std::make_pair(inv_sqr_len_0 * conj.first, inv_sqr_len_0 * conj.second + inv_sqr_len_e * conj.first);
+		}
+
+        template quater slerp(quater const & lhs, quater const & rhs, float s) noexcept;
+		template <typename T>
+		Quaternion_T<T> slerp(Quaternion_T<T> const & lhs, Quaternion_T<T> const & rhs, T s) noexcept
+		{
+			T scale0, scale1;
+
+			// DOT the quats to get the cosine of the angle between them
+			T cosom = dot(lhs, rhs);
+
+			T dir = T(1);
+			if (cosom < 0)
+			{
+				dir = T(-1);
+				cosom = -cosom;
+			}
+
+			// make sure they are different enough to avoid a divide by 0
+			if (cosom < T(1) - std::numeric_limits<T>::epsilon())
+			{
+				// SLERP away
+				T const omega = acos(cosom);
+				T const isinom = T(1) / sin(omega);
+				scale0 = sin((T(1) - s) * omega) * isinom;
+				scale1 = sin(s * omega) * isinom;
+			}
+			else
+			{
+				// LERP is good enough at this distance
+				scale0 = T(1) - s;
+				scale1 = s;
+			}
+
+			// Compute the result
+			return scale0 * lhs + dir * scale1 * rhs;
+		}
 
         template float4x4 to_matrix(const quater &quat);
         template<typename T>
@@ -782,9 +894,9 @@ namespace RenderWorker
             return rot_x * rot_y * rot_z;
         }
 
-        template quater ToQuaternion(const float4x4 &mat);
+        template quater to_quaternion(const float4x4 &mat);
         template<typename T>
-        Quaternion_T<T> ToQuaternion(const Matrix4_T<T>& mat)
+        Quaternion_T<T> to_quaternion(const Matrix4_T<T>& mat)
         {
             quater quat;
             float s;
@@ -864,6 +976,45 @@ namespace RenderWorker
 
             return normalize(quat);
         }
+
+        template quater to_quaternion(float3 const & tangent, float3 const & binormal, float3 const & normal, uint32_t bits) noexcept;
+		template <typename T>
+		Quaternion_T<T> to_quaternion(Vector_T<T, 3> const & tangent, Vector_T<T, 3> const & binormal, Vector_T<T, 3> const & normal, uint32_t bits) noexcept
+		{
+			T k = 1;
+			if (dot(binormal, cross(normal, tangent)) < 0)
+			{
+				k = -1;
+			}
+
+			Matrix4_T<T> tangent_frame(tangent.x(), tangent.y(), tangent.z(), 0,
+				k * binormal.x(), k * binormal.y(), k * binormal.z(), 0,
+				normal.x(), normal.y(), normal.z(), 0,
+				0, 0, 0, 1);
+			Quaternion_T<T> tangent_quat = to_quaternion(tangent_frame);
+			if (tangent_quat.w() < 0)
+			{
+				tangent_quat = -tangent_quat;
+			}
+			if (bits > 0)
+			{
+				T const bias = T(1) / ((1UL << (bits - 1)) - 1);
+				if (tangent_quat.w() < bias)
+				{
+					T const factor = sqrt(1 - bias * bias);
+					tangent_quat.x() *= factor;
+					tangent_quat.y() *= factor;
+					tangent_quat.z() *= factor;
+					tangent_quat.w() = bias;
+				}
+			}
+			if (k < 0)
+			{
+				tangent_quat = -tangent_quat;
+			}
+
+			return tangent_quat;
+		}
 
         template quater ToQuaternion(const rotator &rot);
         template<typename T>
@@ -964,24 +1115,32 @@ namespace RenderWorker
             }
         }
 
-        template float3 TransformQuat(const float3& v, const quater& quat);
-        template<typename T>
-        Vector_T<T, 3> TransformQuat(const Vector_T<T, 3>& v, const Quaternion_T<T>& quat)
-        {
-            return v + cross(quat.GetV(), cross(quat.GetV(), v) + quat.w() * v) * T(2);
-        }
-
-
-        template quater quat_trans_to_udq(quater const & q, float3 const & t) noexcept;
+		template quater mul_real(const  quater& lhs_real, const  quater& rhs_real) noexcept;
 		template <typename T>
-		Quaternion_T<T> quat_trans_to_udq(Quaternion_T<T> const & q, Vector_T<T, 3> const & t) noexcept
+		Quaternion_T<T> mul_real(const  Quaternion_T<T>& lhs_real, const  Quaternion_T<T>& rhs_real) noexcept
+		{
+			return lhs_real * rhs_real;
+		}
+
+		template quater mul_dual(const  quater& lhs_real, const  quater& lhs_dual,
+			const  quater& rhs_real, const  quater& rhs_dual) noexcept;
+		template <typename T>
+		Quaternion_T<T> mul_dual(const  Quaternion_T<T>& lhs_real, const  Quaternion_T<T>& lhs_dual,
+			const  Quaternion_T<T>& rhs_real, const  Quaternion_T<T>& rhs_dual) noexcept
+		{
+			return lhs_real * rhs_dual + lhs_dual * rhs_real;
+		}
+
+        template quater quat_trans_to_udq(const  quater& q, float3 const & t) noexcept;
+		template <typename T>
+		Quaternion_T<T> quat_trans_to_udq(const Quaternion_T<T>&q, Vector_T<T, 3> const & t) noexcept
 		{
 			return mul(q, Quaternion_T<T>(T(0.5) * t.x(), T(0.5) * t.y(), T(0.5) * t.z(), T(0.0)));
 		}
 
-        template float4x4 udq_to_matrix(quater const & real, quater const & dual) noexcept;
+        template float4x4 udq_to_matrix(const  quater& real, const  quater& dual) noexcept;
 		template <typename T>
-		Matrix4_T<T> udq_to_matrix(Quaternion_T<T> const & real, Quaternion_T<T> const & dual) noexcept
+		Matrix4_T<T> udq_to_matrix(const Quaternion_T<T>&real, const Quaternion_T<T>&dual) noexcept
 		{
 			Matrix4_T<T> m;
 
@@ -1012,5 +1171,168 @@ namespace RenderWorker
 
 			return m;
 		}
+
+        template float3 udq_to_trans(const  quater& real, const  quater& dual) noexcept;
+		template <typename T>
+		Vector_T<T, 3> udq_to_trans(const  Quaternion_T<T>& real, const  Quaternion_T<T>& dual) noexcept
+		{
+			Quaternion_T<T> qeq0 = mul(conjugate(real), dual);
+			return T(2.0) * Vector_T<T, 3>(qeq0.x(), qeq0.y(), qeq0.z());
+		}
+
+        
+		template void udq_to_screw(float& angle, float& pitch, float3& dir, float3& moment,
+			quater const & real, quater const & dual) noexcept;
+		template <typename T>
+		void udq_to_screw(T& angle, T& pitch, Vector_T<T, 3>& dir, Vector_T<T, 3>& moment,
+			Quaternion_T<T> const & real, Quaternion_T<T> const & dual) noexcept
+		{
+			if (abs(real.w()) >= 1)
+			{
+				// pure translation
+
+				angle = 0;
+				dir = dual.v();
+
+				T dir_sq_len = length_sq(dir);
+
+				if (dir_sq_len > T(1e-6))
+				{
+					T dir_len = sqrt(dir_sq_len);
+					pitch = 2 * dir_len;
+					dir /= dir_len;
+				}
+				else
+				{
+					pitch = 0;
+				}
+
+				moment = Vector_T<T, 3>::Zero();
+			}
+			else
+			{ 
+				angle = 2 * acos(real.w());
+
+				float const s = length_sq(real.v());
+				if (s < T(1e-6))
+				{
+					dir = Vector_T<T, 3>::Zero();
+					pitch = 0;
+					moment = Vector_T<T, 3>::Zero();
+				}
+				else
+				{
+					float oos = recip_sqrt(s);
+					dir = real.v() * oos;
+
+					pitch = -2 * dual.w() * oos;
+
+					moment = (dual.v() - dir * pitch * real.w() * T(0.5)) * oos;
+				}
+			}
+		}
+
+        template std::pair<quater, quater> udq_from_screw(float const & angle, float const & pitch, float3 const & dir, float3 const & moment) noexcept;
+		template <typename T>
+		std::pair<Quaternion_T<T>, Quaternion_T<T>> udq_from_screw(T const & angle, T const & pitch, Vector_T<T, 3> const & dir, Vector_T<T, 3> const & moment) noexcept
+		{
+			T sa, ca;
+			sincos(angle * T(0.5), sa, ca);
+			return std::make_pair(Quaternion_T<T>(dir * sa, ca),
+				Quaternion_T<T>(sa * moment + T(0.5) * pitch * ca * dir, -pitch * sa * T(0.5)));
+		}
+
+        template std::pair<quater, quater> sclerp(quater const & lhs_real, quater const & lhs_dual,
+			quater const & rhs_real, quater const & rhs_dual, float s) noexcept;
+		template <typename T>
+		std::pair<Quaternion_T<T>, Quaternion_T<T>> sclerp(Quaternion_T<T> const & lhs_real, Quaternion_T<T> const & lhs_dual,
+			Quaternion_T<T> const & rhs_real, Quaternion_T<T> const & rhs_dual, T s) noexcept
+		{
+			// Make sure dot product is >= 0
+			float const quat_dot = dot(lhs_real, rhs_real);
+			Quaternion_T<T> to_sign_corrected_real = rhs_real;
+			Quaternion_T<T> to_sign_corrected_dual = rhs_dual;
+			if (quat_dot < 0)
+			{
+				to_sign_corrected_real = -to_sign_corrected_real;
+				to_sign_corrected_dual = -to_sign_corrected_dual;
+			}
+
+			std::pair<Quaternion_T<T>, Quaternion_T<T>> dif_dq = inverse(lhs_real, lhs_dual);
+			dif_dq.second = mul_dual(dif_dq.first, dif_dq.second, to_sign_corrected_real, to_sign_corrected_dual);
+			dif_dq.first = mul_real(dif_dq.first, to_sign_corrected_real);
+	
+			float angle, pitch;
+			float3 direction, moment;
+			udq_to_screw(angle, pitch, direction, moment, dif_dq.first, dif_dq.second);
+
+			angle *= s; 
+			pitch *= s;
+			dif_dq = udq_from_screw(angle, pitch, direction, moment);
+
+			dif_dq.second = mul_dual(lhs_real, lhs_dual, dif_dq.first, dif_dq.second);
+			dif_dq.first = mul_real(lhs_real, dif_dq.first);
+
+			return dif_dq;
+		}
+
+		template AABBox compute_aabbox(float3* first, float3* last) noexcept;
+		template AABBox compute_aabbox(float4* first, float4* last) noexcept;
+		template AABBox compute_aabbox(float3 const * first, float3 const * last) noexcept;
+		template AABBox compute_aabbox(float4 const * first, float4 const * last) noexcept;
+		template AABBox compute_aabbox(std::vector<float3>::iterator first, std::vector<float3>::iterator last) noexcept;
+		template AABBox compute_aabbox(std::vector<float4>::iterator first, std::vector<float4>::iterator last) noexcept;
+		template AABBox compute_aabbox(std::vector<float3>::const_iterator first, std::vector<float3>::const_iterator last) noexcept;
+		template AABBox compute_aabbox(std::vector<float4>::const_iterator first, std::vector<float4>::const_iterator last) noexcept;
+		template <typename Iterator>
+		AABBox_T<typename std::iterator_traits<Iterator>::value_type::value_type> compute_aabbox(Iterator first, Iterator last) noexcept
+		{
+			typedef typename std::iterator_traits<Iterator>::value_type::value_type value_type;
+
+			Vector_T<value_type, 3> minVec = *first;
+			Vector_T<value_type, 3> maxVec = *first;
+			Iterator iter = first;
+			++ iter;
+			for (; iter != last; ++ iter)
+			{
+				Vector_T<value_type, 3> const & v = *iter;
+				minVec = minimize(minVec, v);
+				maxVec = maximize(maxVec, v);
+			}
+			return AABBox_T<value_type>(minVec, maxVec);
+		}
+
+		template AABBox transform_aabb(AABBox const & aabb, float4x4 const & mat) noexcept;
+		template <typename T>
+		AABBox_T<T> transform_aabb(AABBox_T<T> const & aabb, Matrix4_T<T> const & mat) noexcept
+		{
+			Vector_T<T, 3> min, max;
+			min = max = transform_coord(aabb.Corner(0), mat);
+			for (size_t j = 1; j < 8; ++j)
+			{
+				Vector_T<T, 3> const vec = transform_coord(aabb.Corner(j), mat);
+				min = minimize(min, vec);
+				max = maximize(max, vec);
+			}
+
+			return AABBox_T<T>(min, max);
+		}
+
+		template AABBox transform_aabb(AABBox const & aabb, float3 const & scale, quater const & rot, float3 const & trans) noexcept;
+		template <typename T>
+		AABBox_T<T> transform_aabb(AABBox_T<T> const & aabb, Vector_T<T, 3> const & scale, Quaternion_T<T> const & rot, Vector_T<T, 3> const & trans) noexcept
+		{
+			Vector_T<T, 3> min, max;
+			min = max = transform_quat(aabb.Corner(0) * scale, rot) + trans;
+			for (size_t j = 1; j < 8; ++ j)
+			{
+				Vector_T<T, 3> const vec = transform_quat(aabb.Corner(j) * scale, rot) + trans;
+				min = minimize(min, vec);
+				max = maximize(max, vec);
+			}
+
+			return AABBox_T<T>(min, max);
+		}
+
     }
 }

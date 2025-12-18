@@ -56,6 +56,78 @@ void SceneNode::AddChild(const SceneNodePtr& node)
     }
 }
 
+void SceneNode::AddComponent(SceneComponentPtr const& component)
+{
+    COMMON_ASSERT(component);
+
+    auto* curr_node = component->BoundSceneNode();
+    if (curr_node != nullptr)
+    {
+        curr_node->RemoveComponent(component);
+    }
+
+    components_.push_back(component);
+    component->BindSceneNode(this);
+    pos_aabb_dirty_ = true;
+}
+
+void SceneNode::RemoveComponent(SceneComponentPtr const& component)
+{
+    this->RemoveComponent(component.get());
+}
+
+void SceneNode::RemoveComponent(SceneComponent* component)
+{
+    auto iter =
+        std::find_if(components_.begin(), components_.end(), [component](SceneComponentPtr const& comp) { return comp.get() == component; });
+    if (iter != components_.end())
+    {
+        components_.erase(iter);
+        component->BindSceneNode(nullptr);
+        pos_aabb_dirty_ = true;
+    }
+}
+
+void SceneNode::ClearComponents()
+{
+    components_.clear();
+    pos_aabb_dirty_ = true;
+}
+
+void SceneNode::ReplaceComponent(uint32_t index, SceneComponentPtr const& component)
+{
+    COMMON_ASSERT(component);
+
+    auto* curr_node = component->BoundSceneNode();
+    if (curr_node != this)
+    {
+        if (curr_node != nullptr)
+        {
+            curr_node->RemoveComponent(component);
+        }
+
+        if (components_[index] != nullptr)
+        {
+            components_[index]->BindSceneNode(nullptr);
+        }
+
+        component->BindSceneNode(this);
+        components_[index] = component;
+        pos_aabb_dirty_ = true;
+    }
+}
+
+void SceneNode::ForEachComponent(std::function<void(SceneComponent&)> const& callback) const
+{
+    for (auto const& component : components_)
+    {
+        if (component)
+        {
+            callback(*component);
+        }
+    }
+}
+
 void SceneNode::Traverse(const std::function<bool(SceneNode&)>& callback)
 {
     if (callback(*this))
@@ -75,6 +147,31 @@ void SceneNode::UpdatePosBoundSubtree()
 void SceneNode::RemoveChild(const SceneNodePtr& node)
 {
     this->RemoveChild(node.get());
+}
+
+uint32_t SceneNode::NumComponents() const
+{
+    return static_cast<uint32_t>(components_.size());
+}
+
+SceneComponent* SceneNode::FirstComponent()
+{
+    return this->ComponentByIndex(0);
+}
+
+SceneComponent const* SceneNode::FirstComponent() const
+{
+    return this->ComponentByIndex(0);
+}
+
+SceneComponent* SceneNode::ComponentByIndex(uint32_t i)
+{
+    return components_[i].get();
+}
+
+SceneComponent const* SceneNode::ComponentByIndex(uint32_t i) const
+{
+    return components_[i].get();
 }
 
 void SceneNode::RemoveChild(SceneNode* node)

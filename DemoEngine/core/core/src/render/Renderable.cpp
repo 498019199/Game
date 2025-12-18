@@ -36,16 +36,6 @@ const std::wstring& Renderable::Name() const
     return name_;
 }
 
-RenderEffect* Renderable::GetRenderEffect() const
-{       
-    return effect_.get();
-}
-
-RenderTechnique* Renderable::GetRenderTechnique() const
-{
-    return technique_;
-}
-
 const AABBox& Renderable::PosBound() const
 {
     return pos_aabb_;
@@ -106,5 +96,27 @@ void Renderable::Render()
 void Renderable::Material(const RenderMaterialPtr& mtl)
 {
     
+}
+
+
+
+
+
+
+
+RenderableComponent::RenderableComponent(RenderablePtr const& renderable)
+: renderable_(renderable)
+{
+    COMMON_ASSERT(renderable);
+}
+
+SceneComponentPtr RenderableComponent::Clone() const
+{
+    return MakeSharedPtr<RenderableComponent>(renderable_);
+}
+
+Renderable& RenderableComponent::BoundRenderable() const
+{
+    return *renderable_;
 }
 }

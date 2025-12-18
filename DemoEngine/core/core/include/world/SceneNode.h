@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include <base/ZEngine.h>
+#include <world/SceneComponent.h>
+#include <string_view>
+#include <functional>
 
 namespace RenderWorker
 {
@@ -9,7 +12,7 @@ class SceneNode;
 using SceneNodePtr = std::shared_ptr<SceneNode>;
 
 // 场景上对象位置描述
-class ZENGINE_CORE_API SceneNode
+class ZENGINE_CORE_API SceneNode final : public std::enable_shared_from_this<SceneNode>
 {
     ZENGINE_NONCOPYABLE(SceneNode);
 public:
@@ -40,6 +43,64 @@ public:
     void RemoveChild(const SceneNodePtr& node);
     void RemoveChild(SceneNode* node);
     
+    uint32_t NumComponents() const;
+    template <typename T>
+    uint32_t NumComponentsOfType() const
+    {
+        uint32_t ret = 0;
+        this->ForEachComponentOfType<T>([&ret]([[maybe_unused]] T& component) {
+            ++ret;
+        });
+        return ret;
+    }
+
+    SceneComponent* FirstComponent();
+    SceneComponent const* FirstComponent() const;
+    SceneComponent* ComponentByIndex(uint32_t i);
+    SceneComponent const* ComponentByIndex(uint32_t i) const;
+    template <typename T>
+    T* FirstComponentOfType()
+    {
+        for (auto const& component : components_)
+        {
+            if (auto* casted = NanoRtti::DynCast<T*>(component.get()))
+            {
+                return casted;
+            }
+        }
+        return nullptr;
+    }
+    template <typename T>
+    T const* FirstComponentOfType() const
+    {
+        for (auto const& component : components_)
+        {
+            if (auto const* casted = NanoRtti::DynCast<T*>(component.get()))
+            {
+                return casted;
+            }
+        }
+        return nullptr;
+    }
+
+    void AddComponent(SceneComponentPtr const& component);
+    void RemoveComponent(SceneComponentPtr const& component);
+    void RemoveComponent(SceneComponent* component);
+    void ClearComponents();
+    void ReplaceComponent(uint32_t index, SceneComponentPtr const& component);
+
+    void ForEachComponent(std::function<void(SceneComponent&)> const & callback) const;
+    template <typename T>
+    void ForEachComponentOfType(std::function<void(T&)> const & callback) const
+    {
+        this->ForEachComponent([&](SceneComponent& component) {
+            if (auto* casted = NanoRtti::DynCast<T*>(&component))
+            {
+                callback(*casted);
+            }
+        });
+    }
+
     void Traverse(const std::function<bool(SceneNode&)>& callback);
 	void UpdatePosBoundSubtree();
 
@@ -59,10 +120,14 @@ private:
     SceneNode* parent_ = nullptr;
 	std::vector<SceneNodePtr> children_;
 
+    std::vector<SceneComponentPtr> components_;
+
     float4x4 xform_to_parent_ {float4x4::Identity()}; 
     float4x4 inv_xform_to_parent_ {float4x4::Identity()};
     mutable float4x4 xform_to_world_ {float4x4::Identity()}; 
     mutable float4x4 inv_xform_to_world_ {float4x4::Identity()}; 
+
+	bool pos_aabb_dirty_ = true;
 };
 
 

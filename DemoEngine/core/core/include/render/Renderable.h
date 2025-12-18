@@ -26,8 +26,14 @@ public:
 	virtual RenderLayout& GetRenderLayout(uint32_t lod) const;
 	virtual const std::wstring& Name() const;
 
-	virtual RenderEffect* GetRenderEffect() const;
-    virtual RenderTechnique* GetRenderTechnique() const;
+    virtual RenderEffectPtr const & GetRenderEffect() const
+    {
+        return effect_;
+    }
+    virtual RenderTechnique* GetRenderTechnique() const
+    {
+        return technique_;
+    }
 
     virtual const AABBox& PosBound() const;
 	virtual const AABBox& TexcoordBound() const;
@@ -71,7 +77,29 @@ protected:
 
     bool is_skinned_ {false};
 };
-
-
 using RenderablePtr = std::shared_ptr<RenderWorker::Renderable>;
+
+
+// TODO: Consider merging this with Renderable
+class ZENGINE_CORE_API RenderableComponent : public SceneComponent
+{
+public:
+    NANO_RTTI_REGISTER_RUNTIME_CLASS(SceneComponent)
+
+    explicit RenderableComponent(RenderablePtr const& renderable);
+
+    SceneComponentPtr Clone() const override;
+
+    Renderable& BoundRenderable() const;
+
+    template <typename T>
+    T& BoundRenderableOfType() const
+    {
+        return checked_cast<T&>(this->BoundRenderable());
+    }
+
+private:
+    RenderablePtr renderable_;
+};
+using RenderableComponentPtr = std::shared_ptr<RenderWorker::RenderableComponent>;
 }

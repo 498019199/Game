@@ -1,4 +1,5 @@
 #include <world/Control.h>
+#include <world/SceneNode.h>
 
 namespace RenderWorker
 {
@@ -90,8 +91,8 @@ void FirstPersonController::RotateRel(float yaw, float pitch, float roll)
         rot_z_ = float2(quat_z.z(), quat_z.w());
 
         inv_rot_ = MathWorker::inverse(quat_y * quat_x * quat_z);
-        float3 view_vec = MathWorker::TransformQuat(float3(0, 0, 1), inv_rot_);
-        float3 up_vec = MathWorker::TransformQuat(float3(0, 1, 0), inv_rot_);
+        float3 view_vec = MathWorker::transform_quat(float3(0, 0, 1), inv_rot_);
+        float3 up_vec = MathWorker::transform_quat(float3(0, 1, 0), inv_rot_);
 
         auto& camera_node = *camera_->BoundSceneNode();
         camera_node.TransformToWorld(
@@ -113,8 +114,8 @@ void FirstPersonController::RotateAbs(const quater& quat)
         MathWorker::sincos(roll / 2, rot_z_.x(), rot_z_.y());
 
         inv_rot_ = MathWorker::inverse(quat);
-        float3 view_vec = MathWorker::TransformQuat(float3(0, 0, 1), inv_rot_);
-        float3 up_vec = MathWorker::TransformQuat(float3(0, 1, 0), inv_rot_);
+        float3 view_vec = MathWorker::transform_quat(float3(0, 0, 1), inv_rot_);
+        float3 up_vec = MathWorker::transform_quat(float3(0, 1, 0), inv_rot_);
 
         auto& camera_node = *camera_->BoundSceneNode();
         camera_node.TransformToWorld(
