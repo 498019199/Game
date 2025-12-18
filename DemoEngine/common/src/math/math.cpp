@@ -1,5 +1,6 @@
 #include <math/math.h>
 #include <vector>
+#include <bit>
 
 namespace RenderWorker
 {

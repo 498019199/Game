@@ -32,7 +32,7 @@ public:
 		return elem_num;
 	}
 
-	// ȡ    
+	// 取向量
 	iterator begin() noexcept
 	{
 		return quat_.begin();
@@ -91,7 +91,7 @@ public:
 		return quat_[3];
 	}
 
-	//   ֵ      
+	// 赋值操作符
 	const Quaternion_T& operator+=(const Quaternion_T & rhs) noexcept;
 	const Quaternion_T& operator-=(const Quaternion_T & rhs) noexcept;
 	const Quaternion_T& operator*=(const Quaternion_T & rhs) noexcept;
@@ -121,56 +121,57 @@ public:
 		return quat_;
 	}
 
+	static const Quaternion_T& Identity() noexcept;
+
 
 	bool operator==(Quaternion_T<T> const & rhs) const noexcept;
 	bool operator!=(Quaternion_T<T> const & rhs) const noexcept;
-	static const Quaternion_T& Identity() noexcept;
-
-	// print
-	template <typename U>
-	friend std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs);
 private:
 	Vector_T<T, elem_num> quat_;
 };
 
-template <typename U>
-std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs)
-{
-	return os << rhs.quat_;
-}
+using quater = Quaternion_T<float>;
 
 template <typename T>
 Quaternion_T<T> operator+(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
 {
-    return Quaternion_T<T>(lhs).operator+=(rhs);
+	return Quaternion_T<T>(lhs).operator+=(rhs);
 }
 
 template <typename T>
 Quaternion_T<T> operator-(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
 {
-    return Quaternion_T<T>(lhs).operator-=(rhs);
+	return Quaternion_T<T>(lhs).operator-=(rhs);
 }
 
 template <typename T>
 Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
 {
-    return Quaternion_T<T>(lhs).operator*=(rhs);
+	return Quaternion_T<T>(lhs).operator*=(rhs);
 }
+
 template <typename T>
 Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, T rhs) noexcept
 {
-    return Quaternion_T<T>(lhs).operator*=(rhs);
+	return Quaternion_T<T>(lhs).operator*=(rhs);
 }
+
 template <typename T>
 Quaternion_T<T> operator*(T lhs, const Quaternion_T<T>& rhs) noexcept
 {
-    return Quaternion_T<T>(rhs).operator*=(lhs);
+	return rhs * lhs;
 }
 
 template <typename T>
 Quaternion_T<T> operator/(const Quaternion_T<T>& lhs, T rhs) noexcept
 {
-    return Quaternion_T<T>(lhs).operator/=(rhs);
+	return Quaternion_T<T>(lhs).operator/=(rhs);
 }
-using quater = Quaternion_T<float>;
+
+// print
+template <typename U>
+std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs)
+{
+	return os << rhs.quat_;
+}
 }

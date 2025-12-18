@@ -65,6 +65,8 @@ add_library(ZENGINE_common ${ZENGINE_PREFERRED_LIB_TYPE}
 )
 
 target_link_libraries(ZENGINE_common
+	PUBLIC
+		fmt
 	PRIVATE
 		rapidjson
 		rapidxml

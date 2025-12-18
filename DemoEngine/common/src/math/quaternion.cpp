@@ -161,6 +161,15 @@ const Quaternion_T<T>& Quaternion_T<T>::Identity() noexcept
 	return out;
 }
 
+template <typename T>
+void Quaternion_T<T>::v(Vector_T<T, 3> const& rhs) noexcept
+{
+	// set the vector part (x,y,z) of the quaternion
+	this->x() = rhs.x();
+	this->y() = rhs.y();
+	this->z() = rhs.z();
+}
+
 // print
 template class Quaternion_T<float>;
 }
