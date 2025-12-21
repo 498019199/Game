@@ -7,406 +7,406 @@
 
 namespace
 {
-    using namespace RenderWorker;
-    using namespace CommonWorker;
-    
-    template <int N>
-	void ExtractFVector(std::string_view value_str, float* v)
+using namespace RenderWorker;
+using namespace CommonWorker;
+
+template <int N>
+void ExtractFVector(std::string_view value_str, float* v)
+{
+	std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(' '));
+	for (size_t i = 0; i < N; ++ i)
 	{
-		std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(' '));
-		for (size_t i = 0; i < N; ++ i)
+		if (i < strs.size())
 		{
-			if (i < strs.size())
-			{
-				strs[i] = StringUtil::Trim(strs[i]);
-				v[i] = stof(std::string(strs[i]));
-			}
-			else
-			{
-				v[i] = 0;
-			}
+			strs[i] = StringUtil::Trim(strs[i]);
+			v[i] = stof(std::string(strs[i]));
+		}
+		else
+		{
+			v[i] = 0;
 		}
 	}
+}
 
-    class RenderMaterialLoadingDesc : public ResLoadingDesc
+class RenderMaterialLoadingDesc : public ResLoadingDesc
+{
+private:
+	struct RenderMaterialDesc
 	{
-	private:
-		struct RenderMaterialDesc
+		std::string res_name;
+
+		struct RenderMaterialData
 		{
-			std::string res_name;
+			std::string name;
 
-			struct RenderMaterialData
-			{
-				std::string name;
+			float4 albedo;
+			float metalness;
+			float glossiness;
+			float3 emissive;
 
-				float4 albedo;
-				float metalness;
-				float glossiness;
-				float3 emissive;
+			bool transparent;
+			float alpha_test;
+			bool sss;
+			bool two_sided;
 
-				bool transparent;
-				float alpha_test;
-				bool sss;
-				bool two_sided;
+			float normal_scale;
+			float occlusion_strength;
 
-				float normal_scale;
-				float occlusion_strength;
+			std::array<std::string, RenderMaterial::TS_NumTextureSlots> tex_names;
 
-				std::array<std::string, RenderMaterial::TS_NumTextureSlots> tex_names;
-
-				RenderMaterial::SurfaceDetailMode detail_mode;
-				float2 height_offset_scale;
-				float4 tess_factors;
-			};
-			std::shared_ptr<RenderMaterialData> mtl_data;
-
-			std::shared_ptr<RenderMaterialPtr> mtl;
+			RenderMaterial::SurfaceDetailMode detail_mode;
+			float2 height_offset_scale;
+			float4 tess_factors;
 		};
+		std::shared_ptr<RenderMaterialData> mtl_data;
 
-	public:
-		explicit RenderMaterialLoadingDesc(std::string_view res_name)
+		std::shared_ptr<RenderMaterialPtr> mtl;
+	};
+
+public:
+	explicit RenderMaterialLoadingDesc(std::string_view res_name)
+	{
+		mtl_desc_.res_name = std::string(res_name);
+		mtl_desc_.mtl_data = MakeSharedPtr<RenderMaterialDesc::RenderMaterialData>();
+		mtl_desc_.mtl = MakeSharedPtr<RenderMaterialPtr>();
+	}
+
+	uint64_t Type() const override
+	{
+		return CtHash("RenderMaterialLoadingDesc");
+	}
+
+	bool StateLess() const override
+	{
+		return true;
+	}
+
+	void SubThreadStage() override
+	{
+		std::lock_guard<std::mutex> lock(main_thread_stage_mutex_);
+
+		if (*mtl_desc_.mtl)
 		{
-			mtl_desc_.res_name = std::string(res_name);
-			mtl_desc_.mtl_data = MakeSharedPtr<RenderMaterialDesc::RenderMaterialData>();
-			mtl_desc_.mtl = MakeSharedPtr<RenderMaterialPtr>();
+			return;
 		}
 
-		uint64_t Type() const override
+		ResIdentifierPtr mtl_input = Context::Instance().ResLoaderInstance().Open(mtl_desc_.res_name);
+
+		XMLNode root = LoadXml(*mtl_input);
+
+		if (XMLAttribute const* attr = root.Attrib("name"))
 		{
-			return CtHash("RenderMaterialLoadingDesc");
+			mtl_desc_.mtl_data->name = std::string(attr->ValueString());
+		}
+		else
+		{
+			std::filesystem::path res_path(mtl_desc_.res_name);
+			mtl_desc_.mtl_data->name = res_path.stem().string();
 		}
 
-		bool StateLess() const override
+		mtl_desc_.mtl_data->albedo = float4(0, 0, 0, 1);
+		mtl_desc_.mtl_data->metalness = 0;
+		mtl_desc_.mtl_data->glossiness = 0;
+		mtl_desc_.mtl_data->emissive = float3(0, 0, 0);
+		mtl_desc_.mtl_data->transparent = false;
+		mtl_desc_.mtl_data->alpha_test = 0;
+		mtl_desc_.mtl_data->sss = false;
+		mtl_desc_.mtl_data->two_sided = false;
+
+		mtl_desc_.mtl_data->normal_scale = 1;
+		mtl_desc_.mtl_data->occlusion_strength = 1;
+
+		mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::ParallaxMapping;
+		mtl_desc_.mtl_data->height_offset_scale = float2(-0.5f, 0.06f);
+		mtl_desc_.mtl_data->tess_factors = float4(5, 5, 1, 9);
+
+		if (XMLNode const* albedo_node = root.FirstNode("albedo"))
 		{
-			return true;
+			if (XMLAttribute const* attr = albedo_node->Attrib("color"))
+			{
+				ExtractFVector<4>(attr->ValueString(), &mtl_desc_.mtl_data->albedo[0]);
+			}
+			if (XMLAttribute const* attr = albedo_node->Attrib("texture"))
+			{
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Albedo] = std::string(attr->ValueString());
+			}
 		}
-
-		void SubThreadStage() override
+		if (XMLNode const* metalness_glossiness_node = root.FirstNode("metalness_glossiness"))
 		{
-			std::lock_guard<std::mutex> lock(main_thread_stage_mutex_);
-
-			if (*mtl_desc_.mtl)
+			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("metalness"))
 			{
-				return;
+				mtl_desc_.mtl_data->metalness = attr->ValueFloat();
 			}
-
-			ResIdentifierPtr mtl_input = Context::Instance().ResLoaderInstance().Open(mtl_desc_.res_name);
-
-			XMLNode root = LoadXml(*mtl_input);
-
-			if (XMLAttribute const* attr = root.Attrib("name"))
+			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("glossiness"))
 			{
-				mtl_desc_.mtl_data->name = std::string(attr->ValueString());
+				mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
 			}
-			else
+			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("texture"))
 			{
-				std::filesystem::path res_path(mtl_desc_.res_name);
-				mtl_desc_.mtl_data->name = res_path.stem().string();
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_MetalnessGlossiness] = std::string(attr->ValueString());
 			}
-
-			mtl_desc_.mtl_data->albedo = float4(0, 0, 0, 1);
-			mtl_desc_.mtl_data->metalness = 0;
-			mtl_desc_.mtl_data->glossiness = 0;
-			mtl_desc_.mtl_data->emissive = float3(0, 0, 0);
-			mtl_desc_.mtl_data->transparent = false;
-			mtl_desc_.mtl_data->alpha_test = 0;
-			mtl_desc_.mtl_data->sss = false;
-			mtl_desc_.mtl_data->two_sided = false;
-
-			mtl_desc_.mtl_data->normal_scale = 1;
-			mtl_desc_.mtl_data->occlusion_strength = 1;
-
-			mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::ParallaxMapping;
-			mtl_desc_.mtl_data->height_offset_scale = float2(-0.5f, 0.06f);
-			mtl_desc_.mtl_data->tess_factors = float4(5, 5, 1, 9);
-
-			if (XMLNode const* albedo_node = root.FirstNode("albedo"))
+		}
+		else
+		{
+			if (XMLNode const* metalness_node = root.FirstNode("metalness"))
 			{
-				if (XMLAttribute const* attr = albedo_node->Attrib("color"))
-				{
-					ExtractFVector<4>(attr->ValueString(), &mtl_desc_.mtl_data->albedo[0]);
-				}
-				if (XMLAttribute const* attr = albedo_node->Attrib("texture"))
-				{
-					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Albedo] = std::string(attr->ValueString());
-				}
-			}
-			if (XMLNode const* metalness_glossiness_node = root.FirstNode("metalness_glossiness"))
-			{
-				if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("metalness"))
+				if (XMLAttribute const* attr = metalness_node->Attrib("value"))
 				{
 					mtl_desc_.mtl_data->metalness = attr->ValueFloat();
 				}
-				if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("glossiness"))
-				{
-					mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
-				}
-				if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("texture"))
+				if (XMLAttribute const* attr = metalness_node->Attrib("texture"))
 				{
 					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_MetalnessGlossiness] = std::string(attr->ValueString());
 				}
 			}
-			else
-			{
-				if (XMLNode const* metalness_node = root.FirstNode("metalness"))
-				{
-					if (XMLAttribute const* attr = metalness_node->Attrib("value"))
-					{
-						mtl_desc_.mtl_data->metalness = attr->ValueFloat();
-					}
-					if (XMLAttribute const* attr = metalness_node->Attrib("texture"))
-					{
-						mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_MetalnessGlossiness] = std::string(attr->ValueString());
-					}
-				}
 
-				if (XMLNode const* glossiness_node = root.FirstNode("glossiness"))
-				{
-					if (XMLAttribute const* attr = glossiness_node->Attrib("value"))
-					{
-						mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
-					}
-					if (XMLAttribute const* attr = glossiness_node->Attrib("texture"))
-					{
-						mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_MetalnessGlossiness] = std::string(attr->ValueString());
-					}
-				}
-			}
-			if (XMLNode const* emissive_node = root.FirstNode("emissive"))
+			if (XMLNode const* glossiness_node = root.FirstNode("glossiness"))
 			{
-				if (XMLAttribute const* attr = emissive_node->Attrib("color"))
+				if (XMLAttribute const* attr = glossiness_node->Attrib("value"))
 				{
-					ExtractFVector<3>(attr->ValueString(), &mtl_desc_.mtl_data->emissive[0]);
+					mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
 				}
-				if (XMLAttribute const* attr = emissive_node->Attrib("texture"))
+				if (XMLAttribute const* attr = glossiness_node->Attrib("texture"))
 				{
-					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Emissive] = std::string(attr->ValueString());
-				}
-			}
-			if (XMLNode const* normal_node = root.FirstNode("normal"))
-			{
-				if (XMLAttribute const* attr = normal_node->Attrib("texture"))
-				{
-					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Normal] = std::string(attr->ValueString());
-				}
-				if (XMLAttribute const* attr = normal_node->Attrib("scale"))
-				{
-					mtl_desc_.mtl_data->normal_scale = attr->ValueFloat();
-				}
-			}
-			if (XMLNode const* height_node = root.FirstNode("height"))
-			{
-				if (XMLAttribute const* attr = height_node->Attrib("texture"))
-				{
-					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Height] = std::string(attr->ValueString());
-				}
-				if (XMLAttribute const* attr = height_node->Attrib("offset"))
-				{
-					mtl_desc_.mtl_data->height_offset_scale.x() = attr->ValueFloat();
-				}
-				if (XMLAttribute const* attr = height_node->Attrib("scale"))
-				{
-					mtl_desc_.mtl_data->height_offset_scale.y() = attr->ValueFloat();
-				}
-			}
-			if (XMLNode const* occlusion_node = root.FirstNode("occlusion"))
-			{
-				if (XMLAttribute const* attr = occlusion_node->Attrib("texture"))
-				{
-					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Occlusion] = std::string(attr->ValueString());
-				}
-				if (XMLAttribute const* attr = occlusion_node->Attrib("strength"))
-				{
-					mtl_desc_.mtl_data->occlusion_strength = attr->ValueFloat();
-				}
-			}
-			if (XMLNode const* detail_node = root.FirstNode("detail"))
-			{
-				if (XMLAttribute const* attr = detail_node->Attrib("mode"))
-				{
-					size_t const mode_hash = HashValue(attr->ValueString());
-					if (CtHash("Parallax Occlusion Mapping") == mode_hash)
-					{
-						mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::ParallaxOcclusionMapping;
-					}
-					else if (CtHash("Flat Tessellation") == mode_hash)
-					{
-						mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::FlatTessellation;
-					}
-					else if (CtHash("Smooth Tessellation") == mode_hash)
-					{
-						mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::SmoothTessellation;
-					}
-				}
-
-				if (XMLNode const* tess_node = detail_node->FirstNode("tess"))
-				{
-					if (XMLAttribute const* attr = tess_node->Attrib("edge_hint"))
-					{
-						mtl_desc_.mtl_data->tess_factors.x() = attr->ValueFloat();
-					}
-					if (XMLAttribute const* attr = tess_node->Attrib("inside_hint"))
-					{
-						mtl_desc_.mtl_data->tess_factors.y() = attr->ValueFloat();
-					}
-					if (XMLAttribute const* attr = tess_node->Attrib("min"))
-					{
-						mtl_desc_.mtl_data->tess_factors.z() = attr->ValueFloat();
-					}
-					if (XMLAttribute const* attr = tess_node->Attrib("max"))
-					{
-						mtl_desc_.mtl_data->tess_factors.w() = attr->ValueFloat();
-					}
-				}
-			}
-			if (XMLNode const* transparent_node = root.FirstNode("transparent"))
-			{
-				if (XMLAttribute const* attr = transparent_node->Attrib("value"))
-				{
-					mtl_desc_.mtl_data->transparent = attr->ValueInt() ? true : false;
-				}
-			}
-			if (XMLNode const* alpha_test_node = root.FirstNode("alpha_test"))
-			{
-				if (XMLAttribute const* attr = alpha_test_node->Attrib("value"))
-				{
-					mtl_desc_.mtl_data->alpha_test = attr->ValueFloat();
-				}
-			}
-			if (XMLNode const* sss_node = root.FirstNode("sss"))
-			{
-				if (XMLAttribute const* attr = sss_node->Attrib("value"))
-				{
-					mtl_desc_.mtl_data->sss = attr->ValueInt() ? true : false;
-				}
-			}
-			if (XMLNode const* two_sided_node = root.FirstNode("two_sided"))
-			{
-				if (XMLAttribute const* attr = two_sided_node->Attrib("value"))
-				{
-					mtl_desc_.mtl_data->two_sided = attr->ValueInt() ? true : false;
-				}
-			}
-
-			if (Context::Instance().RenderFactoryValid())
-			{
-				RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-				RenderDeviceCaps const& caps = rf.RenderEngineInstance().DeviceCaps();
-				if (caps.multithread_res_creating_support)
-				{
-					this->MainThreadStageNoLock();
+					mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_MetalnessGlossiness] = std::string(attr->ValueString());
 				}
 			}
 		}
-
-		void MainThreadStage() override
+		if (XMLNode const* emissive_node = root.FirstNode("emissive"))
 		{
-			std::lock_guard<std::mutex> lock(main_thread_stage_mutex_);
-			this->MainThreadStageNoLock();
-		}
-
-		bool HasSubThreadStage() const override
-		{
-			return true;
-		}
-
-		bool Match(ResLoadingDesc const & rhs) const override
-		{
-			if (this->Type() == rhs.Type())
+			if (XMLAttribute const* attr = emissive_node->Attrib("color"))
 			{
-				RenderMaterialLoadingDesc const & mtlld = static_cast<RenderMaterialLoadingDesc const &>(rhs);
-				return (mtl_desc_.res_name == mtlld.mtl_desc_.res_name);
+				ExtractFVector<3>(attr->ValueString(), &mtl_desc_.mtl_data->emissive[0]);
 			}
-			return false;
-		}
-
-		void CopyDataFrom(ResLoadingDesc const & rhs) override
-		{
-			COMMON_ASSERT(this->Type() == rhs.Type());
-
-			RenderMaterialLoadingDesc const & mtlld = static_cast<RenderMaterialLoadingDesc const &>(rhs);
-			mtl_desc_.res_name = mtlld.mtl_desc_.res_name;
-			mtl_desc_.mtl_data = mtlld.mtl_desc_.mtl_data;
-			mtl_desc_.mtl = mtlld.mtl_desc_.mtl;
-		}
-
-		std::shared_ptr<void> CloneResourceFrom(std::shared_ptr<void> const & resource) override
-		{
-			return resource;
-		}
-
-		std::shared_ptr<void> Resource() const override
-		{
-			return *mtl_desc_.mtl;
-		}
-
-	private:
-		void MainThreadStageNoLock()
-		{
-			if (!*mtl_desc_.mtl)
+			if (XMLAttribute const* attr = emissive_node->Attrib("texture"))
 			{
-				RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
-
-				mtl->Name(mtl_desc_.mtl_data->name);
-
-				mtl->Albedo(mtl_desc_.mtl_data->albedo);
-				mtl->Metalness(mtl_desc_.mtl_data->metalness);
-				mtl->Glossiness(mtl_desc_.mtl_data->glossiness);
-				mtl->Emissive(mtl_desc_.mtl_data->emissive);
-
-				mtl->Transparent(mtl_desc_.mtl_data->transparent);
-				mtl->AlphaTestThreshold(mtl_desc_.mtl_data->alpha_test);
-				mtl->Sss(mtl_desc_.mtl_data->sss);
-				mtl->TwoSided(mtl_desc_.mtl_data->two_sided);
-
-				mtl->NormalScale(mtl_desc_.mtl_data->normal_scale);
-				mtl->OcclusionStrength(mtl_desc_.mtl_data->occlusion_strength);
-
-				for (size_t i = 0; i < RenderMaterial::TS_NumTextureSlots; ++i)
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Emissive] = std::string(attr->ValueString());
+			}
+		}
+		if (XMLNode const* normal_node = root.FirstNode("normal"))
+		{
+			if (XMLAttribute const* attr = normal_node->Attrib("texture"))
+			{
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Normal] = std::string(attr->ValueString());
+			}
+			if (XMLAttribute const* attr = normal_node->Attrib("scale"))
+			{
+				mtl_desc_.mtl_data->normal_scale = attr->ValueFloat();
+			}
+		}
+		if (XMLNode const* height_node = root.FirstNode("height"))
+		{
+			if (XMLAttribute const* attr = height_node->Attrib("texture"))
+			{
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Height] = std::string(attr->ValueString());
+			}
+			if (XMLAttribute const* attr = height_node->Attrib("offset"))
+			{
+				mtl_desc_.mtl_data->height_offset_scale.x() = attr->ValueFloat();
+			}
+			if (XMLAttribute const* attr = height_node->Attrib("scale"))
+			{
+				mtl_desc_.mtl_data->height_offset_scale.y() = attr->ValueFloat();
+			}
+		}
+		if (XMLNode const* occlusion_node = root.FirstNode("occlusion"))
+		{
+			if (XMLAttribute const* attr = occlusion_node->Attrib("texture"))
+			{
+				mtl_desc_.mtl_data->tex_names[RenderMaterial::TS_Occlusion] = std::string(attr->ValueString());
+			}
+			if (XMLAttribute const* attr = occlusion_node->Attrib("strength"))
+			{
+				mtl_desc_.mtl_data->occlusion_strength = attr->ValueFloat();
+			}
+		}
+		if (XMLNode const* detail_node = root.FirstNode("detail"))
+		{
+			if (XMLAttribute const* attr = detail_node->Attrib("mode"))
+			{
+				size_t const mode_hash = HashValue(attr->ValueString());
+				if (CtHash("Parallax Occlusion Mapping") == mode_hash)
 				{
-					mtl->TextureName(static_cast<RenderMaterial::TextureSlot>(i), mtl_desc_.mtl_data->tex_names[i]);
+					mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::ParallaxOcclusionMapping;
 				}
+				else if (CtHash("Flat Tessellation") == mode_hash)
+				{
+					mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::FlatTessellation;
+				}
+				else if (CtHash("Smooth Tessellation") == mode_hash)
+				{
+					mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::SmoothTessellation;
+				}
+			}
 
-				mtl->DetailMode(mtl_desc_.mtl_data->detail_mode);
-				mtl->HeightOffset(mtl_desc_.mtl_data->height_offset_scale.x());
-				mtl->HeightScale(mtl_desc_.mtl_data->height_offset_scale.y());
-				mtl->EdgeTessHint(mtl_desc_.mtl_data->tess_factors.x());
-				mtl->InsideTessHint(mtl_desc_.mtl_data->tess_factors.y());
-				mtl->MinTessFactor(mtl_desc_.mtl_data->tess_factors.z());
-				mtl->MaxTessFactor(mtl_desc_.mtl_data->tess_factors.w());
-
-				mtl->LoadTextureSlots();
-
-				*mtl_desc_.mtl = mtl;
+			if (XMLNode const* tess_node = detail_node->FirstNode("tess"))
+			{
+				if (XMLAttribute const* attr = tess_node->Attrib("edge_hint"))
+				{
+					mtl_desc_.mtl_data->tess_factors.x() = attr->ValueFloat();
+				}
+				if (XMLAttribute const* attr = tess_node->Attrib("inside_hint"))
+				{
+					mtl_desc_.mtl_data->tess_factors.y() = attr->ValueFloat();
+				}
+				if (XMLAttribute const* attr = tess_node->Attrib("min"))
+				{
+					mtl_desc_.mtl_data->tess_factors.z() = attr->ValueFloat();
+				}
+				if (XMLAttribute const* attr = tess_node->Attrib("max"))
+				{
+					mtl_desc_.mtl_data->tess_factors.w() = attr->ValueFloat();
+				}
+			}
+		}
+		if (XMLNode const* transparent_node = root.FirstNode("transparent"))
+		{
+			if (XMLAttribute const* attr = transparent_node->Attrib("value"))
+			{
+				mtl_desc_.mtl_data->transparent = attr->ValueInt() ? true : false;
+			}
+		}
+		if (XMLNode const* alpha_test_node = root.FirstNode("alpha_test"))
+		{
+			if (XMLAttribute const* attr = alpha_test_node->Attrib("value"))
+			{
+				mtl_desc_.mtl_data->alpha_test = attr->ValueFloat();
+			}
+		}
+		if (XMLNode const* sss_node = root.FirstNode("sss"))
+		{
+			if (XMLAttribute const* attr = sss_node->Attrib("value"))
+			{
+				mtl_desc_.mtl_data->sss = attr->ValueInt() ? true : false;
+			}
+		}
+		if (XMLNode const* two_sided_node = root.FirstNode("two_sided"))
+		{
+			if (XMLAttribute const* attr = two_sided_node->Attrib("value"))
+			{
+				mtl_desc_.mtl_data->two_sided = attr->ValueInt() ? true : false;
 			}
 		}
 
-	private:
-		RenderMaterialDesc mtl_desc_;
-		std::mutex main_thread_stage_mutex_;
-	};
-
-	// TODO: Need refactors
-
-	uint32_t constexpr sw_albedo_clr_offset_ = 0;
-	uint32_t constexpr sw_metalness_glossiness_factor_offset_ = sw_albedo_clr_offset_ + sizeof(float4);
-	uint32_t constexpr sw_emissive_clr_offset_ = sw_metalness_glossiness_factor_offset_ + sizeof(float4);
-	uint32_t constexpr sw_albedo_map_enabled_offset_ = sw_emissive_clr_offset_ + sizeof(float4);
-	uint32_t constexpr sw_normal_map_enabled_offset_ = sw_albedo_map_enabled_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_height_map_parallax_enabled_offset_ = sw_normal_map_enabled_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_height_map_tess_enabled_offset_ = sw_height_map_parallax_enabled_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_occlusion_map_enabled_offset_ = sw_height_map_tess_enabled_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_alpha_test_threshold_offset_ = sw_occlusion_map_enabled_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_normal_scale_offset_ = sw_alpha_test_threshold_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_occlusion_strength_offset_ = sw_normal_scale_offset_ + sizeof(float);
-	uint32_t constexpr sw_height_offset_scale_offset_ = sw_occlusion_strength_offset_ + sizeof(float);
-	uint32_t constexpr sw_tess_factors_offset_ = sw_height_offset_scale_offset_ + sizeof(uint32_t);
-	uint32_t constexpr sw_pdmc_size = sw_tess_factors_offset_ + sizeof(float4);
-
-	PredefinedMaterialCBuffer const& PredefinedMaterialCBufferInstance()
-	{
-		return Context::Instance().RenderFactoryInstance().RenderEngineInstance().PredefinedMaterialCBufferInstance();
+		if (Context::Instance().RenderFactoryValid())
+		{
+			RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+			RenderDeviceCaps const& caps = rf.RenderEngineInstance().DeviceCaps();
+			if (caps.multithread_res_creating_support)
+			{
+				this->MainThreadStageNoLock();
+			}
+		}
 	}
+
+	void MainThreadStage() override
+	{
+		std::lock_guard<std::mutex> lock(main_thread_stage_mutex_);
+		this->MainThreadStageNoLock();
+	}
+
+	bool HasSubThreadStage() const override
+	{
+		return true;
+	}
+
+	bool Match(ResLoadingDesc const & rhs) const override
+	{
+		if (this->Type() == rhs.Type())
+		{
+			RenderMaterialLoadingDesc const & mtlld = static_cast<RenderMaterialLoadingDesc const &>(rhs);
+			return (mtl_desc_.res_name == mtlld.mtl_desc_.res_name);
+		}
+		return false;
+	}
+
+	void CopyDataFrom(ResLoadingDesc const & rhs) override
+	{
+		COMMON_ASSERT(this->Type() == rhs.Type());
+
+		RenderMaterialLoadingDesc const & mtlld = static_cast<RenderMaterialLoadingDesc const &>(rhs);
+		mtl_desc_.res_name = mtlld.mtl_desc_.res_name;
+		mtl_desc_.mtl_data = mtlld.mtl_desc_.mtl_data;
+		mtl_desc_.mtl = mtlld.mtl_desc_.mtl;
+	}
+
+	std::shared_ptr<void> CloneResourceFrom(std::shared_ptr<void> const & resource) override
+	{
+		return resource;
+	}
+
+	std::shared_ptr<void> Resource() const override
+	{
+		return *mtl_desc_.mtl;
+	}
+
+private:
+	void MainThreadStageNoLock()
+	{
+		if (!*mtl_desc_.mtl)
+		{
+			RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
+
+			mtl->Name(mtl_desc_.mtl_data->name);
+
+			mtl->Albedo(mtl_desc_.mtl_data->albedo);
+			mtl->Metalness(mtl_desc_.mtl_data->metalness);
+			mtl->Glossiness(mtl_desc_.mtl_data->glossiness);
+			mtl->Emissive(mtl_desc_.mtl_data->emissive);
+
+			mtl->Transparent(mtl_desc_.mtl_data->transparent);
+			mtl->AlphaTestThreshold(mtl_desc_.mtl_data->alpha_test);
+			mtl->Sss(mtl_desc_.mtl_data->sss);
+			mtl->TwoSided(mtl_desc_.mtl_data->two_sided);
+
+			mtl->NormalScale(mtl_desc_.mtl_data->normal_scale);
+			mtl->OcclusionStrength(mtl_desc_.mtl_data->occlusion_strength);
+
+			for (size_t i = 0; i < RenderMaterial::TS_NumTextureSlots; ++i)
+			{
+				mtl->TextureName(static_cast<RenderMaterial::TextureSlot>(i), mtl_desc_.mtl_data->tex_names[i]);
+			}
+
+			mtl->DetailMode(mtl_desc_.mtl_data->detail_mode);
+			mtl->HeightOffset(mtl_desc_.mtl_data->height_offset_scale.x());
+			mtl->HeightScale(mtl_desc_.mtl_data->height_offset_scale.y());
+			mtl->EdgeTessHint(mtl_desc_.mtl_data->tess_factors.x());
+			mtl->InsideTessHint(mtl_desc_.mtl_data->tess_factors.y());
+			mtl->MinTessFactor(mtl_desc_.mtl_data->tess_factors.z());
+			mtl->MaxTessFactor(mtl_desc_.mtl_data->tess_factors.w());
+
+			mtl->LoadTextureSlots();
+
+			*mtl_desc_.mtl = mtl;
+		}
+	}
+
+private:
+	RenderMaterialDesc mtl_desc_;
+	std::mutex main_thread_stage_mutex_;
+};
+
+// TODO: Need refactors
+
+uint32_t constexpr sw_albedo_clr_offset_ = 0;
+uint32_t constexpr sw_metalness_glossiness_factor_offset_ = sw_albedo_clr_offset_ + sizeof(float4);
+uint32_t constexpr sw_emissive_clr_offset_ = sw_metalness_glossiness_factor_offset_ + sizeof(float4);
+uint32_t constexpr sw_albedo_map_enabled_offset_ = sw_emissive_clr_offset_ + sizeof(float4);
+uint32_t constexpr sw_normal_map_enabled_offset_ = sw_albedo_map_enabled_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_height_map_parallax_enabled_offset_ = sw_normal_map_enabled_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_height_map_tess_enabled_offset_ = sw_height_map_parallax_enabled_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_occlusion_map_enabled_offset_ = sw_height_map_tess_enabled_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_alpha_test_threshold_offset_ = sw_occlusion_map_enabled_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_normal_scale_offset_ = sw_alpha_test_threshold_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_occlusion_strength_offset_ = sw_normal_scale_offset_ + sizeof(float);
+uint32_t constexpr sw_height_offset_scale_offset_ = sw_occlusion_strength_offset_ + sizeof(float);
+uint32_t constexpr sw_tess_factors_offset_ = sw_height_offset_scale_offset_ + sizeof(uint32_t);
+uint32_t constexpr sw_pdmc_size = sw_tess_factors_offset_ + sizeof(float4);
+
+PredefinedMaterialCBuffer const& PredefinedMaterialCBufferInstance()
+{
+	return Context::Instance().RenderFactoryInstance().RenderEngineInstance().PredefinedMaterialCBufferInstance();
+}
 }
 
 
@@ -416,7 +416,17 @@ using namespace CommonWorker;
 
 RenderMaterial::RenderMaterial()
 {
-    
+	if (Context::Instance().RenderFactoryValid())
+	{
+		auto* curr_cbuff = PredefinedMaterialCBufferInstance().CBuffer();
+		cbuffer_ = curr_cbuff->Clone(curr_cbuff->OwnerEffect());
+		is_sw_mode_ = false;
+	}
+	else
+	{
+		sw_cbuffer_.resize(sw_pdmc_size);
+		is_sw_mode_ = true;
+	}
 }
 
 void RenderMaterial::Albedo(const float4& value)
@@ -831,53 +841,100 @@ const std::string& RenderMaterial::TextureName(TextureSlot slot) const
 
 void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 {
-	//const auto& pmcb = PredefinedMaterialCBufferInstance();
-    
-    switch (slot)
-	{
-        case TS_Albedo:
-        {
+	auto const& pmcb = PredefinedMaterialCBufferInstance();
+		switch (slot)
+		{
+		case TS_Albedo:
+			if (is_sw_mode_)
+			{
+				reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_albedo_map_enabled_offset_]) = srv ? 1 : 0;
+			}
+			else
+			{
+				pmcb.AlbedoMapEnabled(*cbuffer_) = srv ? 1 : 0;
+			}
+			break;
 
-        }
-        break;
+		case TS_MetalnessGlossiness:
+			if (is_sw_mode_)
+			{
+				reinterpret_cast<float3&>(sw_cbuffer_[sw_metalness_glossiness_factor_offset_]).z() = srv ? 1.0f : 0.0f;
+			}
+			else
+			{
+				pmcb.MetalnessGlossinessFactor(*cbuffer_).z() = srv ? 1.0f : 0.0f;
+			}
+			break;
 
-        case TS_MetalnessGlossiness:
-        {
+		case TS_Emissive:
+			if (is_sw_mode_)
+			{
+				reinterpret_cast<float4&>(sw_cbuffer_[sw_emissive_clr_offset_]).w() = srv ? 1.0f : 0.0f;
+			}
+			else
+			{
+				pmcb.EmissiveClr(*cbuffer_).w() = srv ? 1.0f : 0.0f;
+			}
+			break;
 
-        }
-        break;
+		case TS_Normal:
+			if (is_sw_mode_)
+			{
+				reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_normal_map_enabled_offset_]) = srv ? 1 : 0;
+			}
+			else
+			{
+				pmcb.NormalMapEnabled(*cbuffer_) = srv ? 1 : 0;
+			}
+			break;
 
+		case TS_Height:
+			if ((detail_mode_ == SurfaceDetailMode::ParallaxMapping) || (detail_mode_ == SurfaceDetailMode::ParallaxOcclusionMapping))
+			{
+				if (is_sw_mode_)
+				{
+					reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_height_map_parallax_enabled_offset_]) = srv ? 1 : 0;
+					reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_height_map_tess_enabled_offset_]) = 0;
+				}
+				else
+				{
+					pmcb.HeightMapParallaxEnabled(*cbuffer_) = srv ? 1 : 0;
+					pmcb.HeightMapTessEnabled(*cbuffer_) = 0;
+				}
+			}
+			else
+			{
+				if (is_sw_mode_)
+				{
+					reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_height_map_parallax_enabled_offset_]) = 0;
+					reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_height_map_tess_enabled_offset_]) = srv ? 1 : 0;
+				}
+				else
+				{
+					pmcb.HeightMapParallaxEnabled(*cbuffer_) = 0;
+					pmcb.HeightMapTessEnabled(*cbuffer_) = srv ? 1 : 0;
+				}
+			}
+			break;
 
-        case TS_Emissive:
-        {
+		case TS_Occlusion:
+			if (is_sw_mode_)
+			{
+				reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_occlusion_map_enabled_offset_]) = 0;
+			}
+			else
+			{
+				pmcb.OcclusionMapEnabled(*cbuffer_) = srv ? 1 : 0;
+			}
+			break;
 
-        }
-        break;
-
-        case TS_Normal:
-        {
-
-        }
-        break;
-
-        case TS_Height:
-        {
-
-        }
-        break;
-
-        case TS_Occlusion:
-        {
-
-        }
-        break;
-
-        default:
+		default:
 			ZENGINE_UNREACHABLE("Invalid texture slot");
-    }
-    cbuffer_->Dirty(true);
+		}
 
-	textures_[slot].second = std::move(srv);
+		cbuffer_->Dirty(true);
+
+		textures_[slot].second = std::move(srv);
 }
 
 const ShaderResourceViewPtr& RenderMaterial::Texture(TextureSlot slot) const
@@ -912,13 +969,191 @@ void RenderMaterial::LoadTextureSlots()
 
 
 
+RenderMaterialPtr SyncLoadRenderMaterial(std::string_view mtlml_name)
+{
+	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderMaterial>(MakeSharedPtr<RenderMaterialLoadingDesc>(mtlml_name));
+}
 
+RenderMaterialPtr ASyncLoadRenderMaterial(std::string_view mtlml_name)
+{
+	// TODO: Make it really async
+	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderMaterial>(MakeSharedPtr<RenderMaterialLoadingDesc>(mtlml_name));
+}
+
+void SaveRenderMaterial(RenderMaterialPtr const & mtl, std::string const & mtlml_name)
+{
+	XMLNode root(XMLNodeType::Element, "material");
+
+	{
+		XMLNode albedo_node(XMLNodeType::Element, "albedo");
+
+		float4 const& albedo = mtl->Albedo();
+		albedo_node.AppendAttrib(XMLAttribute("color", std::format("{} {} {} {}", albedo.x(), albedo.y(), albedo.z(), albedo.w())));
+
+		if (!mtl->TextureName(RenderMaterial::TS_Albedo).empty())
+		{
+			albedo_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Albedo)));
+		}
+
+		root.AppendNode(std::move(albedo_node));
+	}
+
+	if ((mtl->Metalness() > 0) || (mtl->Glossiness() > 0) || !mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness).empty())
+	{
+		XMLNode metalness_glossiness_node(XMLNodeType::Element, "metalness_glossiness");
+
+		if (mtl->Metalness() > 0)
+		{
+			metalness_glossiness_node.AppendAttrib(XMLAttribute("value", mtl->Metalness()));
+		}
+		if (mtl->Glossiness() > 0)
+		{
+			metalness_glossiness_node.AppendAttrib(XMLAttribute("value", mtl->Glossiness()));
+		}
+		if (!mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness).empty())
+		{
+			metalness_glossiness_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness)));
+		}
+
+		root.AppendNode(std::move(metalness_glossiness_node));
+	}
+
+	float3 const& emissive = mtl->Emissive();
+	if ((emissive.x() > 0) || (emissive.y() > 0) || (emissive.z() > 0)
+		|| (!mtl->TextureName(RenderMaterial::TS_Emissive).empty()))
+	{
+		XMLNode emissive_node(XMLNodeType::Element, "emissive");
+
+		if ((emissive.x() > 0) || (emissive.y() > 0) || (emissive.z() > 0))
+		{
+			emissive_node.AppendAttrib(XMLAttribute("color", std::format("{} {} {}", emissive.x(), emissive.y(), emissive.z())));
+		}
+		if (!mtl->TextureName(RenderMaterial::TS_Emissive).empty())
+		{
+			emissive_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Emissive)));
+		}
+
+		root.AppendNode(std::move(emissive_node));
+	}
+
+	if (!mtl->TextureName(RenderMaterial::TS_Normal).empty())
+	{
+		XMLNode normal_node(XMLNodeType::Element, "normal");
+
+		normal_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Normal)));
+		normal_node.AppendAttrib(XMLAttribute("scale", mtl->NormalScale()));
+
+		root.AppendNode(std::move(normal_node));
+	}
+
+	if (!mtl->TextureName(RenderMaterial::TS_Height).empty())
+	{
+		XMLNode height_node(XMLNodeType::Element, "height");
+
+		height_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Height)));
+		height_node.AppendAttrib(XMLAttribute("offset", mtl->HeightOffset()));
+		height_node.AppendAttrib(XMLAttribute("scale", mtl->HeightScale()));
+
+		root.AppendNode(std::move(height_node));
+	}
+
+	if (!mtl->TextureName(RenderMaterial::TS_Occlusion).empty())
+	{
+		XMLNode occlusion_node(XMLNodeType::Element, "occlusion");
+
+		occlusion_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Occlusion)));
+		occlusion_node.AppendAttrib(XMLAttribute("strength", mtl->OcclusionStrength()));
+
+		root.AppendNode(std::move(occlusion_node));
+	}
+
+	if (mtl->DetailMode() != RenderMaterial::SurfaceDetailMode::ParallaxMapping)
+	{
+		XMLNode detail_node(XMLNodeType::Element, "detail");
+
+		std::string detail_mode_str;
+		switch (mtl->DetailMode())
+		{
+		case RenderMaterial::SurfaceDetailMode::ParallaxOcclusionMapping:
+			detail_mode_str = "Parallax Occlusion Mapping";
+			break;
+
+		case RenderMaterial::SurfaceDetailMode::FlatTessellation:
+			detail_mode_str = "Flat Tessellation";
+			break;
+
+		case RenderMaterial::SurfaceDetailMode::SmoothTessellation:
+			detail_mode_str = "Smooth Tessellation";
+			break;
+
+		default:
+			ZENGINE_UNREACHABLE("Invalid surface detail mode");
+		}
+		detail_node.AppendAttrib(XMLAttribute("mode", detail_mode_str));
+
+		if ((mtl->DetailMode() == RenderMaterial::SurfaceDetailMode::FlatTessellation) ||
+			(mtl->DetailMode() == RenderMaterial::SurfaceDetailMode::SmoothTessellation))
+		{
+			XMLNode tess_node(XMLNodeType::Element, "tess");
+			tess_node.AppendAttrib(XMLAttribute("edge_hint", mtl->EdgeTessHint()));
+			tess_node.AppendAttrib(XMLAttribute("inside_hint", mtl->InsideTessHint()));
+			tess_node.AppendAttrib(XMLAttribute("min", mtl->MinTessFactor()));
+			tess_node.AppendAttrib(XMLAttribute("max", mtl->MaxTessFactor()));
+			detail_node.AppendNode(std::move(tess_node));
+		}
+
+		root.AppendNode(std::move(detail_node));
+	}
+
+	if (mtl->Transparent())
+	{
+		XMLNode transparent_node(XMLNodeType::Element, "transparent");
+
+		transparent_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
+
+		root.AppendNode(std::move(transparent_node));
+	}
+
+	if (mtl->AlphaTestThreshold() > 0)
+	{
+		XMLNode alpha_test_node(XMLNodeType::Element, "alpha_test");
+
+		alpha_test_node.AppendAttrib(XMLAttribute("value", mtl->AlphaTestThreshold()));
+
+		root.AppendNode(std::move(alpha_test_node));
+	}
+
+	if (mtl->Sss())
+	{
+		XMLNode sss_node(XMLNodeType::Element, "sss");
+
+		sss_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
+
+		root.AppendNode(std::move(sss_node));
+	}
+
+	if (mtl->TwoSided())
+	{
+		XMLNode two_sided_node(XMLNodeType::Element, "two_sided");
+
+		two_sided_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
+
+		root.AppendNode(std::move(two_sided_node));
+	}
+
+	std::ofstream ofs(std::string(mtlml_name).c_str());
+	if (!ofs)
+	{
+		ofs.open((Context::Instance().ResLoaderInstance().LocalFolder() + mtlml_name).c_str());
+	}
+	SaveXml(root, ofs);
+}
 
 
 
 
 PredefinedMaterialCBuffer::PredefinedMaterialCBuffer()
-	{
+{
 		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
 		predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
 

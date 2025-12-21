@@ -207,7 +207,9 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
 
 AssetType EditorProjectPanel::GetAssetType(const std::string& extension)
 {
-    auto it = ext_type_map_.find( extension );
+    auto input_ext = extension;
+    StringUtil::ToLower(input_ext);
+    auto it = ext_type_map_.find( input_ext );
     if (it == ext_type_map_.end())
         return AssetType::Other;
     else

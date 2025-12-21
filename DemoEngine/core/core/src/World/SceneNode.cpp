@@ -41,9 +41,9 @@ SceneNode* SceneNode::Parent() const
     return parent_;    
 }
 
-void SceneNode::Parent(SceneNode* node)
+const std::vector<SceneNodePtr>& SceneNode::Children() const
 {
-    parent_ = node;
+    return children_;
 }
 
 void SceneNode::AddChild(const SceneNodePtr& node)
@@ -54,6 +54,37 @@ void SceneNode::AddChild(const SceneNodePtr& node)
         node->Parent(this);
         children_.push_back(node);
     }
+}
+
+void SceneNode::RemoveChild(const SceneNodePtr& node)
+{
+    this->RemoveChild(node.get());
+}
+
+void SceneNode::RemoveChild(SceneNode* node)
+{
+    auto iter = std::find_if(children_.begin(), children_.end(), [node](SceneNodePtr const& child) { return child.get() == node; });
+    if (iter != children_.end())
+    {
+        pos_aabb_dirty_ = true;
+        node->Parent(nullptr);
+        children_.erase(iter);
+
+        this->EmitSceneChanged();
+    }
+}
+
+void SceneNode::ClearChildren()
+{
+    for (auto const& child : children_)
+    {
+        child->Parent(nullptr);
+    }
+
+    pos_aabb_dirty_ = true;
+    children_.clear();
+
+    this->EmitSceneChanged();
 }
 
 void SceneNode::AddComponent(SceneComponentPtr const& component)
@@ -144,11 +175,6 @@ void SceneNode::UpdatePosBoundSubtree()
     
 }
 
-void SceneNode::RemoveChild(const SceneNodePtr& node)
-{
-    this->RemoveChild(node.get());
-}
-
 uint32_t SceneNode::NumComponents() const
 {
     return static_cast<uint32_t>(components_.size());
@@ -172,16 +198,6 @@ SceneComponent* SceneNode::ComponentByIndex(uint32_t i)
 SceneComponent const* SceneNode::ComponentByIndex(uint32_t i) const
 {
     return components_[i].get();
-}
-
-void SceneNode::RemoveChild(SceneNode* node)
-{
-    auto iter = std::find_if(children_.begin(), children_.end(), [node](const SceneNodePtr& child) { return child.get() == node; });
-    if (iter != children_.end())
-    {
-        node->Parent(nullptr);
-        children_.erase(iter);
-    }
 }
 
 void SceneNode::TransformToParent(const float4x4& mat)
@@ -243,6 +259,33 @@ const float4x4& SceneNode::InverseTransformToWorld() const
         inv_xform_to_world_ = MathWorker::inverse(TransformToWorld());
         return inv_xform_to_world_;
     }
+}
+
+void SceneNode::Parent(SceneNode* so)
+{
+    parent_ = so;
+
+    pos_aabb_dirty_ = true;
+    //updated_ = false;
+}
+
+void SceneNode::EmitSceneChanged()
+{
+    // auto& context = Context::Instance();
+    // if (context.SceneManagerValid())
+    // {
+    //     auto* node = this;
+    //     while (node->Parent() != nullptr)
+    //     {
+    //         node = node->Parent();
+    //     }
+
+    //     auto& scene_mgr = context.SceneManagerInstance();
+    //     if (node == &scene_mgr.SceneRootNode())
+    //     {
+    //         scene_mgr.OnSceneChanged();
+    //     }
+    // }
 }
 
 void SceneNode::Update(float dt)

@@ -285,9 +285,6 @@ namespace RenderWorker
 		template<typename T>
 		Matrix4_T<T> PerspectiveFovRH(T Fov, T Aspect, T Near, T Far);
 
-		template <typename T>
-		Quaternion_T<T> quat_trans_to_udq(const Quaternion_T<T>&q, Vector_T<T, 3> const & t) noexcept;
-
 		// 矩阵分解
 		template<typename T>
 		void decompose(Vector_T<T, 3>& scale, Quaternion_T<T>& rot, Vector_T<T, 3>& trans, const Matrix4_T<T>& m);
@@ -318,17 +315,25 @@ namespace RenderWorker
 		template <typename T>
 		Quaternion_T<T> mul_dual(const  Quaternion_T<T>& lhs_real, const  Quaternion_T<T>& lhs_dual,
 			const  Quaternion_T<T>& rhs_real, const  Quaternion_T<T>& rhs_dual) noexcept;
+
+
 		// Dual quaternion
 		///////////////////////////////////////////////////////////////////////////////
 		template <typename T>
-		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
-			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept;
-		
+		Quaternion_T<T> quat_trans_to_udq(const Quaternion_T<T>&q, Vector_T<T, 3> const & t) noexcept;
+
+		template <typename T>
+		Vector_T<T, 3> udq_to_trans(const  Quaternion_T<T>& real, const  Quaternion_T<T>& dual) noexcept;
+
 		template <typename T>
 		Matrix4_T<T> udq_to_matrix(const Quaternion_T<T>&real, const Quaternion_T<T>&dual) noexcept;
 
 		template <typename T>
-		Vector_T<T, 3> udq_to_trans(const  Quaternion_T<T>& real, const  Quaternion_T<T>& dual) noexcept;
+		std::pair<Quaternion_T<T>, Quaternion_T<T>> conjugate(Quaternion_T<T> const & real, Quaternion_T<T> const & dual) noexcept;
+
+		template <typename T>
+		Matrix4_T<T> transformation(const Vector_T<T, 3>* scaling_center, const Quaternion_T<T>* scaling_rotation, const Vector_T<T, 3>* scale,
+			const Vector_T<T, 3>* rotation_center, const Quaternion_T<T>* rotation, const Vector_T<T, 3>* trans) noexcept;
 
 		template <typename T>
 		void udq_to_screw(T& angle, T& pitch, Vector_T<T, 3>& dir, Vector_T<T, 3>& moment,

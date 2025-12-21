@@ -413,6 +413,59 @@ namespace RenderWorker
 		rls_[lod]->BindIndexStream(index_stream, format);
 	}
 
+
+	std::tuple<quater, quater, float> KeyFrameSet::Frame(float frame) const
+	{
+		std::tuple<quater, quater, float> ret;
+		if (frame_id.size() == 1)
+		{
+			ret = std::make_tuple(bind_real[0], bind_dual[0], bind_scale[0]);
+		}
+		else
+		{
+			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
+
+			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
+			int index = static_cast<int>(iter - frame_id.begin());
+
+			int index0 = index - 1;
+			int index1 = index % frame_id.size();
+			int frame0 = frame_id[index0];
+			int frame1 = frame_id[index1];
+			float factor = (frame - frame0) / (frame1 - frame0);
+			auto dq = MathWorker::sclerp(bind_real[index0], bind_dual[index0], bind_real[index1], bind_dual[index1], factor);
+			ret = std::make_tuple(dq.first, dq.second, MathWorker::lerp(bind_scale[index0], bind_scale[index1], factor));
+		}
+		return ret;
+	}
+
+
+
+	AABBox AABBKeyFrameSet::Frame(float frame) const
+	{
+		if (frame_id.size() == 1)
+		{
+			return bb[0];
+		}
+		else
+		{
+			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
+
+			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
+			int index = static_cast<int>(iter - frame_id.begin());
+
+			int index0 = index - 1;
+			int index1 = index % frame_id.size();
+			int frame0 = frame_id[index0];
+			int frame1 = frame_id[index1];
+			float factor = (frame - frame0) / (frame1 - frame0);
+			return AABBox(MathWorker::lerp(bb[index0].Min(), bb[index1].Min(), factor),
+				MathWorker::lerp(bb[index0].Max(), bb[index1].Max(), factor));
+		}
+	}
+
+
+
 	RenderModel::RenderModel(const SceneNodePtr& root_node)
 		: root_node_(root_node), hw_res_ready_(false)
 	{

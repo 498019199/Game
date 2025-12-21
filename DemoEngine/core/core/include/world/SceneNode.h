@@ -37,11 +37,12 @@ public:
 	uint32_t Attrib() const;
 
     SceneNode* Parent() const;
-    void Parent(SceneNode* node);
-	std::vector<SceneNode*> const & Children() const;
+
+    const std::vector<SceneNodePtr>&  Children() const;
     void AddChild(const SceneNodePtr& node);
     void RemoveChild(const SceneNodePtr& node);
     void RemoveChild(SceneNode* node);
+    void ClearChildren();
     
     uint32_t NumComponents() const;
     template <typename T>
@@ -113,6 +114,11 @@ public:
     const float4x4& InverseTransformToParent() const;
     const float4x4& TransformToWorld() const;
     const float4x4& InverseTransformToWorld() const;
+
+private:
+    void Parent(SceneNode* so);
+	void EmitSceneChanged();
+    
 private:
     std::wstring name_;
     uint32_t attrib_;
