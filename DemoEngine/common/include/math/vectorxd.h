@@ -254,8 +254,7 @@ public:
 	template <typename U>
 	const Vector_T& operator/=(const U& rhs) noexcept
 	{
-    	MathHelper::vector_helper<T, N>::DoScale(vec_.data(), vec_.data(), rhs);
-    	return *this;
+		return this->operator*=(1.0f / rhs);
 	}
 
 	//    ƹ   
@@ -282,7 +281,7 @@ public:
 	}
 
 	// 一元操作符
-	const Vector_T operator+() const  noexcept
+	constexpr const Vector_T operator+() const  noexcept
 	{
     	return *this;
 	}
@@ -294,6 +293,71 @@ public:
 		return tmp;
 	}
 
+	friend Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator+=(rhs);
+	}
+
+	template <typename U>
+	friend Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator+=(rhs);
+	}
+	
+	template <typename U>
+	friend Vector_T<T, N> operator+(const U& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return rhs + lhs;
+	}
+
+	friend Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator-=(rhs);
+	}
+
+	template <typename U>
+	friend Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator-=(rhs);
+	}
+
+	friend Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator*=(rhs);
+	}
+
+	template <typename U>
+	friend Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator*=(rhs);
+	}
+
+	template <typename U>
+	friend Vector_T<T, N> operator*(const U& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return rhs * lhs;
+	}
+
+	friend Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator/=(rhs);
+	}
+
+	template <typename U>
+	friend Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	{
+		return Vector_T<T, N>(lhs).operator/=(rhs);
+	}
+
+	// print
+	friend std::ostream& operator<<(std::ostream& os, const Vector_T<T, N>& vec)
+	{
+		for (size_t i = 0; i < N; i++)
+		{
+			os << vec[i] << " ";
+		}
+		return os;
+	}
 
 	void swap(Vector_T& rhs) noexcept
 	{
@@ -320,7 +384,7 @@ public:
 	}
 
 private:
-	DetailType vec_;
+	DetailType vec_ {};
 };
 
 using int1 = Vector_T<int32_t, 1>;
@@ -335,69 +399,4 @@ using float1 = Vector_T<float, 1>;
 using float2 = Vector_T<float, 2>;
 using float3 = Vector_T<float, 3>;
 using float4 = Vector_T<float, 4>;
-
-template <typename T, size_t N>
-Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator+=(rhs);
-}
-
-template <typename T, size_t N, typename U>
-Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const U& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator+=(rhs);
-}
-
-template <typename T, size_t N>
-Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator-=(rhs);
-}
-
-template <typename T, size_t N, typename U>
-Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const U& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator-=(rhs);
-}
-
-template <typename T, size_t N>
-Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator*=(rhs);
-}
-
-template <typename T, size_t N, typename U>
-Vector_T<T, N> operator*(const U& lhs, const Vector_T<T, N>& rhs) noexcept
-{
-	return rhs * lhs;
-}
-
-template <typename T, size_t N, typename U>
-Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const U& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator*=(rhs);
-}
-
-template <typename T, size_t N>
-Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator/=(rhs);
-}
-
-template <typename T, size_t N, typename U>
-Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const U& rhs) noexcept
-{
-	return Vector_T<T, N>(lhs).operator/=(rhs);
-}
-
-// print
-template <typename T, size_t N>
-std::ostream& operator<<(std::ostream& os, const Vector_T<T, N>& vec)
-{
-	for (size_t i = 0; i < N; i++)
-	{
-		os << vec[i] << " ";
-	}
-	return os;
-}
 }

@@ -98,4 +98,31 @@ half::operator float() const noexcept
     return std::bit_cast<float>(ret);
 }
 
+half half::pos_inf() noexcept
+{
+    half h;
+    h.value_ = 0x7C00;
+    return h;
+}
+
+half half::neg_inf() noexcept
+{
+    half h;
+    h.value_ = 0xFC00;
+    return h;
+}
+
+half half::q_nan() noexcept
+{
+    half h;
+    h.value_ = 0x7FFF;
+    return h;
+}
+
+half half::s_nan() noexcept
+{
+    half h;
+    h.value_ = 0x7DFF;
+    return h;
+}
 }

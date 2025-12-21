@@ -138,17 +138,16 @@ public:
     {
         return !(lhs == rhs);
     }
+
+    // print
+    template <typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Matrix4_T<U>& rhs)
+    {
+        return os << rhs.m_;
+    }
 private:
 	Vector_T<Vector_T<T, col_num>, row_num> m_;
 };
-
-
-// print
-template <typename U>
-std::ostream& operator<<(std::ostream& os, const Matrix4_T<U>& rhs)
-{
-	return os << rhs.m_;
-}
 
 using float4x4 = Matrix4_T<float>;
 }

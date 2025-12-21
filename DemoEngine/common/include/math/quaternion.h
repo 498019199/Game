@@ -21,11 +21,27 @@ public:
 	constexpr Quaternion_T() noexcept
 	{
 	}
-	explicit constexpr Quaternion_T(const T * rhs) noexcept;
-	constexpr Quaternion_T(const Vector_T<T, 3>& vec, T s) noexcept;
-	Quaternion_T(const Quaternion_T & rhs) noexcept;
-	Quaternion_T(Quaternion_T&& rhs) noexcept;
-	constexpr Quaternion_T(T x, T y, T z, T w) noexcept;
+	explicit constexpr Quaternion_T(const T* rhs) noexcept
+		: quat_(rhs)
+	{
+
+	}
+	constexpr Quaternion_T(const Vector_T<T, 3>& vec, T s) noexcept
+		: quat_(vec.x(), vec.y(), vec.z(), s)
+	{
+	}
+	Quaternion_T(const Quaternion_T & rhs) noexcept
+		: quat_(rhs.quat_)
+	{
+	}
+	Quaternion_T(Quaternion_T&& rhs) noexcept
+		: quat_(std::move(rhs.quat_))
+	{
+	}
+	constexpr Quaternion_T(T x, T y, T z, T w) noexcept
+		: quat_(std::move(x), std::move(y), std::move(z), std::move(w))
+	{
+	}
 
 	static constexpr size_t size() noexcept
 	{
@@ -99,12 +115,6 @@ public:
 	const Quaternion_T& operator/=(T rhs) noexcept;
 	Quaternion_T& operator=(const Quaternion_T & rhs) noexcept;
 	Quaternion_T& operator=(Quaternion_T&& rhs) noexcept;
-
-	Quaternion_T operator+(const Quaternion_T & rhs) const noexcept;
-	Quaternion_T operator-(const Quaternion_T & rhs) const noexcept;
-	Quaternion_T operator*(const Quaternion_T & rhs) const noexcept;
-	Quaternion_T operator*(T rhs) const noexcept;
-	Quaternion_T operator/(T rhs) const noexcept;
    
 	Quaternion_T const operator+() const noexcept;
 	Quaternion_T const operator-() const noexcept;
@@ -123,55 +133,48 @@ public:
 
 	static const Quaternion_T& Identity() noexcept;
 
-
 	bool operator==(Quaternion_T<T> const & rhs) const noexcept;
 	bool operator!=(Quaternion_T<T> const & rhs) const noexcept;
+
+	friend Quaternion_T<T> operator+(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+	{
+		return Quaternion_T<T>(lhs).operator+=(rhs);
+	}
+
+	friend Quaternion_T<T> operator-(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+	{
+		return Quaternion_T<T>(lhs).operator-=(rhs);
+	}
+
+	friend Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
+	{
+		return Quaternion_T<T>(lhs).operator*=(rhs);
+	}
+
+	friend Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, T rhs) noexcept
+	{
+		return Quaternion_T<T>(lhs).operator*=(rhs);
+	}
+
+	friend Quaternion_T<T> operator*(T lhs, const Quaternion_T<T>& rhs) noexcept
+	{
+		return rhs * lhs;
+	}
+
+	friend Quaternion_T<T> operator/(const Quaternion_T<T>& lhs, T rhs) noexcept
+	{
+		return Quaternion_T<T>(lhs).operator/=(rhs);
+	}
+
+	// print
+	template <typename U>
+	friend std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs)
+	{
+		return os << rhs.quat_;
+	}
 private:
 	Vector_T<T, elem_num> quat_;
 };
 
 using quater = Quaternion_T<float>;
-
-template <typename T>
-Quaternion_T<T> operator+(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
-{
-	return Quaternion_T<T>(lhs).operator+=(rhs);
-}
-
-template <typename T>
-Quaternion_T<T> operator-(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
-{
-	return Quaternion_T<T>(lhs).operator-=(rhs);
-}
-
-template <typename T>
-Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, const Quaternion_T<T>& rhs) noexcept
-{
-	return Quaternion_T<T>(lhs).operator*=(rhs);
-}
-
-template <typename T>
-Quaternion_T<T> operator*(const Quaternion_T<T>& lhs, T rhs) noexcept
-{
-	return Quaternion_T<T>(lhs).operator*=(rhs);
-}
-
-template <typename T>
-Quaternion_T<T> operator*(T lhs, const Quaternion_T<T>& rhs) noexcept
-{
-	return rhs * lhs;
-}
-
-template <typename T>
-Quaternion_T<T> operator/(const Quaternion_T<T>& lhs, T rhs) noexcept
-{
-	return Quaternion_T<T>(lhs).operator/=(rhs);
-}
-
-// print
-template <typename U>
-std::ostream& operator<<(std::ostream& os, const Quaternion_T<U>& rhs)
-{
-	return os << rhs.quat_;
-}
 }

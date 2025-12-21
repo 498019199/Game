@@ -49,6 +49,41 @@
 #pragma once
 #include <math/vectorxd.h>
 
+#define HALF_MIN	5.96046448e-08f	// Smallest positive half
+
+#define HALF_NRM_MIN	6.10351562e-05f	// Smallest positive normalized half
+
+#define HALF_MAX	65504.0f	// Largest positive half
+
+#define HALF_EPSILON	0.00097656f	// Smallest positive e for which
+					// half (1.0 + e) != half (1.0)
+
+#define HALF_MANT_DIG	11		// Number of digits in mantissa
+					// (significand + hidden leading 1)
+
+#define HALF_DIG	2		// Number of base 10 digits that
+					// can be represented without change
+
+#define HALF_RADIX	2		// Base of the exponent
+
+#define HALF_MIN_EXP	-13		// Minimum negative integer such that
+					// HALF_RADIX raised to the power of
+					// one less than that integer is a
+					// normalized half
+
+#define HALF_MAX_EXP	16		// Maximum positive integer such that
+					// HALF_RADIX raised to the power of
+					// one less than that integer is a
+					// normalized half
+
+#define HALF_MIN_10_EXP	-4		// Minimum positive integer such
+					// that 10 raised to that power is
+					// a normalized half
+
+#define HALF_MAX_10_EXP	4		// Maximum positive integer such
+					// that 10 raised to that power is
+					// a normalized half
+
 namespace RenderWorker
 {
 // 不知道这个类干什么的，跟颜色有关
@@ -66,6 +101,15 @@ public:
 
     operator float() const noexcept;
 
+    // 特殊值
+    // returns +infinity
+    static half pos_inf() noexcept;
+    // returns -infinity
+    static half neg_inf() noexcept;
+    // returns a NAN with the bit pattern 0111111111111111
+    static half q_nan() noexcept;
+    // returns a NAN with the bit pattern 0111110111111111
+    static half s_nan() noexcept;
 private:
 	uint16_t value_{};
 };

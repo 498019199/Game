@@ -51,6 +51,26 @@ public:
     Vector_T<T, 3> Corner(size_t index) const noexcept;
 
     bool operator==(AABBox_T<T> const & rhs) const noexcept;
+
+    friend AABBox_T<T> operator+(const AABBox_T<T>& lhs, const Vector_T<T, 3>& rhs) noexcept
+	{
+		return AABBox_T<T>(lhs).operator+=(rhs);
+	}
+
+    friend AABBox_T<T> operator-(const AABBox_T<T>& lhs, const Vector_T<T, 3>& rhs) noexcept
+	{
+		return AABBox_T<T>(lhs).operator-=(rhs);
+	}
+
+    friend AABBox_T<T> operator*(const AABBox_T<T>& lhs, const T& rhs) noexcept
+    {
+        return AABBox_T<T>(lhs).operator*=(rhs);
+    }
+
+    friend AABBox_T<T> operator/(const AABBox_T<T>& lhs, const T& rhs) noexcept
+    {
+        return AABBox_T<T>(lhs).operator/=(rhs);
+    }
 private:
 	Vector_T<T, 3> min_, max_;
 };
