@@ -70,7 +70,7 @@ void World::Flush(uint32_t urt)
 void World::Update()
 {
 	auto& context = Context::Instance();
-    auto& app = context.AppInstance();
+    //auto& app = context.AppInstance();
     //const float app_time = app.AppTime();
     //const float frame_time = app.FrameTime();
 

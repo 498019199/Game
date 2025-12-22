@@ -32,7 +32,7 @@ namespace RenderWorker
 		struct vector_helper
 		{
 			template <typename U>
-			static void DoCopy(T out[N], U const rhs[N]) noexcept
+			static void DoCopy(T out[N], const U rhs[N]) noexcept
 			{
 				out[0] = static_cast<T>(rhs[0]);
 				vector_helper<T, N - 1>::DoCopy(out + 1, rhs + 1);
@@ -45,49 +45,49 @@ namespace RenderWorker
 			}
 
 			template <typename U>
-			static void DoAdd(T out[N], T const lhs[N], U const rhs[N]) noexcept
+			static void DoAdd(T out[N], T const lhs[N], const U rhs[N]) noexcept
 			{
 				out[0] = lhs[0] + rhs[0];
 				vector_helper<T, N - 1>::DoAdd(out + 1, lhs + 1, rhs + 1);
 			}
 
 			template <typename U>
-			static void DoAdd(T out[N], T const lhs[N], U const & rhs) noexcept
+			static void DoAdd(T out[N], T const lhs[N], const U & rhs) noexcept
 			{
 				out[0] = lhs[0] + rhs;
 				vector_helper<T, N - 1>::DoAdd(out + 1, lhs + 1, rhs);
 			}
 
 			template <typename U>
-			static void DoSub(T out[N], T const lhs[N], U const rhs[N]) noexcept
+			static void DoSub(T out[N], T const lhs[N], const U rhs[N]) noexcept
 			{
 				out[0] = lhs[0] - rhs[0];
 				vector_helper<T, N - 1>::DoSub(out + 1, lhs + 1, rhs + 1);
 			}
 
 			template <typename U>
-			static void DoSub(T out[N], T const lhs[N], U const & rhs) noexcept
+			static void DoSub(T out[N], T const lhs[N], const U & rhs) noexcept
 			{
 				out[0] = lhs[0] - rhs;
 				vector_helper<T, N - 1>::DoSub(out + 1, lhs + 1, rhs);
 			}
 
 			template <typename U>
-			static void DoMul(T out[N], T const lhs[N], U const rhs[N]) noexcept
+			static void DoMul(T out[N], T const lhs[N], const U rhs[N]) noexcept
 			{
 				out[0] = lhs[0] * rhs[0];
 				vector_helper<T, N - 1>::DoMul(out + 1, lhs + 1, rhs + 1);
 			}
 
 			template <typename U>
-			static void DoScale(T out[N], T const lhs[N], U const & rhs) noexcept
+			static void DoScale(T out[N], T const lhs[N], const U & rhs) noexcept
 			{
 				out[0] = lhs[0] * rhs;
 				vector_helper<T, N - 1>::DoScale(out + 1, lhs + 1, rhs);
 			}
 
 			template <typename U>
-			static void DoDiv(T out[N], T const lhs[N], U const rhs[N]) noexcept
+			static void DoDiv(T out[N], T const lhs[N], const U rhs[N]) noexcept
 			{
 				out[0] = lhs[0] / rhs[0];
 				vector_helper<T, N - 1>::DoDiv(out + 1, lhs + 1, rhs + 1);
@@ -126,43 +126,43 @@ namespace RenderWorker
 			}
 
 			template <typename U>
-			static void DoAdd(T out[1], T const lhs[1], U const rhs[1]) noexcept
+			static void DoAdd(T out[1], T const lhs[1], const U rhs[1]) noexcept
 			{
 				out[0] = lhs[0] + rhs[0];
 			}
 
 			template <typename U>
-			static void DoAdd(T out[1], T const lhs[1], U const rhs) noexcept
+			static void DoAdd(T out[1], T const lhs[1], const U rhs) noexcept
 			{
 				out[0] = lhs[0] + rhs;
 			}
 
 			template <typename U>
-			static void DoSub(T out[1], T const lhs[1], U const rhs[1]) noexcept
+			static void DoSub(T out[1], T const lhs[1], const U rhs[1]) noexcept
 			{
 				out[0] = lhs[0] - rhs[0];
 			}
 
 			template <typename U>
-			static void DoSub(T out[1], T const lhs[1], U const & rhs) noexcept
+			static void DoSub(T out[1], T const lhs[1], const U & rhs) noexcept
 			{
 				out[0] = lhs[0] - rhs;
 			}
 
 			template <typename U>
-			static void DoMul(T out[1], T const lhs[1], U const rhs[1]) noexcept
+			static void DoMul(T out[1], T const lhs[1], const U rhs[1]) noexcept
 			{
 				out[0] = lhs[0] * rhs[0];
 			}
 
 			template <typename U>
-			static void DoScale(T out[1], T const lhs[1], U const & rhs) noexcept
+			static void DoScale(T out[1], T const lhs[1], const U & rhs) noexcept
 			{
 				out[0] = lhs[0] * rhs;
 			}
 
 			template <typename U>
-			static void DoDiv(T out[1], T const lhs[1], U const rhs[1]) noexcept
+			static void DoDiv(T out[1], T const lhs[1], const U rhs[1]) noexcept
 			{
 				out[0] = lhs[0] / rhs[0];
 			}

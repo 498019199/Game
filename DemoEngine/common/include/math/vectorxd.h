@@ -245,9 +245,9 @@ public:
 
 	// operator /
 	template <typename U>
-	const Vector_T& operator/=(const Vector_T<U, N>& rhs) const noexcept
+	const Vector_T& operator/=(const Vector_T<U, N>& rhs) noexcept
 	{
-		MathHelper::vector_helper<U, N>::DoDiv(vec_.data(), vec_.data(), rhs.data());
+		MathHelper::vector_helper<T, N>::DoDiv(vec_.data(), vec_.data(), rhs.data());
 		return *this;
 	}
 
@@ -257,7 +257,7 @@ public:
 		return this->operator*=(1.0f / rhs);
 	}
 
-	//    ƹ   
+	// 构造函数
 	Vector_T& operator=(const Vector_T& rhs) noexcept
 	{
     	if (this != &rhs)
@@ -293,64 +293,64 @@ public:
 		return tmp;
 	}
 
-	friend Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator+(const Vector_T& lhs, const Vector_T& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator+=(rhs);
 	}
 
 	template <typename U>
-	friend Vector_T<T, N> operator+(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	friend Vector_T operator+(const Vector_T& lhs, const U& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator+=(rhs);
 	}
 	
 	template <typename U>
-	friend Vector_T<T, N> operator+(const U& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator+(const U& lhs, const Vector_T& rhs) noexcept
 	{
 		return rhs + lhs;
 	}
 
-	friend Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator-(const Vector_T& lhs, const Vector_T& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator-=(rhs);
 	}
 
 	template <typename U>
-	friend Vector_T<T, N> operator-(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	friend Vector_T operator-(const Vector_T& lhs, const U& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator-=(rhs);
 	}
 
-	friend Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator*(const Vector_T& lhs, const Vector_T& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator*=(rhs);
 	}
 
 	template <typename U>
-	friend Vector_T<T, N> operator*(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	friend Vector_T operator*(const Vector_T& lhs, const U& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator*=(rhs);
 	}
 
 	template <typename U>
-	friend Vector_T<T, N> operator*(const U& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator*(const U& lhs, const Vector_T& rhs) noexcept
 	{
 		return rhs * lhs;
 	}
 
-	friend Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const Vector_T<T, N>& rhs) noexcept
+	friend Vector_T operator/(const Vector_T& lhs, const Vector_T& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator/=(rhs);
 	}
 
 	template <typename U>
-	friend Vector_T<T, N> operator/(const Vector_T<T, N>& lhs, const U& rhs) noexcept
+	friend Vector_T operator/(const Vector_T& lhs, const U& rhs) noexcept
 	{
 		return Vector_T<T, N>(lhs).operator/=(rhs);
 	}
 
 	// print
-	friend std::ostream& operator<<(std::ostream& os, const Vector_T<T, N>& vec)
+	friend std::ostream& operator<<(std::ostream& os, const Vector_T& vec)
 	{
 		for (size_t i = 0; i < N; i++)
 		{
