@@ -242,8 +242,8 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
 
     Verify(d3d_device != nullptr);
     Verify(d3d_imm_ctx != nullptr);
-    //COMMON_ASSUME(d3d_device != nullptr);
-    //COMMON_ASSUME(d3d_imm_ctx != nullptr);
+    COMMON_ASSUME(d3d_device != nullptr);
+    COMMON_ASSUME(d3d_imm_ctx != nullptr);
 
     // 创建交换链
     depth_stencil_fmt_ = settings.depth_stencil_fmt;

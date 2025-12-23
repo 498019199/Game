@@ -70,7 +70,7 @@ public:
     App3D& AppInstance() noexcept
     {
         COMMON_ASSERT(app_);
-       // COMMON_ASSUME(app_);
+        COMMON_ASSUME(app_);
         return *app_;
     }
 

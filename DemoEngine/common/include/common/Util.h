@@ -19,11 +19,11 @@
 #endif//ZENGINE_DEBUG
 
 #if defined(ZENGINE_COMPILER_MSVC)
-	#define ZENGINE_ASSUME(expr) __assume(expr)
+	#define COMMON_ASSUME(expr) __assume(expr)
 #elif defined(ZENGINE_COMPILER_CLANG) || defined(ZENGINE_COMPILER_CLANGCL)
-	#define ZENGINE_ASSUME(expr) { const auto b = (expr); __builtin_assume(b); }
+	#define COMMON_ASSUME(expr) { const auto b = (expr); __builtin_assume(b); }
 #elif defined(KLAYGE_COMPILER_GCC)
-	#define ZENGINE_ASSUME(expr) if (!(expr)) { __builtin_unreachable(); }
+	#define COMMON_ASSUME(expr) if (!(expr)) { __builtin_unreachable(); }
 #endif
 
 #if defined(ZENGINE_CXX23_LIBRARY_TO_UNDERLYING_SUPPORT)

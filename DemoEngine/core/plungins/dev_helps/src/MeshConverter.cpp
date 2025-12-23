@@ -658,7 +658,7 @@ namespace
 						if (has_texcoord[tci])
 						{
 							COMMON_ASSERT(mesh->mTextureCoords[tci] != nullptr);
-							ZENGINE_ASSUME(mesh->mTextureCoords[tci] != nullptr);
+							COMMON_ASSUME(mesh->mTextureCoords[tci] != nullptr);
 
 							texcoords[tci][vi] = float3(&mesh->mTextureCoords[tci][vi].x);
 						}

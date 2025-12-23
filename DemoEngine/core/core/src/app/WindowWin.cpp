@@ -160,14 +160,26 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_ERASEBKGND:
             return 1;
 
+		case WM_SIZE:
+			{
+				RECT rc;
+				::GetClientRect(wnd_, &rc);
+				left_ = rc.left;
+				top_ = rc.top;
+				width_ = rc.right - rc.left;
+				height_ = rc.bottom - rc.top;
+			}
+			break;
+
         case WM_CLOSE:
-        {		
-            active_ = false;
-            ready_ = false;
-            closed_ = true;
-            ::PostQuitMessage(0);
-            return 0;
-        }
+			{		
+				active_ = false;
+				ready_ = false;
+				closed_ = true;
+				::PostQuitMessage(0);
+				return 0;
+			}
+			break;
 	}
 
 	return default_wnd_proc_(hWnd, uMsg, wParam, lParam);
