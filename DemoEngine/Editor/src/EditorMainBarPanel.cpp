@@ -1,6 +1,6 @@
 #include <editor/EditorMainBarPanel.h>
 #include <editor/EditorDialogBoxManager.h>
-
+#include <editor/EditorManagerD3D11.h>
 
 namespace EditorWorker
 {
@@ -64,7 +64,61 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
             ImGui::EndMenuBar();
         }
         
-        
+        auto& d3d_editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+        bool isPop = false;
+        // Translation
+        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Position)
+        {
+            isPop = true;
+            ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
+            ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
+        }
+        if (ImGui::Button("T", buttonSize))
+        {
+            d3d_editor.SetTransformType(ETransformType::TransformType_Position);
+        }
+        if (isPop)
+        {
+            isPop = false;
+            ImGui::PopStyleColor(2);
+        }
+
+        // Rotation
+        ImGui::SameLine();
+        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Rotation)
+        {
+            isPop = true;
+            ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
+            ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
+        }
+        if (ImGui::Button("R", buttonSize))
+        {
+            d3d_editor.SetTransformType(ETransformType::TransformType_Rotation);
+        }
+        if (isPop)
+        {
+            isPop = false;
+            ImGui::PopStyleColor(2);
+        }
+
+        // Scale
+        ImGui::SameLine();
+        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Scale)
+        {
+            isPop = true;
+            ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
+            ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
+        }
+        if (ImGui::Button("S", buttonSize))
+        {
+            d3d_editor.SetTransformType(ETransformType::TransformType_Scale);
+        }
+        if (isPop)
+        {
+            isPop = false;
+            ImGui::PopStyleColor(2);
+        }
+
         // 3个按钮从左到右的宽度
         float threeButtonSize = 80.0f;
         float avail = ImGui::GetContentRegionAvail().x;
@@ -72,7 +126,6 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
         // 计算3个按钮要居中的话，第一个按钮的起始位置
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 
-        bool isPop = false;
         if (setting.is_game_started_)
         {
             isPop = true;

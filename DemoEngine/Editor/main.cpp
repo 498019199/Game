@@ -17,11 +17,12 @@ int main()
 	const uint32_t defaultProjectHeight = 200;
 	const uint32_t defaultInspectorWidth = 300;
 	const uint32_t defaultMainBarHeight = 58;
+    uint32_t fullWidth = config.graphics_cfg.width + defaultHierarchyWidth + defaultInspectorWidth;
+	uint32_t fullHeight = config.graphics_cfg.height + defaultProjectHeight + defaultMainBarHeight;
+
     uint32_t hWidth = defaultHierarchyWidth;
     uint32_t pHeight = defaultProjectHeight;
     uint32_t iWidth = defaultInspectorWidth;
-    uint32_t fullWidth = config.graphics_cfg.width + defaultHierarchyWidth + defaultInspectorWidth;
-	uint32_t fullHeight = config.graphics_cfg.height + defaultProjectHeight + defaultMainBarHeight;
     config.graphics_cfg.width = fullWidth;
     config.graphics_cfg.height = fullHeight;
     Context::Instance().Config(config);

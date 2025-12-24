@@ -5,6 +5,13 @@
 
 #include <vector>
 
+enum class ETransformType
+{
+    TransformType_Position,
+    TransformType_Rotation,
+    TransformType_Scale
+};
+
 namespace EditorWorker
 {
 class EditorManagerD3D11: public RenderWorker::App3D
@@ -22,6 +29,8 @@ public:
     const AssertBaseInfoPtr& GetSelectedAssert() const {  return selected_asset_info_; };
     AssetType GetAssertType() const;
 
+    void SetTransformType(ETransformType type) { current_transform_type_ = type; }
+    ETransformType GetTransformType() const { return current_transform_type_; }
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
@@ -33,6 +42,8 @@ private:
 
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
+
+    ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 };
 
 

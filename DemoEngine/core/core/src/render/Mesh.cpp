@@ -489,18 +489,18 @@ namespace RenderWorker
 	{
 		uint32_t max_lod = 0;
 		this->ForEachMesh([&max_lod](Renderable& mesh)
-			{
-				max_lod = std::max(max_lod, mesh.NumLods());
-			});
+		{
+			max_lod = std::max(max_lod, mesh.NumLods());
+		});
 		return max_lod;
 	}
 
 	void RenderModel::ActiveLod(int32_t lod)
 	{
 		this->ForEachMesh([lod](Renderable& mesh)
-			{
-				mesh.ActiveLod(lod);
-			});
+		{
+			mesh.ActiveLod(lod);
+		});
 	}
 
 
@@ -593,52 +593,52 @@ namespace RenderWorker
 		std::vector<SceneNode const *> source_nodes;
 		std::vector<SceneNodePtr> new_nodes;
 		source.RootNode()->Traverse([this, &source, &source_nodes, &new_nodes](SceneNode& node)
+		{
+			source_nodes.push_back(&node);
+
+			SceneNodePtr new_node;
+			if (new_nodes.empty())
 			{
-				source_nodes.push_back(&node);
+				new_node = root_node_;
+			}
+			else
+			{
+				new_node = MakeSharedPtr<SceneNode>(node.Name(), node.Attrib());
 
-				SceneNodePtr new_node;
-				if (new_nodes.empty())
+				for (size_t j = 0; j < source_nodes.size() - 1; ++ j)
 				{
-					new_node = root_node_;
-				}
-				else
-				{
-					new_node = MakeSharedPtr<SceneNode>(node.Name(), node.Attrib());
-
-					for (size_t j = 0; j < source_nodes.size() - 1; ++ j)
+					if (node.Parent() == source_nodes[j])
 					{
-						if (node.Parent() == source_nodes[j])
+						new_nodes[j]->AddChild(new_node);
+					}
+				}
+			}
+			new_nodes.push_back(new_node);
+
+			for (uint32_t i = 0; i < node.NumComponents(); ++ i)
+			{
+				auto& component = *node.ComponentByIndex(i);
+				if (component.IsOfType<RenderableComponent>())
+				{
+					auto const* renderable = &NanoRtti::DynCast<RenderableComponent const*>(&component)->BoundRenderable();
+					for (uint32_t mesh_index = 0; mesh_index < source.NumMeshes(); ++mesh_index)
+					{
+						if (renderable == source.Mesh(mesh_index).get())
 						{
-							new_nodes[j]->AddChild(new_node);
+							new_node->AddComponent(MakeSharedPtr<RenderableComponent>(this->Mesh(mesh_index)));
+							break;
 						}
 					}
 				}
-				new_nodes.push_back(new_node);
+				else
+				{
+					new_node->AddComponent(component.Clone());
+				}
+			}
+			new_node->TransformToParent(node.TransformToParent());
 
-				// for (uint32_t i = 0; i < node.NumComponents(); ++ i)
-				// {
-				// 	auto& component = *node.ComponentByIndex(i);
-				// 	if (component.IsOfType<RenderableComponent>())
-				// 	{
-				// 		auto const* renderable = &NanoRtti::DynCast<RenderableComponent const*>(&component)->BoundRenderable();
-				// 		for (uint32_t mesh_index = 0; mesh_index < source.NumMeshes(); ++mesh_index)
-				// 		{
-				// 			if (renderable == source.Mesh(mesh_index).get())
-				// 			{
-				// 				new_node->AddComponent(MakeSharedPtr<RenderableComponent>(this->Mesh(mesh_index)));
-				// 				break;
-				// 			}
-				// 		}
-				// 	}
-				// 	else
-				// 	{
-				// 		new_node->AddComponent(component.Clone());
-				// 	}
-				// }
-				// new_node->TransformToParent(node.TransformToParent());
-
-				return true;
-			});
+			return true;
+		});
 
 		root_node_->UpdatePosBoundSubtree();
 	}

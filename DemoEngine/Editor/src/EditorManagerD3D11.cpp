@@ -165,6 +165,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
         {
             auto ptr = CommonWorker::MakeSharedPtr<AssetMaterialInfo>();
             ptr->name = pAssert->name;
+            ptr->name = pAssert->extension;
             selected_asset_info_ = ptr;
 
             auto model = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
