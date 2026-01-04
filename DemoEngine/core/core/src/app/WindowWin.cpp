@@ -198,7 +198,37 @@ void Window::KeepScreenOn()
 
 void Window::DetectsDpi()
 {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+		DllLoader shcore;
+		if (shcore.Load("user32.dll"))
+		{
+			typedef HRESULT (WINAPI *SetProcessDpiAwarenessContextFunc)(DPI_AWARENESS_CONTEXT value);
+			auto* DynamicSetProcessDpiAwarenessContext =
+				reinterpret_cast<SetProcessDpiAwarenessContextFunc>(shcore.GetProcAddress("SetProcessDpiAwarenessContext"));
+			
+			DynamicSetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+			shcore.Free();
+		}
+
+		typedef NTSTATUS (WINAPI *RtlGetVersionFunc)(OSVERSIONINFOEXW* pVersionInformation);
+		DllLoader ntdll;
+		ntdll.Load("ntdll.dll");
+		auto* DynamicRtlGetVersion = reinterpret_cast<RtlGetVersionFunc>(ntdll.GetProcAddress("RtlGetVersion"));
+		if (DynamicRtlGetVersion)
+		{
+			OSVERSIONINFOEXW os_ver_info;
+			os_ver_info.dwOSVersionInfoSize = sizeof(os_ver_info);
+			DynamicRtlGetVersion(&os_ver_info);
+
+			if ((os_ver_info.dwMajorVersion > 6) || ((6 == os_ver_info.dwMajorVersion) && (os_ver_info.dwMinorVersion >= 3)))
+			{
+				HDC desktop_dc = ::GetDC(nullptr);
+				::EnumDisplayMonitors(desktop_dc, nullptr, EnumMonProc, reinterpret_cast<LPARAM>(this));
+				::ReleaseDC(nullptr, desktop_dc);
+			}
+		}
+#else if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
 		DllLoader shcore;
 		if (shcore.Load("SHCore.dll"))
 		{
@@ -206,7 +236,7 @@ void Window::DetectsDpi()
 			auto* DynamicSetProcessDpiAwareness =
 				reinterpret_cast<SetProcessDpiAwarenessFunc>(shcore.GetProcAddress("SetProcessDpiAwareness"));
 
-			DynamicSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+			DynamicSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); 
 
 			shcore.Free();
 		}
