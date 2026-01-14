@@ -33,3 +33,7 @@ add_subdirectory(common)
 file(COPY ${PROJECT_SOURCE_DIR}/core/core/include DESTINATION "${ZENGINE_PARENT_DIR}/ZEngine")
 add_subdirectory(core)
 add_subdirectory(editor)
+
+if(ZENGINE_IS_DEV_PLATFORM)
+	ADD_SUBDIRECTORY(tests)
+endif()

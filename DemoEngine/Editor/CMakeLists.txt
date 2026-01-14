@@ -1,8 +1,8 @@
 include_directories( 
-    ${ZENGINE_ROOT_HEADER}/include
+    ${ZENGINE_ROOT_HEADER}
     ${PROJECT_SOURCE_DIR}/3rd/dxsdk/dxsdk/Include
     ${PROJECT_SOURCE_DIR}/3rd/imgui
-    ${PROJECT_SOURCE_DIR}/Editor/include)
+    ${PROJECT_SOURCE_DIR}/editor/include)
 
 set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorConsolePanel.cpp

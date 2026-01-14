@@ -53,7 +53,7 @@ target_precompile_headers(ZENGINE_Render_D3D11
 
 target_include_directories(ZENGINE_Render_D3D11
 	PUBLIC
-		${ZENGINE_ROOT_HEADER}/include
+		${ZENGINE_ROOT_HEADER}
 		${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
 )
 

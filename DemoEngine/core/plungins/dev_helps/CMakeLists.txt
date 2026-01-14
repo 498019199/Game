@@ -15,7 +15,7 @@ add_library(ZENGINE_DevHelps ${ZENGINE_PREFERRED_LIB_TYPE}
 )
 target_include_directories(ZENGINE_DevHelps
 	PUBLIC
-		${ZENGINE_ROOT_HEADER}/include
+		${ZENGINE_ROOT_HEADER}
         ${ZENGINE_ROOT_DIR}/core/plungins/dev_helps/include
 )
 

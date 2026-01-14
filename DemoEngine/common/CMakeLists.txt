@@ -74,7 +74,7 @@ target_link_libraries(ZENGINE_common
 
 target_include_directories(ZENGINE_common 
 	PUBLIC
-		${ZENGINE_ROOT_HEADER}/include
+		${ZENGINE_ROOT_HEADER}
 		${COMMON_PROJECT_DIR}/include
 )
 
@@ -87,6 +87,3 @@ target_precompile_headers(ZENGINE_common
 	PRIVATE
 		include/common/common.h
 )
-
-
-add_subdirectory(test)

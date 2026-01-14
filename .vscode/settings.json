@@ -5,7 +5,7 @@
     // "git.showInlineOpenFileAction": false,
     // // 禁用 Git 相关的状态通知
     // "gitlens.enabled": false,
-    "cmake.sourceDirectory": "G:/shareData/project/github/Game/DemoEngine",
+    "cmake.sourceDirectory": "D:/git/Game/DemoEngine",
     "files.associations": {
         "*.mat": "json",
         "*.prefab": "json",
