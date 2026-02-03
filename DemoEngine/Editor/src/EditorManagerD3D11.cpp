@@ -20,6 +20,29 @@ namespace EditorWorker
 {
 using namespace RenderWorker;
 
+void EditorSetting::SetWindowSize(int hWidth, int pHeight, int iWidth)
+{
+    auto cfg = Context::Instance().Config();
+    int Width = cfg.graphics_cfg.width;
+    int Height = cfg.graphics_cfg.height;
+
+    hierarchyWidth = hWidth;
+    hierarchyHeight = Height;
+    consoleWidth = (Width + hierarchyWidth) / 3;
+    consoleHeight = pHeight;
+    projectWidth = Width + hierarchyWidth - consoleWidth;
+    projectHeight = pHeight;
+    inspectorWidth = iWidth;
+    inspectorHeight = Height + projectHeight;
+    mainBarWidth = Width + hierarchyWidth + inspectorWidth;
+    mainBarHeight = 58;
+    srcWidth = mainBarWidth;
+    srcHeight = inspectorHeight + mainBarHeight;
+
+    gameViewWidth = Width;
+    gameViewHeight = Height;
+}
+
 EditorManagerD3D11::EditorManagerD3D11()
     :App3D("Editor App <DirectX 11>")
 {
@@ -85,29 +108,6 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     // 因此需要在此之前将后备缓冲区绑定到渲染管线上
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     return App3D::URV_NeedFlush | App3D::URV_Finished;
-}
-
-void EditorManagerD3D11::SetWindowSize(int hWidth, int pHeight, int iWidth)
-{
-    auto cfg = Context::Instance().Config();
-    int Width = cfg.graphics_cfg.width;
-    int Height = cfg.graphics_cfg.height;
-
-    setting_.hierarchyWidth = hWidth;
-    setting_.hierarchyHeight = Height;
-    setting_.consoleWidth = (Width + setting_.hierarchyWidth) / 3;
-    setting_.consoleHeight = pHeight;
-    setting_.projectWidth = Width + setting_.hierarchyWidth - setting_.consoleWidth;
-    setting_.projectHeight = pHeight;
-    setting_.inspectorWidth = iWidth;
-    setting_.inspectorHeight = Height + setting_.projectHeight;
-    setting_.mainBarWidth = Width + setting_.hierarchyWidth + setting_.inspectorWidth;
-    setting_.mainBarHeight = 58;
-    setting_.srcWidth = setting_.mainBarWidth;
-    setting_.srcHeight = setting_.inspectorHeight + setting_.mainBarHeight;
-
-    setting_.gameViewWidth = Width;
-    setting_.gameViewHeight = Height;
 }
 
 void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)

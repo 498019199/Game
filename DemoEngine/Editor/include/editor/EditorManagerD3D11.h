@@ -23,7 +23,7 @@ public:
     virtual void OnCreate() override;
     virtual void OnDestroy() override;
 
-    void SetWindowSize(int hWidth, int pHeight, int iWidth);
+    static void SetWindowSize(int hWidth, int pHeight, int iWidth);
 
     void SetSelectedAssert(const EditorAssetNodePtr node);
     const AssertBaseInfoPtr& GetSelectedAssert() const {  return selected_asset_info_; };
@@ -31,6 +31,8 @@ public:
 
     void SetTransformType(ETransformType type) { current_transform_type_ = type; }
     ETransformType GetTransformType() const { return current_transform_type_; }
+
+    void GetEditorSetting( const EditorSetting& setting) { setting_ = setting; }
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
