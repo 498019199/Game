@@ -17,8 +17,10 @@ int main()
 	const uint32_t defaultProjectHeight = 200;
 	const uint32_t defaultInspectorWidth = 300;
 	const uint32_t defaultMainBarHeight = 58;
-    uint32_t fullWidth = config.graphics_cfg.width + defaultHierarchyWidth + defaultInspectorWidth;
-	uint32_t fullHeight = config.graphics_cfg.height + defaultProjectHeight + defaultMainBarHeight;
+    uint32_t srcWidth = config.graphics_cfg.width;
+	uint32_t srcHeight = config.graphics_cfg.height;
+    uint32_t fullWidth = srcWidth + defaultHierarchyWidth + defaultInspectorWidth;
+	uint32_t fullHeight = srcHeight + defaultProjectHeight + defaultMainBarHeight;
     uint32_t hWidth = defaultHierarchyWidth;
     uint32_t pHeight = defaultProjectHeight;
     uint32_t iWidth = defaultInspectorWidth;
@@ -35,16 +37,18 @@ int main()
         float scaleRatio = static_cast<float>(screenResolutionX) / static_cast<float>(fullWidth);
         hWidth = static_cast<uint32_t>(static_cast<float>(hWidth) * scaleRatio);
         iWidth = static_cast<uint32_t>(static_cast<float>(iWidth) * scaleRatio);
+        srcWidth = static_cast<uint32_t>(static_cast<float>(srcWidth) * scaleRatio);
     }
     // 高度已经超过了屏幕分辨率，自适应缩小
     if (fullHeight > screenResolutionY && screenResolutionY > 0)
     {
         float scaleRatio = static_cast<float>(screenResolutionY - defaultMainBarHeight) / static_cast<float>(fullHeight - defaultMainBarHeight);
         pHeight = static_cast<uint32_t>(static_cast<float>(pHeight) * scaleRatio);
+        srcHeight = static_cast<uint32_t>(static_cast<float>(srcHeight) * scaleRatio);
     }
 
     EditorSetting setting;
-    setting.SetWindowSize(hWidth, pHeight, iWidth);
+    setting.SetWindowSize(srcWidth, srcHeight, hWidth, pHeight, iWidth);
     config.graphics_cfg.width = setting.srcWidth;
     config.graphics_cfg.height = setting.srcHeight;
     Context::Instance().Config(config);

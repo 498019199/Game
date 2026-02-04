@@ -34,7 +34,7 @@ struct EditorSetting
     bool is_game_started_ {false};
     bool is_game_paused_ {false};
 
-    void SetWindowSize(int hWidth, int pHeight, int iWidth);
+    void SetWindowSize(uint32_t srcWidth, uint32_t srcHeight, int hWidth, int pHeight, int iWidth);
 };
 
 

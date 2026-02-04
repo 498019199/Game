@@ -20,27 +20,23 @@ namespace EditorWorker
 {
 using namespace RenderWorker;
 
-void EditorSetting::SetWindowSize(int hWidth, int pHeight, int iWidth)
+void EditorSetting::SetWindowSize(uint32_t _srcWidth, uint32_t _srcHeight, int hWidth, int pHeight, int iWidth)
 {
-    auto cfg = Context::Instance().Config();
-    int Width = cfg.graphics_cfg.width;
-    int Height = cfg.graphics_cfg.height;
+    gameViewWidth = _srcWidth;
+    gameViewHeight = _srcHeight;
 
     hierarchyWidth = hWidth;
-    hierarchyHeight = Height;
-    consoleWidth = (Width + hierarchyWidth) / 3;
+    hierarchyHeight = gameViewHeight;
+    consoleWidth = (gameViewWidth + hierarchyWidth) / 3;
     consoleHeight = pHeight;
-    projectWidth = Width + hierarchyWidth - consoleWidth;
+    projectWidth = gameViewWidth + hierarchyWidth - consoleWidth;
     projectHeight = pHeight;
     inspectorWidth = iWidth;
-    inspectorHeight = Height + projectHeight;
-    mainBarWidth = Width + hierarchyWidth + inspectorWidth;
+    inspectorHeight = gameViewHeight + projectHeight;
+    mainBarWidth = gameViewWidth + hierarchyWidth + inspectorWidth;
     mainBarHeight = 58;
     srcWidth = mainBarWidth;
     srcHeight = inspectorHeight + mainBarHeight;
-
-    gameViewWidth = Width;
-    gameViewHeight = Height;
 }
 
 EditorManagerD3D11::EditorManagerD3D11()
