@@ -54,6 +54,13 @@ public:
     const ID3D11DepthStencilViewPtr& RetrieveD3DDepthStencilView(ElementFormat pf, uint32_t array_index, CubeFaces face,
         uint32_t level);
 
+    ID3D11UnorderedAccessViewPtr const & RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t first_array_index,
+        uint32_t array_size, uint32_t level);
+    ID3D11UnorderedAccessViewPtr const & RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t array_index, uint32_t first_slice,
+        uint32_t num_slices, uint32_t level);
+    ID3D11UnorderedAccessViewPtr const & RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t first_array_index,
+        uint32_t array_size, CubeFaces first_face, uint32_t num_faces, uint32_t level);
+
     void UpdateSubresource1D(uint32_t array_index, uint32_t level,
         uint32_t x_offset, uint32_t width,
         void const * data) override;
@@ -102,6 +109,15 @@ protected:
     virtual D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(
         ElementFormat pf, uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const;
     virtual D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(ElementFormat pf, uint32_t array_index, CubeFaces face, uint32_t level) const;
+
+    // 定义 UAV 描述
+    virtual D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const;
+    virtual D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+        ElementFormat pf, uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const;
+    virtual D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
+        CubeFaces first_face, uint32_t num_faces, uint32_t level) const;
+
 protected:
     ID3D11Device*				d3d_device_;
     ID3D11DeviceContext*		d3d_imm_ctx_;
@@ -139,7 +155,16 @@ protected:
         ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const override;
     D3D11_RENDER_TARGET_VIEW_DESC FillRTVDesc(
         ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
-        
+    D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+
+    using D3D11Texture::FillSRVDesc;
+    using D3D11Texture::FillRTVDesc;
+    using D3D11Texture::FillDSVDesc;
+    using D3D11Texture::FillUAVDesc;
+
     uint32_t width_;
 };
 
@@ -175,6 +200,13 @@ protected:
         ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
     D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(
 		ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+		ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+
+    using D3D11Texture::FillSRVDesc;
+    using D3D11Texture::FillRTVDesc;
+    using D3D11Texture::FillDSVDesc;
+    using D3D11Texture::FillUAVDesc;
 private:
     uint32_t width_;
     uint32_t height_;
@@ -207,6 +239,17 @@ protected:
         ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t first_level, uint32_t num_levels) const override;
     D3D11_RENDER_TARGET_VIEW_DESC FillRTVDesc(
         ElementFormat pf, uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const override;
+	D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(
+		ElementFormat pf, uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const override;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+	D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+		ElementFormat pf, uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const override;
+
+    using D3D11Texture::FillSRVDesc;
+    using D3D11Texture::FillRTVDesc;
+    using D3D11Texture::FillDSVDesc;
+    using D3D11Texture::FillUAVDesc;
 
 private:
     uint32_t width_;
@@ -247,7 +290,19 @@ protected:
     D3D11_RENDER_TARGET_VIEW_DESC FillRTVDesc(
         ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
     D3D11_RENDER_TARGET_VIEW_DESC FillRTVDesc(ElementFormat pf, uint32_t array_index, CubeFaces face, uint32_t level) const override;
+    D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+    D3D11_DEPTH_STENCIL_VIEW_DESC FillDSVDesc(ElementFormat pf, uint32_t array_index, CubeFaces face, uint32_t level) const override;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(
+        ElementFormat pf, uint32_t first_array_index, uint32_t array_size, uint32_t level) const override;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC FillUAVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
+        CubeFaces first_face, uint32_t num_faces, uint32_t level) const override;
 
+    using D3D11Texture::FillSRVDesc;
+    using D3D11Texture::FillRTVDesc;
+    using D3D11Texture::FillDSVDesc;
+    using D3D11Texture::FillUAVDesc;
+    
 private:
     uint32_t width_;
 };

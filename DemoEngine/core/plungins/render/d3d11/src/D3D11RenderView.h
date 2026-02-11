@@ -183,7 +183,7 @@ public:
 
 
 
-
+// 1D,2D,3D,立方体 无序访问视图
 class D3D11UnorderedAccessView : public UnorderedAccessView
 {
 public:
@@ -220,5 +220,40 @@ protected:
     void* ua_src_;
     uint32_t ua_first_subres_;
     uint32_t ua_num_subres_;
+};
+
+class D3D11Texture1D2DCubeUnorderedAccessView final : public D3D11UnorderedAccessView
+{
+public:
+    D3D11Texture1D2DCubeUnorderedAccessView(TexturePtr const & texture_1d_2d_cube, ElementFormat pf, int first_array_index,
+        int array_size, int level);
+
+    ID3D11UnorderedAccessView* RetrieveD3DUnorderedAccessView() const override;
+};
+
+class D3D11Texture3DUnorderedAccessView final : public D3D11UnorderedAccessView
+{
+public:
+    D3D11Texture3DUnorderedAccessView(TexturePtr const & texture_3d, ElementFormat pf, int array_index, uint32_t first_slice,
+        uint32_t num_slices, int level);
+
+    ID3D11UnorderedAccessView* RetrieveD3DUnorderedAccessView() const override;
+};
+
+class D3D11TextureCubeFaceUnorderedAccessView final : public D3D11UnorderedAccessView
+{
+public:
+    D3D11TextureCubeFaceUnorderedAccessView(TexturePtr const & texture_cube, ElementFormat pf, int array_index, Texture::CubeFaces face,
+        int level);
+
+    ID3D11UnorderedAccessView* RetrieveD3DUnorderedAccessView() const override;
+};
+
+class D3D11BufferUnorderedAccessView final : public D3D11UnorderedAccessView
+{
+public:
+    D3D11BufferUnorderedAccessView(GraphicsBufferPtr const & gb, ElementFormat pf, uint32_t first_elem, uint32_t num_elems);
+
+    ID3D11UnorderedAccessView* RetrieveD3DUnorderedAccessView() const override;
 };
 }

@@ -175,4 +175,61 @@ DepthStencilViewPtr RenderFactory::MakeTextureDsv(const TexturePtr& texture, uin
     }
 }
 
+	UnorderedAccessViewPtr RenderFactory::Make1DUav(TexturePtr const & texture, int first_array_index, int array_size, int level)
+	{
+		return this->Make1DUav(texture, texture->Format(), first_array_index, array_size, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::Make2DUav(TexturePtr const & texture, int first_array_index, int array_size, int level)
+	{
+		return this->Make2DUav(texture, texture->Format(), first_array_index, array_size, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::Make2DUav(TexturePtr const & texture, int array_index, Texture::CubeFaces face, int level)
+	{
+		return this->Make2DUav(texture, texture->Format(), array_index, face, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::Make2DUav(TexturePtr const & texture, int array_index, uint32_t slice, int level)
+	{
+		return this->Make2DUav(texture, texture->Format(), array_index, slice, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::Make3DUav(TexturePtr const & texture, int array_index, uint32_t first_slice, uint32_t num_slices,
+		int level)
+	{
+		return this->Make3DUav(texture, texture->Format(), array_index, first_slice, num_slices, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::MakeCubeUav(TexturePtr const & texture, int array_index, int level)
+	{
+		return this->MakeCubeUav(texture, texture->Format(), array_index, level);
+	}
+
+	UnorderedAccessViewPtr RenderFactory::MakeTextureUav(TexturePtr const & texture, uint32_t level)
+	{
+		switch (texture->Type())
+		{
+		case Texture::TT_1D:
+			return this->Make1DUav(texture, 0, texture->ArraySize(), level);
+
+		case Texture::TT_2D:
+			return this->Make2DUav(texture, 0, texture->ArraySize(), level);
+
+		case Texture::TT_3D:
+			return this->Make3DUav(texture, 0, 0, texture->Depth(0), level);
+
+		case Texture::TT_Cube:
+			return this->MakeCubeUav(texture, 0, level);
+
+		default:
+			ZENGINE_UNREACHABLE("Invalid texture type");
+		}
+	}
+
+	UnorderedAccessViewPtr RenderFactory::MakeBufferUav(GraphicsBufferPtr const & gbuffer, ElementFormat pf)
+	{
+		return this->MakeBufferUav(gbuffer, pf, 0, gbuffer->Size() / NumFormatBytes(pf));
+	}
+
 }

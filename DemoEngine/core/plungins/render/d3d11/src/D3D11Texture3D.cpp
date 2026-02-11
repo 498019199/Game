@@ -220,4 +220,51 @@ D3D11_RENDER_TARGET_VIEW_DESC D3D11Texture3D::FillRTVDesc(ElementFormat pf,
     return desc;
 }
 
+D3D11_DEPTH_STENCIL_VIEW_DESC D3D11Texture3D::FillDSVDesc(
+    ElementFormat pf, [[maybe_unused]] uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Write);
+    COMMON_ASSERT(0 == array_index);
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.Flags = 0;
+    if (this->SampleCount() > 1)
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+    }
+    else
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    }
+    desc.Texture2DArray.MipSlice = level;
+    desc.Texture2DArray.FirstArraySlice = first_slice;
+    desc.Texture2DArray.ArraySize = num_slices;
+
+    return desc;
+}
+
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11Texture3D::FillUAVDesc(
+    ElementFormat pf, uint32_t first_array_index, [[maybe_unused]] uint32_t array_size, uint32_t level) const
+{
+    COMMON_ASSERT(0 == first_array_index);
+    COMMON_ASSERT(1 == array_size);
+
+    return this->FillUAVDesc(pf, first_array_index, 0, this->Depth(level), level);
+}
+
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11Texture3D::FillUAVDesc(
+    ElementFormat pf, [[maybe_unused]] uint32_t array_index, uint32_t first_slice, uint32_t num_slices, uint32_t level) const
+{
+    COMMON_ASSERT(0 == array_index);
+
+    D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+    desc.Texture3D.MipSlice = level;
+    desc.Texture3D.FirstWSlice = first_slice;
+    desc.Texture3D.WSize = num_slices;
+
+    return desc;
+}
 }

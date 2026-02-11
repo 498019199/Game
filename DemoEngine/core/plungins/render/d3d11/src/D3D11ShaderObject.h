@@ -52,6 +52,10 @@ class D3D11ShaderStageObject : public ShaderStageObject
 public:
     explicit D3D11ShaderStageObject(ShaderStage stage);
     
+    void StreamIn(
+        const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids, ResIdentifier& res) override;
+    void StreamOut(std::ostream& os) override;
+
     void CompileShader(const RenderEffect& effect, const RenderTechnique& tech, const RenderPass& pass,
 			const std::array<uint32_t, ShaderStageNum>& shader_desc_ids) override;
 
@@ -128,6 +132,10 @@ public:
 
 private:
     void ClearHwShader() override;
+
+    void StageSpecificStreamIn(ResIdentifier& res) override;
+	void StageSpecificStreamOut(std::ostream& os) override;
+    
     void StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids) override;
 
 #if ZENGINE_IS_DEV_PLATFORM
@@ -195,6 +203,8 @@ public:
     D3D11ShaderObject();
     D3D11ShaderObject(std::shared_ptr<Immutable> immutable, std::shared_ptr<D3D11Immutable> d3d_immutable) noexcept;
  
+	ShaderObjectPtr Clone(RenderEffect& dst_effect) override;
+
     // 绑定资源
     void Bind(const RenderEffect& effect) override;
     // 解除资源
@@ -215,6 +225,9 @@ private:
 
     std::array<std::vector<std::tuple<void*, uint32_t, uint32_t>>, ShaderStageNum> srvsrcs_;
     std::array<std::vector<ID3D11ShaderResourceView*>, ShaderStageNum> srvs_;
+    std::vector<void*> uavsrcs_;
+    std::vector<ID3D11UnorderedAccessView*> uavs_;
+    std::vector<uint32_t> uav_init_counts_;
 };
 
 }

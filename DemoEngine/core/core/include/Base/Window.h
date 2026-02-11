@@ -73,13 +73,13 @@ protected:
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif //ZENGINE_PLATFORM_WINDOWS
 
-    float dpi_scale_ = 1.f;
-    float effective_dpi_scale_ = 1.f;
+    float dpi_scale_ {1.f};
+    float effective_dpi_scale_ {1.f};
 
-    bool active_ = false;
-	bool ready_ = false;
-	bool closed_ = false;
-	bool keep_screen_on_;
+    bool active_ {false};
+	bool ready_ {false};
+	bool closed_ {false};
+	bool keep_screen_on_ {false};
 };
 
 

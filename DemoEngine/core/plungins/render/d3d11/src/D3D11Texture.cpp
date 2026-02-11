@@ -491,6 +491,84 @@ void D3D11Texture::UpdateSubresourceCube(uint32_t array_index, Texture::CubeFace
     }
 }
 
+ID3D11UnorderedAccessViewPtr const & D3D11Texture::RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t first_array_index,
+    uint32_t array_size, uint32_t level)
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Unordered);
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, first_array_index);
+    HashCombine(hash_val, array_size);
+    HashCombine(hash_val, level);
+    HashCombine(hash_val, 0);
+    HashCombine(hash_val, 0);
+
+    auto iter = d3d_ua_views_.find(hash_val);
+    if (iter != d3d_ua_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        auto desc = this->FillUAVDesc(pf, first_array_index, array_size, level);
+        ID3D11UnorderedAccessViewPtr d3d_ua_view;
+        d3d_device_->CreateUnorderedAccessView(this->D3DResource(), &desc, d3d_ua_view.put());
+        return d3d_ua_views_.emplace(hash_val, std::move(d3d_ua_view)).first->second;
+    }
+}
+
+ID3D11UnorderedAccessViewPtr const & D3D11Texture::RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t array_index,
+    uint32_t first_slice, uint32_t num_slices, uint32_t level)
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Unordered);
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, array_index);
+    HashCombine(hash_val, 1);
+    HashCombine(hash_val, level);
+    HashCombine(hash_val, first_slice);
+    HashCombine(hash_val, num_slices);
+
+    auto iter = d3d_ua_views_.find(hash_val);
+    if (iter != d3d_ua_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        auto desc = this->FillUAVDesc(pf, array_index, first_slice, num_slices, level);
+        ID3D11UnorderedAccessViewPtr d3d_ua_view;
+        d3d_device_->CreateUnorderedAccessView(this->D3DResource(), &desc, d3d_ua_view.put());
+        return d3d_ua_views_.emplace(hash_val, std::move(d3d_ua_view)).first->second;
+    }
+}
+
+ID3D11UnorderedAccessViewPtr const & D3D11Texture::RetrieveD3DUnorderedAccessView(ElementFormat pf, uint32_t first_array_index,
+    uint32_t array_size, CubeFaces first_face, uint32_t num_faces, uint32_t level)
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Unordered);
+
+    size_t hash_val = HashValue(pf);
+    HashCombine(hash_val, first_array_index * 6 + first_face);
+    HashCombine(hash_val, array_size * 6 + num_faces);
+    HashCombine(hash_val, level);
+    HashCombine(hash_val, 0);
+    HashCombine(hash_val, 0);
+
+    auto iter = d3d_ua_views_.find(hash_val);
+    if (iter != d3d_ua_views_.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        auto desc = this->FillUAVDesc(pf, first_array_index, array_size, first_face, num_faces, level);
+        ID3D11UnorderedAccessViewPtr d3d_ua_view;
+        d3d_device_->CreateUnorderedAccessView(this->D3DResource(), &desc, d3d_ua_view.put());
+        return d3d_ua_views_.emplace(hash_val, std::move(d3d_ua_view)).first->second;
+    }
+}
+
 void D3D11Texture::GetD3DFlags(D3D11_USAGE& usage, UINT& bind_flags, UINT& cpu_access_flags, UINT& misc_flags)
 {
     if (access_hint_ & EAH_Immutable)
@@ -666,7 +744,24 @@ D3D11_DEPTH_STENCIL_VIEW_DESC D3D11Texture::FillDSVDesc(ElementFormat pf,
     ZENGINE_UNREACHABLE("Can't be called");
 }
 
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11Texture::FillUAVDesc([[maybe_unused]] ElementFormat pf,
+    [[maybe_unused]] uint32_t first_array_index, [[maybe_unused]] uint32_t array_size, [[maybe_unused]] uint32_t level) const
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
 
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11Texture::FillUAVDesc([[maybe_unused]] ElementFormat pf, [[maybe_unused]] uint32_t array_index,
+    [[maybe_unused]] uint32_t first_slice, [[maybe_unused]] uint32_t num_slices, [[maybe_unused]] uint32_t level) const
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
+
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11Texture::FillUAVDesc([[maybe_unused]] ElementFormat pf,
+    [[maybe_unused]] uint32_t first_array_index, [[maybe_unused]] uint32_t array_size, [[maybe_unused]] CubeFaces first_face,
+    [[maybe_unused]] uint32_t num_faces, [[maybe_unused]] uint32_t level) const
+{
+    ZENGINE_UNREACHABLE("Can't be called");
+}
 
 
 

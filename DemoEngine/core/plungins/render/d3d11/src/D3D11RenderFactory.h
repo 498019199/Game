@@ -62,6 +62,21 @@ public:
         uint32_t num_slices, int level) override;
     DepthStencilViewPtr MakeCubeDsv(const TexturePtr& texture, ElementFormat pf, int array_index, int level) override;
 
+    UnorderedAccessViewPtr Make1DUav(TexturePtr const & texture, ElementFormat pf, int first_array_index,
+        int array_size, int level) override;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int first_array_index,
+        int array_size, int level) override;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+        Texture::CubeFaces face, int level) override;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index, uint32_t slice,
+        int level) override;
+    UnorderedAccessViewPtr Make3DUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+        uint32_t first_slice, uint32_t num_slices, int level) override;
+    UnorderedAccessViewPtr MakeCubeUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+        int level) override;
+    UnorderedAccessViewPtr MakeBufferUav(GraphicsBufferPtr const & gbuffer, ElementFormat pf,
+        uint32_t first_elem, uint32_t num_elems) override;
+
     GraphicsBufferPtr MakeVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride = 0) override;
     GraphicsBufferPtr MakeIndexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,

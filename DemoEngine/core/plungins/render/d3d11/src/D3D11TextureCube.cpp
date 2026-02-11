@@ -339,4 +339,70 @@ D3D11_RENDER_TARGET_VIEW_DESC D3D11TextureCube::FillRTVDesc(ElementFormat pf,
     return desc;
 }
 
+D3D11_DEPTH_STENCIL_VIEW_DESC D3D11TextureCube::FillDSVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
+    uint32_t level) const
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Write);
+    COMMON_ASSERT(first_array_index < this->ArraySize());
+    COMMON_ASSERT(first_array_index + array_size <= this->ArraySize());
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.Flags = 0;
+    if (this->SampleCount() > 1)
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+    }
+    else
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    }
+    desc.Texture2DArray.MipSlice = level;
+    desc.Texture2DArray.FirstArraySlice = first_array_index * 6;
+    desc.Texture2DArray.ArraySize = array_size * 6;
+
+    return desc;
+}
+
+D3D11_DEPTH_STENCIL_VIEW_DESC D3D11TextureCube::FillDSVDesc(ElementFormat pf, uint32_t array_index, CubeFaces face,
+    uint32_t level) const
+{
+    COMMON_ASSERT(this->AccessHint() & EAH_GPU_Write);
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.Flags = 0;
+    if (this->SampleCount() > 1)
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+    }
+    else
+    {
+        desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+    }
+    desc.Texture2DArray.MipSlice = level;
+    desc.Texture2DArray.FirstArraySlice = array_index * 6 + face - CF_Positive_X;
+    desc.Texture2DArray.ArraySize = 1;
+
+    return desc;
+}
+
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11TextureCube::FillUAVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
+    uint32_t level) const
+{
+    return this->FillUAVDesc(pf, first_array_index, array_size, CF_Positive_X, 6, level);
+}
+
+D3D11_UNORDERED_ACCESS_VIEW_DESC D3D11TextureCube::FillUAVDesc(ElementFormat pf, uint32_t first_array_index, uint32_t array_size,
+    CubeFaces first_face, uint32_t num_faces, uint32_t level) const
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+    desc.Format = D3D11Mapping::MappingFormat(pf);
+    desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+    desc.Texture2DArray.MipSlice = level;
+    desc.Texture2DArray.FirstArraySlice = first_array_index * 6 + first_face;
+    desc.Texture2DArray.ArraySize = array_size * 6 + num_faces;
+
+    return desc;
+}
 }

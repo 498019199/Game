@@ -103,6 +103,28 @@ public:
     virtual DepthStencilViewPtr MakeCubeDsv(const TexturePtr& texture, ElementFormat pf, int array_index, int level) = 0;
     DepthStencilViewPtr MakeTextureDsv(const TexturePtr& texture, uint32_t level);
     
+    UnorderedAccessViewPtr Make1DUav(TexturePtr const & texture, int first_array_index, int array_size, int level);
+    virtual UnorderedAccessViewPtr Make1DUav(TexturePtr const & texture, ElementFormat pf, int first_array_index, int array_size,
+        int level) = 0;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, int first_array_index, int array_size, int level);
+    virtual UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int first_array_index, int array_size,
+        int level) = 0;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, int array_index, Texture::CubeFaces face, int level);
+    virtual UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index, Texture::CubeFaces face,
+        int level) = 0;
+    UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, int array_index, uint32_t slice, int level);
+    virtual UnorderedAccessViewPtr Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index, uint32_t slice,
+        int level) = 0;
+    UnorderedAccessViewPtr Make3DUav(TexturePtr const & texture, int array_index, uint32_t first_slice, uint32_t num_slices, int level);
+    virtual UnorderedAccessViewPtr Make3DUav(TexturePtr const & texture, ElementFormat pf, int array_index, uint32_t first_slice,
+        uint32_t num_slices, int level) = 0;
+    UnorderedAccessViewPtr MakeCubeUav(TexturePtr const & texture, int array_index, int level);
+    virtual UnorderedAccessViewPtr MakeCubeUav(TexturePtr const & texture, ElementFormat pf, int array_index, int level) = 0;
+    virtual UnorderedAccessViewPtr MakeBufferUav(GraphicsBufferPtr const & gbuffer, ElementFormat pf, uint32_t first_elem,
+        uint32_t num_elems) = 0;
+    UnorderedAccessViewPtr MakeTextureUav(TexturePtr const & texture, uint32_t level);
+    UnorderedAccessViewPtr MakeBufferUav(GraphicsBufferPtr const & gbuffer, ElementFormat pf);
+
     virtual GraphicsBufferPtr MakeVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride = 0) = 0;
     virtual GraphicsBufferPtr MakeIndexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,

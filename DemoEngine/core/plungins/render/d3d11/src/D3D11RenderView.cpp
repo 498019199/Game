@@ -455,4 +455,137 @@ void D3D11UnorderedAccessView::OnDetached([[maybe_unused]] FrameBuffer& fb, uint
     
 }
 
+D3D11Texture1D2DCubeUnorderedAccessView::D3D11Texture1D2DCubeUnorderedAccessView(TexturePtr const & texture, ElementFormat pf,
+		int first_array_index, int array_size, int level)
+		: D3D11UnorderedAccessView(texture.get(), first_array_index * texture->MipMapsNum() + level, 1)
+{
+    COMMON_ASSERT(texture);
+
+    tex_ = texture;
+    pf_ = pf == EF_Unknown ? texture->Format() : pf;
+
+    first_array_index_ = first_array_index;
+    array_size_ = array_size;
+    level_ = level;
+    first_slice_ = 0;
+    num_slices_ = texture->Depth(0);
+    first_face_ = Texture::CF_Positive_X;
+    num_faces_ = 1;
+    first_elem_ = 0;
+    num_elems_ = 0;
+
+    this->RetrieveD3DUnorderedAccessView();
+}
+
+ID3D11UnorderedAccessView* D3D11Texture1D2DCubeUnorderedAccessView::RetrieveD3DUnorderedAccessView() const
+{
+    if (!d3d_ua_view_ && tex_->HWResourceReady())
+    {
+        d3d_ua_view_ = checked_cast<D3D11Texture&>(*tex_).RetrieveD3DUnorderedAccessView(pf_, first_array_index_, array_size_,
+            level_);
+    }
+    return d3d_ua_view_.get();
+}
+
+
+D3D11Texture3DUnorderedAccessView::D3D11Texture3DUnorderedAccessView(TexturePtr const & texture_3d, ElementFormat pf, int array_index,
+    uint32_t first_slice, uint32_t num_slices, int level)
+    : D3D11UnorderedAccessView(texture_3d.get(),
+        (array_index * texture_3d->Depth(level) + first_slice) * texture_3d->MipMapsNum() + level,
+        num_slices * texture_3d->MipMapsNum() + level)
+{
+    COMMON_ASSERT(texture_3d);
+    COMMON_ASSERT(array_index == 0);
+
+    tex_ = texture_3d;
+    pf_ = pf == EF_Unknown ? texture_3d->Format() : pf;
+
+    first_array_index_ = array_index;
+    array_size_ = 1;
+    level_ = level;
+    first_slice_ = first_slice;
+    num_slices_ = num_slices;
+    first_face_ = Texture::CF_Positive_X;
+    num_faces_ = 1;
+    first_elem_ = 0;
+    num_elems_ = 0;
+
+    this->RetrieveD3DUnorderedAccessView();
+}
+
+ID3D11UnorderedAccessView* D3D11Texture3DUnorderedAccessView::RetrieveD3DUnorderedAccessView() const
+{
+    if (!d3d_ua_view_ && tex_->HWResourceReady())
+    {
+        d3d_ua_view_ = checked_cast<D3D11Texture&>(*tex_).RetrieveD3DUnorderedAccessView(pf_, first_array_index_, first_slice_,
+            num_slices_, level_);
+    }
+    return d3d_ua_view_.get();
+}
+
+
+D3D11TextureCubeFaceUnorderedAccessView::D3D11TextureCubeFaceUnorderedAccessView(TexturePtr const & texture_cube, ElementFormat pf,
+    int array_index, Texture::CubeFaces face, int level)
+    : D3D11UnorderedAccessView(texture_cube.get(), (array_index * 6 + face) * texture_cube->MipMapsNum() + level, 1)
+{
+    COMMON_ASSERT(texture_cube);
+
+    tex_ = texture_cube;
+    pf_ = pf == EF_Unknown ? texture_cube->Format() : pf;
+
+    first_array_index_ = array_index;
+    array_size_ = 1;
+    level_ = level;
+    first_slice_ = 0;
+    num_slices_ = texture_cube->Depth(0);
+    first_face_ = face;
+    num_faces_ = 1;
+    first_elem_ = 0;
+    num_elems_ = 0;
+
+    this->RetrieveD3DUnorderedAccessView();
+}
+
+ID3D11UnorderedAccessView* D3D11TextureCubeFaceUnorderedAccessView::RetrieveD3DUnorderedAccessView() const
+{
+    if (!d3d_ua_view_ && tex_->HWResourceReady())
+    {
+        d3d_ua_view_ = checked_cast<D3D11Texture&>(*tex_).RetrieveD3DUnorderedAccessView(pf_, first_array_index_, first_face_,
+            level_);
+    }
+    return d3d_ua_view_.get();
+}
+
+
+D3D11BufferUnorderedAccessView::D3D11BufferUnorderedAccessView(GraphicsBufferPtr const & gb, ElementFormat pf, uint32_t first_elem,
+    uint32_t num_elems)
+    : D3D11UnorderedAccessView(gb.get(), 0, 1)
+{
+    COMMON_ASSERT(gb);
+    COMMON_ASSERT(gb->AccessHint() & EAH_GPU_Unordered);
+
+    buff_ = gb;
+    pf_ = pf;
+
+    first_array_index_ = 0;
+    array_size_ = 0;
+    level_ = 0;
+    first_slice_ = 0;
+    num_slices_ = 0;
+    first_face_ = Texture::CF_Positive_X;
+    num_faces_ = 1;
+    first_elem_ = first_elem;
+    num_elems_ = num_elems;
+
+    this->RetrieveD3DUnorderedAccessView();
+}
+
+ID3D11UnorderedAccessView* D3D11BufferUnorderedAccessView::RetrieveD3DUnorderedAccessView() const
+{
+    if (!d3d_ua_view_ && buff_->HWResourceReady())
+    {
+        d3d_ua_view_ = checked_cast<D3D11GraphicsBuffer&>(*buff_).RetrieveD3DUnorderedAccessView(pf_, first_elem_, num_elems_);
+    }
+    return d3d_ua_view_.get();
+}
 }

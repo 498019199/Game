@@ -196,6 +196,49 @@ DepthStencilViewPtr D3D11RenderFactory::MakeCubeDsv(const TexturePtr& texture, E
     return MakeSharedPtr<D3D11Texture1D2DCubeDepthStencilView>(texture, pf, array_index, array_size, level);
 }
 
+UnorderedAccessViewPtr D3D11RenderFactory::Make1DUav(TexturePtr const & texture, ElementFormat pf,
+    int first_array_index, int array_size, int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeUnorderedAccessView>(texture, pf, first_array_index, array_size, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::Make2DUav(TexturePtr const & texture, ElementFormat pf,
+    int first_array_index, int array_size, int level)
+{
+    return MakeSharedPtr<D3D11Texture1D2DCubeUnorderedAccessView>(texture, pf, first_array_index, array_size, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+    Texture::CubeFaces face, int level)
+{
+    return MakeSharedPtr<D3D11TextureCubeFaceUnorderedAccessView>(texture, pf, array_index, face, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::Make2DUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+    uint32_t slice, int level)
+{
+    return this->Make3DUav(texture, pf, array_index, slice, 1, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::Make3DUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+    uint32_t first_slice, uint32_t num_slices, int level)
+{
+    return MakeSharedPtr<D3D11Texture3DUnorderedAccessView>(texture, pf, array_index, first_slice, num_slices, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::MakeCubeUav(TexturePtr const & texture, ElementFormat pf, int array_index,
+    int level)
+{
+    int array_size = 1;
+    return MakeSharedPtr<D3D11Texture1D2DCubeUnorderedAccessView>(texture, pf, array_index, array_size, level);
+}
+
+UnorderedAccessViewPtr D3D11RenderFactory::MakeBufferUav(GraphicsBufferPtr const & gbuffer, ElementFormat pf,
+    uint32_t first_elem, uint32_t num_elems)
+{
+    return MakeSharedPtr<D3D11BufferUnorderedAccessView>(gbuffer, pf, first_elem, num_elems);
+}
+
 GraphicsBufferPtr D3D11RenderFactory::MakeVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride)
 {

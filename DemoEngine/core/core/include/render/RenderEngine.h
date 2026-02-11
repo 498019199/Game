@@ -68,6 +68,19 @@ public:
         return force_line_mode_;
     }
 
+    uint32_t NativeShaderFourCC() const
+    {
+        return native_shader_fourcc_;
+    }
+    uint32_t NativeShaderVersion() const
+    {
+        return native_shader_version_;
+    }
+    std::string_view NativeShaderPlatformName() const
+    {
+        return native_shader_platform_name_;
+    }
+
     virtual void Refresh() const;
     
     // 获取渲染设备能力
@@ -96,6 +109,12 @@ protected:
     
     // 强制使用线框模式
     bool force_line_mode_ {false}; 
+
+    // 渲染设备原生着色器格式信息
+    uint32_t native_shader_fourcc_ {0};
+    uint32_t native_shader_version_ {0};
+    std::string_view native_shader_platform_name_;
+
     RenderStateObjectPtr cur_rs_obj_;
     RenderStateObjectPtr cur_line_rs_obj_;
     

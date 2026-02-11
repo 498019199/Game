@@ -6,7 +6,7 @@
 #include "D3D11RenderView.h"
 
 #include <base/ZEngine.h>
-
+#include <common/CustomizedStreamBuf.h>
 #if ZENGINE_IS_DEV_PLATFORM
 #include <d3dx11.h>
 #include <d3dcompiler.h>
@@ -67,6 +67,196 @@ using namespace CommonWorker;
 D3D11ShaderStageObject::D3D11ShaderStageObject(ShaderStage stage)
     : ShaderStageObject(stage)
 {
+}
+
+void D3D11ShaderStageObject::StreamIn(
+    const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids, ResIdentifier& res)
+{
+    uint32_t native_shader_block_len;
+    res.read(&native_shader_block_len, sizeof(native_shader_block_len));
+    native_shader_block_len = LE2Native(native_shader_block_len);
+
+    is_validate_ = false;
+    std::string_view const shader_profile = this->GetShaderProfile(effect, shader_desc_ids[std::to_underlying(stage_)]);
+    if (native_shader_block_len >= 25 + shader_profile.size())
+    {
+        uint8_t len;
+        res.read(reinterpret_cast<char*>(&len), sizeof(len));
+        std::string& profile = shader_profile_;
+        profile.resize(len);
+        res.read(&profile[0], len);
+        if (profile == shader_profile)
+        {
+            is_validate_ = true;
+
+            uint32_t blob_size;
+            res.read(reinterpret_cast<char*>(&blob_size), sizeof(blob_size));
+            shader_code_.resize(blob_size);
+
+            res.read(reinterpret_cast<char*>(shader_code_.data()), blob_size);
+
+            uint16_t cb_desc_size;
+            res.read(reinterpret_cast<char*>(&cb_desc_size), sizeof(cb_desc_size));
+            cb_desc_size = LE2Native(cb_desc_size);
+            shader_desc_.cb_desc.resize(cb_desc_size);
+            for (size_t i = 0; i < shader_desc_.cb_desc.size(); ++i)
+            {
+                res.read(reinterpret_cast<char*>(&len), sizeof(len));
+                shader_desc_.cb_desc[i].name.resize(len);
+                res.read(&shader_desc_.cb_desc[i].name[0], len);
+
+                shader_desc_.cb_desc[i].name_hash = RtHash(shader_desc_.cb_desc[i].name.c_str());
+
+                res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].size), sizeof(shader_desc_.cb_desc[i].size));
+                shader_desc_.cb_desc[i].size = LE2Native(shader_desc_.cb_desc[i].size);
+
+                uint16_t var_desc_size;
+                res.read(reinterpret_cast<char*>(&var_desc_size), sizeof(var_desc_size));
+                var_desc_size = LE2Native(var_desc_size);
+                shader_desc_.cb_desc[i].var_desc.resize(var_desc_size);
+                for (size_t j = 0; j < shader_desc_.cb_desc[i].var_desc.size(); ++j)
+                {
+                    res.read(reinterpret_cast<char*>(&len), sizeof(len));
+                    shader_desc_.cb_desc[i].var_desc[j].name.resize(len);
+                    res.read(&shader_desc_.cb_desc[i].var_desc[j].name[0], len);
+
+                    res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].var_desc[j].start_offset),
+                        sizeof(shader_desc_.cb_desc[i].var_desc[j].start_offset));
+                    shader_desc_.cb_desc[i].var_desc[j].start_offset = LE2Native(shader_desc_.cb_desc[i].var_desc[j].start_offset);
+                    res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].var_desc[j].type),
+                        sizeof(shader_desc_.cb_desc[i].var_desc[j].type));
+                    res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].var_desc[j].rows),
+                        sizeof(shader_desc_.cb_desc[i].var_desc[j].rows));
+                    res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].var_desc[j].columns),
+                        sizeof(shader_desc_.cb_desc[i].var_desc[j].columns));
+                    res.read(reinterpret_cast<char*>(&shader_desc_.cb_desc[i].var_desc[j].elements),
+                        sizeof(shader_desc_.cb_desc[i].var_desc[j].elements));
+                    shader_desc_.cb_desc[i].var_desc[j].elements = LE2Native(shader_desc_.cb_desc[i].var_desc[j].elements);
+                }
+            }
+
+            res.read(reinterpret_cast<char*>(&shader_desc_.num_samplers), sizeof(shader_desc_.num_samplers));
+            shader_desc_.num_samplers = LE2Native(shader_desc_.num_samplers);
+            res.read(reinterpret_cast<char*>(&shader_desc_.num_srvs), sizeof(shader_desc_.num_srvs));
+            shader_desc_.num_srvs = LE2Native(shader_desc_.num_srvs);
+            res.read(reinterpret_cast<char*>(&shader_desc_.num_uavs), sizeof(shader_desc_.num_uavs));
+            shader_desc_.num_uavs = LE2Native(shader_desc_.num_uavs);
+
+            uint16_t res_desc_size;
+            res.read(reinterpret_cast<char*>(&res_desc_size), sizeof(res_desc_size));
+            res_desc_size = LE2Native(res_desc_size);
+            shader_desc_.res_desc.resize(res_desc_size);
+            for (size_t i = 0; i < shader_desc_.res_desc.size(); ++i)
+            {
+                res.read(reinterpret_cast<char*>(&len), sizeof(len));
+                shader_desc_.res_desc[i].name.resize(len);
+                res.read(&shader_desc_.res_desc[i].name[0], len);
+
+                res.read(reinterpret_cast<char*>(&shader_desc_.res_desc[i].type), sizeof(shader_desc_.res_desc[i].type));
+
+                res.read(reinterpret_cast<char*>(&shader_desc_.res_desc[i].dimension), sizeof(shader_desc_.res_desc[i].dimension));
+
+                res.read(reinterpret_cast<char*>(&shader_desc_.res_desc[i].bind_point), sizeof(shader_desc_.res_desc[i].bind_point));
+                shader_desc_.res_desc[i].bind_point = LE2Native(shader_desc_.res_desc[i].bind_point);
+            }
+
+            this->FillCBufferIndices(effect);
+
+            this->StageSpecificStreamIn(res);
+        }
+    }
+    else
+    {
+        std::vector<char> native_shader_block(native_shader_block_len);
+        res.read(reinterpret_cast<char*>(native_shader_block.data()), native_shader_block_len);
+    }
+}
+
+void D3D11ShaderStageObject::StreamOut(std::ostream& os)
+{
+    std::vector<char> native_shader_block;
+    VectorOutputStreamBuf native_shader_buff(native_shader_block);
+    std::ostream oss(&native_shader_buff);
+
+    {
+        uint8_t len = static_cast<uint8_t>(shader_profile_.size());
+        oss.write(reinterpret_cast<char const*>(&len), sizeof(len));
+        oss.write(reinterpret_cast<char const*>(shader_profile_.data()), len);
+    }
+
+    if (!shader_code_.empty())
+    {
+        uint8_t len;
+
+        uint32_t blob_size = Native2LE(static_cast<uint32_t>(shader_code_.size()));
+        oss.write(reinterpret_cast<char const*>(&blob_size), sizeof(blob_size));
+        oss.write(reinterpret_cast<char const*>(shader_code_.data()), shader_code_.size());
+
+        uint16_t cb_desc_size = Native2LE(static_cast<uint16_t>(shader_desc_.cb_desc.size()));
+        oss.write(reinterpret_cast<char const*>(&cb_desc_size), sizeof(cb_desc_size));
+        for (size_t i = 0; i < shader_desc_.cb_desc.size(); ++i)
+        {
+            len = static_cast<uint8_t>(shader_desc_.cb_desc[i].name.size());
+            oss.write(reinterpret_cast<char const*>(&len), sizeof(len));
+            oss.write(reinterpret_cast<char const*>(&shader_desc_.cb_desc[i].name[0]), len);
+
+            uint32_t size = Native2LE(shader_desc_.cb_desc[i].size);
+            oss.write(reinterpret_cast<char const*>(&size), sizeof(size));
+
+            uint16_t var_desc_size = Native2LE(static_cast<uint16_t>(shader_desc_.cb_desc[i].var_desc.size()));
+            oss.write(reinterpret_cast<char const*>(&var_desc_size), sizeof(var_desc_size));
+            for (size_t j = 0; j < shader_desc_.cb_desc[i].var_desc.size(); ++j)
+            {
+                len = static_cast<uint8_t>(shader_desc_.cb_desc[i].var_desc[j].name.size());
+                oss.write(reinterpret_cast<char const*>(&len), sizeof(len));
+                oss.write(reinterpret_cast<char const*>(&shader_desc_.cb_desc[i].var_desc[j].name[0]), len);
+
+                uint32_t start_offset = Native2LE(shader_desc_.cb_desc[i].var_desc[j].start_offset);
+                oss.write(reinterpret_cast<char const*>(&start_offset), sizeof(start_offset));
+                oss.write(reinterpret_cast<char const*>(&shader_desc_.cb_desc[i].var_desc[j].type),
+                    sizeof(shader_desc_.cb_desc[i].var_desc[j].type));
+                oss.write(reinterpret_cast<char const*>(&shader_desc_.cb_desc[i].var_desc[j].rows),
+                    sizeof(shader_desc_.cb_desc[i].var_desc[j].rows));
+                oss.write(reinterpret_cast<char const*>(&shader_desc_.cb_desc[i].var_desc[j].columns),
+                    sizeof(shader_desc_.cb_desc[i].var_desc[j].columns));
+                uint16_t elements = Native2LE(shader_desc_.cb_desc[i].var_desc[j].elements);
+                oss.write(reinterpret_cast<char const*>(&elements), sizeof(elements));
+            }
+        }
+
+        uint16_t num_samplers = Native2LE(shader_desc_.num_samplers);
+        oss.write(reinterpret_cast<char const*>(&num_samplers), sizeof(num_samplers));
+        uint16_t num_srvs = Native2LE(shader_desc_.num_srvs);
+        oss.write(reinterpret_cast<char const*>(&num_srvs), sizeof(num_srvs));
+        uint16_t num_uavs = Native2LE(shader_desc_.num_uavs);
+        oss.write(reinterpret_cast<char const*>(&num_uavs), sizeof(num_uavs));
+
+        uint16_t res_desc_size = Native2LE(static_cast<uint16_t>(shader_desc_.res_desc.size()));
+        oss.write(reinterpret_cast<char const*>(&res_desc_size), sizeof(res_desc_size));
+        for (size_t i = 0; i < shader_desc_.res_desc.size(); ++i)
+        {
+            len = static_cast<uint8_t>(shader_desc_.res_desc[i].name.size());
+            oss.write(reinterpret_cast<char const*>(&len), sizeof(len));
+            oss.write(reinterpret_cast<char const*>(&shader_desc_.res_desc[i].name[0]), len);
+
+            oss.write(reinterpret_cast<char const*>(&shader_desc_.res_desc[i].type), sizeof(shader_desc_.res_desc[i].type));
+            oss.write(reinterpret_cast<char const*>(&shader_desc_.res_desc[i].dimension), sizeof(shader_desc_.res_desc[i].dimension));
+            uint16_t bind_point = Native2LE(shader_desc_.res_desc[i].bind_point);
+            oss.write(reinterpret_cast<char const*>(&bind_point), sizeof(bind_point));
+        }
+
+        this->StageSpecificStreamOut(oss);
+    }
+
+    uint32_t len = static_cast<uint32_t>(native_shader_block.size());
+    {
+        uint32_t tmp = Native2LE(len);
+        os.write(reinterpret_cast<char const*>(&tmp), sizeof(tmp));
+    }
+    if (len > 0)
+    {
+        os.write(reinterpret_cast<char const*>(&native_shader_block[0]), len * sizeof(native_shader_block[0]));
+    }
 }
 
 void D3D11ShaderStageObject::CompileShader(const RenderEffect& effect, const RenderTechnique& tech, const RenderPass& pass,
@@ -333,6 +523,18 @@ void D3D11VertexShaderStageObject::ClearHwShader()
     geometry_shader_.reset();
 }
 
+void D3D11VertexShaderStageObject::StageSpecificStreamIn(ResIdentifier& res)
+{
+    res.read(reinterpret_cast<char*>(&vs_signature_), sizeof(vs_signature_));
+    vs_signature_ = LE2Native(vs_signature_);
+}
+
+void D3D11VertexShaderStageObject::StageSpecificStreamOut(std::ostream& os)
+{
+    uint32_t const vs_signature = Native2LE(vs_signature_);
+    os.write(reinterpret_cast<char const*>(&vs_signature), sizeof(vs_signature));
+}
+
 void D3D11VertexShaderStageObject::StageSpecificCreateHwShader(const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
 {
     auto& d3d11_re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
@@ -462,6 +664,31 @@ D3D11ShaderObject::D3D11ShaderObject(std::shared_ptr<Immutable> immutable, std::
     :ShaderObject(std::move(immutable)), d3d_immutable_(std::move(d3d_immutable))
 {
     
+}
+
+ShaderObjectPtr D3D11ShaderObject::Clone(RenderEffect& dst_effect)
+{
+    auto ret = MakeSharedPtr<D3D11ShaderObject>(immutable_, d3d_immutable_);
+
+    ret->hw_res_ready_ = hw_res_ready_;
+    ret->uavsrcs_.resize(uavsrcs_.size(), nullptr);
+    ret->uavs_.resize(uavs_.size());
+    ret->uav_init_counts_.resize(uav_init_counts_.size());
+
+    for (size_t i = 0; i < ShaderStageNum; ++ i)
+    {
+        ret->srvsrcs_[i].resize(srvsrcs_[i].size(), std::make_tuple(static_cast<void*>(nullptr), 0, 0));
+        ret->srvs_[i].resize(srvs_[i].size());
+
+        ret->param_binds_[i].reserve(param_binds_[i].size());
+        for (auto const & pb : param_binds_[i])
+        {
+            ret->param_binds_[i].push_back(ret->GetBindFunc(static_cast<ShaderStage>(i), pb.offset,
+                *dst_effect.ParameterByName(pb.param->Name())));
+        }
+    }
+
+    return ret;
 }
 
 void D3D11ShaderObject::Bind(const RenderEffect& effect)

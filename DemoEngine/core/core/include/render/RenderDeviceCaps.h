@@ -4,8 +4,44 @@
 namespace RenderWorker
 {
 
+struct ShaderModel
+{
+    uint8_t major_ver;
+    uint8_t minor_ver;
+
+    constexpr ShaderModel() noexcept
+        : major_ver(0), minor_ver(0)
+    {
+    }
+    constexpr ShaderModel(uint8_t major, uint8_t minor) noexcept
+        : major_ver(major), minor_ver(minor)
+    {
+    }
+
+    uint32_t FullVersion() const noexcept
+    {
+        return (major_ver << 8) | minor_ver;
+    }
+
+    bool operator<(ShaderModel const & rhs) const noexcept
+    {
+        return this->FullVersion() < rhs.FullVersion();
+    }
+    bool operator==(ShaderModel const & rhs) const noexcept
+    {
+        return this->FullVersion() == rhs.FullVersion();
+    }
+
+    friend bool operator>(ShaderModel const& lhs, ShaderModel const& rhs) noexcept { return rhs < lhs; }
+    friend bool operator<=(ShaderModel const& lhs, ShaderModel const& rhs) noexcept { return !(rhs < lhs); }
+    friend bool operator>=(ShaderModel const& lhs, ShaderModel const& rhs) noexcept { return !(lhs < rhs); }
+    friend bool operator!=(ShaderModel const& lhs, ShaderModel const& rhs) noexcept { return !(lhs == rhs); }
+};
+
 struct ZENGINE_CORE_API RenderDeviceCaps
 {
+    ShaderModel max_shader_model;
+
     uint32_t max_texture_width;         // 2D 纹理在 U 轴（宽度）上允许的最大尺寸
     uint32_t max_texture_height;        // 2D 纹理在 V 轴（高度）上允许的最大尺寸
     uint32_t max_texture_depth;         // 2D 纹理在 W 轴（深度度）上允许的最大尺寸

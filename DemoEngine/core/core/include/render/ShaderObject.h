@@ -63,6 +63,11 @@ public:
     explicit ShaderStageObject(ShaderStage stage) noexcept;
     virtual ~ShaderStageObject() noexcept;
 
+    virtual void StreamIn(
+        const RenderEffect& effect, const std::array<uint32_t, ShaderStageNum>& shader_desc_ids, ResIdentifier& res) = 0;
+    virtual void StreamOut(std::ostream& os) = 0;
+
+
 	virtual void CompileShader(const RenderEffect& effect, const RenderTechnique& tech, const RenderPass& pass,
 			const std::array<uint32_t, ShaderStageNum>& shader_desc_ids) = 0;
 
@@ -84,6 +89,12 @@ public:
         return hw_res_ready_;
     }
 protected:
+    virtual void StageSpecificStreamIn([[maybe_unused]] ResIdentifier& res)
+    {
+    }
+    virtual void StageSpecificStreamOut([[maybe_unused]] std::ostream& os)
+    {
+    }
     virtual void StageSpecificCreateHwShader(
         [[maybe_unused]] const RenderEffect& effect, [[maybe_unused]] const std::array<uint32_t, ShaderStageNum>& shader_desc_ids)
     {
@@ -116,6 +127,7 @@ public:
     void AttachStage(ShaderStage stage, const ShaderStageObjectPtr&  shader_stage);
 
     void LinkShaders(RenderEffect& effect);
+    virtual ShaderObjectPtr Clone(RenderEffect& dst_effect) = 0;
 
     const ShaderStageObjectPtr&  Stage(ShaderStage stage) const noexcept;
     

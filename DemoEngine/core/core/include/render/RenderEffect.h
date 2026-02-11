@@ -3,6 +3,7 @@
 #include <common/XMLDom.h>
 
 #include <render/GraphicsBuffer.h>
+#include <render/RenderDeviceCaps.h>
 #include <render/ShaderObject.h>
 #include <render/Light.h>
 #include <render/RenderStateObject.h>
@@ -116,7 +117,7 @@ public:
     virtual RenderVariable& operator=(float4x4 const & value);
     virtual RenderVariable& operator=(TexturePtr const & value);
     virtual RenderVariable& operator=(ShaderResourceViewPtr const & value);
-    //virtual RenderVariable& operator=(UnorderedAccessViewPtr const & value);
+    virtual RenderVariable& operator=(UnorderedAccessViewPtr const & value);
     virtual RenderVariable& operator=(SamplerStateObjectPtr const & value);
     virtual RenderVariable& operator=(std::string const & value);
     virtual RenderVariable& operator=(std::string_view value);
@@ -170,7 +171,7 @@ public:
     virtual void Value(float4x4& val) const;
     virtual void Value(TexturePtr& val) const;
     virtual void Value(ShaderResourceViewPtr& val) const;
-    //virtual void Value(UnorderedAccessViewPtr& val) const;
+    virtual void Value(UnorderedAccessViewPtr& val) const;
     virtual void Value(SamplerStateObjectPtr& val) const;
     virtual void Value(std::string& val) const;
     virtual void Value(std::string_view& val) const;
@@ -246,10 +247,10 @@ public:
         return stage_;
     }
 
-    // ShaderModel Version() const noexcept
-    // {
-    //     return ver_;
-    // }
+    ShaderModel Version() const noexcept
+    {
+        return ver_;
+    }
 
     std::string const& str() const noexcept
     {
@@ -258,7 +259,7 @@ public:
 
 private:
     ShaderStage stage_;
-    //ShaderModel ver_;
+    ShaderModel ver_;
     std::string str_;
 };
 
@@ -432,6 +433,8 @@ public:
 #if ZENGINE_IS_DEV_PLATFORM
 	void StreamOut(std::ostream& os) const;
 #endif
+
+    RenderEffectParameter Clone();
 
     RenderEffectDataType Type() const noexcept
     {
@@ -699,6 +702,11 @@ public:
         return name_hash_;
     }
 
+    ShaderModel Version() const noexcept
+    {
+        return ver_;
+    }
+
     uint32_t NumMacros() const noexcept
     {
         return macros_ ? static_cast<uint32_t>(macros_->size()) : 0;
@@ -738,6 +746,8 @@ public:
 private:
     std::string name_;
     size_t name_hash_;
+
+    ShaderModel ver_;
 
     std::vector<RenderPassPtr> passes_;
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> macros_;
@@ -811,5 +821,8 @@ private:
     bool is_validate_;
 };
 
-RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_names);
+ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_names);
+ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffects(std::span<std::string const> effect_names);
+ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffect(std::string_view effect_name);
+ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffects(std::span<std::string const> effect_names);
 }
