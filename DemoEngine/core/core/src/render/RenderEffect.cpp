@@ -7845,7 +7845,7 @@ public:
 			return;
 		}
 
-#if KLAYGE_IS_DEV_PLATFORM
+#if ZENGINE_IS_DEV_PLATFORM
 		effect->CompileShaders();
 #endif
 

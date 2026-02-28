@@ -693,6 +693,7 @@ void D3D11RenderEngine::DoCreateRenderWindow(std::string const & name, RenderSet
 	D3D11RenderWindowPtr win = MakeSharedPtr<D3D11RenderWindow>(&this->ActiveAdapter(),
 			name, settings);
 	
+	native_shader_platform_name_ = "d3d_11_0";
 	switch (d3d_feature_level_)
 	{
 	case D3D_FEATURE_LEVEL_12_1:
