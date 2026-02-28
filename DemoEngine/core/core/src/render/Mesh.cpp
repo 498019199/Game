@@ -5,6 +5,7 @@
 #include <base/LZMACodec.h>
 
 #include <render/RenderFactory.h>
+#include <world/World.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -307,164 +308,19 @@ namespace
 
 }
 
-
-// write model file
-namespace
-{
-	// void SaveModel(std::string const & jit_name, std::vector<RenderMaterialPtr> const & mtls,
-	// 	std::vector<VertexElement> const & merged_ves, char all_is_index_16_bit,
-	// 	std::vector<std::vector<uint8_t>> const & merged_buffs, std::vector<uint8_t> const & merged_indices,
-	// 	std::vector<std::string> const & mesh_names, std::vector<int32_t> const & mtl_ids, std::vector<uint32_t> const & mesh_lods,
-	// 	std::vector<AABBox> const & pos_bbs, std::vector<AABBox> const & tc_bbs,
-	// 	std::vector<uint32_t> const & mesh_num_vertices, std::vector<uint32_t> const & mesh_base_vertices,
-	// 	std::vector<uint32_t> const & mesh_num_indices, std::vector<uint32_t> const & mesh_base_indices,
-	// 	std::vector<SceneNode const *> const & nodes, std::vector<Renderable const *> const & renderables,
-	// 	std::vector<JointComponent const*> const & joints, std::shared_ptr<std::vector<Animation>> const & animations,
-	// 	std::shared_ptr<std::vector<KeyFrameSet>> const & kfs, uint32_t num_frames, uint32_t frame_rate,
-	// 	std::vector<std::shared_ptr<AABBKeyFrameSet>> const & frame_pos_bbs)
-	// {
-	// }
-}
-
 namespace RenderWorker
 {
-	StaticMesh::StaticMesh(std::wstring_view name)
-		: Renderable(name), hw_res_ready_(false)
+	void AddToSceneHelper(SceneNode& node, RenderModel& model)
 	{
+		auto& world = Context::Instance().WorldInstance();
+		std::lock_guard<std::mutex> lock(world.MutexForUpdate());
+		node.AddChild(model.RootNode());
 	}
 
-	void StaticMesh::BuildMeshInfo(const RenderModel& model)
+	void AddToSceneRootHelper(RenderModel& model)
 	{
-		this->DoBuildMeshInfo(model);
-		hw_res_ready_ = true;
+		AddToSceneHelper(Context::Instance().WorldInstance().SceneRootNode(), model);
 	}
-
-	void StaticMesh::NumLods(uint32_t lods)
-	{
-		Renderable::NumLods(lods);
-
-		for (auto& rl : rls_)
-		{
-			if (Context::Instance().RenderFactoryValid())
-			{
-				auto& rf = Context::Instance().RenderFactoryInstance();
-				rl = rf.MakeRenderLayout();
-			}
-			else
-			{
-				rl = MakeSharedPtr<RenderLayout>();
-			}
-			rl->TopologyType(RenderLayout::TT_TriangleList);
-		}
-	}
-
-	void StaticMesh::PosBound(const AABBox& aabb)
-	{
-		pos_aabb_ = aabb;
-	}
-
-	void StaticMesh::TexcoordBound(const AABBox& aabb)
-	{
-		tc_aabb_ = aabb;
-	}
-
-	void StaticMesh::DoBuildMeshInfo(const RenderModel& model)
-	{
-		bool is_skinned = false;
-		for (uint32_t i = 0; !is_skinned && (i < rls_[0]->VertexStreamNum()); ++i)
-		{
-			auto const& vertex_stream_fmt = rls_[0]->VertexStreamFormat(i);
-			for (auto const& vertex_elem : vertex_stream_fmt)
-			{
-				if ((vertex_elem.usage == VEU_BlendIndex) || (vertex_elem.usage == VEU_BlendWeight))
-				{
-					is_skinned = true;
-					break;
-				}
-			}
-		}
-
-		this->IsSkinned(is_skinned);
-		this->Material(model.GetMaterial(this->MaterialID()));
-	}
-
-	void StaticMesh::AddVertexStream(uint32_t lod, const void * buf, uint32_t size, const VertexElement & ve, uint32_t access_hint)
-	{
-		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-		GraphicsBufferPtr vb = rf.MakeVertexBuffer(BU_Static, access_hint, size, buf);
-		this->AddVertexStream(lod, vb, ve);
-	}
-
-	void StaticMesh::AddVertexStream(uint32_t lod, const GraphicsBufferPtr & buffer, const VertexElement & ve)
-	{
-		rls_[lod]->BindVertexStream(buffer, ve);
-	}
-
-	void StaticMesh::AddIndexStream(uint32_t lod, const void * buf, uint32_t size, ElementFormat format, uint32_t access_hint)
-	{
-		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
-
-		GraphicsBufferPtr ib = rf.MakeIndexBuffer(BU_Static, access_hint, size, buf);
-		this->AddIndexStream(lod, ib, format);
-	}
-
-	void StaticMesh::AddIndexStream(uint32_t lod, const GraphicsBufferPtr & index_stream, ElementFormat format)
-	{
-		rls_[lod]->BindIndexStream(index_stream, format);
-	}
-
-
-	std::tuple<quater, quater, float> KeyFrameSet::Frame(float frame) const
-	{
-		std::tuple<quater, quater, float> ret;
-		if (frame_id.size() == 1)
-		{
-			ret = std::make_tuple(bind_real[0], bind_dual[0], bind_scale[0]);
-		}
-		else
-		{
-			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
-
-			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
-			int index = static_cast<int>(iter - frame_id.begin());
-
-			int index0 = index - 1;
-			int index1 = index % frame_id.size();
-			int frame0 = frame_id[index0];
-			int frame1 = frame_id[index1];
-			float factor = (frame - frame0) / (frame1 - frame0);
-			auto dq = MathWorker::sclerp(bind_real[index0], bind_dual[index0], bind_real[index1], bind_dual[index1], factor);
-			ret = std::make_tuple(dq.first, dq.second, MathWorker::lerp(bind_scale[index0], bind_scale[index1], factor));
-		}
-		return ret;
-	}
-
-
-
-	AABBox AABBKeyFrameSet::Frame(float frame) const
-	{
-		if (frame_id.size() == 1)
-		{
-			return bb[0];
-		}
-		else
-		{
-			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
-
-			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
-			int index = static_cast<int>(iter - frame_id.begin());
-
-			int index0 = index - 1;
-			int index1 = index % frame_id.size();
-			int frame0 = frame_id[index0];
-			int frame1 = frame_id[index1];
-			float factor = (frame - frame0) / (frame1 - frame0);
-			return AABBox(MathWorker::lerp(bb[index0].Min(), bb[index1].Min(), factor),
-				MathWorker::lerp(bb[index0].Max(), bb[index1].Max(), factor));
-		}
-	}
-
-
 
 	RenderModel::RenderModel(const SceneNodePtr& root_node)
 		: root_node_(root_node), hw_res_ready_(false)
@@ -641,6 +497,143 @@ namespace RenderWorker
 		});
 
 		root_node_->UpdatePosBoundSubtree();
+	}
+
+
+	StaticMesh::StaticMesh(std::wstring_view name)
+		: Renderable(name), hw_res_ready_(false)
+	{
+	}
+
+	void StaticMesh::BuildMeshInfo(const RenderModel& model)
+	{
+		this->DoBuildMeshInfo(model);
+		hw_res_ready_ = true;
+	}
+
+	void StaticMesh::NumLods(uint32_t lods)
+	{
+		Renderable::NumLods(lods);
+
+		for (auto& rl : rls_)
+		{
+			if (Context::Instance().RenderFactoryValid())
+			{
+				auto& rf = Context::Instance().RenderFactoryInstance();
+				rl = rf.MakeRenderLayout();
+			}
+			else
+			{
+				rl = MakeSharedPtr<RenderLayout>();
+			}
+			rl->TopologyType(RenderLayout::TT_TriangleList);
+		}
+	}
+
+	void StaticMesh::PosBound(const AABBox& aabb)
+	{
+		pos_aabb_ = aabb;
+	}
+
+	void StaticMesh::TexcoordBound(const AABBox& aabb)
+	{
+		tc_aabb_ = aabb;
+	}
+
+	void StaticMesh::DoBuildMeshInfo(const RenderModel& model)
+	{
+		bool is_skinned = false;
+		for (uint32_t i = 0; !is_skinned && (i < rls_[0]->VertexStreamNum()); ++i)
+		{
+			auto const& vertex_stream_fmt = rls_[0]->VertexStreamFormat(i);
+			for (auto const& vertex_elem : vertex_stream_fmt)
+			{
+				if ((vertex_elem.usage == VEU_BlendIndex) || (vertex_elem.usage == VEU_BlendWeight))
+				{
+					is_skinned = true;
+					break;
+				}
+			}
+		}
+
+		this->IsSkinned(is_skinned);
+		this->Material(model.GetMaterial(this->MaterialID()));
+	}
+
+	void StaticMesh::AddVertexStream(uint32_t lod, const void * buf, uint32_t size, const VertexElement & ve, uint32_t access_hint)
+	{
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+		GraphicsBufferPtr vb = rf.MakeVertexBuffer(BU_Static, access_hint, size, buf);
+		this->AddVertexStream(lod, vb, ve);
+	}
+
+	void StaticMesh::AddVertexStream(uint32_t lod, const GraphicsBufferPtr & buffer, const VertexElement & ve)
+	{
+		rls_[lod]->BindVertexStream(buffer, ve);
+	}
+
+	void StaticMesh::AddIndexStream(uint32_t lod, const void * buf, uint32_t size, ElementFormat format, uint32_t access_hint)
+	{
+		RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+
+		GraphicsBufferPtr ib = rf.MakeIndexBuffer(BU_Static, access_hint, size, buf);
+		this->AddIndexStream(lod, ib, format);
+	}
+
+	void StaticMesh::AddIndexStream(uint32_t lod, const GraphicsBufferPtr & index_stream, ElementFormat format)
+	{
+		rls_[lod]->BindIndexStream(index_stream, format);
+	}
+
+
+	std::tuple<quater, quater, float> KeyFrameSet::Frame(float frame) const
+	{
+		std::tuple<quater, quater, float> ret;
+		if (frame_id.size() == 1)
+		{
+			ret = std::make_tuple(bind_real[0], bind_dual[0], bind_scale[0]);
+		}
+		else
+		{
+			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
+
+			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
+			int index = static_cast<int>(iter - frame_id.begin());
+
+			int index0 = index - 1;
+			int index1 = index % frame_id.size();
+			int frame0 = frame_id[index0];
+			int frame1 = frame_id[index1];
+			float factor = (frame - frame0) / (frame1 - frame0);
+			auto dq = MathWorker::sclerp(bind_real[index0], bind_dual[index0], bind_real[index1], bind_dual[index1], factor);
+			ret = std::make_tuple(dq.first, dq.second, MathWorker::lerp(bind_scale[index0], bind_scale[index1], factor));
+		}
+		return ret;
+	}
+
+
+
+	AABBox AABBKeyFrameSet::Frame(float frame) const
+	{
+		if (frame_id.size() == 1)
+		{
+			return bb[0];
+		}
+		else
+		{
+			frame = std::fmod(frame, static_cast<float>(frame_id.back() + 1));
+
+			auto iter = std::upper_bound(frame_id.begin(), frame_id.end(), frame);
+			int index = static_cast<int>(iter - frame_id.begin());
+
+			int index0 = index - 1;
+			int index1 = index % frame_id.size();
+			int frame0 = frame_id[index0];
+			int frame1 = frame_id[index1];
+			float factor = (frame - frame0) / (frame1 - frame0);
+			return AABBox(MathWorker::lerp(bb[index0].Min(), bb[index1].Min(), factor),
+				MathWorker::lerp(bb[index0].Max(), bb[index1].Max(), factor));
+		}
 	}
 
 	SceneComponentPtr JointComponent::Clone() const

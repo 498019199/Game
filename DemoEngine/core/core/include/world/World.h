@@ -22,6 +22,19 @@ public:
     void RemoveSceneObj(const SceneNodePtr& node);
     void AddRenderable(Renderable* obj);
 
+    SceneNode& SceneRootNode()
+    {
+        return scene_root_;
+    }
+    SceneNode const & SceneRootNode() const
+    {
+        return scene_root_;
+    }
+
+    std::mutex& MutexForUpdate()
+    {
+        return update_mutex_;
+    }
 protected:
 	void Flush(uint32_t urt);
 

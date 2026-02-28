@@ -9,10 +9,10 @@
 
 namespace RenderWorker
 {
-class StaticMesh;
-using StaticMeshPtr = std::shared_ptr<StaticMesh>;
 class RenderModel;
 using RenderModelPtr = std::shared_ptr<RenderModel>;
+class StaticMesh;
+using StaticMeshPtr = std::shared_ptr<StaticMesh>;
 
 template <typename T>
 inline StaticMeshPtr CreateMeshFactory(std::wstring_view name)
@@ -26,6 +26,8 @@ inline RenderModelPtr CreateModelFactory(std::wstring_view name, uint32_t node_a
     return MakeSharedPtr<T>(name, node_attrib);
 }
 
+ZENGINE_CORE_API void AddToSceneHelper(SceneNode& node, RenderModel& model);
+ZENGINE_CORE_API void AddToSceneRootHelper(RenderModel& model);
 
 class ZENGINE_CORE_API StaticMesh:public Renderable
 {

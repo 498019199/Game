@@ -15,6 +15,7 @@
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
+#include <render/Mesh.h>
 
 namespace EditorWorker
 {
@@ -165,7 +166,12 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             selected_asset_info_ = ptr;
 
             auto model = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
-			    SceneNode::SOA_Cullable | SceneNode::SOA_Moveable);
+			    SceneNode::SOA_Cullable | SceneNode::SOA_Moveable, 
+                [](RenderModel& model)
+                {
+                    model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 5.0f, 0.0f));
+                    AddToSceneRootHelper(model);
+                });
         }
         break;
 
