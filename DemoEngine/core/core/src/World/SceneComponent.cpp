@@ -15,4 +15,13 @@ namespace RenderWorker
         return node_;
     }
     
+    bool SceneComponent::Enabled() const
+	{
+		return enabled_;
+	}
+
+	void SceneComponent::Enabled(bool enabled)
+	{
+		enabled_ = enabled;
+	}
 }

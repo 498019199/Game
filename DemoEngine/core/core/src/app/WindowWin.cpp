@@ -23,29 +23,30 @@ LRESULT Window::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noex
     return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+// win8.1以上，回调函数：每枚举到一台显示器就调用一次
 #if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
-	BOOL Window::EnumMonProc(HMONITOR mon, [[maybe_unused]] HDC dc_mon, [[maybe_unused]] RECT* rc_mon, LPARAM lparam) noexcept
+BOOL Window::EnumMonProc(HMONITOR mon, [[maybe_unused]] HDC dc_mon, [[maybe_unused]] RECT* rc_mon, LPARAM lparam) noexcept
+{
+	DllLoader shcore;
+	if (shcore.Load("SHCore.dll"))
 	{
-		DllLoader shcore;
-		if (shcore.Load("SHCore.dll"))
+		typedef HRESULT (CALLBACK *GetDpiForMonitorFunc)(HMONITOR mon, MONITOR_DPI_TYPE dpi_type, UINT* dpi_x, UINT* dpi_y);
+		auto* DynamicGetDpiForMonitor = reinterpret_cast<GetDpiForMonitorFunc>(shcore.GetProcAddress("GetDpiForMonitor"));
+		if (DynamicGetDpiForMonitor)
 		{
-			typedef HRESULT (CALLBACK *GetDpiForMonitorFunc)(HMONITOR mon, MONITOR_DPI_TYPE dpi_type, UINT* dpi_x, UINT* dpi_y);
-			auto* DynamicGetDpiForMonitor = reinterpret_cast<GetDpiForMonitorFunc>(shcore.GetProcAddress("GetDpiForMonitor"));
-			if (DynamicGetDpiForMonitor)
+			UINT dpi_x, dpi_y;
+			if (S_OK == DynamicGetDpiForMonitor(mon, MDT_DEFAULT, &dpi_x, &dpi_y))
 			{
-				UINT dpi_x, dpi_y;
-				if (S_OK == DynamicGetDpiForMonitor(mon, MDT_DEFAULT, &dpi_x, &dpi_y))
-				{
-					Window* win = reinterpret_cast<Window*>(lparam);
-					win->UpdateDpiScale(std::max(win->dpi_scale_, static_cast<float>(std::max(dpi_x, dpi_y)) / USER_DEFAULT_SCREEN_DPI));
-				}
+				Window* win = reinterpret_cast<Window*>(lparam);
+				win->UpdateDpiScale(std::max(win->dpi_scale_, static_cast<float>(std::max(dpi_x, dpi_y)) / USER_DEFAULT_SCREEN_DPI));
 			}
-
-			shcore.Free();
 		}
 
-		return TRUE;
+		shcore.Free();
 	}
+
+	return TRUE;
+}
 #endif
 
 Window::Window(const std::string& name, const RenderSettings& settings, void* native_wnd)
@@ -171,6 +172,29 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+#if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
+		case WM_DPICHANGED:
+			{
+				RECT rc;
+				::GetClientRect(wnd_, &rc);
+				rc.left = static_cast<int32_t>(rc.left / dpi_scale_ + 0.5f);
+				rc.top = static_cast<int32_t>(rc.top / dpi_scale_ + 0.5f);
+				rc.right = static_cast<uint32_t>(rc.right / dpi_scale_ + 0.5f);
+				rc.bottom = static_cast<uint32_t>(rc.bottom / dpi_scale_ + 0.5f);
+
+				this->UpdateDpiScale(static_cast<float>(HIWORD(wParam)) / USER_DEFAULT_SCREEN_DPI);
+
+				rc.left = static_cast<int32_t>(rc.left * dpi_scale_ + 0.5f);
+				rc.top = static_cast<int32_t>(rc.top * dpi_scale_ + 0.5f);
+				rc.right = static_cast<uint32_t>(rc.right * dpi_scale_ + 0.5f);
+				rc.bottom = static_cast<uint32_t>(rc.bottom * dpi_scale_ + 0.5f);
+
+				::AdjustWindowRect(&rc, win_style_, false);
+
+				::SetWindowPos(this->GetHWND(), HWND_TOP, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOREPOSITION);
+			}
+			break;
+#endif
         case WM_CLOSE:
 			{		
 				active_ = false;
@@ -198,67 +222,41 @@ void Window::KeepScreenOn()
 
 void Window::DetectsDpi()
 {
+	DllLoader shcore;
+	if (shcore.Load("user32.dll"))
+	{
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
-		DllLoader shcore;
-		if (shcore.Load("user32.dll"))
-		{
-			typedef HRESULT (WINAPI *SetProcessDpiAwarenessContextFunc)(DPI_AWARENESS_CONTEXT value);
-			auto* DynamicSetProcessDpiAwarenessContext =
-				reinterpret_cast<SetProcessDpiAwarenessContextFunc>(shcore.GetProcAddress("SetProcessDpiAwarenessContext"));
-			
-			DynamicSetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-			shcore.Free();
-		}
-
-		typedef NTSTATUS (WINAPI *RtlGetVersionFunc)(OSVERSIONINFOEXW* pVersionInformation);
-		DllLoader ntdll;
-		ntdll.Load("ntdll.dll");
-		auto* DynamicRtlGetVersion = reinterpret_cast<RtlGetVersionFunc>(ntdll.GetProcAddress("RtlGetVersion"));
-		if (DynamicRtlGetVersion)
-		{
-			OSVERSIONINFOEXW os_ver_info;
-			os_ver_info.dwOSVersionInfoSize = sizeof(os_ver_info);
-			DynamicRtlGetVersion(&os_ver_info);
-
-			if ((os_ver_info.dwMajorVersion > 6) || ((6 == os_ver_info.dwMajorVersion) && (os_ver_info.dwMinorVersion >= 3)))
-			{
-				HDC desktop_dc = ::GetDC(nullptr);
-				::EnumDisplayMonitors(desktop_dc, nullptr, EnumMonProc, reinterpret_cast<LPARAM>(this));
-				::ReleaseDC(nullptr, desktop_dc);
-			}
-		}
-#else if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
-		DllLoader shcore;
-		if (shcore.Load("SHCore.dll"))
-		{
-			typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(PROCESS_DPI_AWARENESS value);
-			auto* DynamicSetProcessDpiAwareness =
-				reinterpret_cast<SetProcessDpiAwarenessFunc>(shcore.GetProcAddress("SetProcessDpiAwareness"));
-
-			DynamicSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); 
-
-			shcore.Free();
-		}
-
-		typedef NTSTATUS (WINAPI *RtlGetVersionFunc)(OSVERSIONINFOEXW* pVersionInformation);
-		DllLoader ntdll;
-		ntdll.Load("ntdll.dll");
-		auto* DynamicRtlGetVersion = reinterpret_cast<RtlGetVersionFunc>(ntdll.GetProcAddress("RtlGetVersion"));
-		if (DynamicRtlGetVersion)
-		{
-			OSVERSIONINFOEXW os_ver_info;
-			os_ver_info.dwOSVersionInfoSize = sizeof(os_ver_info);
-			DynamicRtlGetVersion(&os_ver_info);
-
-			if ((os_ver_info.dwMajorVersion > 6) || ((6 == os_ver_info.dwMajorVersion) && (os_ver_info.dwMinorVersion >= 3)))
-			{
-				HDC desktop_dc = ::GetDC(nullptr);
-				::EnumDisplayMonitors(desktop_dc, nullptr, EnumMonProc, reinterpret_cast<LPARAM>(this));
-				::ReleaseDC(nullptr, desktop_dc);
-			}
-		}
+		typedef BOOL (WINAPI *SetProcessDpiAwarenessContextFunc)(DPI_AWARENESS_CONTEXT value);
+		auto* DynamicSetProcessDpiAwarenessContext =
+			reinterpret_cast<SetProcessDpiAwarenessContextFunc>(shcore.GetProcAddress("SetProcessDpiAwarenessContext")); 
+		DynamicSetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#else
+		typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(PROCESS_DPI_AWARENESS value);
+		auto* DynamicSetProcessDpiAwareness =
+			reinterpret_cast<SetProcessDpiAwarenessFunc>(shcore.GetProcAddress("SetProcessDpiAwareness"));
+		DynamicSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); 
 #endif
+		shcore.Free();
+	}
+
+	typedef NTSTATUS (WINAPI *RtlGetVersionFunc)(OSVERSIONINFOEXW* pVersionInformation);
+	DllLoader ntdll;
+	ntdll.Load("ntdll.dll");
+	auto* DynamicRtlGetVersion = reinterpret_cast<RtlGetVersionFunc>(ntdll.GetProcAddress("RtlGetVersion"));
+	if (DynamicRtlGetVersion)
+	{
+		OSVERSIONINFOEXW os_ver_info;
+		os_ver_info.dwOSVersionInfoSize = sizeof(os_ver_info);
+		DynamicRtlGetVersion(&os_ver_info);
+
+		if ((os_ver_info.dwMajorVersion > 6) || ((6 == os_ver_info.dwMajorVersion) && (os_ver_info.dwMinorVersion >= 3)))
+		{
+			// 获取每台显示器的 DPI 和分辨率
+			HDC desktop_dc = ::GetDC(nullptr);
+			::EnumDisplayMonitors(desktop_dc, nullptr, EnumMonProc, reinterpret_cast<LPARAM>(this));
+			::ReleaseDC(nullptr, desktop_dc);
+		}
+	}
 }
 
 }

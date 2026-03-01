@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <base/ZEngine.h>
-#include <world/SceneComponent.h>
+#include <render/Camera.h>
 #include <string_view>
 #include <functional>
 
@@ -33,8 +33,6 @@ public:
 
     std::wstring_view Name() const;
     void Name(std::wstring_view name);
-
-	uint32_t Attrib() const;
 
     SceneNode* Parent() const;
 
@@ -115,6 +113,13 @@ public:
     const float4x4& TransformToWorld() const;
     const float4x4& InverseTransformToWorld() const;
 
+    void FillVisibleMark(BoundOverlap vm);
+	void VisibleMark(uint32_t camera_index, BoundOverlap vm);
+	BoundOverlap VisibleMark(uint32_t camera_index) const;
+
+    uint32_t Attrib() const;
+	bool Visible() const;
+	void Visible(bool vis);
 private:
     void Parent(SceneNode* so);
 	void EmitSceneChanged();
@@ -132,6 +137,8 @@ private:
     float4x4 inv_xform_to_parent_ {float4x4::Identity()};
     mutable float4x4 xform_to_world_ {float4x4::Identity()}; 
     mutable float4x4 inv_xform_to_world_ {float4x4::Identity()}; 
+
+	std::array<BoundOverlap, PredefinedCameraCBuffer::max_num_cameras> visible_marks_;
 
 	bool pos_aabb_dirty_ = true;
 };

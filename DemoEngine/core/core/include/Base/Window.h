@@ -51,6 +51,7 @@ private:
     // 防止系统进入睡眠或休眠状态
     void KeepScreenOn();
 
+    // Windows 系统 DPI 适配
     void DetectsDpi();
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 

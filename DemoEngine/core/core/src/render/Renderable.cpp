@@ -2,13 +2,14 @@
 
 #include <base/ZEngine.h>
 #include <render/RenderFactory.h>
+#include <world/World.h>
 
 namespace RenderWorker
 {
 
 
 Renderable::Renderable()
-    :rls_(1), active_lod_(-1)
+    : Renderable(L"")
 {
 }
 
@@ -34,6 +35,15 @@ RenderLayout& Renderable::GetRenderLayout(uint32_t lod) const
 const std::wstring& Renderable::Name() const
 {
     return name_;
+}
+
+void Renderable::OnRenderBegin()
+{
+    
+}
+
+void Renderable::OnRenderEnd()
+{
 }
 
 const AABBox& Renderable::PosBound() const
@@ -74,6 +84,11 @@ int32_t Renderable::ActiveLod() const
     return active_lod_;
 }
 
+void Renderable::AddToRenderQueue()
+{
+    Context::Instance().WorldInstance().AddRenderable(this);
+}
+
 void Renderable::Render()
 {
     int32_t lod;
@@ -90,7 +105,20 @@ void Renderable::Render()
     const auto& layout = GetRenderLayout(lod);
     const auto& tech = *GetRenderTechnique();
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+
+    this->OnRenderBegin();
     re.Render(effect, tech, layout);
+    this->OnRenderEnd();
+}
+
+void Renderable::AddInstance(SceneNode const * node)
+{
+    instances_.push_back(node);
+}
+
+void Renderable::ClearInstances()
+{
+    instances_.resize(0);
 }
 
 void Renderable::Material(const RenderMaterialPtr& mtl)

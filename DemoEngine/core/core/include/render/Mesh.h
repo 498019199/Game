@@ -37,7 +37,7 @@ public:
 
     void BuildMeshInfo(const RenderModel& model);
 
-    virtual void Technique(RenderEffectPtr const & effect, RenderTechnique* tech)
+    virtual void Technique(const RenderEffectPtr& effect, RenderTechnique* tech)
     {
 		effect_ = effect;
 		technique_ = tech;

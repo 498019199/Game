@@ -1,4 +1,5 @@
-UpdateExternalLib("ogg" "https://github.com/xiph/ogg.git" "e1774cd77f471443541596e09078e78fdc342e4f")
+
+UpdateExternalLib("ogg" "https://github.com/xiph/ogg.git" "db03f952b25717fd5c4938817c9290837a4ae1b2")
 
 SET(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 SET(BUILD_TESTING OFF CACHE BOOL "" FORCE)

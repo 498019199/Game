@@ -12,7 +12,8 @@ namespace RenderWorker
 {
 
 World::World()
-    :scene_root_(L"SceenRoot", SceneNode::SOA_Cullable)
+    :scene_root_(L"SceenRoot", SceneNode::SOA_Cullable),
+    overlay_root_(L"OverlayRoot", SceneNode::SOA_Cullable | SceneNode::SOA_Overlay)
 {
 }
 
@@ -47,6 +48,69 @@ void World::AddRenderable(Renderable* obj)
 
 void World::Flush(uint32_t urt)
 {
+    std::lock_guard<std::mutex> lock(update_mutex_);
+
+	urt_ = urt;
+
+    scene_root_.Traverse([this](SceneNode& node)
+        {
+            all_scene_nodes_.push_back(&node);
+            return true;
+        });
+    overlay_root_.Traverse([this](SceneNode& node)
+        {
+            all_overlay_nodes_.push_back(&node);
+            return true;
+        });
+	auto& scene_nodes = (urt & App3D::URV_Overlay) ? all_overlay_nodes_ : all_scene_nodes_;
+
+    for (auto* node : scene_nodes)
+    {
+        node->FillVisibleMark(BoundOverlap::No);
+    }
+
+    if (!(urt & App3D::URV_Overlay))
+    {}
+    if (urt & App3D::URV_NeedFlush)
+    {}
+    if (urt & App3D::URV_Overlay)
+    {}
+
+    auto node_visible = MakeUniquePtr<bool[]>(scene_nodes.size());
+    for (size_t i = 0; i < scene_nodes.size(); ++i)
+    {
+        node_visible[i] = true;
+    }
+    for (size_t i = 0; i < scene_nodes.size(); ++i)
+    {
+        if (node_visible[i])
+        {
+            scene_nodes[i]->ForEachComponentOfType<RenderableComponent>(
+                [](RenderableComponent& renderable_comp) { renderable_comp.BoundRenderable().ClearInstances(); });
+        }
+    }
+
+    for (size_t i = 0; i < scene_nodes.size(); ++i)
+    {
+        if (node_visible[i])
+        {
+            auto* node = scene_nodes[i];
+            node->ForEachComponentOfType<RenderableComponent>([node](RenderableComponent& renderable_comp) {
+                auto& renderable = renderable_comp.BoundRenderable();
+                if (renderable_comp.Enabled() && (renderable.GetRenderTechnique() != nullptr))
+                {
+                    if (0 == renderable.NumInstances())
+                    {
+                        renderable.AddToRenderQueue();
+                    }
+                    renderable.AddInstance(node);
+                }
+            });
+
+            ++ num_objects_rendered_;
+        }
+    }
+
     std::sort(render_queue_.begin(), render_queue_.end(),
     [](std::pair<const RenderTechnique*, std::vector<Renderable*>> const & lhs,
         std::pair<const RenderTechnique*, std::vector<Renderable*>> const & rhs)
@@ -65,6 +129,12 @@ void World::Flush(uint32_t urt)
         }
         num_renderables_rendered_ += static_cast<uint32_t>(items.second.size());
     }
+
+    render_queue_.resize(0);
+    
+    all_scene_nodes_.clear();
+    all_overlay_nodes_.clear();
+    urt_ = 0;
 }
 
 void World::Update()

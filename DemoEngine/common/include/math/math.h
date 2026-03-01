@@ -46,6 +46,13 @@ namespace RenderWorker
 	float constexpr DEG2RAD	= 0.01745329f;			// 角度化弧度因数
 	float constexpr RAD2DEG	= 57.29577f;			// 弧度化角度因数
 	
+	enum class BoundOverlap : uint32_t
+	{
+		No = 0,
+		Partial,
+		Yes,
+	};
+
 	namespace MathWorker
 	{
 		inline float Deg2Rad(const float x) { return x * DEG2RAD; }

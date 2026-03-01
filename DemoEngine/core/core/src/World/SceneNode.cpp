@@ -31,11 +31,6 @@ void SceneNode::Name(std::wstring_view name)
     name_ = std::wstring(name);
 }
 
-uint32_t SceneNode::Attrib() const
-{
-    return attrib_;
-}
-
 SceneNode* SceneNode::Parent() const
 {
     return parent_;    
@@ -258,6 +253,50 @@ const float4x4& SceneNode::InverseTransformToWorld() const
     {
         inv_xform_to_world_ = MathWorker::inverse(TransformToWorld());
         return inv_xform_to_world_;
+    }
+}
+
+void SceneNode::FillVisibleMark(BoundOverlap vm)
+{
+    visible_marks_.fill(vm);
+}
+
+void SceneNode::VisibleMark(uint32_t camera_index, BoundOverlap vm)
+{
+    COMMON_ASSERT(camera_index < visible_marks_.size());
+    visible_marks_[camera_index] = vm;
+}
+
+BoundOverlap SceneNode::VisibleMark(uint32_t camera_index) const
+{
+    COMMON_ASSERT(camera_index < visible_marks_.size());
+    return visible_marks_[camera_index];
+}
+
+uint32_t SceneNode::Attrib() const
+{
+    return attrib_;
+}
+
+bool SceneNode::Visible() const
+{
+    return (0 == (attrib_ & SOA_Invisible));
+}
+
+void SceneNode::Visible(bool vis)
+{
+    if (vis)
+    {
+        attrib_ &= ~SOA_Invisible;
+    }
+    else
+    {
+        attrib_ |= SOA_Invisible;
+    }
+
+    for (auto const & child : children_)
+    {
+        child->Visible(vis);
     }
 }
 

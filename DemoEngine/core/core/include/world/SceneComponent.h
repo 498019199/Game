@@ -27,8 +27,13 @@ public:
     
     virtual void BindSceneNode(SceneNode* node);
     SceneNode* BoundSceneNode() const;
+
+    bool Enabled() const;
+	void Enabled(bool enabled);
+
 protected:
-    SceneNode* node_ = nullptr;
+    SceneNode* node_ {nullptr};
+	bool enabled_ {true};
 };
 
 }

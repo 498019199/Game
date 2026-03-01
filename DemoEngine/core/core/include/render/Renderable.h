@@ -35,6 +35,9 @@ public:
         return technique_;
     }
 
+    virtual void OnRenderBegin();
+	virtual void OnRenderEnd();
+
     virtual const AABBox& PosBound() const;
 	virtual const AABBox& TexcoordBound() const;
 
@@ -43,7 +46,20 @@ public:
     virtual void ActiveLod(int32_t lod);
     virtual int32_t ActiveLod() const;
 
+	virtual void AddToRenderQueue();
+
     void Render();
+
+    void AddInstance(SceneNode const * node);
+	void ClearInstances();
+    uint32_t NumInstances() const
+    {
+        return static_cast<uint32_t>(instances_.size());
+    }
+    SceneNode const * GetInstance(uint32_t index) const
+    {
+        return instances_[index];
+    }
 
     virtual bool HWResourceReady() const
     {
@@ -65,13 +81,17 @@ protected:
     AABBox pos_aabb_;
 	AABBox tc_aabb_;
 
-    int32_t active_lod_ = 0;
+    std::vector<const SceneNode*> instances_;
+    const SceneNode* curr_node_ {nullptr};
 
-    // 布局顶点索引
-    std::vector<RenderLayoutPtr> rls_;
     // 效果参数合集
     RenderEffectPtr effect_;
     RenderTechnique* technique_ {nullptr};
+
+    // 布局顶点索引
+    std::vector<RenderLayoutPtr> rls_;
+
+    int32_t active_lod_ = 0;
 
 	RenderMaterialPtr mtl_;
 
