@@ -121,7 +121,7 @@ void Camera::ProjParams(float fov, float aspect, float near_plane, float far_pla
     near_plane_	= near_plane;
     far_plane_	= far_plane;
 
-    proj_mat_ = MathWorker::PerspectiveFovLH(fov, aspect, near_plane, far_plane);
+    proj_mat_ = MathWorker::perspective_fov_lh(fov, aspect, near_plane, far_plane);
     inv_proj_mat_ = MathWorker::inverse(proj_mat_);
     view_proj_mat_dirty_ = true;
 }

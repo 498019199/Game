@@ -101,9 +101,9 @@ void Renderable::Render()
         lod = active_lod_;
     }
 
-    const auto& effect = *GetRenderEffect();
-    const auto& layout = GetRenderLayout(lod);
-    const auto& tech = *GetRenderTechnique();
+    const auto& effect = *this->GetRenderEffect();
+    const auto& layout = this->GetRenderLayout(lod);
+    const auto& tech = *this->GetRenderTechnique();
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 
     this->OnRenderBegin();

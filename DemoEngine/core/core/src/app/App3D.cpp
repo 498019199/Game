@@ -4,6 +4,9 @@
 #include <base/ResLoader.h>
 #include <render/RenderFactory.h>
 
+#include <math/math.h>
+#include <world/SceneNode.h>
+
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(push)
@@ -215,4 +218,54 @@ void App3D::UpdateStats()
 	timer_.restart();
 }
 
+// 获取当前摄像机
+/////////////////////////////////////////////////////////////////////////////////
+const Camera& App3D::ActiveCamera() const
+{
+    RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    const CameraPtr& camera = re.CurFrameBuffer()->Viewport()->Camera();
+    COMMON_ASSERT(camera);
+
+    return *camera;
+}
+
+Camera& App3D::ActiveCamera()
+{
+    RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    const CameraPtr& camera = re.CurFrameBuffer()->Viewport()->Camera();
+    COMMON_ASSERT(camera);
+
+    return *camera;
+}
+
+// 设置观察矩阵
+/////////////////////////////////////////////////////////////////////////////////
+void App3D::LookAt(float3 const & vEye, float3 const & vLookAt)
+{
+    this->LookAt(vEye, vLookAt, float3(0, 1, 0));
+}
+
+void App3D::LookAt(float3 const & vEye, float3 const & vLookAt,
+                                            float3 const & vUp)
+{
+    auto& camera = this->ActiveCamera();
+    camera.LookAtDist(MathWorker::length(vLookAt - vEye));
+
+    auto& camera_node = *camera.BoundSceneNode();
+    camera_node.TransformToWorld(MathWorker::inverse(MathWorker::look_at_lh(vEye, vLookAt, vUp)));
+}
+
+// 设置投射矩阵
+/////////////////////////////////////////////////////////////////////////////////
+void App3D::Proj(float nearPlane, float farPlane)
+{
+    COMMON_ASSERT(nearPlane != 0);
+    COMMON_ASSERT(farPlane != 0);
+
+    RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    FrameBuffer& fb = *re.CurFrameBuffer();
+
+    this->ActiveCamera().ProjParams(re.DefaultFOV(), static_cast<float>(fb.Width()) / fb.Height(),
+        nearPlane, farPlane);
+}
 }

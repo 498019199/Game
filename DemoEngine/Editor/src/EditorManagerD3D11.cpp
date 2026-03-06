@@ -52,6 +52,9 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::OnCreate()
 {
+    this->LookAt(float3(-25.72f, 29.65f, 24.57f), float3(-24.93f, 29.09f, 24.32f));
+	this->Proj(0.05f, 300.0f);
+
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -165,7 +168,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             ptr->name = pAssert->extension;
             selected_asset_info_ = ptr;
 
-            auto model = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
+            auto model = ASyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
 			    SceneNode::SOA_Cullable | SceneNode::SOA_Moveable, 
                 [](RenderModel& model)
                 {

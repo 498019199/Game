@@ -96,7 +96,7 @@ void FirstPersonController::RotateRel(float yaw, float pitch, float roll)
 
         auto& camera_node = *camera_->BoundSceneNode();
         camera_node.TransformToWorld(
-            MathWorker::inverse(MathWorker::LookAtLH(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
+            MathWorker::inverse(MathWorker::look_at_lh(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
 
         camera_->Dirty();
     }
@@ -119,7 +119,7 @@ void FirstPersonController::RotateAbs(const quater& quat)
 
         auto& camera_node = *camera_->BoundSceneNode();
         camera_node.TransformToWorld(
-            MathWorker::inverse(MathWorker::LookAtLH(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
+            MathWorker::inverse(MathWorker::look_at_lh(camera_->EyePos(), camera_->EyePos() + view_vec * camera_->LookAtDist(), up_vec)));
         camera_->Dirty();
     }
 }

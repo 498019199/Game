@@ -9,6 +9,7 @@
 
 namespace RenderWorker
 {
+class Camera;
 class Window;
 using WindowPtr = std::shared_ptr<Window>;
 // 一个用于创建3D应用程序框架的基类。建立一个3D应用程序需要继承这个类，
@@ -66,10 +67,16 @@ public:
     float FPS() const;
     float AppTime() const;
     float FrameTime() const;
+
+    const Camera& ActiveCamera() const;
+	Camera& ActiveCamera();
 protected:
     uint32_t Update(uint32_t pass);
     void UpdateStats();
 
+    void LookAt(float3 const & eye, float3 const & lookAt);
+	void LookAt(float3 const & eye, float3 const & lookAt, float3 const & up);
+	void Proj(float nearPlane, float farPlane);
 private:
     virtual void OnCreate()
     {

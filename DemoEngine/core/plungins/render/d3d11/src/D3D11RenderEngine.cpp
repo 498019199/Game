@@ -671,6 +671,8 @@ void D3D11RenderEngine::D3DDevice(ID3D11Device1* device, ID3D11DeviceContext1* i
 	d3d_feature_level_ = feature_level;
 	Verify(device != nullptr);
 
+	this->FillRenderDeviceCaps();
+	
 	if (d3d_11_runtime_sub_ver_ >= 4)
 	{
 		// 创建一个手动重置的事件对象（Event Object）

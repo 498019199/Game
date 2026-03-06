@@ -81,6 +81,15 @@ public:
         return native_shader_platform_name_;
     }
 
+    float DefaultFOV() const
+    {
+        return default_fov_;
+    }
+    void DefaultFOV(float fov)
+    {
+        default_fov_ = fov;
+    }
+
     virtual void Refresh() const;
     
     // 获取渲染设备能力
@@ -125,6 +134,8 @@ protected:
     RenderLayoutPtr so_buffers_;
 
     RenderDeviceCaps caps_;
+
+    float default_fov_;
 
     StereoMethod stereo_method_ {STM_None};
     float stereo_separation_ {0.0f};

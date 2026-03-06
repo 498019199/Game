@@ -19,6 +19,7 @@ namespace
 namespace RenderWorker
 {
 RenderEngine::RenderEngine()
+    :default_fov_(PI / 4)
 {
     
 }

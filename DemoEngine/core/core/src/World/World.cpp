@@ -30,6 +30,7 @@ void World::AddRenderable(Renderable* obj)
     }
 
     const RenderTechnique* obj_tech = obj->GetRenderTechnique();
+    COMMON_ASSERT(obj_tech);
     bool found = false;
     for (auto& items : render_queue_)
     {
