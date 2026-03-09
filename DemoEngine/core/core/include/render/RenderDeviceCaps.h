@@ -70,6 +70,19 @@ struct ZENGINE_CORE_API RenderDeviceCaps
 
 	ElementFormat BestMatchVertexFormat(std::span<ElementFormat const> formats) const;
 
+    static constexpr uint32_t EncodeSampleCountQuality(uint32_t sample_count, uint32_t sample_quality) noexcept
+    {
+        return sample_count | (sample_quality << 16);
+    }
+    static constexpr uint32_t DecodeSampleCount(uint32_t encoded) noexcept
+    {
+        return encoded & 0xFFFF;
+    }
+    static constexpr uint32_t DecodeSampleQuality(uint32_t encoded) noexcept
+    {
+        return encoded >> 16;
+    }
+
 	void AssignVertexFormats(std::vector<ElementFormat> vertex_formats);
 	void AssignTextureFormats(std::vector<ElementFormat> texture_formats);
 

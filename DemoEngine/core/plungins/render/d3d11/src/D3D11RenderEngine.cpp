@@ -922,7 +922,7 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 	caps_.ds_support = true;
 
 	std::vector<ElementFormat> vertex_formats;
-	//std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
+	std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
 	std::vector<ElementFormat> texture_formats;
 	std::vector<ElementFormat> uav_formats;
 	bool check_uav_fmts = false;
@@ -1001,8 +1001,8 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 	UINT s;
 	for (auto const & fmt : fmts)
 	{
-		if (/*(caps_.max_shader_model < ShaderModel(5, 0))
-			&& */((EF_BC6 == fmt.first) || (EF_SIGNED_BC6 == fmt.first)
+		if ((caps_.max_shader_model < ShaderModel(5, 0))
+			&& ((EF_BC6 == fmt.first) || (EF_SIGNED_BC6 == fmt.first)
 				|| (EF_BC7 == fmt.first) || (EF_BC7_SRGB == fmt.first)))
 		{
 			continue;
@@ -1083,7 +1083,7 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 					{
 						if (quality > 0)
 						{
-							//render_target_formats[fmt.first].push_back(RenderDeviceCaps::EncodeSampleCountQuality(count, quality));
+							render_target_formats[fmt.first].push_back(RenderDeviceCaps::EncodeSampleCountQuality(count, quality));
 							count <<= 1;
 						}
 						else

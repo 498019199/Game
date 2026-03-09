@@ -520,16 +520,23 @@ namespace RenderWorker
             }
         }
 
-        template float4x4 LHToRH(const float4x4& float4x4) noexcept;
+        template float4x4 lh_to_rh(const float4x4& rhs) noexcept;
+		template <typename T>
+		Matrix4_T<T> lh_to_rh(const Matrix4_T<T>& rhs) noexcept
+		{
+			Matrix4_T<T> ret = rhs;
+			ret(2, 0) = -ret(2, 0);
+			ret(2, 1) = -ret(2, 1);
+			ret(2, 2) = -ret(2, 2);
+			ret(2, 3) = -ret(2, 3);
+			return ret;
+		}
+
+        template float4x4 rh_to_lh(const float4x4& rhs) noexcept;
         template<typename T>
-        Matrix4_T<T> LHToRH(const Matrix4_T<T>& rhs) noexcept
+        Matrix4_T<T> rh_to_lh(const Matrix4_T<T>& rhs) noexcept
         {
-            Matrix4_T<T> ret = rhs;
-            ret(2, 0) = -ret(2, 0);
-            ret(2, 1) = -ret(2, 1);
-            ret(2, 2) = -ret(2, 2);
-            ret(2, 3) = -ret(2, 3);
-            return ret;
+        return lh_to_rh(rhs);
         }
 
         // 视口为中心的正交投影矩阵
@@ -582,9 +589,9 @@ namespace RenderWorker
         }
 
         // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/bb281711(v=vs.85)
-        template float4x4 LookAtRH(const float3& Eye, const float3& At, const float3& Up);
+        template float4x4 look_at_rh(const float3& Eye, const float3& At, const float3& Up);
         template<typename T>
-        Matrix4_T<T> LookAtRH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
+        Matrix4_T<T> look_at_rh(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
         {
             Vector_T<T, 3> ZAxis = normalize(Eye - At);// 朝-z方向
             Vector_T<T, 3> XAxis = normalize(Up ^ ZAxis);
@@ -598,9 +605,9 @@ namespace RenderWorker
 
         // https://learn.microsoft.com/en-us/previous-versions/windows/desktop/bb281710(v=vs.85)
         // Eye 是摄像机位置，At 是摄像机朝向方向，Up 摄像机向上方向
-        template float4x4 LookAtLH(const float3& Eye, const float3& At, const float3& Up);
+        template float4x4 look_at_lh(const float3& Eye, const float3& At, const float3& Up);
         template<typename T>
-        Matrix4_T<T> LookAtLH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
+        Matrix4_T<T> look_at_lh(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up)
         {
             Vector_T<T, 3> ZAxis = normalize(At - Eye);
             Vector_T<T, 3> XAxis = normalize(Up ^ ZAxis);
@@ -612,9 +619,9 @@ namespace RenderWorker
                 -XAxis | Eye,   -YAxis | Eye,   -ZAxis | Eye,   1);        
         }
 
-        template float4x4 PerspectiveLH(float w, float h, float Near, float Far);
+        template float4x4 perspective_lh(float w, float h, float Near, float Far);
         template<typename T>
-        Matrix4_T<T> PerspectiveLH(T w, T h, T Near, T Far)
+        Matrix4_T<T> perspective_lh(T w, T h, T Near, T Far)
         {
             const T  q(Far / (Far - Near));
             const T  near2(Near + Near);
@@ -626,9 +633,9 @@ namespace RenderWorker
                 0,				0,			-Near * q,      0);    
         }
 
-        template float4x4 PerspectiveFovLH(float Fov, float Aspect, float Near, float Far);
+        template float4x4 perspective_fov_lh(float Fov, float Aspect, float Near, float Far);
         template<typename T>
-        Matrix4_T<T> PerspectiveFovLH(T Fov, T Aspect, T Near, T Far)
+        Matrix4_T<T> perspective_fov_lh(T Fov, T Aspect, T Near, T Far)
         {
             const T  h(T(1) / std::tan(Fov / 2));
             const T  w(h / Aspect);
@@ -641,9 +648,9 @@ namespace RenderWorker
                 0,		0,		-Near * q, 0);      
         }
 
-        template float4x4 PerspectiveOffCenterLH(float left, float right, float bottom, float top, float farPlane, float nearPlane);
+        template float4x4 perspective_off_center_lh(float left, float right, float bottom, float top, float farPlane, float nearPlane);
         template<typename T>
-        Matrix4_T<T> PerspectiveOffCenterLH(T left, T right, T bottom, T top, T farPlane, T nearPlane)
+        Matrix4_T<T> perspective_off_center_lh(T left, T right, T bottom, T top, T farPlane, T nearPlane)
         {
             const T q(farPlane / (farPlane - nearPlane));
             const T near2(nearPlane + nearPlane);
@@ -657,23 +664,23 @@ namespace RenderWorker
                 0,							0,								-nearPlane * q, 0);
         }
 
-        template float4x4 PerspectiveRH(float w, float h, float Near, float Far);
+        template float4x4 perspective_rh(float w, float h, float Near, float Far);
         template<typename T>
-        Matrix4_T<T> PerspectiveRH(T w, T h, T Near, T Far)
+        Matrix4_T<T> perspective_rh(T w, T h, T Near, T Far)
         {
-            return LHToRH(PerspectiveLH(w, h, Near, Far));          
+            return lh_to_rh(perspective_lh(w, h, Near, Far));          
         }
         
-        template float4x4 PerspectiveOffCenterRH(float left, float right, float bottom, float top, float farPlane, float nearPlane);
+        template float4x4 perspective_off_center_rh(float left, float right, float bottom, float top, float farPlane, float nearPlane);
         template<typename T>
-        Matrix4_T<T> PerspectiveOffCenterRH(T left, T right, T bottom, T top, T farPlane, T nearPlane)
+        Matrix4_T<T> perspective_off_center_rh(T left, T right, T bottom, T top, T farPlane, T nearPlane)
         {
-            return LHToRH(PerspectiveOffCenterLH(left, right, bottom, top, farPlane, nearPlane));        
+            return lh_to_rh(perspective_off_center_lh(left, right, bottom, top, farPlane, nearPlane));        
         }
 
-        template float4x4 PerspectiveFovRH(float Fov, float Aspect, float Near, float Far);
+        template float4x4 perspective_fov_rh(float Fov, float Aspect, float Near, float Far);
         template<typename T>
-        Matrix4_T<T> PerspectiveFovRH(T Fov, T Aspect, T Near, T Far)
+        Matrix4_T<T> perspective_fov_rh(T Fov, T Aspect, T Near, T Far)
         {
             const T  h(T(1) / std::tan(Fov / 2));
             const T  w(h / Aspect);

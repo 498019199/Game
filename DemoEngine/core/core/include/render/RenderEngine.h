@@ -12,6 +12,8 @@ namespace RenderWorker
 
 class RenderEffect;
 class RenderTechnique;
+class SceneNode;
+using SceneNodePtr = std::shared_ptr<SceneNode>;
 
 class ZENGINE_CORE_API RenderEngine
 {
@@ -112,6 +114,7 @@ private:
 protected:
     FrameBufferPtr cur_frame_buffer_;
     FrameBufferPtr screen_frame_buffer_;
+    SceneNodePtr screen_frame_buffer_camera_node_;
     FrameBufferPtr default_frame_buffers_[4];
     int fb_stage_ {0};
     FrameBufferPtr overlay_frame_buffer_;

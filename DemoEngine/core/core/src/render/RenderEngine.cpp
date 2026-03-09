@@ -50,6 +50,10 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
 
     screen_frame_buffer_ = cur_frame_buffer_;
 
+    screen_frame_buffer_camera_node_ =
+        MakeSharedPtr<SceneNode>(L"CameraNode", SceneNode::SOA_Cullable | SceneNode::SOA_Moveable | SceneNode::SOA_NotCastShadow);
+    screen_frame_buffer_camera_node_->AddComponent(screen_frame_buffer_->Viewport()->Camera());
+
     const uint32_t screen_width = screen_frame_buffer_->Width();
     const uint32_t screen_height = screen_frame_buffer_->Height();
     float const screen_aspect = static_cast<float>(screen_width) / screen_height;

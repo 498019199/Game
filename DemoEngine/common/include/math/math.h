@@ -255,12 +255,14 @@ namespace RenderWorker
 		Matrix4_T<T> inverse(const Matrix4_T<T>& m);
 
 		template <typename T>
-		Matrix4_T<T> LHToRH(Matrix4_T<T> const & rhs) noexcept;
+		Matrix4_T<T> lh_to_rh(const Matrix4_T<T>& rhs) noexcept;
+		template <typename T>
+		Matrix4_T<T> rh_to_lh(const Matrix4_T<T>& rhs) noexcept;
 
 		template<typename T>
-		Matrix4_T<T> LookAtRH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up);
+		Matrix4_T<T> look_at_rh(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up);
 		template<typename T>
-		Matrix4_T<T> LookAtLH(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up);
+		Matrix4_T<T> look_at_lh(const Vector_T<T, 3>& Eye, const Vector_T<T, 3>& At, const Vector_T<T, 3>& Up);
 
 		// 正交投影
 		//left hand , z axis = zero.->directX
@@ -278,19 +280,19 @@ namespace RenderWorker
 		//透视投影
 		//left hand , z axis = zero.->directX
 		template<typename T>
-		Matrix4_T<T> PerspectiveLH(T w, T h, T Near, T Far);
+		Matrix4_T<T> perspective_lh(T w, T h, T Near, T Far);
 		template<typename T>
-		Matrix4_T<T> PerspectiveOffCenterLH(T left, T right, T bottom, T top, T farPlane, T nearPlane);
+		Matrix4_T<T> perspective_off_center_lh(T left, T right, T bottom, T top, T farPlane, T nearPlane);
 		template<typename T>
-		Matrix4_T<T> PerspectiveFovLH(T Fov, T Aspect, T Near, T Far);
+		Matrix4_T<T> perspective_fov_lh(T Fov, T Aspect, T Near, T Far);
 
 		// right hand , z axis = negative one ->openGL
 		template<typename T>
-		Matrix4_T<T> PerspectiveRH(T w, T h, T Near, T Far);
+		Matrix4_T<T> perspective_rh(T w, T h, T Near, T Far);
 		template<typename T>
-		Matrix4_T<T> PerspectiveOffCenterRH(T left, T right, T bottom, T top, T farPlane, T nearPlane);
+		Matrix4_T<T> perspective_off_center_rh(T left, T right, T bottom, T top, T farPlane, T nearPlane);
 		template<typename T>
-		Matrix4_T<T> PerspectiveFovRH(T Fov, T Aspect, T Near, T Far);
+		Matrix4_T<T> perspective_fov_rh(T Fov, T Aspect, T Near, T Far);
 
 		// 矩阵分解
 		template<typename T>
