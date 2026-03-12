@@ -309,6 +309,11 @@ void RenderEngine::Destroy()
     this->DoDestroy();
 }
 
+uint32_t RenderEngine::NumRealizedCameraInstances() const
+{
+    return (num_camera_instances_ == 0) ? cur_frame_buffer_->Viewport()->NumCameras() : num_camera_instances_;
+}
+
 void RenderEngine::ForceLineMode(bool line)
 {
     if (force_line_mode_ != line)

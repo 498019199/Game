@@ -3,6 +3,7 @@
 #include <common/DllLoader.h>
 
 #include <render/RenderEffect.h>
+#include <render/RenderFactory.h>
 #include <render/ShaderObject.h>
 
 #if ZENGINE_IS_DEV_PLATFORM
@@ -232,12 +233,56 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 		RenderPass const& pass, std::vector<std::pair<char const*, char const*>> const& api_special_macros, char const* func_name,
 		char const* shader_profile, uint32_t flags, void** reflector, bool strip)
 	{
-        //auto& re = Context::Instance().RenderEngineInstance();
-        const std::string& hlsl_shader_text = effect.HLSLShaderText();
+        const auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+        const auto& caps = re.DeviceCaps();
+        const auto& hlsl_shader_text = effect.HLSLShaderText();
         std::vector<uint8_t> code;
         
-        std::string err_msg;
+		std::string max_sm_str = std::to_string(caps.max_shader_model.FullVersion());
+		std::string max_tex_array_str = std::to_string(caps.max_texture_array_length);
+		std::string max_tex_depth_str = std::to_string(caps.max_texture_depth);
+		std::string max_tex_units_str = std::to_string(static_cast<int>(caps.max_pixel_texture_units));
+		std::string flipping_str = std::to_string(re.RequiresFlipping() ? -1 : +1);
+		std::string render_to_tex_array_str = std::to_string(caps.render_to_texture_array_support ? 1 : 0);
+
+		std::string err_msg;
 		std::vector<D3D_SHADER_MACRO> macros;
+
+		for (uint32_t i = 0; i < api_special_macros.size(); ++i)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{api_special_macros[i].first, api_special_macros[i].second});
+		}
+
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_SHADER_MODEL", max_sm_str.c_str()});
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_MAX_TEX_ARRAY_LEN", max_tex_array_str.c_str()});
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_MAX_TEX_DEPTH", max_tex_depth_str.c_str()});
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_MAX_TEX_UNITS", max_tex_units_str.c_str()});
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_FLIPPING", flipping_str.c_str()});
+		macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_RENDER_TO_TEX_ARRAY", render_to_tex_array_str.c_str()});
+		if (!caps.fp_color_support)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_NO_FP_COLOR", "1"});
+		}
+		if (caps.pack_to_rgba_required)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_PACK_TO_RGBA", "1"});
+		}
+		if (caps.UavFormatSupport(EF_ABGR16F))
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_TYPED_UAV_SUPPORT", "1"});
+		}
+		if (caps.uavs_at_every_stage_support)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_UAVS_AT_EVERY_STAGE_SUPPORT", "1"});
+		}
+		if (caps.explicit_multi_sample_support)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_EXPLICIT_MULTI_SAMPLE_SUPPORT", "1"});
+		}
+		if (caps.vp_rt_index_at_every_stage_support)
+		{
+			macros.emplace_back(D3D_SHADER_MACRO{"KLAYGE_VP_RT_INDEX_AT_EVERY_STAGE_SUPPORT", "1"});
+		}
 
         {
 			char const* type_name;

@@ -17,6 +17,11 @@ public:
     D3D11RenderEngine();
     ~D3D11RenderEngine();
 
+    bool RequiresFlipping() const override
+    {
+        return true;
+    }
+
 #if ZENGINE_IS_DEV_PLATFORM
     void* GetD3DDevice() override;
     void* GetD3DDeviceImmContext() override;
@@ -95,6 +100,7 @@ public:
         D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext) const;
 
 	static void CALLBACK OnDeviceLost(PTP_CALLBACK_INSTANCE instance, PVOID context, PTP_WAIT wait, TP_WAIT_RESULT wait_result) noexcept;
+
 private:
     // 建立渲染窗口
 	virtual void DoCreateRenderWindow(std::string const & name, RenderSettings const & settings) override;
@@ -150,6 +156,9 @@ private:
     
     uint32_t num_primitives_just_rendered_{0};
 	uint32_t num_vertices_just_rendered_{0};
+	uint32_t num_draws_just_called_{0};
+	uint32_t num_dispatches_just_called_{0};
+
     // 光栅状态
     ID3D11RasterizerState* rasterizer_state_cache_{nullptr};
     // 模板/深度状态

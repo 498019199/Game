@@ -92,14 +92,14 @@ public:
 		return rls_[lod]->StartIndexLocation();
 	}
 
-	// void StartInstanceLocation(uint32_t lod, uint32_t location)
-	// {
-	// 	rls_[lod]->StartInstanceLocation(location);
-	// }
-	// uint32_t StartInstanceLocation(uint32_t lod) const
-	// {
-	// 	return rls_[lod]->StartInstanceLocation();
-	// }
+	void StartInstanceLocation(uint32_t lod, uint32_t location)
+	{
+		rls_[lod]->StartInstanceLocation(location);
+	}
+	uint32_t StartInstanceLocation(uint32_t lod) const
+	{
+		return rls_[lod]->StartInstanceLocation();
+	}
 
 	int32_t MaterialID() const
 	{

@@ -55,10 +55,26 @@ struct ZENGINE_CORE_API RenderDeviceCaps
     uint8_t max_vertex_streams;         // 一个顶点声明（Vertex Declaration）中允许的最大顶点元素（Vertex Element）数量
     uint8_t max_texture_anisotropy;     // 各向异性过滤（Anisotropic Filtering）的最大支持级别
 
-	bool primitive_restart_support : 1;
-	bool multithread_rendering_support : 1;
-	bool multithread_res_creating_support : 1;
-	bool arbitrary_multithread_rendering_support : 1;
+    bool primitive_restart_support : 1;
+    bool multithread_rendering_support : 1;
+    bool multithread_res_creating_support : 1;
+    bool arbitrary_multithread_rendering_support : 1;
+    bool mrt_independent_bit_depths_support : 1;
+    bool logic_op_support : 1;
+    bool independent_blend_support : 1;
+    bool depth_texture_support : 1;
+    bool fp_color_support : 1;
+    bool pack_to_rgba_required : 1;
+    bool draw_indirect_support : 1;
+    bool no_overwrite_support : 1;
+    bool full_npot_texture_support : 1;
+    bool render_to_texture_array_support : 1;
+    bool explicit_multi_sample_support : 1;
+    bool load_from_buffer_support : 1;
+    bool uavs_at_every_stage_support : 1;
+    bool rovs_support : 1;
+    bool flexible_srvs_support : 1;
+    bool vp_rt_index_at_every_stage_support : 1;
 
     bool gs_support : 1;
     bool cs_support : 1;
@@ -67,6 +83,9 @@ struct ZENGINE_CORE_API RenderDeviceCaps
 
 	bool VertexFormatSupport(ElementFormat format) const;
 	bool TextureFormatSupport(ElementFormat format) const;
+    bool RenderTargetFormatSupport(ElementFormat format, uint32_t sample_count, uint32_t sample_quality) const;
+	bool TextureRenderTargetFormatSupport(ElementFormat format, uint32_t sample_count, uint32_t sample_quality) const;
+    bool UavFormatSupport(ElementFormat format) const;
 
 	ElementFormat BestMatchVertexFormat(std::span<ElementFormat const> formats) const;
 
@@ -85,6 +104,8 @@ struct ZENGINE_CORE_API RenderDeviceCaps
 
 	void AssignVertexFormats(std::vector<ElementFormat> vertex_formats);
 	void AssignTextureFormats(std::vector<ElementFormat> texture_formats);
+    void AssignRenderTargetFormats(std::map<ElementFormat, std::vector<uint32_t>> render_target_formats);
+    void AssignUavFormats(std::vector<ElementFormat> uav_formats);
 
 	ElementFormat BestMatchTextureFormat(std::span<const ElementFormat> formats) const;
 private:

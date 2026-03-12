@@ -152,6 +152,7 @@ void* D3D11RenderEngine::GetD3DDeviceImmContext()
 void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
 	uint32_t vertex_stream_num = rl.VertexStreamNum();
+	const uint32_t all_num_vertex_stream = vertex_stream_num + (rl.InstanceStream() ? 1 : 0);
 
 	const auto& d3d_rl = checked_cast<const D3D11RenderLayout&>(rl);
 	d3d_rl.Active();
@@ -160,18 +161,18 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 	const auto& vbs = d3d_rl.VBs();
 	const auto& strides = d3d_rl.Strides();
 	const auto& offsets = d3d_rl.Offsets();
-	if(0 != vertex_stream_num)
+	if(0 != all_num_vertex_stream)
 	{
-		if ((vb_cache_.size() != vertex_stream_num) || (vb_cache_ != vbs)
+		if ((vb_cache_.size() != all_num_vertex_stream) || (vb_cache_ != vbs)
 			|| (vb_stride_cache_ != strides) || (vb_offset_cache_ != offsets))
 		{
-			d3d_imm_ctx_1_->IASetVertexBuffers(0, vertex_stream_num, &vbs[0], &strides[0], &offsets[0]);
+			d3d_imm_ctx_1_->IASetVertexBuffers(0, all_num_vertex_stream, &vbs[0], &strides[0], &offsets[0]);
 			vb_cache_ = vbs;
 			vb_stride_cache_ = strides;
 			vb_offset_cache_ = offsets;
 		}
 
-		auto layout = d3d_rl.InputLayout(effect.ShaderObjectByIndex(0).get());
+		auto layout = d3d_rl.InputLayout(tech.Pass(0).GetShaderObject(effect).get());
 		if (layout != input_layout_cache_)
 		{
 			d3d_imm_ctx_1_->IASetInputLayout(layout);
@@ -195,9 +196,30 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 		d3d_imm_ctx_1_->IASetInputLayout(input_layout_cache_);
 	}
 
-    // 设置图元类型，设定输入布局
 	uint32_t const vertex_count = static_cast<uint32_t>(rl.UseIndices() ? rl.NumIndices() : rl.NumVertices());
+
+    // 设置图元类型，设定输入布局
 	D3D11RenderLayout::topology_type tt = rl.TopologyType();
+	if (tech.HasTessellation())
+	{
+		switch (tt)
+		{
+		case RenderLayout::TT_PointList:
+			tt = RenderLayout::TT_1_Ctrl_Pt_PatchList;
+			break;
+
+		case RenderLayout::TT_LineList:
+			tt = RenderLayout::TT_2_Ctrl_Pt_PatchList;
+			break;
+
+		case RenderLayout::TT_TriangleList:
+			tt = RenderLayout::TT_3_Ctrl_Pt_PatchList;
+			break;
+
+		default:
+			break;
+		}
+	}
 	if (topology_type_cache_ != tt)
 	{
 		d3d_imm_ctx_1_->IASetPrimitiveTopology(D3D11Mapping::Mapping(tt));
@@ -243,8 +265,10 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 		}
 		break;
 	}
-	num_primitives_just_rendered_ = prim_count;
-	num_vertices_just_rendered_ = vertex_count;
+	const uint32_t num_instances = rl.NumInstances() * this->NumRealizedCameraInstances();
+
+	num_primitives_just_rendered_ += num_instances * prim_count;
+	num_vertices_just_rendered_ += num_instances * vertex_count;
 
     // 绑定索引资源
 	if(rl.UseIndices())
@@ -252,8 +276,8 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 		ID3D11Buffer* d3dib = checked_cast<D3D11GraphicsBuffer&>(*rl.GetIndexStream()).D3DBuffer();
 		if (ib_cache_ != d3dib)
 		{
-			ib_cache_ = d3dib;
 			d3d_imm_ctx_1_->IASetIndexBuffer(d3dib, D3D11Mapping::MappingFormat(rl.IndexStreamFormat()), 0);
+			ib_cache_ = d3dib;
 		}
 	}
 	else
@@ -267,16 +291,63 @@ void D3D11RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniq
 
 	// 将更新好的常量缓冲区绑定到顶点着色器和像素着色器
 	uint32_t const num_passes = tech.NumPasses();
-	for (uint32_t i = 0; i < num_passes; ++ i)
+	GraphicsBuffer const * indirect_buff = rl.GetIndirectArgs().get();
+	if (indirect_buff)
 	{
-		auto& pass = tech.Pass(i);
-		pass.Bind(effect);
-		if(3 == num_vertices_just_rendered_)
-			d3d_imm_ctx_1_->DrawIndexed(num_vertices_just_rendered_, 0, 0);
+		if (rl.UseIndices())
+		{
+			for (uint32_t i = 0; i < num_passes; ++ i)
+			{
+				auto& pass = tech.Pass(i);
+
+				pass.Bind(effect);
+				d3d_imm_ctx_1_->DrawIndexedInstancedIndirect(
+					checked_cast<D3D11GraphicsBuffer const&>(*indirect_buff).D3DBuffer(), rl.IndirectArgsOffset());
+				pass.Unbind(effect);
+			}
+		}
 		else
-			d3d_imm_ctx_1_->DrawAuto();
-		pass.Unbind(effect);
+		{
+			for (uint32_t i = 0; i < num_passes; ++ i)
+			{
+				auto& pass = tech.Pass(i);
+
+				pass.Bind(effect);
+				d3d_imm_ctx_1_->DrawInstancedIndirect(
+					checked_cast<D3D11GraphicsBuffer const&>(*indirect_buff).D3DBuffer(), rl.IndirectArgsOffset());
+				pass.Unbind(effect);
+			}
+		}
 	}
+	else
+	{
+		if (rl.UseIndices())
+		{
+			uint32_t const num_indices = rl.NumIndices();
+			for (uint32_t i = 0; i < num_passes; ++ i)
+			{
+				auto& pass = tech.Pass(i);
+
+				pass.Bind(effect);
+				d3d_imm_ctx_1_->DrawIndexedInstanced(num_indices, num_instances, rl.StartIndexLocation(), rl.StartVertexLocation(), rl.StartInstanceLocation());
+				pass.Unbind(effect);
+			}
+		}
+		else
+		{
+			uint32_t const num_vertices = rl.NumVertices();
+			for (uint32_t i = 0; i < num_passes; ++ i)
+			{
+				auto& pass = tech.Pass(i);
+
+				pass.Bind(effect);
+				d3d_imm_ctx_1_->DrawInstanced(num_vertices, num_instances, rl.StartVertexLocation(), rl.StartInstanceLocation());
+				pass.Unbind(effect);
+			}
+		}
+	}
+
+	num_draws_just_called_ += num_passes;
 }
 
 void D3D11RenderEngine::DoBindFrameBuffer([[maybe_unused]] FrameBufferPtr const & fb)
@@ -917,6 +988,65 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 		}
 	}
 
+	// MRT 独立位深支持
+	caps_.mrt_independent_bit_depths_support = true;
+	{
+		// OutputMergerLogicOp 是否支持逻辑运算
+		D3D11_FEATURE_DATA_D3D11_OPTIONS d3d11_feature{};
+		if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &d3d11_feature, sizeof(d3d11_feature))))
+		{
+			caps_.logic_op_support = d3d11_feature.OutputMergerLogicOp ? true : false;
+		}
+		else
+		{
+			caps_.logic_op_support = false;
+		}
+	}
+	caps_.independent_blend_support = true;
+	caps_.draw_indirect_support = true;
+	caps_.no_overwrite_support = true;
+	caps_.full_npot_texture_support = true;
+	caps_.render_to_texture_array_support = true;
+	caps_.explicit_multi_sample_support = true;
+	caps_.load_from_buffer_support = true;
+	caps_.uavs_at_every_stage_support = (d3d_feature_level_ >= D3D_FEATURE_LEVEL_11_1);
+	// ROVs 是 D3D11 后期版本（11.3）的特性
+	if (d3d_11_runtime_sub_ver_ >= 3)
+	{
+		D3D11_FEATURE_DATA_D3D11_OPTIONS2 d3d11_feature{};
+		if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS2, &d3d11_feature, sizeof(d3d11_feature))))
+		{
+			// ROVs（Rasterizer Ordered Views，光栅化顺序视图）
+			caps_.rovs_support = d3d11_feature.ROVsSupported ? true : false;
+		}
+		else
+		{
+			caps_.rovs_support = false;
+		}
+	}
+	else
+	{
+		caps_.rovs_support = false;
+	}
+	caps_.flexible_srvs_support = true;
+	if (d3d_11_runtime_sub_ver_ >= 4)
+	{
+		// VP 和 RT 索引在光栅化阶段的任意着色器阶段支持
+		D3D11_FEATURE_DATA_D3D11_OPTIONS3 d3d11_feature{};
+		if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS3, &d3d11_feature, sizeof(d3d11_feature))))
+		{
+			caps_.vp_rt_index_at_every_stage_support = d3d11_feature.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer ? true : false;
+		}
+		else
+		{
+			caps_.vp_rt_index_at_every_stage_support = false;
+		}
+	}
+	else
+	{
+		caps_.vp_rt_index_at_every_stage_support = false;
+	}
+
 	caps_.gs_support = true;
 	caps_.hs_support = true;
 	caps_.ds_support = true;
@@ -1102,6 +1232,8 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 	
 	caps_.AssignVertexFormats(std::move(vertex_formats));
 	caps_.AssignTextureFormats(std::move(texture_formats));
+	caps_.AssignRenderTargetFormats(std::move(render_target_formats));
+	caps_.AssignUavFormats(std::move(uav_formats));
 }
 
 char const * D3D11RenderEngine::DefaultShaderProfile(ShaderStage stage) const

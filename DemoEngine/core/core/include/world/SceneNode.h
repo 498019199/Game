@@ -112,7 +112,9 @@ public:
     const float4x4& InverseTransformToParent() const;
     const float4x4& TransformToWorld() const;
     const float4x4& InverseTransformToWorld() const;
-
+    const float4x4& PrevTransformToWorld() const;
+    void UpdateTransforms();
+    
     void FillVisibleMark(BoundOverlap vm);
 	void VisibleMark(uint32_t camera_index, BoundOverlap vm);
 	BoundOverlap VisibleMark(uint32_t camera_index) const;
@@ -135,6 +137,7 @@ private:
 
     float4x4 xform_to_parent_ {float4x4::Identity()}; 
     float4x4 inv_xform_to_parent_ {float4x4::Identity()};
+    mutable float4x4 prev_xform_to_world_ = float4x4::Identity();
     mutable float4x4 xform_to_world_ {float4x4::Identity()}; 
     mutable float4x4 inv_xform_to_world_ {float4x4::Identity()}; 
 

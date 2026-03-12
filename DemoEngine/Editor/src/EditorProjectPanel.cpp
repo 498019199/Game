@@ -43,6 +43,7 @@ EditorProjectPanel::EditorProjectPanel()
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".scene",    AssetType::Scene             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".obj",      AssetType::Model             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".fbx",      AssetType::Model             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".glb",      AssetType::Model             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".wav",      AssetType::Audio             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".ogg",      AssetType::Audio             ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".txt",      AssetType::Text              ));

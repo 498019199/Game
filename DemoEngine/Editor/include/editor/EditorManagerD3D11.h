@@ -21,6 +21,7 @@ public:
     ~EditorManagerD3D11();
 
     virtual void OnCreate() override;
+    void DoUpdateOverlay();
     virtual void OnDestroy() override;
 
     static void SetWindowSize(int hWidth, int pHeight, int iWidth);

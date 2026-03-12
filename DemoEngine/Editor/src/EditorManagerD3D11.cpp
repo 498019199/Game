@@ -15,7 +15,7 @@
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
-#include <render/Mesh.h>
+#include "Model.h"
 
 namespace EditorWorker
 {
@@ -79,6 +79,11 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
 }
+
+void EditorManagerD3D11::DoUpdateOverlay()
+{
+}
+
 
 void EditorManagerD3D11::OnDestroy()
 {
@@ -174,7 +179,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                 {
                     model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 5.0f, 0.0f));
                     AddToSceneRootHelper(model);
-                });
+                }, CreateModelFactory<RenderModel>, CreateMeshFactory<DetailedMesh>);
         }
         break;
 

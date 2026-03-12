@@ -256,6 +256,11 @@ const float4x4& SceneNode::InverseTransformToWorld() const
     }
 }
 
+float4x4 const& SceneNode::PrevTransformToWorld() const
+{
+    return prev_xform_to_world_;
+}
+
 void SceneNode::FillVisibleMark(BoundOverlap vm)
 {
     visible_marks_.fill(vm);
@@ -325,6 +330,22 @@ void SceneNode::EmitSceneChanged()
     //         scene_mgr.OnSceneChanged();
     //     }
     // }
+}
+
+void SceneNode::UpdateTransforms()
+{
+    prev_xform_to_world_ = xform_to_world_;
+    if (parent_)
+    {
+        xform_to_world_ = xform_to_parent_ * parent_->TransformToWorld();
+    }
+    else
+    {
+        xform_to_world_ = xform_to_parent_;
+    }
+    inv_xform_to_world_ = MathWorker::inverse(xform_to_world_);
+
+    pos_aabb_dirty_ = true;
 }
 
 void SceneNode::Update(float dt)

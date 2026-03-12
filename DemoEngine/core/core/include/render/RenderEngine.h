@@ -22,6 +22,8 @@ public:
     RenderEngine();
     virtual ~RenderEngine() noexcept;
 
+    virtual bool RequiresFlipping() const = 0;
+
     // 设置当前渲染状态对象
     void SetStateObject(RenderStateObjectPtr const & rs_obj);
     // 设置当前Stream output目标
@@ -91,6 +93,15 @@ public:
     {
         default_fov_ = fov;
     }
+    
+    void NumCameraInstances(uint32_t num)
+    {
+        num_camera_instances_ = num;
+    }
+    uint32_t NumCameraInstances() const
+    {
+        return num_camera_instances_;
+    }
 
     virtual void Refresh() const;
     
@@ -101,6 +112,7 @@ public:
 protected:
 
 	void Destroy();
+    uint32_t NumRealizedCameraInstances() const;
 
 private:
 
@@ -126,6 +138,8 @@ protected:
     uint32_t native_shader_fourcc_ {0};
     uint32_t native_shader_version_ {0};
     std::string_view native_shader_platform_name_;
+
+    uint32_t num_camera_instances_ {0};
 
     RenderStateObjectPtr cur_rs_obj_;
     RenderStateObjectPtr cur_line_rs_obj_;

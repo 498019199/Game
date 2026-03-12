@@ -143,6 +143,17 @@ public:
     void NumVertices(uint32_t n);
     uint32_t NumVertices() const;
 
+    const GraphicsBufferPtr& InstanceStream() const;
+    void InstanceStream(GraphicsBufferPtr const & buffer);
+    std::vector<VertexElement> const & InstanceStreamFormat() const
+    {
+        return instance_stream_.format;
+    }
+    uint32_t InstanceSize() const
+    {
+        return instance_stream_.vertex_size;
+    }
+
     const GraphicsBufferPtr& GetVertexStream(uint32_t index) const
     {
         return vertex_streams_[index].stream;
@@ -153,10 +164,7 @@ public:
         streams_dirty_ = true;
     }
 
-    const GraphicsBufferPtr& GetIndexStream() const
-    {
-		return index_stream_;
-	}
+    const GraphicsBufferPtr& GetIndexStream() const;
 
     void VertexStreamFormat(uint32_t index, std::span<const VertexElement> vet);
 
@@ -191,11 +199,22 @@ public:
 
     void Active() const;
 
+    void NumInstances(uint32_t n);
+    uint32_t NumInstances() const;
+
     void StartVertexLocation(uint32_t location);
     uint32_t StartVertexLocation() const;
 
     void StartIndexLocation(uint32_t location);
     uint32_t StartIndexLocation() const;
+
+    void StartInstanceLocation(uint32_t location);
+    uint32_t StartInstanceLocation() const;
+
+    void BindIndirectArgs(GraphicsBufferPtr const & args_buff);
+    GraphicsBufferPtr const & GetIndirectArgs() const;
+    void IndirectArgsOffset(uint32_t offset);
+    uint32_t IndirectArgsOffset() const;
 protected:
     topology_type topo_type_;
 
@@ -203,12 +222,18 @@ protected:
 	ElementFormat index_format_; // 索引格式
 
     std::vector<StreamUnit> vertex_streams_;; // 顶点缓冲区
+    StreamUnit instance_stream_;
 
-    uint32_t force_num_vertices_{0xFFFFFFFF};
-	uint32_t force_num_indices_{0xFFFFFFFF};
+    uint32_t force_num_vertices_ {0xFFFFFFFF};
+	uint32_t force_num_indices_ {0xFFFFFFFF};
+    uint32_t force_num_instances_ {0xFFFFFFFF};
 
     uint32_t start_vertex_location_ {0};
     uint32_t start_index_location_ {0};
+	uint32_t start_instance_location_ {0};
+
+    GraphicsBufferPtr indirect_args_buff_;
+	uint32_t indirect_args_offset{0};
 
     mutable bool streams_dirty_;
 };

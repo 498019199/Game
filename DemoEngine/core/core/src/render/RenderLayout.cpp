@@ -57,6 +57,16 @@ void RenderLayout::BindVertexStream(const GraphicsBufferPtr& buffer, std::span<c
         vs.type = type;
         vs.freq = freq;
     }
+    else
+    {
+        instance_stream_.stream = buffer;
+        instance_stream_.format.assign(vet.begin(), vet.end());
+        instance_stream_.vertex_size = size;
+        instance_stream_.type = type;
+        instance_stream_.freq = freq;
+    }
+
+    streams_dirty_ = true;
 }
 
 void RenderLayout::BindIndexStream(const GraphicsBufferPtr& buffer, ElementFormat format)
@@ -66,6 +76,23 @@ void RenderLayout::BindIndexStream(const GraphicsBufferPtr& buffer, ElementForma
     index_stream_ = buffer;
     index_format_ = format;
 
+    streams_dirty_ = true;
+}
+
+const GraphicsBufferPtr& RenderLayout::GetIndexStream() const
+{
+    COMMON_ASSERT(index_stream_);
+    return index_stream_;
+}
+
+GraphicsBufferPtr const & RenderLayout::InstanceStream() const
+{
+    return instance_stream_.stream;
+}
+
+void RenderLayout::InstanceStream(GraphicsBufferPtr const & buffer)
+{
+    instance_stream_.stream = buffer;
     streams_dirty_ = true;
 }
 
@@ -135,6 +162,33 @@ uint32_t RenderLayout::NumVertices() const
     return n;
 }
 
+void RenderLayout::NumInstances(uint32_t n)
+{
+    force_num_instances_ = n;
+    streams_dirty_ = true;
+}
+
+uint32_t RenderLayout::NumInstances() const
+{
+    uint32_t n;
+    if (0xFFFFFFFF == force_num_instances_)
+    {
+        if (vertex_streams_.empty())
+        {
+            n = 1;
+        }
+        else
+        {
+            n = vertex_streams_[0].freq;
+        }
+    }
+    else
+    {
+        n = force_num_instances_;
+    }
+    return n;
+}
+
 void RenderLayout::StartVertexLocation(uint32_t location)
 {
     start_vertex_location_ = location;
@@ -152,8 +206,41 @@ void RenderLayout::StartIndexLocation(uint32_t location)
     streams_dirty_ = true;
 }
 
+void RenderLayout::StartInstanceLocation(uint32_t location)
+{
+    start_instance_location_ = location;
+    streams_dirty_ = true;
+}
+
+uint32_t RenderLayout::StartInstanceLocation() const
+{
+    return start_instance_location_;
+}
+
 uint32_t RenderLayout::StartIndexLocation() const
 {
     return start_index_location_;
+}
+
+void RenderLayout::BindIndirectArgs(GraphicsBufferPtr const & args_buff)
+{
+    indirect_args_buff_ = args_buff;
+    streams_dirty_ = true;
+}
+
+GraphicsBufferPtr const & RenderLayout::GetIndirectArgs() const
+{
+    return indirect_args_buff_;
+}
+
+void RenderLayout::IndirectArgsOffset(uint32_t offset)
+{
+    indirect_args_offset = offset;
+    streams_dirty_ = true;
+}
+
+uint32_t RenderLayout::IndirectArgsOffset() const
+{
+    return indirect_args_offset;
 }
 }
