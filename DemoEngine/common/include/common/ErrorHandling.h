@@ -1,5 +1,5 @@
 #pragma once
-
+#include <common/macro.h>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -13,9 +13,7 @@ namespace CommonWorker
 	std::string CombineFileLine(std::string_view file, uint32_t line);
 	void Verify(bool x);
 
-#if defined(ZENGINE_DEBUG)
 	[[noreturn]] void UnreachableInternal(std::string_view msg = {}, std::string_view file = {}, uint32_t line = 0);
-#endif
 }
 
 // Throw error code

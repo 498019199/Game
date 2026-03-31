@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(DEBUG) | defined(_DEBUG)
+	#define ZENGINE_DEBUG
+#endif
+
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 	#define ZENGINE_PLATFORM_WINDOWS
 

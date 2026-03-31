@@ -3,10 +3,6 @@
 
 #include <common/common.h>
 
-#if defined(DEBUG) | defined(_DEBUG)
-	#define ZENGINE_DEBUG
-#endif
-
 #define ZENGINE_NAME			ZENGINE
 #define ZENGINE_STRINGIZE(X) ZENGINE_DO_STRINGIZE(X)
 #define ZENGINE_DO_STRINGIZE(X) #X

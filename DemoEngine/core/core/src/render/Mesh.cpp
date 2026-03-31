@@ -308,6 +308,455 @@ namespace
 
 }
 
+namespace
+{
+	void WriteMaterialsChunk(std::vector<RenderMaterialPtr> const & mtls, std::ostream& os)
+	{
+		for (size_t i = 0; i < mtls.size(); ++ i)
+		{
+			auto& mtl = *mtls[i];
+
+			WriteShortString(os, mtl.Name());
+
+			for (uint32_t j = 0; j < 4; ++ j)
+			{
+				float const value = Native2LE(mtl.Albedo()[j]);
+				os.write(reinterpret_cast<char const *>(&value), sizeof(value));
+			}
+
+			float metalness = Native2LE(mtl.Metalness());
+			os.write(reinterpret_cast<char*>(&metalness), sizeof(metalness));
+
+			float glossiness = Native2LE(mtl.Glossiness());
+			os.write(reinterpret_cast<char*>(&glossiness), sizeof(glossiness));
+
+			for (uint32_t j = 0; j < 3; ++ j)
+			{
+				float const value = Native2LE(mtl.Emissive()[j]);
+				os.write(reinterpret_cast<char const *>(&value), sizeof(value));
+			}
+
+			uint8_t transparent = mtl.Transparent();
+			os.write(reinterpret_cast<char*>(&transparent), sizeof(transparent));
+
+			uint8_t alpha_test = static_cast<uint8_t>(MathWorker::clamp(static_cast<int>(mtl.AlphaTestThreshold() * 255.0f + 0.5f), 0, 255));
+			os.write(reinterpret_cast<char*>(&alpha_test), sizeof(alpha_test));
+
+			uint8_t sss = mtl.Sss();
+			os.write(reinterpret_cast<char*>(&sss), sizeof(sss));
+
+			uint8_t two_sided = mtl.TwoSided();
+			os.write(reinterpret_cast<char*>(&two_sided), sizeof(two_sided));
+
+			for (size_t j = 0; j < RenderMaterial::TS_NumTextureSlots; ++ j)
+			{
+				WriteShortString(os, mtl.TextureName(static_cast<RenderMaterial::TextureSlot>(j)));
+			}
+			if (!mtl.TextureName(RenderMaterial::TS_Normal).empty())
+			{
+				float normal_scale = Native2LE(mtl.NormalScale());
+				os.write(reinterpret_cast<char*>(&normal_scale), sizeof(normal_scale));
+			}
+			if (!mtl.TextureName(RenderMaterial::TS_Height).empty())
+			{
+				float height_offset = Native2LE(mtl.HeightOffset());
+				os.write(reinterpret_cast<char*>(&height_offset), sizeof(height_offset));
+				float height_scale = Native2LE(mtl.HeightScale());
+				os.write(reinterpret_cast<char*>(&height_scale), sizeof(height_scale));
+			}
+			if (!mtl.TextureName(RenderMaterial::TS_Occlusion).empty())
+			{
+				float occlusion_strength = Native2LE(mtl.OcclusionStrength());
+				os.write(reinterpret_cast<char*>(&occlusion_strength), sizeof(occlusion_strength));
+			}
+
+			uint8_t detail_mode = static_cast<uint8_t>(mtl.DetailMode());
+			os.write(reinterpret_cast<char*>(&detail_mode), sizeof(detail_mode));
+			if ((mtl.DetailMode() == RenderMaterial::SurfaceDetailMode::FlatTessellation) ||
+				(mtl.DetailMode() == RenderMaterial::SurfaceDetailMode::SmoothTessellation))
+			{
+				float tess_factor = Native2LE(mtl.EdgeTessHint());
+				os.write(reinterpret_cast<char*>(&tess_factor), sizeof(tess_factor));
+				tess_factor = Native2LE(mtl.InsideTessHint());
+				os.write(reinterpret_cast<char*>(&tess_factor), sizeof(tess_factor));
+				tess_factor = Native2LE(mtl.MinTessFactor());
+				os.write(reinterpret_cast<char*>(&tess_factor), sizeof(tess_factor));
+				tess_factor = Native2LE(mtl.MaxTessFactor());
+				os.write(reinterpret_cast<char*>(&tess_factor), sizeof(tess_factor));
+			}
+		}
+	}
+
+	void WriteMeshesChunk(std::vector<std::string> const & mesh_names, std::vector<int32_t> const & mtl_ids, std::vector<uint32_t> const & mesh_lods,
+		std::vector<AABBox> const & pos_bbs, std::vector<AABBox> const & tc_bbs,
+		std::vector<uint32_t> const & mesh_num_vertices, std::vector<uint32_t> const & mesh_base_vertices,
+		std::vector<uint32_t> const & mesh_num_indices, std::vector<uint32_t> const & mesh_start_indices,
+		std::vector<VertexElement> const & merged_ves,
+		std::vector<std::vector<uint8_t>> const & merged_vertices, std::vector<uint8_t> const & merged_indices,
+		char is_index_16_bit, std::ostream& os)
+	{
+		uint32_t num_merged_ves = Native2LE(static_cast<uint32_t>(merged_ves.size()));
+		os.write(reinterpret_cast<char*>(&num_merged_ves), sizeof(num_merged_ves));
+		for (size_t i = 0; i < merged_ves.size(); ++ i)
+		{
+			VertexElement ve = merged_ves[i];
+			ve.usage = Native2LE(ve.usage);
+			ve.format = Native2LE(ve.format);
+			os.write(reinterpret_cast<char*>(&ve), sizeof(ve));
+		}
+
+		uint32_t num_vertices = Native2LE(mesh_base_vertices.back());
+		os.write(reinterpret_cast<char*>(&num_vertices), sizeof(num_vertices));
+		uint32_t num_indices = Native2LE(mesh_start_indices.back());
+		os.write(reinterpret_cast<char*>(&num_indices), sizeof(num_indices));
+		os.write(&is_index_16_bit, sizeof(is_index_16_bit));
+
+		for (size_t i = 0; i < merged_vertices.size(); ++ i)
+		{
+			os.write(reinterpret_cast<char const *>(&merged_vertices[i][0]), merged_vertices[i].size() * sizeof(merged_vertices[i][0]));
+		}
+		os.write(reinterpret_cast<char const *>(&merged_indices[0]), merged_indices.size() * sizeof(merged_indices[0]));
+
+		uint32_t mesh_lod_index = 0;
+		for (uint32_t mesh_index = 0; mesh_index < mesh_names.size(); ++ mesh_index)
+		{
+			WriteShortString(os, mesh_names[mesh_index]);
+
+			int32_t mtl_id = Native2LE(mtl_ids[mesh_index]);
+			os.write(reinterpret_cast<char*>(&mtl_id), sizeof(mtl_id));
+
+			uint32_t lods = Native2LE(mesh_lods[mesh_index]);
+			os.write(reinterpret_cast<char*>(&lods), sizeof(lods));
+
+			float3 min_bb;
+			min_bb.x() = Native2LE(pos_bbs[mesh_index].Min().x());
+			min_bb.y() = Native2LE(pos_bbs[mesh_index].Min().y());
+			min_bb.z() = Native2LE(pos_bbs[mesh_index].Min().z());
+			os.write(reinterpret_cast<char*>(&min_bb), sizeof(min_bb));
+			float3 max_bb;
+			max_bb.x() = Native2LE(pos_bbs[mesh_index].Max().x());
+			max_bb.y() = Native2LE(pos_bbs[mesh_index].Max().y());
+			max_bb.z() = Native2LE(pos_bbs[mesh_index].Max().z());
+			os.write(reinterpret_cast<char*>(&max_bb), sizeof(max_bb));
+
+			min_bb.x() = Native2LE(tc_bbs[mesh_index].Min().x());
+			min_bb.y() = Native2LE(tc_bbs[mesh_index].Min().y());
+			os.write(reinterpret_cast<char*>(&min_bb[0]), sizeof(min_bb[0]));
+			os.write(reinterpret_cast<char*>(&min_bb[1]), sizeof(min_bb[1]));
+			max_bb.x() = Native2LE(tc_bbs[mesh_index].Max().x());
+			max_bb.y() = Native2LE(tc_bbs[mesh_index].Max().y());
+			os.write(reinterpret_cast<char*>(&max_bb[0]), sizeof(max_bb[0]));
+			os.write(reinterpret_cast<char*>(&max_bb[1]), sizeof(max_bb[1]));
+
+			for (uint32_t lod = 0; lod < lods; ++ lod, ++ mesh_lod_index)
+			{
+				uint32_t nv = Native2LE(mesh_num_vertices[mesh_lod_index]);
+				os.write(reinterpret_cast<char*>(&nv), sizeof(nv));
+				uint32_t bv = Native2LE(mesh_base_vertices[mesh_lod_index]);
+				os.write(reinterpret_cast<char*>(&bv), sizeof(bv));
+				uint32_t ni = Native2LE(mesh_num_indices[mesh_lod_index]);
+				os.write(reinterpret_cast<char*>(&ni), sizeof(ni));
+				uint32_t si = Native2LE(mesh_start_indices[mesh_lod_index]);
+				os.write(reinterpret_cast<char*>(&si), sizeof(si));
+			}
+		}
+	}
+
+	void WriteNodesChunk(std::vector<SceneNode const*> const& nodes, std::vector<Renderable const*> const& renderables,
+		std::vector<JointComponent const*> const& joints, std::ostream& os)
+	{
+		std::map<Renderable const*, uint16_t> renderable_indices;
+		for (size_t i = 0; i < renderables.size(); ++i)
+		{
+			renderable_indices.emplace(renderables[i], static_cast<uint16_t>(i));
+		}
+
+		std::map<JointComponent const*, int16_t> joint_indices;
+		for (size_t i = 0; i < joints.size(); ++i)
+		{
+			joint_indices.emplace(joints[i], static_cast<int16_t>(i));
+		}
+
+		for (size_t i = 0; i < nodes.size(); ++ i)
+		{
+			std::string name;
+			Convert(name, nodes[i]->Name());
+			WriteShortString(os, name);
+
+			uint32_t attrib = Native2LE(nodes[i]->Attrib());
+			os.write(reinterpret_cast<char*>(&attrib), sizeof(attrib));
+
+			int16_t node_parent = -1;
+			if (nodes[i]->Parent() != nullptr)
+			{
+				for (size_t j = 0; j < i; ++ j)
+				{
+					if (nodes[j] == nodes[i]->Parent())
+					{
+						node_parent = static_cast<int16_t>(j);
+						break;
+					}
+				}
+			}
+
+			node_parent = Native2LE(node_parent);
+			os.write(reinterpret_cast<char*>(&node_parent), sizeof(node_parent));
+
+			int16_t joint_index = -1;
+			std::vector<uint16_t> mesh_indices;
+			nodes[i]->ForEachComponent(
+				[&mesh_indices, &joint_index, &renderable_indices, &joint_indices](SceneComponent& component) {
+					if (component.IsOfType<RenderableComponent>())
+					{
+						auto const& renderable_comp = *NanoRtti::DynCast<RenderableComponent const*>(&component);
+						Renderable const* renderable = &renderable_comp.BoundRenderable();
+						COMMON_ASSERT(renderable_indices.find(renderable) != renderable_indices.end());
+
+						uint16_t index = renderable_indices[renderable];
+						index = Native2LE(index);
+						mesh_indices.push_back(index);
+					}
+					else if (component.IsOfType<JointComponent>())
+					{
+						auto const* joint_comp = NanoRtti::DynCast<JointComponent const*>(&component);
+						COMMON_ASSERT(joint_indices.find(joint_comp) != joint_indices.end());
+
+						int16_t index = joint_indices[joint_comp];
+						joint_index = Native2LE(index);
+					}
+				});
+			uint16_t num_meshes = static_cast<uint16_t>(mesh_indices.size());
+			num_meshes = Native2LE(num_meshes);
+			os.write(reinterpret_cast<char*>(&num_meshes), sizeof(num_meshes));
+			os.write(reinterpret_cast<char*>(mesh_indices.data()), mesh_indices.size() * sizeof(mesh_indices[0]));
+
+			os.write(reinterpret_cast<char*>(&joint_index), sizeof(joint_index));
+
+			float4x4 xform_to_parent = nodes[i]->TransformToParent();
+			for (auto& item : xform_to_parent)
+			{
+				item = Native2LE(item);
+			}
+			os.write(reinterpret_cast<char*>(&xform_to_parent), sizeof(xform_to_parent));
+		}
+	}
+
+	void WriteBonesChunk(std::vector<JointComponent const*> const& joints, std::ostream& os)
+	{
+		for (size_t i = 0; i < joints.size(); ++ i)
+		{
+			auto const& joint = *joints[i];
+
+			quater bind_real, bind_dual;
+			float bind_scale;
+			if (MathWorker::SignBit(joint.InverseOriginScale()) > 0)
+			{
+				std::tie(bind_real, bind_dual) = MathWorker::inverse(joint.InverseOriginReal(), joint.InverseOriginDual());
+				bind_scale = 1 / joint.InverseOriginScale();
+			}
+			else
+			{
+				float4x4 tmp_mat = MathWorker::scaling(-joint.InverseOriginScale(), -joint.InverseOriginScale(), joint.InverseOriginScale())
+					* MathWorker::to_matrix(joint.InverseOriginReal())
+					* MathWorker::translation(MathWorker::udq_to_trans(joint.InverseOriginReal(), joint.InverseOriginDual()));
+				tmp_mat = MathWorker::inverse(tmp_mat);
+				tmp_mat(2, 0) = -tmp_mat(2, 0);
+				tmp_mat(2, 1) = -tmp_mat(2, 1);
+				tmp_mat(2, 2) = -tmp_mat(2, 2);
+
+				float3 scale;
+				quater rot;
+				float3 trans;
+				MathWorker::decompose(scale, rot, trans, tmp_mat);
+
+				bind_real = rot;
+				bind_dual = MathWorker::quat_trans_to_udq(rot, trans);
+				bind_scale = -scale.x();
+			}
+
+			bind_real *= std::abs(bind_scale);
+
+			bind_real.x() = Native2LE(bind_real.x());
+			bind_real.y() = Native2LE(bind_real.y());
+			bind_real.z() = Native2LE(bind_real.z());
+			bind_real.w() = Native2LE(bind_real.w());
+			os.write(reinterpret_cast<char*>(&bind_real), sizeof(bind_real));
+
+			bind_dual.x() = Native2LE(bind_dual.x());
+			bind_dual.y() = Native2LE(bind_dual.y());
+			bind_dual.z() = Native2LE(bind_dual.z());
+			bind_dual.w() = Native2LE(bind_dual.w());
+			os.write(reinterpret_cast<char*>(&bind_dual), sizeof(bind_dual));
+		}
+	}
+
+	void WriteKeyFramesChunk(uint32_t num_frames, uint32_t frame_rate, std::vector<KeyFrameSet>& kfs,
+		std::ostream& os)
+	{
+		num_frames = Native2LE(num_frames);
+		os.write(reinterpret_cast<char*>(&num_frames), sizeof(num_frames));
+		frame_rate = Native2LE(frame_rate);
+		os.write(reinterpret_cast<char*>(&frame_rate), sizeof(frame_rate));
+
+		for (size_t i = 0; i < kfs.size(); ++ i)
+		{
+			uint32_t num_kf = Native2LE(static_cast<uint32_t>(kfs[i].frame_id.size()));
+			os.write(reinterpret_cast<char*>(&num_kf), sizeof(num_kf));
+
+			for (size_t j = 0; j < kfs[i].frame_id.size(); ++ j)
+			{
+				quater bind_real = kfs[i].bind_real[j];
+				quater bind_dual = kfs[i].bind_dual[j];
+				float bind_scale = kfs[i].bind_scale[j];
+
+				uint32_t frame_id = Native2LE(kfs[i].frame_id[j]);
+				os.write(reinterpret_cast<char*>(&frame_id), sizeof(frame_id));
+				bind_real *= bind_scale;
+				bind_real.x() = Native2LE(bind_real.x());
+				bind_real.y() = Native2LE(bind_real.y());
+				bind_real.z() = Native2LE(bind_real.z());
+				bind_real.w() = Native2LE(bind_real.w());
+				os.write(reinterpret_cast<char*>(&bind_real), sizeof(bind_real));
+				bind_dual.x() = Native2LE(bind_dual.x());
+				bind_dual.y() = Native2LE(bind_dual.y());
+				bind_dual.z() = Native2LE(bind_dual.z());
+				bind_dual.w() = Native2LE(bind_dual.w());
+				os.write(reinterpret_cast<char*>(&bind_dual), sizeof(bind_dual));
+			}
+		}
+	}
+
+	void WriteBBKeyFramesChunk(std::vector<std::shared_ptr<AABBKeyFrameSet>> const & frame_pos_bbs, std::ostream& os)
+	{
+		for (size_t i = 0; i < frame_pos_bbs.size(); ++ i)
+		{
+			auto& bb_kf = *frame_pos_bbs[i];
+
+			uint32_t num_bb_kf = Native2LE(static_cast<uint32_t>(bb_kf.frame_id.size()));
+			os.write(reinterpret_cast<char*>(&num_bb_kf), sizeof(num_bb_kf));
+
+			for (uint32_t j = 0; j < bb_kf.frame_id.size(); ++ j)
+			{
+				uint32_t frame_id = Native2LE(bb_kf.frame_id[j]);
+				os.write(reinterpret_cast<char*>(&frame_id), sizeof(frame_id));
+				float3 bb_min;
+				bb_min.x() = Native2LE(bb_kf.bb[j].Min().x());
+				bb_min.y() = Native2LE(bb_kf.bb[j].Min().y());
+				bb_min.z() = Native2LE(bb_kf.bb[j].Min().z());
+				os.write(reinterpret_cast<char*>(&bb_min), sizeof(bb_min));
+				float3 bb_max = bb_kf.bb[j].Max();
+				bb_max.x() = Native2LE(bb_kf.bb[j].Max().x());
+				bb_max.y() = Native2LE(bb_kf.bb[j].Max().y());
+				bb_max.z() = Native2LE(bb_kf.bb[j].Max().z());
+				os.write(reinterpret_cast<char*>(&bb_max), sizeof(bb_max));
+			}
+		}
+	}
+
+	void WriteAnimationsChunk(std::vector<Animation> const & animations, std::ostream& os)
+	{
+		for (size_t i = 0; i < animations.size(); ++ i)
+		{
+			WriteShortString(os, animations[i].name);
+
+			uint32_t sf = Native2LE(animations[i].start_frame);
+			os.write(reinterpret_cast<char*>(&sf), sizeof(sf));
+
+			uint32_t ef = Native2LE(animations[i].end_frame);
+			os.write(reinterpret_cast<char*>(&ef), sizeof(ef));
+		}
+	}
+
+	void SaveModel(std::string const & jit_name, std::vector<RenderMaterialPtr> const & mtls,
+		std::vector<VertexElement> const & merged_ves, char all_is_index_16_bit,
+		std::vector<std::vector<uint8_t>> const & merged_buffs, std::vector<uint8_t> const & merged_indices,
+		std::vector<std::string> const & mesh_names, std::vector<int32_t> const & mtl_ids, std::vector<uint32_t> const & mesh_lods,
+		std::vector<AABBox> const & pos_bbs, std::vector<AABBox> const & tc_bbs,
+		std::vector<uint32_t> const & mesh_num_vertices, std::vector<uint32_t> const & mesh_base_vertices,
+		std::vector<uint32_t> const & mesh_num_indices, std::vector<uint32_t> const & mesh_base_indices,
+		std::vector<SceneNode const *> const & nodes, std::vector<Renderable const *> const & renderables,
+		std::vector<JointComponent const*> const & joints, std::shared_ptr<std::vector<Animation>> const & animations,
+		std::shared_ptr<std::vector<KeyFrameSet>> const & kfs, uint32_t num_frames, uint32_t frame_rate,
+		std::vector<std::shared_ptr<AABBKeyFrameSet>> const & frame_pos_bbs)
+	{
+		std::ostringstream ss;
+
+		{
+			uint32_t num_mtls = Native2LE(static_cast<uint32_t>(mtls.size()));
+			ss.write(reinterpret_cast<char*>(&num_mtls), sizeof(num_mtls));
+
+			uint32_t num_meshes = Native2LE(static_cast<uint32_t>(pos_bbs.size()));
+			ss.write(reinterpret_cast<char*>(&num_meshes), sizeof(num_meshes));
+
+			uint32_t num_nodes = Native2LE(static_cast<uint32_t>(nodes.size()));
+			ss.write(reinterpret_cast<char*>(&num_nodes), sizeof(num_nodes));
+
+			uint32_t num_joints = Native2LE(static_cast<uint32_t>(joints.size()));
+			ss.write(reinterpret_cast<char*>(&num_joints), sizeof(num_joints));
+
+			uint32_t num_kfs = Native2LE(kfs ? static_cast<uint32_t>(kfs->size()) : 0);
+			ss.write(reinterpret_cast<char*>(&num_kfs), sizeof(num_kfs));
+
+			uint32_t num_animations = Native2LE(animations ? std::max(static_cast<uint32_t>(animations->size()), 1U) : 0);
+			ss.write(reinterpret_cast<char*>(&num_animations), sizeof(num_animations));
+		}
+
+		if (!mtls.empty())
+		{
+			WriteMaterialsChunk(mtls, ss);
+		}
+
+		if (!mesh_names.empty())
+		{
+			WriteMeshesChunk(mesh_names, mtl_ids, mesh_lods, pos_bbs, tc_bbs,
+				mesh_num_vertices, mesh_base_vertices, mesh_num_indices, mesh_base_indices,
+				merged_ves, merged_buffs, merged_indices, all_is_index_16_bit, ss);
+		}
+
+		if (!nodes.empty())
+		{
+			WriteNodesChunk(nodes, renderables, joints, ss);
+		}
+
+		if (!joints.empty())
+		{
+			WriteBonesChunk(joints, ss);
+		}
+
+		if (kfs && !kfs->empty())
+		{
+			WriteKeyFramesChunk(num_frames, frame_rate, *kfs, ss);
+
+			WriteBBKeyFramesChunk(frame_pos_bbs, ss);
+
+			WriteAnimationsChunk(*animations, ss);
+		}
+
+		std::ofstream ofs(jit_name.c_str(), std::ios_base::binary);
+		COMMON_ASSERT(ofs);
+		uint32_t fourcc = Native2LE(MakeFourCC<'K', 'L', 'M', ' '>::value);
+		ofs.write(reinterpret_cast<char*>(&fourcc), sizeof(fourcc));
+
+		uint32_t ver = Native2LE(MODEL_BIN_VERSION);
+		ofs.write(reinterpret_cast<char*>(&ver), sizeof(ver));
+
+		auto const & ss_str = ss.str();
+		uint64_t original_len = Native2LE(static_cast<uint64_t>(ss_str.size()));
+		ofs.write(reinterpret_cast<char*>(&original_len), sizeof(original_len));
+
+		std::ofstream::pos_type p = ofs.tellp();
+		uint64_t len = 0;
+		ofs.write(reinterpret_cast<char*>(&len), sizeof(len));
+
+		LZMACodec lzma;
+		len = lzma.Encode(ofs, MakeSpan(reinterpret_cast<uint8_t const *>(ss_str.c_str()), ss_str.size()));
+
+		ofs.seekp(p, std::ios_base::beg);
+		len = Native2LE(len);
+		ofs.write(reinterpret_cast<char*>(&len), sizeof(len));
+	}
+} // namespace
+
 namespace RenderWorker
 {
 	void AddToSceneHelper(SceneNode& node, RenderModel& model)
@@ -1825,6 +2274,12 @@ struct NodeInfo
 				frame_pos_bbs[mesh_index] = skinned_mesh.GetFramePosBounds();
 			}
 		}
+
+		::SaveModel(output_path.string(), mtls, merged_ves, all_is_index_16_bit, merged_buffs, merged_indices,
+			mesh_names, mtl_ids, mesh_lods, pos_bbs, tc_bbs,
+			mesh_num_vertices, mesh_base_vertices, mesh_num_indices, mesh_base_indices,
+			nodes, renderables,
+			joints, animations, kfs, num_frame, frame_rate, frame_pos_bbs);
 
 #if ZENGINE_IS_DEV_PLATFORM
 		if (need_conversion)

@@ -55,6 +55,7 @@ void EditorManagerD3D11::OnCreate()
     this->LookAt(float3(-25.72f, 29.65f, 24.57f), float3(-24.93f, 29.09f, 24.32f));
 	this->Proj(0.05f, 300.0f);
 
+#ifndef EDITOR_DEBUG_MODE
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -78,6 +79,7 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorInspectorPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
+#endif // EDITOR_DEBUG_MODE
 }
 
 void EditorManagerD3D11::DoUpdateOverlay()
@@ -87,13 +89,62 @@ void EditorManagerD3D11::DoUpdateOverlay()
 
 void EditorManagerD3D11::OnDestroy()
 {
+#ifndef EDITOR_DEBUG_MODE
     ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+#endif //EDITOR_DEBUG_MODE
 }
 
 uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
 {
+    if( nullptr == model_ )
+    {
+        RenderEditorPanels();
+        return App3D::URV_NeedFlush | App3D::URV_Finished;
+    }
+
+    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    switch (pass)
+    {
+        case 0:
+        {
+
+        }
+            return App3D::URV_NeedFlush;
+        default:
+        {
+            re.BindFrameBuffer(FrameBufferPtr());
+            Color clear_clr(0.2f, 0.4f, 0.6f, 1);
+            if (Context::Instance().Config().graphics_cfg.gamma)
+            {
+                clear_clr.r() = 0.029f;
+                clear_clr.g() = 0.133f;
+                clear_clr.b() = 0.325f;
+            }
+            re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
+
+            RenderEditorPanels();
+
+            model_->ForEachMesh([this](Renderable& mesh)
+                {
+                    auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
+
+                    //detailed_mesh.LightPos(light_->Position());
+                    //detailed_mesh.LightColor(light_->Color());
+                    //detailed_mesh.LightFalloff(light_->Falloff());
+                    detailed_mesh.EyePos(this->ActiveCamera().EyePos());
+                    detailed_mesh.BackFaceDepthPass(false);
+                });
+
+        }
+            return App3D::URV_NeedFlush | App3D::URV_Finished;
+    }
+}
+
+void EditorManagerD3D11::RenderEditorPanels() const
+{
+#ifndef EDITOR_DEBUG_MODE
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -112,7 +163,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     // 下面这句话会触发ImGui在Direct3D的绘制
     // 因此需要在此之前将后备缓冲区绑定到渲染管线上
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    return App3D::URV_NeedFlush | App3D::URV_Finished;
+#endif // EDITOR_DEBUG_MODE
 }
 
 void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
@@ -173,7 +224,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             ptr->name = pAssert->extension;
             selected_asset_info_ = ptr;
 
-            auto model = ASyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
+            model_ = ASyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
 			    SceneNode::SOA_Cullable | SceneNode::SOA_Moveable, 
                 [](RenderModel& model)
                 {

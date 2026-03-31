@@ -1,5 +1,13 @@
 #include <common/ErrorHandling.h>
+
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <system_error>
+
 #include <format>
+#include <common/Log.h>
+
 namespace CommonWorker
 {
 	std::string CombineFileLine(std::string_view file, uint32_t line)
@@ -15,21 +23,19 @@ namespace CommonWorker
 		}
 	}
 
-#if defined(ZENGINE_DEBUG)
 	void UnreachableInternal(std::string_view msg, std::string_view file, uint32_t line)
 	{
-		// if (!msg.empty())
-		// {
+		if (!msg.empty())
+		{
 		// 	LogError() << msg << std::endl;
-		// }
+		}
 		// LogError() << "UNREACHABLE executed";
-		// if (!file.empty())
-		// {
+		if (!file.empty())
+		{
 		// 	LogError() << " at " << file << ": " << line;
-		// }
+		}
 		// LogError() << "." << std::endl;
 
 		std::unreachable();
 	}
-#endif
 }

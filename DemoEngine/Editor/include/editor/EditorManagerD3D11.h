@@ -34,6 +34,7 @@ public:
     ETransformType GetTransformType() const { return current_transform_type_; }
 
     void GetEditorSetting( const EditorSetting& setting) { setting_ = setting; }
+    void RenderEditorPanels() const;
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
@@ -45,6 +46,8 @@ private:
 
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
+
+    RenderWorker::RenderModelPtr model_;
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 };

@@ -11,8 +11,8 @@
 #include <utility>
 
 #ifdef ZENGINE_DEBUG
-	#define COMMON_ASSERT(expr) assert(val)
-    #define COMMON_ASSERT_MSG(expr, msg) assert(val)
+	#define COMMON_ASSERT(expr) assert(expr)
+    #define COMMON_ASSERT_MSG(expr, msg) assert(expr)
 #else
 	#define COMMON_ASSERT(expr) 
 	#define COMMON_ASSERT_MSG(expr, msg) 
