@@ -3970,36 +3970,36 @@ namespace
 
 namespace RenderWorker
 {
-// 	RenderEffectAnnotation::RenderEffectAnnotation() = default;
-// 	RenderEffectAnnotation::RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept = default;
-// 	RenderEffectAnnotation& RenderEffectAnnotation::operator=(RenderEffectAnnotation&& rhs) noexcept = default;
+	RenderEffectAnnotation::RenderEffectAnnotation() = default;
+	RenderEffectAnnotation::RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept = default;
+	RenderEffectAnnotation& RenderEffectAnnotation::operator=(RenderEffectAnnotation&& rhs) noexcept = default;
 
-// #if ZENGINE_IS_DEV_PLATFORM
-// 	void RenderEffectAnnotation::Load(RenderEffect const& effect, XMLNode const& node)
-// 	{
-// 		type_ = TypeFromName(node.Attrib("type")->ValueString());
-// 		name_ = std::string(node.Attrib("name")->ValueString());
-// 		var_ = LoadVariable(effect, node, type_, 0);
-// 	}
-// #endif
+#if ZENGINE_IS_DEV_PLATFORM
+	void RenderEffectAnnotation::Load(RenderEffect const& effect, XMLNode const& node)
+	{
+		type_ = TypeFromName(node.Attrib("type")->ValueString());
+		name_ = std::string(node.Attrib("name")->ValueString());
+		var_ = LoadVariable(effect, node, type_, 0);
+	}
+#endif
 
-// 	void RenderEffectAnnotation::StreamIn(RenderEffect const& effect, ResIdentifier& res)
-// 	{
-// 		res.read(&type_, sizeof(type_));
-// 		type_ = LE2Native(type_);
-// 		name_ = ReadShortString(res);
-// 		var_ = StreamInVariable(effect, res, type_, 0);
-// 	}
+	void RenderEffectAnnotation::StreamIn(RenderEffect const& effect, ResIdentifier& res)
+	{
+		res.read(&type_, sizeof(type_));
+		type_ = LE2Native(type_);
+		name_ = ReadShortString(res);
+		var_ = StreamInVariable(effect, res, type_, 0);
+	}
 
-// #if ZENGINE_IS_DEV_PLATFORM
-// 	void RenderEffectAnnotation::StreamOut(std::ostream& os) const
-// 	{
-// 		uint32_t t = Native2LE(type_);
-// 		os.write(reinterpret_cast<char const *>(&t), sizeof(t));
-// 		WriteShortString(os, name_);
-// 		StreamOutVariable(os, *var_);
-// 	}
-// #endif
+#if ZENGINE_IS_DEV_PLATFORM
+	void RenderEffectAnnotation::StreamOut(std::ostream& os) const
+	{
+		uint32_t t = Native2LE(type_);
+		os.write(reinterpret_cast<char const *>(&t), sizeof(t));
+		WriteShortString(os, name_);
+		StreamOutVariable(os, *var_);
+	}
+#endif
 
 
 	RenderEffectStructType::RenderEffectStructType() = default;
@@ -4189,7 +4189,7 @@ namespace RenderWorker
 			immutable_->shader_frags.clear();
 			immutable_->hlsl_shader.clear();
 			immutable_->techniques.clear();
-			//immutable_->shader_graph_nodes.clear();
+			immutable_->shader_graph_nodes.clear();
 
 			immutable_->shader_descs.resize(1);
 
@@ -4799,34 +4799,34 @@ namespace RenderWorker
 			param.Load(*this, node);
 		}
 
-		// for (const XMLNode* shader_graph_nodes_node = root.FirstNode("shader_graph_nodes"); shader_graph_nodes_node;
-		// 	 shader_graph_nodes_node = shader_graph_nodes_node->NextSibling("shader_graph_nodes"))
-		// {
-		// 	for (const XMLNode* shader_node = shader_graph_nodes_node->FirstNode("node"); shader_node;
-		// 		 shader_node = shader_node->NextSibling("node"))
-		// 	{
-		// 		auto name_attr = shader_node->Attrib("name");
-		// 		COMMON_ASSERT(name_attr);
+		for (const XMLNode* shader_graph_nodes_node = root.FirstNode("shader_graph_nodes"); shader_graph_nodes_node;
+			 shader_graph_nodes_node = shader_graph_nodes_node->NextSibling("shader_graph_nodes"))
+		{
+			for (const XMLNode* shader_node = shader_graph_nodes_node->FirstNode("node"); shader_node;
+				 shader_node = shader_node->NextSibling("node"))
+			{
+				auto name_attr = shader_node->Attrib("name");
+				COMMON_ASSERT(name_attr);
 
-		// 		size_t const node_name_hash = HashValue(name_attr->ValueString());
-		// 		bool found = false;
-		// 		for (auto& gn : immutable_->shader_graph_nodes)
-		// 		{
-		// 			if (node_name_hash == gn.NameHash())
-		// 			{
-		// 				gn.Load(*shader_node);
-		// 				found = true;
-		// 				break;
-		// 			}
-		// 		}
+				size_t const node_name_hash = HashValue(name_attr->ValueString());
+				bool found = false;
+				for (auto& gn : immutable_->shader_graph_nodes)
+				{
+					if (node_name_hash == gn.NameHash())
+					{
+						gn.Load(*shader_node);
+						found = true;
+						break;
+					}
+				}
 
-		// 		if (!found)
-		// 		{
-		// 			auto& node = immutable_->shader_graph_nodes.emplace_back();
-		// 			node.Load(*shader_node);
-		// 		}
-		// 	}
-		// }
+				if (!found)
+				{
+					auto& node = immutable_->shader_graph_nodes.emplace_back();
+					node.Load(*shader_node);
+				}
+			}
+		}
 
 		for (const XMLNode* shader_node = root.FirstNode("shader"); shader_node; shader_node = shader_node->NextSibling("shader"))
 		{
@@ -4931,15 +4931,15 @@ namespace RenderWorker
 							param.StreamIn(*this, source);
 						}
 					}
-					// {
-					// 	uint8_t num_shader_graph_nodes;
-					// 	source.read(&num_shader_graph_nodes, sizeof(num_shader_graph_nodes));
-					// 	immutable_->shader_graph_nodes.resize(num_shader_graph_nodes);
-					// 	for (auto& node : immutable_->shader_graph_nodes)
-					// 	{
-					// 		node.StreamIn(source);
-					// 	}
-					// }
+					{
+						uint8_t num_shader_graph_nodes;
+						source.read(&num_shader_graph_nodes, sizeof(num_shader_graph_nodes));
+						immutable_->shader_graph_nodes.resize(num_shader_graph_nodes);
+						for (auto& node : immutable_->shader_graph_nodes)
+						{
+							node.StreamIn(source);
+						}
+					}
 					{
 						uint16_t num_shader_frags;
 						source.read(&num_shader_frags, sizeof(num_shader_frags));
@@ -5056,14 +5056,14 @@ namespace RenderWorker
 				param.StreamOut(os);
 			}
 		}
-		// {
-		// 	uint8_t num_shader_graph_nodes = static_cast<uint8_t>(immutable_->shader_graph_nodes.size());
-		// 	os.write(reinterpret_cast<char const *>(&num_shader_graph_nodes), sizeof(num_shader_graph_nodes));
-		// 	for (auto const& node : immutable_->shader_graph_nodes)
-		// 	{
-		// 		node.StreamOut(os);
-		// 	}
-		// }
+		{
+			uint8_t num_shader_graph_nodes = static_cast<uint8_t>(immutable_->shader_graph_nodes.size());
+			os.write(reinterpret_cast<char const *>(&num_shader_graph_nodes), sizeof(num_shader_graph_nodes));
+			for (auto const& node : immutable_->shader_graph_nodes)
+			{
+				node.StreamOut(os);
+			}
+		}
 		{
 			uint16_t num_shader_frags = Native2LE(static_cast<uint16_t>(immutable_->shader_frags.size()));
 			os.write(reinterpret_cast<char const *>(&num_shader_frags), sizeof(num_shader_frags));
@@ -5440,14 +5440,14 @@ namespace RenderWorker
 			}
 		}
 
-		// if (!immutable_->shader_graph_nodes.empty())
-		// {
-		// 	for (auto const& node : immutable_->shader_graph_nodes)
-		// 	{
-		// 		str += node.GenDeclarationCode();
-		// 	}
-		// 	str += '\n';
-		// }
+		if (!immutable_->shader_graph_nodes.empty())
+		{
+			for (auto const& node : immutable_->shader_graph_nodes)
+			{
+				str += node.GenDeclarationCode();
+			}
+			str += '\n';
+		}
 
 		for (auto const& frag : immutable_->shader_frags)
 		{
@@ -5503,15 +5503,15 @@ namespace RenderWorker
 			}
 		}
 
-		// if (!immutable_->shader_graph_nodes.empty())
-		// {
-		// 	str += '\n';
-		// 	for (auto const& node : immutable_->shader_graph_nodes)
-		// 	{
-		// 		str += node.GenDefinitionCode();
-		// 	}
-		// 	str += '\n';
-		//}
+		if (!immutable_->shader_graph_nodes.empty())
+		{
+			str += '\n';
+			for (auto const& node : immutable_->shader_graph_nodes)
+			{
+				str += node.GenDefinitionCode();
+			}
+			str += '\n';
+		}
 	}
 #endif
 
@@ -5547,25 +5547,25 @@ namespace RenderWorker
 			return;
 		}
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	if (parent_tech && parent_tech->annotations_)
-		// 	{
-		// 		*annotations_ = *parent_tech->annotations_;
-		// 	}
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		annotations_->push_back(annotation);
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			if (parent_tech && parent_tech->annotations_)
+			{
+				*annotations_ = *parent_tech->annotations_;
+			}
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				annotations_->push_back(annotation);
 
-		// 		annotation->Load(effect, *anno_node);
-		// 	}
-		// }
-		// else if (parent_tech)
-		// {
-		// 	annotations_ = parent_tech->annotations_;
-		// }
+				annotation->Load(effect, *anno_node);
+			}
+		}
+		else if (parent_tech)
+		{
+			annotations_ = parent_tech->annotations_;
+		}
 
 		if (const XMLNode* macro_node = node.FirstNode("macro"))
 		{
@@ -5740,22 +5740,22 @@ namespace RenderWorker
 		name_ = ReadShortString(res);
 		name_hash_ = HashValue(name_);
 
-		//res.read(&ver_, sizeof(ver_));
+		res.read(&ver_, sizeof(ver_));
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	annotations_->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		(*annotations_)[i] = annotation;
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			annotations_->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				(*annotations_)[i] = annotation;
 				
-		// 		annotation->StreamIn(effect, res);
-		// 	}
-		// }
+				annotation->StreamIn(effect, res);
+			}
+		}
 
 		uint8_t num_macro;
 		res.read(&num_macro, sizeof(num_macro));
@@ -5841,11 +5841,11 @@ namespace RenderWorker
 	}
 #endif
 
-	// RenderEffectAnnotation const& RenderTechnique::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return *(*annotations_)[n];
-	// }
+	RenderEffectAnnotation const& RenderTechnique::Annotation(uint32_t n) const noexcept
+	{
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return *(*annotations_)[n];
+	}
 
 	std::pair<std::string, std::string> const& RenderTechnique::MacroByIndex(uint32_t n) const noexcept
 	{
@@ -5889,23 +5889,23 @@ namespace RenderWorker
 		name_ = std::string(node.Attrib("name")->ValueString());
 		name_hash_ = HashValue(name_);
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	if (inherit_pass && inherit_pass->annotations_)
-		// 	{
-		// 		*annotations_ = *inherit_pass->annotations_;
-		// 	}
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		auto& annotation = *annotations_->emplace_back(MakeSharedPtr<RenderEffectAnnotation>());
-		// 		annotation.Load(effect, *anno_node);
-		// 	}
-		// }
-		// else if (inherit_pass)
-		// {
-		// 	annotations_ = inherit_pass->annotations_;
-		// }
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			if (inherit_pass && inherit_pass->annotations_)
+			{
+				*annotations_ = *inherit_pass->annotations_;
+			}
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				auto& annotation = *annotations_->emplace_back(MakeSharedPtr<RenderEffectAnnotation>());
+				annotation.Load(effect, *anno_node);
+			}
+		}
+		else if (inherit_pass)
+		{
+			annotations_ = inherit_pass->annotations_;
+		}
 
 		if (const XMLNode* macro_node = node.FirstNode("macro"))
 		{
@@ -6455,19 +6455,19 @@ namespace RenderWorker
 		name_ = ReadShortString(res);
 		name_hash_ = HashValue(name_);
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	annotations_->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		(*annotations_)[i] = annotation;
-		// 		annotation->StreamIn(effect, res);
-		// 	}
-		// }
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			annotations_->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				(*annotations_)[i] = annotation;
+				annotation->StreamIn(effect, res);
+			}
+		}
 
 		uint8_t num_macro;
 		res.read(&num_macro, sizeof(num_macro));
@@ -6573,23 +6573,23 @@ namespace RenderWorker
 	{
 		WriteShortString(os, name_);
 
-		//uint8_t num_anno;
-		// if (annotations_)
-		// {
-		// 	num_anno = static_cast<uint8_t>(annotations_->size());
-		// }
-		// else
-		// {
-		// 	num_anno = 0;
-		// }
-		// os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
-		// for (uint32_t i = 0; i < num_anno; ++ i)
-		// {
-		// 	RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 	(*annotations_)[i] = annotation;
+		uint8_t num_anno;
+		if (annotations_)
+		{
+			num_anno = static_cast<uint8_t>(annotations_->size());
+		}
+		else
+		{
+			num_anno = 0;
+		}
+		os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
+		for (uint32_t i = 0; i < num_anno; ++ i)
+		{
+			RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+			(*annotations_)[i] = annotation;
 				
-		// 	annotation->StreamOut(os);
-		// }
+			annotation->StreamOut(os);
+		}
 
 		uint8_t num_macro;
 		if (macros_)
@@ -6684,11 +6684,11 @@ namespace RenderWorker
 		this->GetShaderObject(effect)->Unbind();
 	}
 
-	// RenderEffectAnnotation const& RenderPass::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return *(*annotations_)[n];
-	// }
+	const RenderEffectAnnotation& RenderPass::Annotation(uint32_t n) const noexcept
+	{
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return *(*annotations_)[n];
+	}
 
 	std::pair<std::string, std::string> const& RenderPass::MacroByIndex(uint32_t n) const noexcept
 	{
@@ -6909,16 +6909,16 @@ namespace RenderWorker
 		}
 		var_ = LoadVariable(effect, node, immutable_->type, as);
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		auto& anno = immutable_->annotations->emplace_back();
-		// 		anno.Load(effect, *anno_node);
-		// 		this->ProcessAnnotation(anno);
-		// 	}
-		// }
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				auto& anno = immutable_->annotations->emplace_back();
+				anno.Load(effect, *anno_node);
+				this->ProcessAnnotation(anno);
+			}
+		}
 	}
 #endif
 
@@ -6964,43 +6964,43 @@ namespace RenderWorker
 		}
 		var_ = StreamInVariable(effect, res, immutable_->type, as);
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
-		// 	immutable_->annotations->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotation& anno = (*immutable_->annotations)[i];
-		// 		anno.StreamIn(effect, res);
-		// 		this->ProcessAnnotation(anno);
-		// 	}
-		// }
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
+			immutable_->annotations->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotation& anno = (*immutable_->annotations)[i];
+				anno.StreamIn(effect, res);
+				this->ProcessAnnotation(anno);
+			}
+		}
 	}
 
-	// void RenderEffectParameter::ProcessAnnotation(RenderEffectAnnotation& anno)
-	// {
-	// 	if (((REDT_texture1D == immutable_->type) || (REDT_texture2D == immutable_->type) || (REDT_texture2DMS == immutable_->type) ||
-	// 			(REDT_texture3D == immutable_->type) || (REDT_textureCUBE == immutable_->type) ||
-	// 			(REDT_texture1DArray == immutable_->type) || (REDT_texture2DArray == immutable_->type) ||
-	// 			(REDT_texture2DMSArray == immutable_->type) || (REDT_texture3DArray == immutable_->type) ||
-	// 			(REDT_textureCUBEArray == immutable_->type)) &&
-	// 		(REDT_string == anno.Type()) && (anno.Name() == "SasResourceAddress"))
-	// 	{
-	// 		std::string val;
-	// 		anno.Value(val);
+	void RenderEffectParameter::ProcessAnnotation(RenderEffectAnnotation& anno)
+	{
+		if (((REDT_texture1D == immutable_->type) || (REDT_texture2D == immutable_->type) || (REDT_texture2DMS == immutable_->type) ||
+				(REDT_texture3D == immutable_->type) || (REDT_textureCUBE == immutable_->type) ||
+				(REDT_texture1DArray == immutable_->type) || (REDT_texture2DArray == immutable_->type) ||
+				(REDT_texture2DMSArray == immutable_->type) || (REDT_texture3DArray == immutable_->type) ||
+				(REDT_textureCUBEArray == immutable_->type)) &&
+			(REDT_string == anno.Type()) && (anno.Name() == "SasResourceAddress"))
+		{
+			std::string val;
+			anno.Value(val);
 
-	// 		if (Context::Instance().ResLoaderInstance().Locate(val).empty())
-	// 		{
-	// 			LogError() << val << " NOT found" << std::endl;
-	// 		}
-	// 		else
-	// 		{
-	// 			*var_ = SyncLoadTexture(val, EAH_GPU_Read | EAH_Immutable);
-	// 		}
-	// 	}	
-	// }
+			if (Context::Instance().ResLoaderInstance().Locate(val).empty())
+			{
+				//LogError() << val << " NOT found" << std::endl;
+			}
+			else
+			{
+				*var_ = SyncLoadTexture(val, EAH_GPU_Read | EAH_Immutable);
+			}
+		}	
+	}
 
 #if ZENGINE_IS_DEV_PLATFORM
 	void RenderEffectParameter::StreamOut(std::ostream& os) const
@@ -7080,270 +7080,270 @@ namespace RenderWorker
 		return this->HasSemantic() ? immutable_->semantic_hash : 0;
 	}
 
-	// RenderEffectAnnotation const& RenderEffectParameter::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return (*immutable_->annotations)[n];
-	// }
-
-	void RenderEffectParameter::BindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index, uint32_t offset, uint32_t stride)
+	const RenderEffectAnnotation& RenderEffectParameter::Annotation(uint32_t n) const noexcept
 	{
-		var_->BindToCBuffer(effect, cbuff_index, offset, stride);
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return (*immutable_->annotations)[n];
 	}
 
-	void RenderEffectParameter::RebindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index)
-	{
-		var_->RebindToCBuffer(effect, cbuff_index);
-	}
+void RenderEffectParameter::BindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index, uint32_t offset, uint32_t stride)
+{
+	var_->BindToCBuffer(effect, cbuff_index, offset, stride);
+}
 
-	RenderEffectConstantBuffer& RenderEffectParameter::CBuffer() const
-	{
-		COMMON_ASSERT(this->InCBuffer());
-		return *var_->CBuffer();
-	}
+void RenderEffectParameter::RebindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index)
+{
+	var_->RebindToCBuffer(effect, cbuff_index);
+}
+
+RenderEffectConstantBuffer& RenderEffectParameter::CBuffer() const
+{
+	COMMON_ASSERT(this->InCBuffer());
+	return *var_->CBuffer();
+}
 
 
 #if ZENGINE_IS_DEV_PLATFORM
-	void RenderShaderFragment::Load(XMLNode const& node)
+void RenderShaderFragment::Load(XMLNode const& node)
+{
+	stage_ = ShaderStage::NumStages;
+	if (const XMLAttribute* attr = node.Attrib("type"))
 	{
-		stage_ = ShaderStage::NumStages;
-		if (const XMLAttribute* attr = node.Attrib("type"))
+		size_t const type_str_hash = HashValue(attr->ValueString());
+		if (CtHash("vertex_shader") == type_str_hash)
 		{
-			size_t const type_str_hash = HashValue(attr->ValueString());
-			if (CtHash("vertex_shader") == type_str_hash)
-			{
-				stage_ = ShaderStage::Vertex;
-			}
-			else if (CtHash("pixel_shader") == type_str_hash)
-			{
-				stage_ = ShaderStage::Pixel;
-			}
-			else if (CtHash("geometry_shader") == type_str_hash)
-			{
-				stage_ = ShaderStage::Geometry;
-			}
-			else if (CtHash("compute_shader") == type_str_hash)
-			{
-				stage_ = ShaderStage::Compute;
-			}
-			else if (CtHash("hull_shader") == type_str_hash)
-			{
-				stage_ = ShaderStage::Hull;
-			}
-			else
-			{
-				COMMON_ASSERT(CtHash("domain_shader") == type_str_hash);
-				stage_ = ShaderStage::Domain;
-			}
+			stage_ = ShaderStage::Vertex;
 		}
-		
-		ver_ = ShaderModel(0, 0);
-		LoadVersion(node, ver_);
-
-		for (const XMLNode* shader_text_node = node.FirstNode(); shader_text_node; shader_text_node = shader_text_node->NextSibling())
+		else if (CtHash("pixel_shader") == type_str_hash)
 		{
-			if ((XMLNodeType::Comment == shader_text_node->Type()) || (XMLNodeType::CData == shader_text_node->Type()))
-			{
-				str_ += std::string(shader_text_node->ValueString());
-			}
+			stage_ = ShaderStage::Pixel;
 		}
-	}
-#endif
-
-	void RenderShaderFragment::StreamIn(ResIdentifier& res)
-	{
-		uint32_t tmp;
-		res.read(&tmp, sizeof(tmp));
-		stage_ = static_cast<ShaderStage>(LE2Native(tmp));
-		res.read(&ver_, sizeof(ver_));
-
-		uint32_t len;
-		res.read(&len, sizeof(len));
-		len = LE2Native(len);
-		str_.resize(len);
-		res.read(&str_[0], len * sizeof(str_[0]));
-	}
-
-#if ZENGINE_IS_DEV_PLATFORM
-	void RenderShaderFragment::StreamOut(std::ostream& os) const
-	{
-		uint32_t tmp;
-		tmp = Native2LE(std::to_underlying(stage_));
-		os.write(reinterpret_cast<char const *>(&tmp), sizeof(tmp));
-		os.write(reinterpret_cast<char const *>(&ver_), sizeof(ver_));
-
-		uint32_t len = static_cast<uint32_t>(str_.size());
-		tmp = Native2LE(len);
-		os.write(reinterpret_cast<char const *>(&tmp), sizeof(tmp));
-		os.write(&str_[0], len * sizeof(str_[0]));
-	}
-#endif
-
-/*
-#if ZENGINE_IS_DEV_PLATFORM
-	void RenderShaderGraphNode::Load(XMLNode const& node)
-	{
-		const XMLAttribute* attr = node.Attrib("name");
-		COMMON_ASSERT(attr);
-
-		if (!name_.empty())
+		else if (CtHash("geometry_shader") == type_str_hash)
 		{
-			COMMON_ASSERT(name_ == std::string(attr->ValueString()));
+			stage_ = ShaderStage::Geometry;
+		}
+		else if (CtHash("compute_shader") == type_str_hash)
+		{
+			stage_ = ShaderStage::Compute;
+		}
+		else if (CtHash("hull_shader") == type_str_hash)
+		{
+			stage_ = ShaderStage::Hull;
 		}
 		else
 		{
-			name_ = std::string(attr->ValueString());
-			name_hash_ = HashValue(name_);
-
-			attr = node.Attrib("return");
-			if (attr)
-			{
-				return_type_ = std::string(attr->ValueString());
-			}
-			else
-			{
-				return_type_ = "void";
-			}
-
-			for (const XMLNode* param_node = node.FirstNode(); param_node; param_node = param_node->NextSibling())
-			{
-				const XMLAttribute* type_attr = param_node->Attrib("type");
-				const XMLAttribute* name_attr = param_node->Attrib("name");
-				COMMON_ASSERT(type_attr);
-				COMMON_ASSERT(name_attr);
-
-				params_.emplace_back(type_attr->ValueString(), name_attr->ValueString());
-			}
-		}
-
-		attr = node.Attrib("impl");
-		if (attr)
-		{
-			impl_ = std::string(attr->ValueString());
+			COMMON_ASSERT(CtHash("domain_shader") == type_str_hash);
+			stage_ = ShaderStage::Domain;
 		}
 	}
+	
+	ver_ = ShaderModel(0, 0);
+	LoadVersion(node, ver_);
+
+	for (const XMLNode* shader_text_node = node.FirstNode(); shader_text_node; shader_text_node = shader_text_node->NextSibling())
+	{
+		if ((XMLNodeType::Comment == shader_text_node->Type()) || (XMLNodeType::CData == shader_text_node->Type()))
+		{
+			str_ += std::string(shader_text_node->ValueString());
+		}
+	}
+}
 #endif
 
-	void RenderShaderGraphNode::StreamIn(ResIdentifier& res)
+void RenderShaderFragment::StreamIn(ResIdentifier& res)
+{
+	uint32_t tmp;
+	res.read(&tmp, sizeof(tmp));
+	stage_ = static_cast<ShaderStage>(LE2Native(tmp));
+	res.read(&ver_, sizeof(ver_));
+
+	uint32_t len;
+	res.read(&len, sizeof(len));
+	len = LE2Native(len);
+	str_.resize(len);
+	res.read(&str_[0], len * sizeof(str_[0]));
+}
+
+#if ZENGINE_IS_DEV_PLATFORM
+void RenderShaderFragment::StreamOut(std::ostream& os) const
+{
+	uint32_t tmp;
+	tmp = Native2LE(std::to_underlying(stage_));
+	os.write(reinterpret_cast<char const *>(&tmp), sizeof(tmp));
+	os.write(reinterpret_cast<char const *>(&ver_), sizeof(ver_));
+
+	uint32_t len = static_cast<uint32_t>(str_.size());
+	tmp = Native2LE(len);
+	os.write(reinterpret_cast<char const *>(&tmp), sizeof(tmp));
+	os.write(&str_[0], len * sizeof(str_[0]));
+}
+#endif
+
+
+#if ZENGINE_IS_DEV_PLATFORM
+void RenderShaderGraphNode::Load(XMLNode const& node)
+{
+	const XMLAttribute* attr = node.Attrib("name");
+	COMMON_ASSERT(attr);
+
+	if (!name_.empty())
 	{
-		name_ = ReadShortString(res);
+		COMMON_ASSERT(name_ == std::string(attr->ValueString()));
+	}
+	else
+	{
+		name_ = std::string(attr->ValueString());
 		name_hash_ = HashValue(name_);
 
-		return_type_ = ReadShortString(res);
-		impl_ = ReadShortString(res);
-
-		uint8_t len;
-		res.read(&len, sizeof(len));
-		params_.resize(len);
-		for (uint32_t i = 0; i < len; ++ i)
+		attr = node.Attrib("return");
+		if (attr)
 		{
-			params_.emplace_back(ReadShortString(res), ReadShortString(res));
+			return_type_ = std::string(attr->ValueString());
+		}
+		else
+		{
+			return_type_ = "void";
+		}
+
+		for (const XMLNode* param_node = node.FirstNode(); param_node; param_node = param_node->NextSibling())
+		{
+			const XMLAttribute* type_attr = param_node->Attrib("type");
+			const XMLAttribute* name_attr = param_node->Attrib("name");
+			COMMON_ASSERT(type_attr);
+			COMMON_ASSERT(name_attr);
+
+			params_.emplace_back(type_attr->ValueString(), name_attr->ValueString());
 		}
 	}
+
+	attr = node.Attrib("impl");
+	if (attr)
+	{
+		impl_ = std::string(attr->ValueString());
+	}
+}
+#endif
+
+void RenderShaderGraphNode::StreamIn(ResIdentifier& res)
+{
+	name_ = ReadShortString(res);
+	name_hash_ = HashValue(name_);
+
+	return_type_ = ReadShortString(res);
+	impl_ = ReadShortString(res);
+
+	uint8_t len;
+	res.read(&len, sizeof(len));
+	params_.resize(len);
+	for (uint32_t i = 0; i < len; ++ i)
+	{
+		params_.emplace_back(ReadShortString(res), ReadShortString(res));
+	}
+}
 
 #if ZENGINE_IS_DEV_PLATFORM
-	void RenderShaderGraphNode::StreamOut(std::ostream& os) const
-	{
-		WriteShortString(os, name_);
-		WriteShortString(os, return_type_);
-		WriteShortString(os, impl_);
+void RenderShaderGraphNode::StreamOut(std::ostream& os) const
+{
+	WriteShortString(os, name_);
+	WriteShortString(os, return_type_);
+	WriteShortString(os, impl_);
 
-		uint8_t len = static_cast<uint8_t>(params_.size());
-		os.write(reinterpret_cast<char*>(&len), sizeof(len));
-		for (uint32_t i = 0; i < len; ++ i)
-		{
-			WriteShortString(os, params_[i].first);
-			WriteShortString(os, params_[i].second);
-		}
+	uint8_t len = static_cast<uint8_t>(params_.size());
+	os.write(reinterpret_cast<char*>(&len), sizeof(len));
+	for (uint32_t i = 0; i < len; ++ i)
+	{
+		WriteShortString(os, params_[i].first);
+		WriteShortString(os, params_[i].second);
 	}
+}
 #endif
 	
-	std::pair<std::string, std::string> const& RenderShaderGraphNode::Parameter(uint32_t n) const noexcept
-	{
-		COMMON_ASSERT(n < this->NumParameters());
-		return params_[n];
-	}
+std::pair<std::string, std::string> const& RenderShaderGraphNode::Parameter(uint32_t n) const noexcept
+{
+	COMMON_ASSERT(n < this->NumParameters());
+	return params_[n];
+}
 
-	void RenderShaderGraphNode::OverrideImpl(std::string_view impl)
-	{
-		impl_ = std::string(std::move(impl));
-	}
+void RenderShaderGraphNode::OverrideImpl(std::string_view impl)
+{
+	impl_ = std::string(std::move(impl));
+}
 
 #if ZENGINE_IS_DEV_PLATFORM
-	std::string RenderShaderGraphNode::GenDeclarationCode() const
+std::string RenderShaderGraphNode::GenDeclarationCode() const
+{
+	std::string ret;
+
+	ret += return_type_;
+	ret += ' ';
+	ret += name_;
+	ret += '(';
+	for (size_t i = 0; i < params_.size(); ++ i)
 	{
-		std::string ret;
+		auto const & param = params_[i];
 
-		ret += return_type_;
+		ret += param.first;
 		ret += ' ';
-		ret += name_;
-		ret += '(';
-		for (size_t i = 0; i < params_.size(); ++ i)
+		ret += param.second;
+
+		if (i != params_.size() - 1)
 		{
-			auto const & param = params_[i];
-
-			ret += param.first;
-			ret += ' ';
-			ret += param.second;
-
-			if (i != params_.size() - 1)
-			{
-				ret += ", ";
-			}
+			ret += ", ";
 		}
-		ret += ");\n";
-
-		return ret;
 	}
+	ret += ");\n";
 
-	std::string RenderShaderGraphNode::GenDefinitionCode() const
+	return ret;
+}
+
+std::string RenderShaderGraphNode::GenDefinitionCode() const
+{
+	std::string ret;
+
+	ret += return_type_;
+	ret += ' ';
+	ret += name_;
+	ret += '(';
+	for (size_t i = 0; i < params_.size(); ++ i)
 	{
-		std::string ret;
+		auto const & param = params_[i];
 
-		ret += return_type_;
+		ret += param.first;
 		ret += ' ';
-		ret += name_;
-		ret += '(';
-		for (size_t i = 0; i < params_.size(); ++ i)
+		ret += param.second;
+
+		if (i != params_.size() - 1)
 		{
-			auto const & param = params_[i];
-
-			ret += param.first;
-			ret += ' ';
-			ret += param.second;
-
-			if (i != params_.size() - 1)
-			{
-				ret += ", ";
-			}
+			ret += ", ";
 		}
-		ret += ")\n";
-		ret += "{\n";
-		ret += "\t";
-		if (return_type_ != "void")
-		{
-			ret += "return ";
-		}
-		ret += impl_;
-		ret += '(';
-		for (size_t i = 0; i < params_.size(); ++ i)
-		{
-			auto const & param = params_[i];
-
-			ret += param.second;
-
-			if (i != params_.size() - 1)
-			{
-				ret += ", ";
-			}
-		}
-		ret += ");\n";
-		ret += "}\n\n";
-
-		return ret;
 	}
+	ret += ")\n";
+	ret += "{\n";
+	ret += "\t";
+	if (return_type_ != "void")
+	{
+		ret += "return ";
+	}
+	ret += impl_;
+	ret += '(';
+	for (size_t i = 0; i < params_.size(); ++ i)
+	{
+		auto const & param = params_[i];
+
+		ret += param.second;
+
+		if (i != params_.size() - 1)
+		{
+			ret += ", ";
+		}
+	}
+	ret += ");\n";
+	ret += "}\n\n";
+
+	return ret;
+}
 #endif
-*/
+
 
 	RenderVariable::RenderVariable() noexcept = default;
 	RenderVariable::~RenderVariable() noexcept = default;
