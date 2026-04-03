@@ -224,13 +224,16 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             ptr->name = pAssert->extension;
             selected_asset_info_ = ptr;
 
-            model_ = ASyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
-			    SceneNode::SOA_Cullable | SceneNode::SOA_Moveable, 
+            model_ = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
+			    SceneNode::SOA_Cullable, 
                 [](RenderModel& model)
                 {
                     model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 5.0f, 0.0f));
                     AddToSceneRootHelper(model);
                 }, CreateModelFactory<RenderModel>, CreateMeshFactory<DetailedMesh>);
+            
+            this->LookAt(float3(-0.4f, 1, 3.9f), float3(0, 1, 0), float3(0.0f, 1.0f, 0.0f));
+	        this->Proj(0.1f, 200.0f);;
         }
         break;
 

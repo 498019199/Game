@@ -38,9 +38,10 @@ D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_de
     const auto& d3d11_re = checked_cast<const D3D11RenderEngine&>(
         Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     ID3D11Device1* d3d_device = d3d11_re.D3DDevice1();
+    const auto& caps = d3d11_re.DeviceCaps();
 
     // 光栅化状态描述
-    D3D11_RASTERIZER_DESC d3d_rs_desc;
+    D3D11_RASTERIZER_DESC1 d3d_rs_desc;
     d3d_rs_desc.FillMode = D3D11Mapping::Mapping(rs_desc.polygon_mode);             // 填充模式
     d3d_rs_desc.CullMode = D3D11Mapping::Mapping(rs_desc.cull_mode);                // 裁剪模式
     d3d_rs_desc.FrontCounterClockwise = rs_desc.front_face_ccw;                     // 是否三角形顶点按逆时针排布时为正面
@@ -51,8 +52,8 @@ D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_de
     d3d_rs_desc.ScissorEnable = rs_desc.scissor_enable;                             // 是否允许指定矩形范围的裁剪，若TRUE，则需要在RSSetScissor设置像素保留的矩形区域
     d3d_rs_desc.MultisampleEnable = rs_desc.multisample_enable;                     // 是否允许多重采样
     d3d_rs_desc.AntialiasedLineEnable = false;                                      // 是否允许反走样线，仅当多重采样为FALSE时才有效
-    //d3d_rs_desc.ForcedSampleCount = 0; // TODO: Add support to forced sample count
-    TIFHR(d3d_device->CreateRasterizerState(&d3d_rs_desc, rasterizer_state_.put()));
+    d3d_rs_desc.ForcedSampleCount = 0; // TODO: Add support to forced sample count
+    TIFHR(d3d_device->CreateRasterizerState1(&d3d_rs_desc, rasterizer_state_.put()));
 
     D3D11_DEPTH_STENCIL_DESC d3d_dss_desc;
     d3d_dss_desc.DepthEnable = dss_desc.depth_enable;                                                       // 是否开启深度测试
@@ -74,28 +75,28 @@ D3D11RenderStateObject::D3D11RenderStateObject(RasterizerStateDesc const & rs_de
     TIFHR(d3d_device->CreateDepthStencilState(&d3d_dss_desc, depth_stencil_state_.put()));
 
     // 初始化混合状态
-    D3D11_BLEND_DESC d3d_bs_desc;
+    D3D11_BLEND_DESC1 d3d_bs_desc;
     d3d_bs_desc.AlphaToCoverageEnable = bs_desc.alpha_to_coverage_enable;
-    d3d_bs_desc.IndependentBlendEnable = /*caps.independent_blend_support ?*/ bs_desc.independent_blend_enable /*: false*/;
+    d3d_bs_desc.IndependentBlendEnable = caps.independent_blend_support ? bs_desc.independent_blend_enable : false;
     for (int i = 0; i < 8; ++ i)
     {
-        uint32_t const rt_index = /*caps.independent_blend_support ? i :*/ 0;
+        uint32_t const rt_index = caps.independent_blend_support ? i : 0;
 
         d3d_bs_desc.RenderTarget[i].BlendEnable = bs_desc.blend_enable[rt_index];
-        //d3d_bs_desc.RenderTarget[i].LogicOpEnable = bs_desc.logic_op_enable[rt_index];
+        d3d_bs_desc.RenderTarget[i].LogicOpEnable = bs_desc.logic_op_enable[rt_index];
         d3d_bs_desc.RenderTarget[i].SrcBlend = D3D11Mapping::Mapping(bs_desc.src_blend[rt_index]);
         d3d_bs_desc.RenderTarget[i].DestBlend = D3D11Mapping::Mapping(bs_desc.dest_blend[rt_index]);
         d3d_bs_desc.RenderTarget[i].BlendOp = D3D11Mapping::Mapping(bs_desc.blend_op[rt_index]);
         d3d_bs_desc.RenderTarget[i].SrcBlendAlpha = D3D11Mapping::Mapping(bs_desc.src_blend_alpha[rt_index]);
         d3d_bs_desc.RenderTarget[i].DestBlendAlpha = D3D11Mapping::Mapping(bs_desc.dest_blend_alpha[rt_index]);
         d3d_bs_desc.RenderTarget[i].BlendOpAlpha = D3D11Mapping::Mapping(bs_desc.blend_op_alpha[rt_index]);
-        // d3d_bs_desc.RenderTarget[i].LogicOp
-        //     = caps.logic_op_support ? D3D11Mapping::Mapping(bs_desc.logic_op[rt_index]) : D3D11_LOGIC_OP_NOOP;
+		d3d_bs_desc.RenderTarget[i].LogicOp
+			= caps.logic_op_support ? D3D11Mapping::Mapping(bs_desc.logic_op[rt_index]) : D3D11_LOGIC_OP_NOOP;
         d3d_bs_desc.RenderTarget[i].RenderTargetWriteMask
             = static_cast<UINT8>(D3D11Mapping::MappingColorMask(bs_desc.color_write_mask[rt_index]));
     }
 
-    TIFHR(d3d_device->CreateBlendState(&d3d_bs_desc, blend_state_.put()));
+    TIFHR(d3d_device->CreateBlendState1(&d3d_bs_desc, blend_state_.put()));
 }
 
 void D3D11RenderStateObject::Active()

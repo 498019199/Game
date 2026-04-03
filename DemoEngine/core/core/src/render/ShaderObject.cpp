@@ -317,10 +317,6 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 			}
 			macros.emplace_back(D3D_SHADER_MACRO{type_name, "1"});
 		}
-        for (uint32_t i = 0; i < api_special_macros.size(); ++i)
-		{
-			macros.emplace_back(D3D_SHADER_MACRO{api_special_macros[i].first, api_special_macros[i].second});
-		}
 
         for (uint32_t i = 0; i < tech.NumMacros(); ++i)
 		{

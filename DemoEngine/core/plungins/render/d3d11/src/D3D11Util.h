@@ -48,8 +48,8 @@ namespace RenderWorker
     using ID3D11InputLayoutPtr = CommonWorker::com_ptr<ID3D11InputLayout>;
     using ID3D11SamplerStatePtr = CommonWorker::com_ptr<ID3D11SamplerState>;
 	using ID3D11ShaderResourceViewPtr = CommonWorker::com_ptr<ID3D11ShaderResourceView>;
-    using ID3D11RasterizerStatePtr = CommonWorker::com_ptr<ID3D11RasterizerState>;
-    using ID3D11BlendStatePtr = CommonWorker::com_ptr<ID3D11BlendState>;
+    using ID3D11RasterizerState1Ptr = CommonWorker::com_ptr<ID3D11RasterizerState1>;
+    using ID3D11BlendState1Ptr = CommonWorker::com_ptr<ID3D11BlendState1>;
     using ID3D11DepthStencilStatePtr = CommonWorker::com_ptr<ID3D11DepthStencilState>;
 }
 
@@ -73,6 +73,7 @@ public:
     
     static D3D11_BLEND Mapping(AlphaBlendFactor factor);
     static D3D11_BLEND_OP Mapping(BlendOperation bo);
+    static D3D11_LOGIC_OP Mapping(LogicOperation op);
     static uint32_t MappingColorMask(uint32_t mask);
 
     static D3D11_DEPTH_WRITE_MASK Mapping(bool depth_write_mask);

@@ -5491,7 +5491,7 @@ namespace RenderWorker
 					"#if KLAYGE_SHADER_MODEL >= SHADER_MODEL({}, {})\n", static_cast<int>(ver.major_ver), static_cast<int>(ver.minor_ver));
 			}
 
-		str += frag.str() + "\n";
+			str += frag.str() + "\n";
 
 			if ((ver.major_ver != 0) || (ver.minor_ver != 0))
 			{
@@ -5795,7 +5795,7 @@ namespace RenderWorker
 	{
 		WriteShortString(os, name_);
 
-		//os.write(reinterpret_cast<char const*>(&ver_), sizeof(ver_));
+		os.write(reinterpret_cast<char const*>(&ver_), sizeof(ver_));
 
 		// uint8_t num_anno;
 		// if (annotations_)
@@ -5935,7 +5935,7 @@ namespace RenderWorker
 			}
 		}
 		else if (inherit_pass)
-		{
+		{ 
 			macros_ = inherit_pass->macros_;
 		}
 

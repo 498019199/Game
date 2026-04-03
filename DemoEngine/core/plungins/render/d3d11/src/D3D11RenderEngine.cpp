@@ -1055,7 +1055,26 @@ void D3D11RenderEngine::FillRenderDeviceCaps()
 	std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
 	std::vector<ElementFormat> texture_formats;
 	std::vector<ElementFormat> uav_formats;
+
 	bool check_uav_fmts = false;
+	if (d3d_11_runtime_sub_ver_ >= 3)
+	{
+		D3D11_FEATURE_DATA_D3D11_OPTIONS2 feature_data{};
+		if (SUCCEEDED(d3d_device_1_->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS2, &feature_data, sizeof(feature_data))))
+		{
+			check_uav_fmts = feature_data.TypedUAVLoadAdditionalFormats ? true : false;
+		}
+	}
+
+	if (!check_uav_fmts)
+	{
+		uav_formats.insert(uav_formats.end(),
+			{
+				EF_R32F,
+				EF_R32UI,
+				EF_R32I
+			});
+	}
 
 	std::pair<ElementFormat, DXGI_FORMAT> const fmts[] = 
 	{
