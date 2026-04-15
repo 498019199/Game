@@ -153,11 +153,6 @@ private:
     // List of D3D drivers installed (video cards)
 	// Enumerates itself
 	D3D11AdapterList adapterList_;
-    
-    uint32_t num_primitives_just_rendered_{0};
-	uint32_t num_vertices_just_rendered_{0};
-	uint32_t num_draws_just_called_{0};
-	uint32_t num_dispatches_just_called_{0};
 
     // 光栅状态
     ID3D11RasterizerState* rasterizer_state_cache_{nullptr};

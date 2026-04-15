@@ -44,6 +44,11 @@ public:
     virtual void EndPass();
     virtual void EndFrame();
     
+    uint32_t NumPrimitivesJustRendered();
+	uint32_t NumVerticesJustRendered();
+	uint32_t NumDrawsJustCalled();
+	uint32_t NumDispatchesJustCalled();
+
 	void BindFrameBuffer(const FrameBufferPtr& fb);
     // 获取当前渲染目标
     const FrameBufferPtr& CurFrameBuffer() const;
@@ -147,6 +152,11 @@ protected:
     DisplayOutputMethod display_output_method_;
     uint32_t paper_white_;
     uint32_t display_max_luminance_;
+
+    uint32_t num_primitives_just_rendered_{0};
+	uint32_t num_vertices_just_rendered_{0};
+	uint32_t num_draws_just_called_{0};
+	uint32_t num_dispatches_just_called_{0};
 
     RenderLayoutPtr so_buffers_;
 

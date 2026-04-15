@@ -3970,36 +3970,36 @@ namespace
 
 namespace RenderWorker
 {
-// 	RenderEffectAnnotation::RenderEffectAnnotation() = default;
-// 	RenderEffectAnnotation::RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept = default;
-// 	RenderEffectAnnotation& RenderEffectAnnotation::operator=(RenderEffectAnnotation&& rhs) noexcept = default;
+	RenderEffectAnnotation::RenderEffectAnnotation() = default;
+	RenderEffectAnnotation::RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept = default;
+	RenderEffectAnnotation& RenderEffectAnnotation::operator=(RenderEffectAnnotation&& rhs) noexcept = default;
 
-// #if ZENGINE_IS_DEV_PLATFORM
-// 	void RenderEffectAnnotation::Load(RenderEffect const& effect, XMLNode const& node)
-// 	{
-// 		type_ = TypeFromName(node.Attrib("type")->ValueString());
-// 		name_ = std::string(node.Attrib("name")->ValueString());
-// 		var_ = LoadVariable(effect, node, type_, 0);
-// 	}
-// #endif
+#if ZENGINE_IS_DEV_PLATFORM
+	void RenderEffectAnnotation::Load(RenderEffect const& effect, XMLNode const& node)
+	{
+		type_ = TypeFromName(node.Attrib("type")->ValueString());
+		name_ = std::string(node.Attrib("name")->ValueString());
+		var_ = LoadVariable(effect, node, type_, 0);
+	}
+#endif
 
-// 	void RenderEffectAnnotation::StreamIn(RenderEffect const& effect, ResIdentifier& res)
-// 	{
-// 		res.read(&type_, sizeof(type_));
-// 		type_ = LE2Native(type_);
-// 		name_ = ReadShortString(res);
-// 		var_ = StreamInVariable(effect, res, type_, 0);
-// 	}
+	void RenderEffectAnnotation::StreamIn(RenderEffect const& effect, ResIdentifier& res)
+	{
+		res.read(&type_, sizeof(type_));
+		type_ = LE2Native(type_);
+		name_ = ReadShortString(res);
+		var_ = StreamInVariable(effect, res, type_, 0);
+	}
 
-// #if ZENGINE_IS_DEV_PLATFORM
-// 	void RenderEffectAnnotation::StreamOut(std::ostream& os) const
-// 	{
-// 		uint32_t t = Native2LE(type_);
-// 		os.write(reinterpret_cast<char const *>(&t), sizeof(t));
-// 		WriteShortString(os, name_);
-// 		StreamOutVariable(os, *var_);
-// 	}
-// #endif
+#if ZENGINE_IS_DEV_PLATFORM
+	void RenderEffectAnnotation::StreamOut(std::ostream& os) const
+	{
+		uint32_t t = Native2LE(type_);
+		os.write(reinterpret_cast<char const *>(&t), sizeof(t));
+		WriteShortString(os, name_);
+		StreamOutVariable(os, *var_);
+	}
+#endif
 
 
 	RenderEffectStructType::RenderEffectStructType() = default;
@@ -4611,11 +4611,11 @@ namespace RenderWorker
 			{
 				XMLNode new_tech_node = this->ResolveInheritTechNode(root, node);
 
-				// for (auto* tech_anno_node = tech_node->FirstNode("annotation"); tech_anno_node;
-				// 	tech_anno_node = tech_anno_node->NextSibling("annotation"))
-				// {
-				// 	new_tech_node.AppendNode(*tech_anno_node);
-				// }
+				for (auto* tech_anno_node = tech_node->FirstNode("annotation"); tech_anno_node;
+					tech_anno_node = tech_anno_node->NextSibling("annotation"))
+				{
+					new_tech_node.AppendNode(*tech_anno_node);
+				}
 				for (auto* tech_macro_node = tech_node->FirstNode("macro"); tech_macro_node;
 					tech_macro_node = tech_macro_node->NextSibling("macro"))
 				{
@@ -5005,19 +5005,24 @@ namespace RenderWorker
 
 		uint32_t fourcc = Native2LE(MakeFourCC<'K', 'F', 'X', ' '>::value);
 		os.write(reinterpret_cast<char const *>(&fourcc), sizeof(fourcc));
+		std::cout << "StreamOut: fourcc = " << std::hex << fourcc << std::dec << std::endl;
 
 		uint32_t ver = Native2LE(KFX_VERSION);
 		os.write(reinterpret_cast<char const *>(&ver), sizeof(ver));
+		std::cout << "StreamOut: version = " << std::hex << ver << std::dec << std::endl;
 
 		uint32_t shader_fourcc = Native2LE(re.NativeShaderFourCC());
 		os.write(reinterpret_cast<char const *>(&shader_fourcc), sizeof(shader_fourcc));
+		std::cout << "StreamOut: shader_fourcc = " << std::hex << shader_fourcc << std::dec << std::endl;
 
 		uint32_t shader_ver = Native2LE(re.NativeShaderVersion());
 		os.write(reinterpret_cast<char const *>(&shader_ver), sizeof(shader_ver));
+		std::cout << "StreamOut: shader_ver = " << std::hex << shader_ver << std::dec << std::endl;
 
 		uint8_t shader_platform_name_len = static_cast<uint8_t>(re.NativeShaderPlatformName().size());
 		os.write(reinterpret_cast<char const *>(&shader_platform_name_len), sizeof(shader_platform_name_len));
 		os.write(&re.NativeShaderPlatformName()[0], shader_platform_name_len);
+		std::cout << "StreamOut: shader_platform_name = " << re.NativeShaderPlatformName() << std::endl;
 
 		uint64_t timestamp = Native2LE(immutable_->timestamp);
 		os.write(reinterpret_cast<char const *>(&timestamp), sizeof(timestamp));
@@ -5547,25 +5552,25 @@ namespace RenderWorker
 			return;
 		}
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	if (parent_tech && parent_tech->annotations_)
-		// 	{
-		// 		*annotations_ = *parent_tech->annotations_;
-		// 	}
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		annotations_->push_back(annotation);
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			if (parent_tech && parent_tech->annotations_)
+			{
+				*annotations_ = *parent_tech->annotations_;
+			}
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				annotations_->push_back(annotation);
 
-		// 		annotation->Load(effect, *anno_node);
-		// 	}
-		// }
-		// else if (parent_tech)
-		// {
-		// 	annotations_ = parent_tech->annotations_;
-		// }
+				annotation->Load(effect, *anno_node);
+			}
+		}
+		else if (parent_tech)
+		{
+			annotations_ = parent_tech->annotations_;
+		}
 
 		if (const XMLNode* macro_node = node.FirstNode("macro"))
 		{
@@ -5740,22 +5745,22 @@ namespace RenderWorker
 		name_ = ReadShortString(res);
 		name_hash_ = HashValue(name_);
 
-		//res.read(&ver_, sizeof(ver_));
+		res.read(&ver_, sizeof(ver_));
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	annotations_->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		(*annotations_)[i] = annotation;
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			annotations_->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				(*annotations_)[i] = annotation;
 				
-		// 		annotation->StreamIn(effect, res);
-		// 	}
-		// }
+				annotation->StreamIn(effect, res);
+			}
+		}
 
 		uint8_t num_macro;
 		res.read(&num_macro, sizeof(num_macro));
@@ -5797,20 +5802,20 @@ namespace RenderWorker
 
 		os.write(reinterpret_cast<char const*>(&ver_), sizeof(ver_));
 
-		// uint8_t num_anno;
-		// if (annotations_)
-		// {
-		// 	num_anno = static_cast<uint8_t>(annotations_->size());
-		// }
-		// else
-		// {
-		// 	num_anno = 0;
-		// }
-		// os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
-		// for (uint32_t i = 0; i < num_anno; ++ i)
-		// {
-		// 	(*annotations_)[i]->StreamOut(os);
-		// }
+		uint8_t num_anno;
+		if (annotations_)
+		{
+			num_anno = static_cast<uint8_t>(annotations_->size());
+		}
+		else
+		{
+			num_anno = 0;
+		}
+		os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
+		for (uint32_t i = 0; i < num_anno; ++ i)
+		{
+			(*annotations_)[i]->StreamOut(os);
+		}
 
 		uint8_t num_macro;
 		if (macros_)
@@ -5841,11 +5846,11 @@ namespace RenderWorker
 	}
 #endif
 
-	// RenderEffectAnnotation const& RenderTechnique::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return *(*annotations_)[n];
-	// }
+	const RenderEffectAnnotation& RenderTechnique::Annotation(uint32_t n) const noexcept
+	{
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return *(*annotations_)[n];
+	}
 
 	std::pair<std::string, std::string> const& RenderTechnique::MacroByIndex(uint32_t n) const noexcept
 	{
@@ -5889,23 +5894,23 @@ namespace RenderWorker
 		name_ = std::string(node.Attrib("name")->ValueString());
 		name_hash_ = HashValue(name_);
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	if (inherit_pass && inherit_pass->annotations_)
-		// 	{
-		// 		*annotations_ = *inherit_pass->annotations_;
-		// 	}
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		auto& annotation = *annotations_->emplace_back(MakeSharedPtr<RenderEffectAnnotation>());
-		// 		annotation.Load(effect, *anno_node);
-		// 	}
-		// }
-		// else if (inherit_pass)
-		// {
-		// 	annotations_ = inherit_pass->annotations_;
-		// }
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			if (inherit_pass && inherit_pass->annotations_)
+			{
+				*annotations_ = *inherit_pass->annotations_;
+			}
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				auto& annotation = *annotations_->emplace_back(MakeSharedPtr<RenderEffectAnnotation>());
+				annotation.Load(effect, *anno_node);
+			}
+		}
+		else if (inherit_pass)
+		{
+			annotations_ = inherit_pass->annotations_;
+		}
 
 		if (const XMLNode* macro_node = node.FirstNode("macro"))
 		{
@@ -6342,7 +6347,7 @@ namespace RenderWorker
 		COMMON_ASSERT(inherit_pass);
 
 		name_ = inherit_pass->name_;
-		//annotations_ = inherit_pass->annotations_;
+		annotations_ = inherit_pass->annotations_;
 		macros_ = inherit_pass->macros_;
 
 		uint64_t macros_hash;
@@ -6455,19 +6460,19 @@ namespace RenderWorker
 		name_ = ReadShortString(res);
 		name_hash_ = HashValue(name_);
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-		// 	annotations_->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 		(*annotations_)[i] = annotation;
-		// 		annotation->StreamIn(effect, res);
-		// 	}
-		// }
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
+			annotations_->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+				(*annotations_)[i] = annotation;
+				annotation->StreamIn(effect, res);
+			}
+		}
 
 		uint8_t num_macro;
 		res.read(&num_macro, sizeof(num_macro));
@@ -6573,23 +6578,23 @@ namespace RenderWorker
 	{
 		WriteShortString(os, name_);
 
-		//uint8_t num_anno;
-		// if (annotations_)
-		// {
-		// 	num_anno = static_cast<uint8_t>(annotations_->size());
-		// }
-		// else
-		// {
-		// 	num_anno = 0;
-		// }
-		// os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
-		// for (uint32_t i = 0; i < num_anno; ++ i)
-		// {
-		// 	RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-		// 	(*annotations_)[i] = annotation;
+		uint8_t num_anno;
+		if (annotations_)
+		{
+			num_anno = static_cast<uint8_t>(annotations_->size());
+		}
+		else
+		{
+			num_anno = 0;
+		}
+		os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
+		for (uint32_t i = 0; i < num_anno; ++ i)
+		{
+			RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
+			(*annotations_)[i] = annotation;
 				
-		// 	annotation->StreamOut(os);
-		// }
+			annotation->StreamOut(os);
+		}
 
 		uint8_t num_macro;
 		if (macros_)
@@ -6684,11 +6689,11 @@ namespace RenderWorker
 		this->GetShaderObject(effect)->Unbind();
 	}
 
-	// RenderEffectAnnotation const& RenderPass::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return *(*annotations_)[n];
-	// }
+	RenderEffectAnnotation const& RenderPass::Annotation(uint32_t n) const noexcept
+	{
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return *(*annotations_)[n];
+	}
 
 	std::pair<std::string, std::string> const& RenderPass::MacroByIndex(uint32_t n) const noexcept
 	{
@@ -6909,16 +6914,16 @@ namespace RenderWorker
 		}
 		var_ = LoadVariable(effect, node, immutable_->type, as);
 
-		// if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		// {
-		// 	immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
-		// 	for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-		// 	{
-		// 		auto& anno = immutable_->annotations->emplace_back();
-		// 		anno.Load(effect, *anno_node);
-		// 		this->ProcessAnnotation(anno);
-		// 	}
-		// }
+		if (const XMLNode* anno_node = node.FirstNode("annotation"))
+		{
+			immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
+			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
+			{
+				auto& anno = immutable_->annotations->emplace_back();
+				anno.Load(effect, *anno_node);
+				this->ProcessAnnotation(anno);
+			}
+		}
 	}
 #endif
 
@@ -6964,43 +6969,43 @@ namespace RenderWorker
 		}
 		var_ = StreamInVariable(effect, res, immutable_->type, as);
 
-		// uint8_t num_anno;
-		// res.read(&num_anno, sizeof(num_anno));
-		// if (num_anno > 0)
-		// {
-		// 	immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
-		// 	immutable_->annotations->resize(num_anno);
-		// 	for (uint32_t i = 0; i < num_anno; ++ i)
-		// 	{
-		// 		RenderEffectAnnotation& anno = (*immutable_->annotations)[i];
-		// 		anno.StreamIn(effect, res);
-		// 		this->ProcessAnnotation(anno);
-		// 	}
-		// }
+		uint8_t num_anno;
+		res.read(&num_anno, sizeof(num_anno));
+		if (num_anno > 0)
+		{
+			immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
+			immutable_->annotations->resize(num_anno);
+			for (uint32_t i = 0; i < num_anno; ++ i)
+			{
+				RenderEffectAnnotation& anno = (*immutable_->annotations)[i];
+				anno.StreamIn(effect, res);
+				this->ProcessAnnotation(anno);
+			}
+		}
 	}
 
-	// void RenderEffectParameter::ProcessAnnotation(RenderEffectAnnotation& anno)
-	// {
-	// 	if (((REDT_texture1D == immutable_->type) || (REDT_texture2D == immutable_->type) || (REDT_texture2DMS == immutable_->type) ||
-	// 			(REDT_texture3D == immutable_->type) || (REDT_textureCUBE == immutable_->type) ||
-	// 			(REDT_texture1DArray == immutable_->type) || (REDT_texture2DArray == immutable_->type) ||
-	// 			(REDT_texture2DMSArray == immutable_->type) || (REDT_texture3DArray == immutable_->type) ||
-	// 			(REDT_textureCUBEArray == immutable_->type)) &&
-	// 		(REDT_string == anno.Type()) && (anno.Name() == "SasResourceAddress"))
-	// 	{
-	// 		std::string val;
-	// 		anno.Value(val);
+	void RenderEffectParameter::ProcessAnnotation(RenderEffectAnnotation& anno)
+	{
+		if (((REDT_texture1D == immutable_->type) || (REDT_texture2D == immutable_->type) || (REDT_texture2DMS == immutable_->type) ||
+				(REDT_texture3D == immutable_->type) || (REDT_textureCUBE == immutable_->type) ||
+				(REDT_texture1DArray == immutable_->type) || (REDT_texture2DArray == immutable_->type) ||
+				(REDT_texture2DMSArray == immutable_->type) || (REDT_texture3DArray == immutable_->type) ||
+				(REDT_textureCUBEArray == immutable_->type)) &&
+			(REDT_string == anno.Type()) && (anno.Name() == "SasResourceAddress"))
+		{
+			std::string val;
+			anno.Value(val);
 
-	// 		if (Context::Instance().ResLoaderInstance().Locate(val).empty())
-	// 		{
-	// 			LogError() << val << " NOT found" << std::endl;
-	// 		}
-	// 		else
-	// 		{
-	// 			*var_ = SyncLoadTexture(val, EAH_GPU_Read | EAH_Immutable);
-	// 		}
-	// 	}	
-	// }
+			if (Context::Instance().ResLoaderInstance().Locate(val).empty())
+			{
+				//LogError() << val << " NOT found" << std::endl;
+			}
+			else
+			{
+				*var_ = SyncLoadTexture(val, EAH_GPU_Read | EAH_Immutable);
+			}
+		}	
+	}
 
 #if ZENGINE_IS_DEV_PLATFORM
 	void RenderEffectParameter::StreamOut(std::ostream& os) const
@@ -7029,20 +7034,20 @@ namespace RenderWorker
 		}
 		StreamOutVariable(os, *var_);
 
-		// uint8_t num_anno;
-		// if (immutable_->annotations)
-		// {
-		// 	num_anno = static_cast<uint8_t>(immutable_->annotations->size());
-		// }
-		// else
-		// {
-		// 	num_anno = 0;
-		// }
-		// os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
-		// for (uint32_t i = 0; i < num_anno; ++ i)
-		// {
-		// 	(*immutable_->annotations)[i].StreamOut(os);
-		// }
+		uint8_t num_anno;
+		if (immutable_->annotations)
+		{
+			num_anno = static_cast<uint8_t>(immutable_->annotations->size());
+		}
+		else
+		{
+			num_anno = 0;
+		}
+		os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
+		for (uint32_t i = 0; i < num_anno; ++ i)
+		{
+			(*immutable_->annotations)[i].StreamOut(os);
+		}
 	}
 #endif
 
@@ -7080,11 +7085,11 @@ namespace RenderWorker
 		return this->HasSemantic() ? immutable_->semantic_hash : 0;
 	}
 
-	// RenderEffectAnnotation const& RenderEffectParameter::Annotation(uint32_t n) const noexcept
-	// {
-	// 	COMMON_ASSERT(n < this->NumAnnotations());
-	// 	return (*immutable_->annotations)[n];
-	// }
+	const RenderEffectAnnotation& RenderEffectParameter::Annotation(uint32_t n) const noexcept
+	{
+		COMMON_ASSERT(n < this->NumAnnotations());
+		return (*immutable_->annotations)[n];
+	}
 
 	void RenderEffectParameter::BindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index, uint32_t offset, uint32_t stride)
 	{
