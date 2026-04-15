@@ -56,7 +56,19 @@ int main()
     auto app = MakeUniquePtr<EditorManagerD3D11>();
     app->GetEditorSetting( setting );
     app->Create();
+#ifndef EDITOR_DEBUG_MODE
     app->MainWnd()->BindMsgProc(ImGui_ImplWin32_WndProcHandler);
+#endif //EDITOR_DEBUG_MODE
+
+    // test model
+    EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
+    child->parent = nullptr;
+    child->path = "D:/git/Game/ZEngine/bin/win_x64/../../Assets/Models/Dragon/Dragon.glb";
+    child->name = "Dragon";
+    child->extension = ".glb";
+    child->type = AssetType::Model;
+    app->SetSelectedAssert( child );
+
     app->Run();
     return 0;
 }

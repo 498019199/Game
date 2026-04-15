@@ -230,6 +230,10 @@ protected:
     };
 };
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
 class ZENGINE_CORE_API RenderEffectAnnotation final
 {
     ZENGINE_NONCOPYABLE(RenderEffectAnnotation);
@@ -272,6 +276,10 @@ private:
 
 using RenderEffectAnnotationPtr = std::shared_ptr<RenderEffectAnnotation>;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
 class ZENGINE_CORE_API RenderShaderFragment final
 {
 public:
@@ -304,6 +312,61 @@ private:
     ShaderModel ver_;
     std::string str_;
 };
+
+
+class ZENGINE_CORE_API RenderShaderGraphNode final
+{
+public:
+#if ZENGINE_IS_DEV_PLATFORM
+    void Load(XMLNode const& node);
+#endif
+
+    void StreamIn(ResIdentifier& res);
+#if ZENGINE_IS_DEV_PLATFORM
+    void StreamOut(std::ostream& os) const;
+#endif
+
+    std::string const& Name() const noexcept
+    {
+        return name_;
+    }
+    size_t NameHash() const noexcept
+    {
+        return name_hash_;
+    }
+
+    std::string const& ReturnType() const noexcept
+    {
+        return return_type_;
+    }
+
+    uint32_t NumParameters() const noexcept
+    {
+        return static_cast<uint32_t>(params_.size());
+    }
+    std::pair<std::string, std::string> const& Parameter(uint32_t n) const noexcept;
+
+    std::string const& ImplName() const noexcept
+    {
+        return impl_;
+    }
+
+    void OverrideImpl(std::string_view impl);
+
+#if ZENGINE_IS_DEV_PLATFORM
+    std::string GenDeclarationCode() const;
+    std::string GenDefinitionCode() const;
+#endif
+
+private:
+    std::string name_;
+    size_t name_hash_;
+
+    std::string return_type_;
+    std::vector<std::pair<std::string, std::string>> params_;
+    std::string impl_;
+};
+
 
 class ZENGINE_CORE_API RenderEffectStructType final
 {
@@ -515,7 +578,11 @@ public:
         return immutable_->annotations ? static_cast<uint32_t>(immutable_->annotations->size()) : 0;
     }
     const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
     template <typename T>
     RenderEffectParameter& operator=(T const & value)
     {
@@ -716,7 +783,7 @@ private:
 
         std::vector<ShaderDesc> shader_descs;
 
-        //std::vector<RenderShaderGraphNode> shader_graph_nodes;
+        std::vector<RenderShaderGraphNode> shader_graph_nodes;
     };
 
     std::shared_ptr<Immutable> immutable_;
@@ -768,7 +835,10 @@ public:
     }
     const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
     uint32_t NumMacros() const noexcept
     {
         return macros_ ? static_cast<uint32_t>(macros_->size()) : 0;
@@ -867,10 +937,10 @@ public:
     }
 
     uint32_t NumAnnotations() const noexcept
-	{
-		return annotations_ ? static_cast<uint32_t>(annotations_->size()) : 0;
-	}
-	const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
+    {
+        return annotations_ ? static_cast<uint32_t>(annotations_->size()) : 0;
+    }
+    const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
 
     uint32_t NumMacros() const noexcept
     {
@@ -881,7 +951,6 @@ public:
 private:
     std::string name_;
     size_t name_hash_;
-
     std::shared_ptr<std::vector<RenderEffectAnnotationPtr>> annotations_;
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> macros_;
     std::array<uint32_t, ShaderStageNum> shader_desc_ids_;
