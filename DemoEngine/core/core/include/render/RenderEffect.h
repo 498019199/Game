@@ -230,10 +230,6 @@ protected:
     };
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
 class ZENGINE_CORE_API RenderEffectAnnotation final
 {
     ZENGINE_NONCOPYABLE(RenderEffectAnnotation);
@@ -276,10 +272,6 @@ private:
 
 using RenderEffectAnnotationPtr = std::shared_ptr<RenderEffectAnnotation>;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
 class ZENGINE_CORE_API RenderShaderFragment final
 {
 public:
@@ -578,11 +570,6 @@ public:
         return immutable_->annotations ? static_cast<uint32_t>(immutable_->annotations->size()) : 0;
     }
     const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
-<<<<<<< HEAD
-
-=======
-        
->>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
     template <typename T>
     RenderEffectParameter& operator=(T const & value)
     {
@@ -835,10 +822,6 @@ public:
     }
     const RenderEffectAnnotation& Annotation(uint32_t n) const noexcept;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
     uint32_t NumMacros() const noexcept
     {
         return macros_ ? static_cast<uint32_t>(macros_->size()) : 0;

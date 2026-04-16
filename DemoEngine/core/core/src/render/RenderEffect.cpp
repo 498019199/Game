@@ -7008,97 +7008,88 @@ namespace RenderWorker
 	}
 
 #if ZENGINE_IS_DEV_PLATFORM
-	void RenderEffectParameter::StreamOut(std::ostream& os) const
+void RenderEffectParameter::StreamOut(std::ostream& os) const
+{
+	uint32_t t = Native2LE(immutable_->type);
+	os.write(reinterpret_cast<char const *>(&t), sizeof(t));
+	WriteShortString(os, immutable_->name);
+	if (!immutable_->semantic.empty())
 	{
-		uint32_t t = Native2LE(immutable_->type);
-		os.write(reinterpret_cast<char const *>(&t), sizeof(t));
-		WriteShortString(os, immutable_->name);
-		if (!immutable_->semantic.empty())
-		{
-			WriteShortString(os, immutable_->semantic);
-		}
-		else
-		{
-			uint8_t len = 0;
-			os.write(reinterpret_cast<char const *>(&len), sizeof(len));
-		}
-
-		if (immutable_->array_size)
-		{
-			WriteShortString(os, *immutable_->array_size);
-		}
-		else
-		{
-			uint8_t len = 0;
-			os.write(reinterpret_cast<char const *>(&len), sizeof(len));
-		}
-		StreamOutVariable(os, *var_);
-
-		uint8_t num_anno;
-		if (immutable_->annotations)
-		{
-			num_anno = static_cast<uint8_t>(immutable_->annotations->size());
-		}
-		else
-		{
-			num_anno = 0;
-		}
-		os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
-		for (uint32_t i = 0; i < num_anno; ++ i)
-		{
-			(*immutable_->annotations)[i].StreamOut(os);
-		}
+		WriteShortString(os, immutable_->semantic);
 	}
+	else
+	{
+		uint8_t len = 0;
+		os.write(reinterpret_cast<char const *>(&len), sizeof(len));
+	}
+
+	if (immutable_->array_size)
+	{
+		WriteShortString(os, *immutable_->array_size);
+	}
+	else
+	{
+		uint8_t len = 0;
+		os.write(reinterpret_cast<char const *>(&len), sizeof(len));
+	}
+	StreamOutVariable(os, *var_);
+
+	uint8_t num_anno;
+	if (immutable_->annotations)
+	{
+		num_anno = static_cast<uint8_t>(immutable_->annotations->size());
+	}
+	else
+	{
+		num_anno = 0;
+	}
+	os.write(reinterpret_cast<char const *>(&num_anno), sizeof(num_anno));
+	for (uint32_t i = 0; i < num_anno; ++ i)
+	{
+		(*immutable_->annotations)[i].StreamOut(os);
+	}
+}
 #endif
 
-	RenderEffectParameter RenderEffectParameter::Clone()
+RenderEffectParameter RenderEffectParameter::Clone()
+{
+	RenderEffectParameter ret;
+
+	ret.immutable_ = immutable_;
+	ret.var_ = var_->Clone();
+
+	return ret;
+}
+
+RenderVariable const& RenderEffectParameter::Var() const noexcept
+{
+	COMMON_ASSERT(var_);
+	return *var_;
+}
+
+std::string const & RenderEffectParameter::Semantic() const
+{
+	if (this->HasSemantic())
 	{
-		RenderEffectParameter ret;
-
-		ret.immutable_ = immutable_;
-		ret.var_ = var_->Clone();
-
-		return ret;
+		return immutable_->semantic;
 	}
-
-	RenderVariable const& RenderEffectParameter::Var() const noexcept
+	else
 	{
-		COMMON_ASSERT(var_);
-		return *var_;
+		static std::string empty("");
+		return empty;
 	}
+}
 
-	std::string const & RenderEffectParameter::Semantic() const
-	{
-		if (this->HasSemantic())
-		{
-			return immutable_->semantic;
-		}
-		else
-		{
-			static std::string empty("");
-			return empty;
-		}
-	}
+size_t RenderEffectParameter::SemanticHash() const noexcept
+{
+	return this->HasSemantic() ? immutable_->semantic_hash : 0;
+}
 
-	size_t RenderEffectParameter::SemanticHash() const noexcept
-	{
-		return this->HasSemantic() ? immutable_->semantic_hash : 0;
-	}
-
-	const RenderEffectAnnotation& RenderEffectParameter::Annotation(uint32_t n) const noexcept
-<<<<<<< HEAD
-	{
-		COMMON_ASSERT(n < this->NumAnnotations());
-		return (*immutable_->annotations)[n];
-	}
-
-	void RenderEffectParameter::BindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index, uint32_t offset, uint32_t stride)
-=======
->>>>>>> 7a3d76a3e21eeff0f1e58a9cc7771576aea0bc51
-	{
-		COMMON_ASSERT(n < this->NumAnnotations());
-		return (*immutable_->annotations)[n];
-	}
+const RenderEffectAnnotation& RenderEffectParameter::Annotation(uint32_t n) const noexcept
+{
+	COMMON_ASSERT(n < this->NumAnnotations());
+	return (*immutable_->annotations)[n];
+}
 
 void RenderEffectParameter::BindToCBuffer(RenderEffect const& effect, uint32_t cbuff_index, uint32_t offset, uint32_t stride)
 {
