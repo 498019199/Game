@@ -56,6 +56,9 @@ void EditorManagerD3D11::OnCreate()
     this->LookAt(float3(-25.72f, 29.65f, 24.57f), float3(-24.93f, 29.09f, 24.32f));
 	this->Proj(0.05f, 300.0f);
 
+    auto& context = Context::Instance();
+	RenderFactory& rf = context.RenderFactoryInstance();
+	auto& d3d11_re = rf.RenderEngineInstance();
 #ifndef EDITOR_DEBUG_MODE
     IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -68,8 +71,6 @@ void EditorManagerD3D11::OnCreate()
 
     //设置平台/渲染器后端
     ImGui_ImplWin32_Init(Context::Instance().AppInstance().MainWnd()->GetHWND()); 
-    auto& rf = Context::Instance().RenderFactoryInstance();
-	auto& d3d11_re = rf.RenderEngineInstance();
     auto re = static_cast<ID3D11Device*>(d3d11_re.GetD3DDevice());
     auto ctx = static_cast<ID3D11DeviceContext*>(d3d11_re.GetD3DDeviceImmContext());
     ImGui_ImplDX11_Init(re, ctx);
@@ -82,10 +83,7 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
 #endif // EDITOR_DEBUG_MODE
 
-    auto& context = Context::Instance();
-	RenderFactory& rf = context.RenderFactoryInstance();
-	RenderEngine& re = rf.RenderEngineInstance();
-	const RenderDeviceCaps& caps = re.DeviceCaps();
+	const RenderDeviceCaps& caps = d3d11_re.DeviceCaps();
     depth_texture_support_ = caps.depth_texture_support;
 
     back_face_depth_fb_ = rf.MakeFrameBuffer();

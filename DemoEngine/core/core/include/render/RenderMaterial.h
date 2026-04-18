@@ -84,6 +84,8 @@ public:
     void Texture(TextureSlot slot, ShaderResourceViewPtr srv);
 	const ShaderResourceViewPtr& Texture(TextureSlot slot) const;
 
+    void Active(RenderEffect& effect);
+    
 	void LoadTextureSlots();
 private:
 	std::string name_;
@@ -105,6 +107,8 @@ private:
     SurfaceDetailMode detail_mode_ = SurfaceDetailMode::ParallaxMapping;
     std::array<std::pair<std::string, ShaderResourceViewPtr>, TS_NumTextureSlots> textures_;
 };
+
+
 
 
 float const MAX_SHININESS = 8192;

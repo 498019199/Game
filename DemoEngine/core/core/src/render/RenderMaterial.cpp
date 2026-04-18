@@ -967,7 +967,54 @@ void RenderMaterial::LoadTextureSlots()
     }
 }
 
+void RenderMaterial::Active(RenderEffect& effect)
+{
+	if (&cbuffer_->OwnerEffect() != &effect)
+	{
+		albedo_tex_param_ = effect.ParameterByName("albedo_tex");
+		metalness_glossiness_tex_param_ = effect.ParameterByName("metalness_glossiness_tex");
+		emissive_tex_param_ = effect.ParameterByName("emissive_tex");
+		normal_tex_param_ = effect.ParameterByName("normal_tex");
+		height_tex_param_ = effect.ParameterByName("height_tex");
+		occlusion_tex_param_ = effect.ParameterByName("occlusion_tex");
+	}
 
+	uint32_t const index = effect.FindCBuffer("klayge_material");
+	if (index != static_cast<uint32_t>(-1) && (effect.CBufferByIndex(index)->Size() > 0))
+	{
+		if (&cbuffer_->OwnerEffect() != &effect)
+		{
+			cbuffer_ = cbuffer_->Clone(effect);
+		}
+
+		effect.BindCBufferByIndex(index, cbuffer_);
+	}
+
+	if (albedo_tex_param_)
+	{
+		*albedo_tex_param_ = this->Texture(RenderMaterial::TS_Albedo);
+	}
+	if (metalness_glossiness_tex_param_)
+	{
+		*metalness_glossiness_tex_param_ = this->Texture(RenderMaterial::TS_MetalnessGlossiness);
+	}
+	if (emissive_tex_param_)
+	{
+		*emissive_tex_param_ = this->Texture(RenderMaterial::TS_Emissive);
+	}
+	if (normal_tex_param_)
+	{
+		*normal_tex_param_ = this->Texture(RenderMaterial::TS_Normal);
+	}
+	if (height_tex_param_)
+	{
+		*height_tex_param_ = this->Texture(RenderMaterial::TS_Height);
+	}
+	if (occlusion_tex_param_)
+	{
+		*occlusion_tex_param_ = this->Texture(RenderMaterial::TS_Occlusion);
+	}
+}
 
 
 RenderMaterialPtr SyncLoadRenderMaterial(std::string_view mtlml_name)

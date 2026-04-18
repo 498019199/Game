@@ -415,7 +415,20 @@ void RenderEngine::Refresh() const
     }
 }
 
-PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance() const
+RenderMaterialPtr const& RenderEngine::DefaultMaterial() const
+{
+    if (!default_material_)
+    {
+        std::lock_guard<std::mutex> lock(default_mtl_instance_mutex);
+        if (!default_material_)
+        {
+            default_material_ = MakeSharedPtr<RenderMaterial>();
+        }
+    }
+    return default_material_;
+}
+
+const PredefinedMaterialCBuffer& RenderEngine::PredefinedMaterialCBufferInstance() const
 {
     if (!predefined_material_cb_)
     {
@@ -428,7 +441,7 @@ PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance
     return *predefined_material_cb_;
 }
 
-PredefinedMeshCBuffer const& RenderEngine::PredefinedMeshCBufferInstance() const
+const PredefinedMeshCBuffer& RenderEngine::PredefinedMeshCBufferInstance() const
 {
     if (!predefined_mesh_cb_)
     {
@@ -441,7 +454,7 @@ PredefinedMeshCBuffer const& RenderEngine::PredefinedMeshCBufferInstance() const
     return *predefined_mesh_cb_;
 }
 
-PredefinedModelCBuffer const& RenderEngine::PredefinedModelCBufferInstance() const
+const PredefinedModelCBuffer& RenderEngine::PredefinedModelCBufferInstance() const
 {
     if (!predefined_model_cb_)
     {
@@ -454,7 +467,7 @@ PredefinedModelCBuffer const& RenderEngine::PredefinedModelCBufferInstance() con
     return *predefined_model_cb_;
 }
 
-PredefinedCameraCBuffer const& RenderEngine::PredefinedCameraCBufferInstance() const
+const PredefinedCameraCBuffer& RenderEngine::PredefinedCameraCBufferInstance() const
 {
     if (!predefined_camera_cb_)
     {

@@ -114,10 +114,11 @@ public:
     // 获取渲染设备能力
     const RenderDeviceCaps& DeviceCaps() const;
 
-    PredefinedMaterialCBuffer const& PredefinedMaterialCBufferInstance() const;
-    PredefinedMeshCBuffer const& PredefinedMeshCBufferInstance() const;
-    PredefinedModelCBuffer const& PredefinedModelCBufferInstance() const;
-    PredefinedCameraCBuffer const& PredefinedCameraCBufferInstance() const;
+    const RenderMaterialPtr& DefaultMaterial() const;
+    const PredefinedMaterialCBuffer& PredefinedMaterialCBufferInstance() const;
+    const PredefinedMeshCBuffer& PredefinedMeshCBufferInstance() const;
+    const PredefinedModelCBuffer& PredefinedModelCBufferInstance() const;
+    const PredefinedCameraCBuffer& PredefinedCameraCBufferInstance() const;
 protected:
 
 	void Destroy();
@@ -171,11 +172,14 @@ protected:
     StereoMethod stereo_method_ {STM_None};
     float stereo_separation_ {0.0f};
 
+    mutable RenderMaterialPtr default_material_;
     mutable std::unique_ptr<PredefinedMaterialCBuffer> predefined_material_cb_;
     mutable std::unique_ptr<PredefinedMeshCBuffer> predefined_mesh_cb_;
     mutable std::unique_ptr<PredefinedModelCBuffer> predefined_model_cb_;
     mutable std::unique_ptr<PredefinedCameraCBuffer> predefined_camera_cb_;
 };
+
+
 
 
 

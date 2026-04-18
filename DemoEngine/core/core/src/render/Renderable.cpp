@@ -141,14 +141,14 @@ void Renderable::OnRenderBegin()
         }
     }
 
-    // if (select_mode_on_)
-    // {
-    //     *select_mode_object_id_param_ = select_mode_object_id_;
-    // }
-    // else
-    // {
-    //     auto const& mtl = mtl_ ? mtl_ : re.DefaultMaterial();
-    //     mtl->Active(*effect_);
+    if (select_mode_on_)
+    {
+        *select_mode_object_id_param_ = select_mode_object_id_;
+    }
+    else
+    {
+        auto const& mtl = mtl_ ? mtl_ : re.DefaultMaterial();
+        mtl->Active(*effect_);
 
     //     if (drl_valid)
     //     {
@@ -180,7 +180,7 @@ void Renderable::OnRenderBegin()
     //             break;
     //         }
     //     }
-    // }
+    }
 }
 
 void Renderable::OnRenderEnd()
