@@ -26,6 +26,8 @@ set(BASE_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/CpuInfo.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/DevHelper.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/Input.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/InputFactory.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/LZMACodec.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Package.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/ResLoader.h
@@ -125,19 +127,32 @@ SOURCE_GROUP("Audio System\\Header Files" FILES ${AUDIO_HEADER_FILES})
 
 set(WORLD_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/world/World.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/world/Control.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/world/CameraController.h
     ${PROJECT_SOURCE_DIR}/core/core/include/world/SceneNode.h
     ${PROJECT_SOURCE_DIR}/core/core/include/world/SceneComponent.h
 )
 
 set(WORLD_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/world/World.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/world/Control.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/world/CameraController.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/world/SceneNode.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/world/SceneComponent.cpp
 )
 SOURCE_GROUP("World\\Source Files" FILES ${AUDIO_SOURCE_FILES})
 SOURCE_GROUP("World\\Header Files" FILES ${AUDIO_HEADER_FILES})
+
+SOURCE_GROUP("Input\\Source Files" FILES ${INPUT_SOURCE_FILES})
+set(INPUT_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/InputActionMap.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/InputDevice.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/InputEngine.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/InputFactory.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Joystick.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Keyboard.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Mouse.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Touch.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Touch.cpp
+)
 
 add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
     ${APP_HEADER_FILES} ${APP_SOURCE_FILES}
@@ -145,6 +160,7 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
     ${WORLD_HEADER_FILES} ${WORLD_SOURCE_FILES}
     ${RENDER_HEADER_FILES} ${RENDER_SOURCE_FILES}
     ${AUDIO_HEADER_FILES} ${AUDIO_SOURCE_FILES}
+    ${INPUT_SOURCE_FILES}
 )
 
 target_include_directories(ZENGINE_core

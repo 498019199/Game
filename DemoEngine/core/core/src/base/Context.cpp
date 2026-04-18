@@ -6,6 +6,7 @@
 #include <base/DevHelper.h>
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
+#include <base/InputFactory.h>
 #include <audio/AudioFactory.h>
 #include <world/World.h>
 
@@ -19,6 +20,7 @@ extern "C"
     void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
 	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
     void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
+    void MakeInputFactory(std::unique_ptr<RenderWorker::InputFactory>& ptr);
 	void MakeDevHelper(std::unique_ptr<RenderWorker::DevHelper>& ptr);
     void MakeAudioDataSourceFactory(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr);
 }
@@ -32,6 +34,7 @@ namespace RenderWorker
 	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
     typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<AudioFactory>& ptr);
     typedef void (*MakeAudioDataSourceFactoryFunc)(std::unique_ptr<AudioDataSourceFactory>& ptr);
+    typedef void (*MakeInputFactoryFunc)(std::unique_ptr<InputFactory>& ptr);
 #if ZENGINE_IS_DEV_PLATFORM
 	typedef void (*MakeDevHelperFunc)(std::unique_ptr<DevHelper>& ptr);
 #endif
@@ -125,6 +128,23 @@ public:
             }
         }
         return *audio_data_src_factory_;
+    }
+
+    bool InputFactoryValid() const noexcept
+    {
+        return input_factory_ != nullptr;
+    }
+    InputFactory& InputFactoryInstance()
+    {
+        if (!input_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!input_factory_)
+            {
+                this->LoadInputFactory(cfg_.input_factory_name);
+            }
+        }
+        return *input_factory_;
     }
 
     World& WorldInstance() noexcept
@@ -260,6 +280,35 @@ public:
         KFL_UNUSED(adsf_name);
         MakeAudioDataSourceFactory(audio_data_src_factory_);
 #endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadInputFactory( std::string const& if_name )
+    {
+        input_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        input_loader_.Free();
+
+        auto& res_loader = ResLoaderInstance();
+        std::string input_path = res_loader.Locate("Input");
+        std::string fn = ZENGINE_DLL_PREFIX"_InputEngine_" + if_name + DLL_SUFFIX;
+
+        std::string path = input_path + "/" + fn;
+        input_loader_.Load(res_loader.Locate(path));
+
+        auto* mif = reinterpret_cast<MakeInputFactoryFunc>(input_loader_.GetProcAddress("MakeInputFactory"));
+        if (mif != nullptr)
+        {
+            mif(input_factory_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            input_loader_.Free();
+        }
+#else
+        KFL_UNUSED(if_name);
+        MakeInputFactory(input_factory_);
+#endif
     }
 
     void LoadRenderWorld( )
@@ -497,6 +546,8 @@ private:
     std::unique_ptr<AudioFactory> audio_factory_;
     // 音频解析
     std::unique_ptr<AudioDataSourceFactory> audio_data_src_factory_;
+    // 输入工厂
+    std::unique_ptr<InputFactory> input_factory_;
 #if ZENGINE_IS_DEV_PLATFORM
     // 开发辅助工具
     std::unique_ptr<DevHelper> dev_helper_;
@@ -563,6 +614,16 @@ AudioDataSourceFactory& Context::AudioDataSourceFactoryInstance()
 bool Context::AudioDataSourceFactoryValid() const noexcept
 {
     return pimpl_->AudioDataSourceFactoryValid();
+}
+
+bool Context::InputFactoryValid() const noexcept
+{
+    return pimpl_->InputFactoryValid();
+}
+
+InputFactory& Context::InputFactoryInstance()
+{
+    return pimpl_->InputFactoryInstance();
 }
 
 AudioFactory& Context::AudioFactoryInstance()

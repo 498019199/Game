@@ -15,8 +15,22 @@
 #include <world/World.h>
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
+#include <base/InputFactory.h>
 #include <render/RenderFactory.h>
 #include "Model.h"
+
+namespace
+{
+	enum
+	{
+		Exit,
+	};
+
+	InputActionDefine actions[] =
+	{
+		InputActionDefine(Exit, KS_Escape),
+	};
+}
 
 namespace EditorWorker
 {
@@ -53,6 +67,8 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::OnCreate()
 {
+    tbController_.AttachCamera(this->ActiveCamera());
+	tbController_.Scalers(0.01f, 0.01f);
     this->LookAt(float3(-25.72f, 29.65f, 24.57f), float3(-24.93f, 29.09f, 24.32f));
 	this->Proj(0.05f, 300.0f);
 
@@ -82,6 +98,17 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
 #endif // EDITOR_DEBUG_MODE
+
+	InputEngine& inputEngine(context.InputFactoryInstance().InputEngineInstance());
+	InputActionMap actionMap;
+	actionMap.AddActions(actions, actions + std::size(actions));
+    action_handler_t input_handler = MakeSharedPtr<input_signal>();
+	input_handler->Connect(
+		[this](InputEngine const & sender, InputAction const & action)
+		{
+			this->InputHandler(sender, action);
+		});
+	inputEngine.ActionMap(actionMap, input_handler);
 
 	const RenderDeviceCaps& caps = d3d11_re.DeviceCaps();
     depth_texture_support_ = caps.depth_texture_support;
@@ -259,6 +286,16 @@ void EditorManagerD3D11::RenderEditorPanels() const
     // 因此需要在此之前将后备缓冲区绑定到渲染管线上
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #endif // EDITOR_DEBUG_MODE
+}
+
+void EditorManagerD3D11::InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action)
+{
+	switch (action.first)
+	{
+	case Exit:
+		this->Quit();
+		break;
+	}
 }
 
 void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)

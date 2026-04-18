@@ -1,5 +1,6 @@
 #pragma once
 #include <base/App3D.h>
+#include <world/CameraController.h>
 #include <editor/EditorPanel.h>
 #include <editor/EditorProjectPanel.h>
 
@@ -36,6 +37,8 @@ public:
 
     void GetEditorSetting( const EditorSetting& setting) { setting_ = setting; }
     void RenderEditorPanels() const;
+
+    void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
@@ -47,6 +50,8 @@ private:
 
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
+
+    RenderWorker::TrackballCameraController tbController_;
 
     RenderWorker::RenderModelPtr model_;
     RenderWorker::LightSourcePtr light_;

@@ -9,6 +9,7 @@
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 #include <render/FrameBuffer.h>
+#include <base/InputFactory.h>
 
 namespace RenderWorker
 {
@@ -186,6 +187,9 @@ void World::Update()
 
     FrameBuffer& fb = *re.ScreenFrameBuffer();
     fb.SwapBuffers();
+
+    InputEngine& ie = context.InputFactoryInstance().InputEngineInstance();
+	ie.Update();
 
     frame_cameras_.clear();
     frame_lights_.clear();

@@ -1024,9 +1024,9 @@ namespace RenderWorker
 			return tangent_quat;
 		}
 
-        template quater ToQuaternion(const rotator &rot);
+        template quater to_quaternion(const rotator &rot);
         template<typename T>
-        Quaternion_T<T> ToQuaternion(const Rotator_T<T>& rot)
+        Quaternion_T<T> to_quaternion(const Rotator_T<T>& rot)
         {
             const T angX(rot.pitch() / 2), angY(rot.yaw() / 2), angZ(rot.roll() / 2);
             T sx, sy, sz;
@@ -1041,6 +1041,23 @@ namespace RenderWorker
                 cx * cy * sz - sx * sy * cz,
                 sx * sy * sz + cx * cy * cz);
         }
+
+        template quater rotation_axis(float3 const & v, float const & angle) noexcept;
+		template <typename T>
+		Quaternion_T<T> rotation_axis(Vector_T<T, 3> const & v, T const & angle) noexcept
+		{
+			T sa, ca;
+			sincos(angle * T(0.5), sa, ca);
+
+			if (equal<T>(length_sq(v), 0))
+			{
+				return Quaternion_T<T>(sa, sa, sa, ca);
+			}
+			else
+			{
+				return Quaternion_T<T>(sa * normalize(v), ca);
+			}
+		}
 
         //template rotator ToRotator(const float4x4 &mat);
         //template<typename T>

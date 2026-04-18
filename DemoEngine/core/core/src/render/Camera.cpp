@@ -146,6 +146,9 @@ void Camera::ProjOrthoParams(float w, float h, float near_plane, float far_plane
 void Camera::Dirty()
 {
     view_proj_mat_dirty_ = true;
+    //view_proj_mat_wo_adjust_dirty_ = true;
+    camera_dirty_ = true;
+    //frustum_dirty_ = true;
 }
 
 void Camera::Active(RenderEffectConstantBuffer& camera_cbuffer, uint32_t index, float4x4 const& model_mat, float4x4 const& inv_model_mat,

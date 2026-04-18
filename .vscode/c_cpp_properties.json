@@ -9,6 +9,7 @@
       "defines": [
         "ZENGINE_PLATFORM_WINDOWS",
         "ZENGINE_COMPILER_MSVC",
+        "ZENGINE_PLATFORM_WINDOWS_DESKTOP",
         "_DEBUG",
         "ZENGINE_IS_DEV_PLATFORM"
       ],

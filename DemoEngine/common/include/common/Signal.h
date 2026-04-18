@@ -166,7 +166,7 @@ namespace CommonWorker
 					auto on_exit = nonstd::make_scope_exit([this] { mutex_.Unlock(); });
 					mutex_.Lock();
 
-					BOOST_ASSERT(&connection.Signal() == this);
+					COMMON_ASSERT(&connection.Signal() == this);
 					this->Disconnect(connection.Slot());
 				}
 

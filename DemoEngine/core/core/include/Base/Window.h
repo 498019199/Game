@@ -55,6 +55,53 @@ private:
     void DetectsDpi();
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
+public:
+#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
+	typedef Signal::Signal<void(Window const& wnd, HRAWINPUT ri)> RawInputEvent;
+#endif
+    typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id)> PointerDownEvent;
+    typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id)> PointerUpEvent;
+    typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id, bool down)> PointerUpdateEvent;
+    typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id, int32_t wheel_delta)> PointerWheelEvent;
+    typedef Signal::Signal<void(Window const& wnd)> CloseEvent;
+
+#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    RawInputEvent& OnRawInput()
+    {
+        return raw_input_event_;
+    }
+#endif
+    PointerDownEvent& OnPointerDown()
+    {
+        return pointer_down_event_;
+    }
+    PointerUpEvent& OnPointerUp()
+    {
+        return pointer_up_event_;
+    }
+    PointerUpdateEvent& OnPointerUpdate()
+    {
+        return pointer_update_event_;
+    }
+    PointerWheelEvent& OnPointerWheel()
+    {
+        return pointer_wheel_event_;
+    }
+    CloseEvent& OnClose()
+    {
+        return close_event_;
+    }
+
+private:
+#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
+	RawInputEvent raw_input_event_;
+#endif
+    PointerDownEvent pointer_down_event_;
+    PointerUpEvent pointer_up_event_;
+    PointerUpdateEvent pointer_update_event_;
+    PointerWheelEvent pointer_wheel_event_;
+    CloseEvent close_event_;
+
 protected:
     uint32_t	left_;
     uint32_t	top_;

@@ -8,6 +8,7 @@
 #include <VersionHelpers.h>
 #include <ShellScalingAPI.h>
 #endif
+#include <windowsx.h>
 
 namespace RenderWorker
 {
@@ -173,6 +174,40 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WINBLUE)
+		case WM_POINTERDOWN:
+			{
+				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				::ScreenToClient(this->GetHWND(), &pt);
+				this->OnPointerDown()(*this, int2(pt.x, pt.y), GET_POINTERID_WPARAM(wParam));
+			}
+			break;
+
+		case WM_POINTERUP:
+			{
+				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				::ScreenToClient(this->GetHWND(), &pt);
+				this->OnPointerUp()(*this, int2(pt.x, pt.y), GET_POINTERID_WPARAM(wParam));
+			}
+			break;
+
+		case WM_POINTERUPDATE:
+			{
+				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				::ScreenToClient(this->GetHWND(), &pt);
+				this->OnPointerUpdate()(*this, int2(pt.x, pt.y), GET_POINTERID_WPARAM(wParam),
+					IS_POINTER_INCONTACT_WPARAM(wParam));
+			}
+			break;
+
+		case WM_POINTERWHEEL:
+			{
+				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				::ScreenToClient(this->GetHWND(), &pt);
+				this->OnPointerWheel()(*this, int2(pt.x, pt.y), GET_POINTERID_WPARAM(wParam),
+					GET_WHEEL_DELTA_WPARAM(wParam));
+			}
+			break;
+
 		case WM_DPICHANGED:
 			{
 				RECT rc;
@@ -195,8 +230,14 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 #endif
+		case WM_INPUT:
+			this->OnRawInput()(*this, reinterpret_cast<HRAWINPUT>(lParam));
+			break;
+
         case WM_CLOSE:
 			{		
+				this->OnClose()(*this);
+
 				active_ = false;
 				ready_ = false;
 				closed_ = true;

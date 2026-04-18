@@ -37,4 +37,5 @@ target_link_libraries(ZENGINE_editor
         ZENGINE_DevHelps
         ZENGINE_AudioEngine_XAudio
         ZENGINE_AudioDataSource_OggVorbis
+        ZENGINE_InputEngine_MsgInput
 )

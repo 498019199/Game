@@ -1,7 +1,6 @@
 #pragma once
 
 #include <world/SceneNode.h>
-#include <world/Control.h>
 
 #include <render/Renderable.h>
 #include <render/Light.h>

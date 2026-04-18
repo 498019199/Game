@@ -309,7 +309,9 @@ namespace RenderWorker
 		template <typename T>
 		Quaternion_T<T> to_quaternion(Vector_T<T, 3> const & tangent, Vector_T<T, 3> const & binormal, Vector_T<T, 3> const & normal, uint32_t bits) noexcept;
 		template<typename T>
-		Quaternion_T<T> ToQuaternion(const Rotator_T<T>& rot);
+		Quaternion_T<T> to_quaternion(const Rotator_T<T>& rot);
+		template <typename T>
+		Quaternion_T<T> rotation_axis(Vector_T<T, 3> const & v, T const & angle) noexcept;
 
 		//template<typename T>
 		//Rotator_T<T> ToRotator(const Matrix4_T<T>& mat);
