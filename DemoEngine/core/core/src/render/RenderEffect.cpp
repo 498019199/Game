@@ -6993,7 +6993,7 @@ namespace RenderWorker
 
 			if (Context::Instance().ResLoaderInstance().Locate(val).empty())
 			{
-				//LogError() << val << " NOT found" << std::endl;
+				LogError() << val << " NOT found" << std::endl;
 			}
 			else
 			{

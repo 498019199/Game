@@ -16,6 +16,22 @@ Renderable::Renderable()
 Renderable::Renderable(std::wstring_view name)
     : name_(name), rls_(1)
 {
+    if (Context::Instance().RenderFactoryValid())
+    {
+        auto const& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+
+        auto const& mesh_cb = re.PredefinedMeshCBufferInstance();
+        auto* mesh_cbuff = mesh_cb.CBuffer();
+        mesh_cbuffer_ = mesh_cbuff->Clone(mesh_cbuff->OwnerEffect());
+
+        auto const& model_cb = re.PredefinedModelCBufferInstance();
+        auto* model_cbuff = model_cb.CBuffer();
+        model_cbuffer_ = model_cbuff->Clone(model_cbuff->OwnerEffect());
+
+        auto const& camera_cb = re.PredefinedCameraCBufferInstance();
+        auto* camera_cbuff = camera_cb.CBuffer();
+        camera_cbuffer_ = camera_cbuff->Clone(camera_cbuff->OwnerEffect());
+    }
 }
 
 Renderable::~Renderable()
@@ -39,7 +55,132 @@ const std::wstring& Renderable::Name() const
 
 void Renderable::OnRenderBegin()
 {
-    
+    RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    //const bool drl_valid = Context::Instance().DeferredRenderingLayerValid();
+    //auto& drl = Context::Instance().DeferredRenderingLayerInstance();
+
+    {
+        uint32_t const mesh_cbuff_index = effect_->FindCBuffer("klayge_mesh");
+        if ((mesh_cbuff_index != static_cast<uint32_t>(-1)) && (effect_->CBufferByIndex(mesh_cbuff_index)->Size() > 0))
+        {
+            if (&mesh_cbuffer_->OwnerEffect() != effect_.get())
+            {
+                mesh_cbuffer_ = mesh_cbuffer_->Clone(*effect_);
+            }
+
+            effect_->BindCBufferByIndex(mesh_cbuff_index, mesh_cbuffer_);
+        }
+    }
+
+    {
+        uint32_t const camera_cbuff_index = effect_->FindCBuffer("klayge_camera");
+        if ((camera_cbuff_index != static_cast<uint32_t>(-1)) && (effect_->CBufferByIndex(camera_cbuff_index)->Size() > 0))
+        {
+            if (&camera_cbuffer_->OwnerEffect() != effect_.get())
+            {
+                camera_cbuffer_ = camera_cbuffer_->Clone(*effect_);
+            }
+
+            auto const& pccb = re.PredefinedCameraCBufferInstance();
+
+            auto const& viewport = *re.CurFrameBuffer()->Viewport();
+            uint32_t const num_cameras = viewport.NumCameras();
+            visible_in_cameras_ = 0;
+            for (uint32_t i = 0; i < num_cameras; ++i)
+            {
+                if ((curr_node_ == nullptr) || (curr_node_->VisibleMark(i) != BoundOverlap::No))
+                {
+                    const Camera& camera = *viewport.Camera(i);
+
+                    float4x4 cascade_crop_mat = float4x4::Identity();
+                    bool need_cascade_crop_mat = false;
+                    // if (drl_valid)
+                    // {
+                    //     int32_t const cas_index = drl.CurrCascadeIndex();
+                    //     if (cas_index >= 0)
+                    //     {
+                    //         cascade_crop_mat = drl.GetCascadedShadowLayer().CascadeCropMatrix(cas_index);
+                    //         need_cascade_crop_mat = true;
+                    //     }
+                    // }
+                    //
+                    camera.Active(*camera_cbuffer_, visible_in_cameras_, model_mat_, inv_model_mat_, prev_model_mat_, model_mat_dirty_,
+                         cascade_crop_mat, need_cascade_crop_mat);
+                    pccb.CameraIndices(*camera_cbuffer_, visible_in_cameras_) = i;
+
+                    ++visible_in_cameras_;
+                }
+            }
+
+            pccb.NumCameras(*camera_cbuffer_) = visible_in_cameras_;
+
+            effect_->BindCBufferByIndex(camera_cbuff_index, camera_cbuffer_);
+        }
+    }
+
+    {
+        uint32_t const model_cbuff_index = effect_->FindCBuffer("klayge_model");
+        if ((model_cbuff_index != static_cast<uint32_t>(-1)) && (effect_->CBufferByIndex(model_cbuff_index)->Size() > 0))
+        {
+            if (&model_cbuffer_->OwnerEffect() != effect_.get())
+            {
+                model_cbuffer_ = model_cbuffer_->Clone(*effect_);
+            }
+
+            if (model_mat_dirty_)
+            {
+                auto const& pmcb = re.PredefinedModelCBufferInstance();
+
+                pmcb.Model(*model_cbuffer_) = MathWorker::transpose(model_mat_);
+                pmcb.InvModel(*model_cbuffer_) = MathWorker::transpose(inv_model_mat_);
+
+                model_mat_dirty_ = false;
+            }
+
+            effect_->BindCBufferByIndex(model_cbuff_index, model_cbuffer_);
+        }
+    }
+
+    // if (select_mode_on_)
+    // {
+    //     *select_mode_object_id_param_ = select_mode_object_id_;
+    // }
+    // else
+    // {
+    //     auto const& mtl = mtl_ ? mtl_ : re.DefaultMaterial();
+    //     mtl->Active(*effect_);
+
+    //     if (drl_valid)
+    //     {
+    //         FrameBufferPtr const & fb = re.CurFrameBuffer();
+    //         *frame_size_param_ = int2(fb->Width(), fb->Height());
+
+    //         *half_exposure_x_framerate_param_ = drl.MotionBlurExposure() / 2 / Context::Instance().AppInstance().FrameTime();
+    //         *motion_blur_radius_param_ = static_cast<float>(drl.MotionBlurRadius());
+
+    //         switch (type_)
+    //         {
+    //         case PT_OpaqueGBuffer:
+    //         case PT_TransparencyBackGBuffer:
+    //         case PT_TransparencyFrontGBuffer:
+    //         case PT_GenReflectiveShadowMap:
+    //             *opaque_depth_tex_param_ = drl.ResolvedDepthTex(drl.ActiveViewport());
+    //             break;
+
+    //         case PT_OpaqueSpecialShading:
+    //         case PT_TransparencyBackSpecialShading:
+    //         case PT_TransparencyFrontSpecialShading:
+    //             if (reflection_tex_param_)
+    //             {
+    //                 *reflection_tex_param_ = drl.ReflectionTex(drl.ActiveViewport());
+    //             }
+    //             break;
+
+    //         default:
+    //             break;
+    //         }
+    //     }
+    // }
 }
 
 void Renderable::OnRenderEnd()

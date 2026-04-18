@@ -473,4 +473,26 @@ private:
     uint32_t tc_center_offset_;
     uint32_t tc_extent_offset_;
 };
+
+
+class ZENGINE_CORE_API PredefinedModelCBuffer
+{
+public:
+    PredefinedModelCBuffer();
+
+    RenderEffectConstantBuffer* CBuffer() const
+    {
+        return predefined_cbuffer_;
+    }
+
+    float4x4& Model(RenderEffectConstantBuffer& cbuff) const;
+    float4x4& InvModel(RenderEffectConstantBuffer& cbuff) const;
+
+private:
+    RenderEffectPtr effect_;
+    RenderEffectConstantBuffer* predefined_cbuffer_;
+
+    uint32_t model_offset_;
+    uint32_t inv_model_offset_;
+};
 }

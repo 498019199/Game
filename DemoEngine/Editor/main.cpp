@@ -3,6 +3,7 @@
 #include <base/ResLoader.h>
 #include <world/World.h>
 #include <base/Window.h>
+#include <filesystem>
 
 using namespace EditorWorker;
 using namespace RenderWorker;
@@ -61,9 +62,10 @@ int main()
 #endif //EDITOR_DEBUG_MODE
 
     // test model
+    std::filesystem::path current_dir = std::filesystem::current_path().parent_path();
     EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
     child->parent = nullptr;
-    child->path = "D:/git/Game/ZEngine/bin/win_x64/../../Assets/Models/Dragon/Dragon.glb";
+    child->path = "G:/shareData/project/github/Game/ZEngine/Assets/Models/Dragon/Dragon.glb";
     child->name = "Dragon";
     child->extension = ".glb";
     child->type = AssetType::Model;

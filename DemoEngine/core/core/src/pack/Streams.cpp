@@ -33,6 +33,7 @@
 #include <unknwnbase.h>
 #endif
 #include <CPP/Common/MyWindows.h>
+#include <fstream>
 
 #include "Streams.h"
 

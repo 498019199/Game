@@ -116,19 +116,19 @@ bool ImagePlane::Load(std::string_view name, TexMetadata const & metadata)
 
         if (type != Texture::TT_2D)
         {
-            //LogWarn() << "Only 2D texture are supported." << std::endl;
+            LogWarn() << "Only 2D texture are supported." << std::endl;
         }
         if (depth != 1)
         {
-            //LogWarn() << "Only first slice in the 3D texture is used." << std::endl;
+            LogWarn() << "Only first slice in the 3D texture is used." << std::endl;
         }
         if (num_mipmaps != 1)
         {
-            //LogWarn() << "Only first mip level in the texture is used." << std::endl;
+            LogWarn() << "Only first mip level in the texture is used." << std::endl;
         }
         if (array_size != 1)
         {
-            //LogWarn() << "Only first slice in the texture array is used." << std::endl;
+            LogWarn() << "Only first slice in the texture array is used." << std::endl;
         }
 
         if (IsCompressedFormat(format))

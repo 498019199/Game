@@ -197,7 +197,7 @@ public:
         }
         else
         {
-            //LogError() << "Loading " << path << " failed" << std::endl;
+            LogError() << "Loading " << path << " failed" << std::endl;
             render_loader_.Free();
         }
 #else
@@ -225,7 +225,7 @@ public:
         }
         else
         {
-            //LogError() << "Loading " << path << " failed" << std::endl;
+            LogError() << "Loading " << path << " failed" << std::endl;
             audio_loader_.Free();
         }
 #else
@@ -253,7 +253,7 @@ public:
         }
         else
         {
-            //LogError() << "Loading " << path << " failed" << std::endl;
+            LogError() << "Loading " << path << " failed" << std::endl;
             ads_loader_.Free();
         }
 #else
@@ -287,7 +287,7 @@ public:
         }
         else
         {
-            //LogError() << "Loading " << path << " failed" << std::endl;
+            LogError() << "Loading " << path << " failed" << std::endl;
             dev_helper_loader_.Free();
         }
 #else

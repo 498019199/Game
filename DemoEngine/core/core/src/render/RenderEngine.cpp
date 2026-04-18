@@ -415,6 +415,19 @@ void RenderEngine::Refresh() const
     }
 }
 
+PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance() const
+{
+    if (!predefined_material_cb_)
+    {
+        std::lock_guard<std::mutex> lock(mtl_cb_instance_mutex);
+        if (!predefined_material_cb_)
+        {
+            predefined_material_cb_ = MakeUniquePtr<PredefinedMaterialCBuffer>();
+        }
+    }
+    return *predefined_material_cb_;
+}
+
 PredefinedMeshCBuffer const& RenderEngine::PredefinedMeshCBufferInstance() const
 {
     if (!predefined_mesh_cb_)
@@ -428,16 +441,29 @@ PredefinedMeshCBuffer const& RenderEngine::PredefinedMeshCBufferInstance() const
     return *predefined_mesh_cb_;
 }
 
-PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance() const
+PredefinedModelCBuffer const& RenderEngine::PredefinedModelCBufferInstance() const
 {
-    if (!predefined_material_cb_)
+    if (!predefined_model_cb_)
     {
-        std::lock_guard<std::mutex> lock(mtl_cb_instance_mutex);
-        if (!predefined_material_cb_)
+        std::lock_guard<std::mutex> lock(model_cb_instance_mutex);
+        if (!predefined_model_cb_)
         {
-            predefined_material_cb_ = MakeUniquePtr<PredefinedMaterialCBuffer>();
+            predefined_model_cb_ = MakeUniquePtr<PredefinedModelCBuffer>();
         }
     }
-    return *predefined_material_cb_;
+    return *predefined_model_cb_;
+}
+
+PredefinedCameraCBuffer const& RenderEngine::PredefinedCameraCBufferInstance() const
+{
+    if (!predefined_camera_cb_)
+    {
+        std::lock_guard<std::mutex> lock(camera_cb_instance_mutex);
+        if (!predefined_camera_cb_)
+        {
+            predefined_camera_cb_ = MakeUniquePtr<PredefinedCameraCBuffer>();
+        }
+    }
+    return *predefined_camera_cb_;
 }
 }

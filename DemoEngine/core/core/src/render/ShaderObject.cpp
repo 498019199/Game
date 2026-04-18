@@ -337,7 +337,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
         if (!err_msg.empty())
         {
 
-            LOGER_WARN() << "Error when compiling " << func_name << ":" << std::endl;
+            LogWarn() << "Error when compiling " << func_name << ":" << std::endl;
 
 			std::map<int, std::vector<std::string>> err_lines;
 			{
@@ -398,7 +398,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 					std::string s;
 					int line = 1;
 
-					LOGER_INFO() << "..." << std::endl;
+					LogInfo() << "..." << std::endl;
 					while (iss && ((iter->first - line) >= 3))
 					{
 						std::getline(iss, s);
@@ -413,16 +413,16 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 							s.resize(s.size() - 1);
 						}
 
-						LOGER_INFO() << line << ' ' << s << std::endl;
+						LogInfo() << line << ' ' << s << std::endl;
 
 						++line;
 					}
-					LOGER_INFO()  << "..." << std::endl;
+					LogInfo()  << "..." << std::endl;
 				}
 
 				for (auto const & msg : iter->second)
 				{
-					LOGER_INFO() << msg << std::endl;
+					LogInfo() << msg << std::endl;
 				}
 			}
         }

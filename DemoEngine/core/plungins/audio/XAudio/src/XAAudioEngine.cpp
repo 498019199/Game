@@ -89,7 +89,7 @@ namespace RenderWorker
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 		if (!mod_xaudio2_.Load(XAUDIO2_DLL_A))
 		{
-			//LogError() << "COULDN'T load " XAUDIO2_DLL_A << std::endl;
+			LogError() << "COULDN'T load " XAUDIO2_DLL_A << std::endl;
 			Verify(false);
 		}
 

@@ -2,6 +2,8 @@
 #include <common/JsonDom.h>
 #include "MetadataUtil.h"
 
+#include <fstream>
+
 namespace RenderWorker
 {
 using namespace CommonWorker;
@@ -123,7 +125,7 @@ void MeshMetadata::Load(std::string_view name)
     }
     else if (!name.empty())
     {
-        //LogInfo() << "Could NOT find " << name << ". Fallback to default metadata." << std::endl;
+        LogInfo() << "Could NOT find " << name << ". Fallback to default metadata." << std::endl;
     }
 
     if (new_metadata.lod_file_names_.empty())

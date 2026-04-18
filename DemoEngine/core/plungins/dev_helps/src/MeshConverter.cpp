@@ -361,7 +361,7 @@ namespace
 
 			if (!found)
 			{
-				//LogError() << "Could NOT find the correspondence node between LoDs" << std::endl;
+				LogError() << "Could NOT find the correspondence node between LoDs" << std::endl;
 				Verify(false);
 			}
 		}
@@ -1062,7 +1062,7 @@ namespace
 			std::string const file_name = (lod == 0) ? std::string(input_name) : res_loader.Locate(lod_file_name);
 			if (file_name.empty())
 			{
-				//LogError() << "Could NOT find " << lod_file_name << " for LoD " << lod << '.' << std::endl;
+				LogError() << "Could NOT find " << lod_file_name << " for LoD " << lod << '.' << std::endl;
 				return;
 			}
 
@@ -1081,7 +1081,7 @@ namespace
 
 			if (!scenes[lod])
 			{
-				//LogError() << "Assimp: Import file " << lod_file_name << " error: " << importer.GetErrorString() << std::endl;
+				LogError() << "Assimp: Import file " << lod_file_name << " error: " << importer.GetErrorString() << std::endl;
 				return;
 			}
 		}
@@ -3404,7 +3404,7 @@ namespace
 		std::string const input_name_str = res_loader.Locate(input_name);
 		if (input_name_str.empty())
 		{
-			//LogError() << "Could NOT find " << input_name << '.' << std::endl;
+			LogError() << "Could NOT find " << input_name << '.' << std::endl;
 			return RenderModelPtr();
 		}
 
@@ -3856,7 +3856,7 @@ namespace
 		std::string const input_name_str = Context::Instance().ResLoaderInstance().Locate(input_name);
 		if (input_name_str.empty())
 		{
-			//LogError() << "Could NOT find " << input_name << '.' << std::endl;
+			LogError() << "Could NOT find " << input_name << '.' << std::endl;
 			return false;
 		}
 

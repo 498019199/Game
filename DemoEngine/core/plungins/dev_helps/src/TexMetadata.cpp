@@ -316,7 +316,7 @@ namespace RenderWorker
         }
         else if (!name.empty())
         {
-            //LogInfo() << "Could NOT find " << name << ". Fallback to default metadata." << std::endl;
+            LogInfo() << "Could NOT find " << name << ". Fallback to default metadata." << std::endl;
         }
 
         if (new_metadata.plane_file_names_.empty())

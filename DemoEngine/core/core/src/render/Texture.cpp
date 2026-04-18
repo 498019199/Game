@@ -1331,8 +1331,8 @@ namespace
 
 				if (!found)
 				{
-					//LogError() << tex_desc_.res_name << "'s format (0x" << std::hex << static_cast<uint64_t>(tex_data.format)
-						//<< ") is not supported." << std::endl;
+					LogError() << tex_desc_.res_name << "'s format (0x" << std::hex << static_cast<uint64_t>(tex_data.format)
+						<< ") is not supported." << std::endl;
 					break;
 				}
 			}
@@ -1379,7 +1379,7 @@ namespace
 				context.DevHelperInstance().ConvertTexture(tex_desc_.res_name, tex_desc_.metadata_name,
 					tex_desc_.runtime_name, &caps);
 #else
-				//LogError() << "Could NOT locate " << tex_desc_.runtime_name << std::endl;
+				LogError() << "Could NOT locate " << tex_desc_.runtime_name << std::endl;
 #endif
 			}
 

@@ -61,6 +61,9 @@ public:
     void ProjOrthoParams(float w, float h, float near_plane, float far_plane);
 
     void Dirty();
+
+    void Active(RenderEffectConstantBuffer& camera_cbuffer, uint32_t index, float4x4 const& model_mat, float4x4 const& inv_model_mat,
+		float4x4 const& prev_model_mat, bool model_mat_dirty, float4x4 const& cascade_crop_mat, bool need_cascade_crop_mat) const;
 private:
     float		look_at_dist_ {1};
 
@@ -69,11 +72,16 @@ private:
     float		near_plane_ {0.f};
     float		far_plane_ {0.f};
 
+    float4x4 prev_view_mat_;
+	float4x4 prev_proj_mat_;
+
     float4x4	proj_mat_ {float4x4::Identity()};
     float4x4    inv_proj_mat_ {float4x4::Identity()}; 
     mutable float4x4	view_proj_mat_ {float4x4::Identity()}; 
     mutable float4x4	inv_view_proj_mat_ {float4x4::Identity()}; 
-    mutable bool view_proj_mat_dirty_{false};
+    mutable bool        view_proj_mat_dirty_{false};
+	mutable bool		camera_dirty_ = true;
+
 };
 
 

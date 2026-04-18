@@ -153,7 +153,7 @@ bool TexLoader::IsSupported(std::string_view input_name)
     const std::string input_name_str = Context::Instance().ResLoaderInstance().Locate(input_name);
     if (input_name_str.empty())
     {
-        //LogError() << "Could NOT find " << input_name << '.' << std::endl;
+        LogError() << "Could NOT find " << input_name << '.' << std::endl;
         return false;
     }
 
@@ -184,7 +184,7 @@ bool TexLoader::Load()
         auto& image = planes_[arr].emplace_back(MakeSharedPtr<ImagePlane>());
         if (!image->Load(plane_file_name, metadata_))
         {
-            //LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
+            LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
             return false;
         }
     }
@@ -271,7 +271,7 @@ bool TexLoader::Load()
                 {
                     if (!planes_[arr][m]->Load(plane_file_name, metadata_))
                     {
-                        //LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
+                        LogError() << "Could NOT load " << plane_file_name << '.' << std::endl;
                         return false;
                     }
                 }

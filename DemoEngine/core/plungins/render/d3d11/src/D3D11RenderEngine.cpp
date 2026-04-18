@@ -58,13 +58,13 @@ D3D11RenderEngine::D3D11RenderEngine()
 	// Dynamic loading because these dlls can't be loaded on WinXP
 	if (!mod_dxgi_.Load("dxgi.dll"))
 	{
-		//LogError() << "COULDN'T load dxgi.dll" << std::endl;
+		LogError() << "COULDN'T load dxgi.dll" << std::endl;
 		Verify(false);
 	}
 
 	if (!mod_d3d11_.Load("d3d11.dll"))
 	{
-		//LogError() << "COULDN'T load d3d11.dll" << std::endl;
+		LogError() << "COULDN'T load d3d11.dll" << std::endl;
 		Verify(false);
 	}
 

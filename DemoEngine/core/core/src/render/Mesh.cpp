@@ -1532,7 +1532,7 @@ namespace RenderWorker
 
 				return context.DevHelperInstance().ConvertModel(model_name, metadata_name, runtime_name, &caps);
 #else
-				//LogError() << "Could NOT locate " << runtime_name << std::endl;
+				LogError() << "Could NOT locate " << runtime_name << std::endl;
 				return RenderModelPtr();
 #endif
 			}
@@ -2486,5 +2486,28 @@ struct NodeInfo
 	float2& PredefinedMeshCBuffer::TcExtent(RenderEffectConstantBuffer& cbuff) const
 	{
 		return *cbuff.template VariableInBuff<float2>(tc_extent_offset_);
+	}
+
+
+	PredefinedModelCBuffer::PredefinedModelCBuffer()
+	{
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+		predefined_cbuffer_ = effect_->CBufferByName("klayge_model");
+
+		model_offset_ = effect_->ParameterByName("model")->CBufferOffset();
+		inv_model_offset_ = effect_->ParameterByName("inv_model")->CBufferOffset();
+
+		this->Model(*predefined_cbuffer_) = float4x4::Identity();
+		this->InvModel(*predefined_cbuffer_) = float4x4::Identity();
+	}
+
+	float4x4& PredefinedModelCBuffer::Model(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float4x4>(model_offset_);
+	}
+
+	float4x4& PredefinedModelCBuffer::InvModel(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float4x4>(inv_model_offset_);
 	}
 }
