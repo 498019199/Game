@@ -250,6 +250,8 @@ public:
     }
 
 protected:
+    virtual void UpdateBoundBox();
+
     // For deferred only
 	void BindDeferredEffect(RenderEffectPtr const & deferred_effect);
 	virtual RenderTechnique* PassTech(PassType type) const;

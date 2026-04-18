@@ -915,7 +915,7 @@ namespace RenderWorker
 					}
 				}
 
-				Sleep(10);
+				CommonWorker::Sleep(10);
 			}
 		}
 

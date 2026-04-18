@@ -11,6 +11,8 @@ public:
 
     RenderLayoutPtr MakeRenderLayout() override;
     
+    FrameBufferPtr MakeFrameBuffer() override;
+    
     GraphicsBufferPtr MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint,
         uint32_t size_in_byte, uint32_t structure_byte_stride = 0) override;
     GraphicsBufferPtr MakeDelayCreationIndexBuffer(BufferUsage usage, uint32_t access_hint,
@@ -84,6 +86,9 @@ public:
     GraphicsBufferPtr MakeConstantBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride = 0) override;
 
+    QueryPtr MakeConditionalRender() override;
+
+    FencePtr MakeFence() override;
 private:
     std::unique_ptr<RenderEngine> DoMakeRenderEngine() override;
     

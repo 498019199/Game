@@ -327,4 +327,10 @@ ZENGINE_CORE_API void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint
     void const * src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch, ElementFormat src_format,
     uint32_t src_width, uint32_t src_height, uint32_t src_depth,
     TextureFilter filter);
+
+
+// return the lookat and up vector in cubemap view
+//////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::pair<Vector_T<T, 3>, Vector_T<T, 3>> CubeMapViewVector(Texture::CubeFaces face);
 }

@@ -50,6 +50,7 @@ public:
     void Config(const ContextConfig& cfg) noexcept;
 
     void AppInstance(App3D& app) noexcept;
+    bool AppValid() const noexcept;
     App3D& AppInstance() noexcept;
     
 	AudioFactory& AudioFactoryInstance();

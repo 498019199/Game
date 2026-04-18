@@ -281,12 +281,13 @@ void D3D11ShaderStageObject::CompileShader(const RenderEffect& effect, const Ren
 
 #if !defined(ZENGINE_DEBUG)
         flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#else
+        // 设置 D3DCOMPILE_DEBUG 标志用于获取着色器调试信息。该标志可以提升调试体验，
+        // 但仍然允许着色器进行优化操作
+        flags |= D3DCOMPILE_DEBUG;
+        // 在Debug环境下禁用优化以避免出现一些不合理的情况
+        flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
-        // // 设置 D3DCOMPILE_DEBUG 标志用于获取着色器调试信息。该标志可以提升调试体验，
-        // // 但仍然允许着色器进行优化操作
-        // flags |= D3DCOMPILE_DEBUG;
-        // // 在Debug环境下禁用优化以避免出现一些不合理的情况
-        // flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
         com_ptr<ID3D11ShaderReflection> reflection;
         shader_code_ = ShaderStageObject::CompileToDXBC(
             stage_, effect, tech, pass, macros, sd.func_name.c_str(), shader_profile_.c_str(), flags, reflection.put_void(), true); 

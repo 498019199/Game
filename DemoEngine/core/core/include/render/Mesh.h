@@ -401,4 +401,76 @@ ZENGINE_CORE_API RenderModelPtr ASyncLoadModel(std::string_view model_name, uint
     std::function<StaticMeshPtr(std::wstring_view)> CreateMeshFactoryFunc = CreateMeshFactory<StaticMesh>);
 ZENGINE_CORE_API RenderModelPtr LoadSoftwareModel(std::string_view model_name);
 ZENGINE_CORE_API void SaveModel(const RenderModel & model, std::string_view model_name);
+
+
+class ZENGINE_CORE_API RenderableLightSourceProxy : public StaticMesh
+{
+public:
+    explicit RenderableLightSourceProxy(std::wstring_view name);
+
+    void Technique(RenderEffectPtr const & effect, RenderTechnique* tech) override;
+
+    void AttachLightSrc(LightSourcePtr const & light);
+
+    void OnRenderBegin() override;
+
+protected:
+    void DoBuildMeshInfo([[maybe_unused]] RenderModel const & model) override
+    {
+    }
+
+private:
+    LightSourcePtr light_;
+
+    RenderEffectParameter* light_is_projective_param_;
+    RenderEffectParameter* projective_map_2d_tex_param_;
+    RenderEffectParameter* projective_map_cube_tex_param_;
+};
+
+class ZENGINE_CORE_API RenderableCameraProxy : public StaticMesh
+{
+public:
+    explicit RenderableCameraProxy(std::wstring_view name);
+
+    void Technique(RenderEffectPtr const & effect, RenderTechnique* tech) override;
+
+    void AttachCamera(CameraPtr const & camera);
+
+protected:
+    void DoBuildMeshInfo([[maybe_unused]] RenderModel const & model) override
+    {
+    }
+
+private:
+    CameraPtr camera_;
+};
+
+ZENGINE_CORE_API RenderModelPtr LoadLightSourceProxyModel(LightSourcePtr const& light);
+ZENGINE_CORE_API RenderModelPtr LoadCameraProxyModel(CameraPtr const& camera);
+
+
+class ZENGINE_CORE_API PredefinedMeshCBuffer
+{
+public:
+    PredefinedMeshCBuffer();
+
+    RenderEffectConstantBuffer* CBuffer() const
+    {
+        return predefined_cbuffer_;
+    }
+
+    float3& PosCenter(RenderEffectConstantBuffer& cbuff) const;
+    float3& PosExtent(RenderEffectConstantBuffer& cbuff) const;
+    float2& TcCenter(RenderEffectConstantBuffer& cbuff) const;
+    float2& TcExtent(RenderEffectConstantBuffer& cbuff) const;
+
+private:
+    RenderEffectPtr effect_;
+    RenderEffectConstantBuffer* predefined_cbuffer_;
+
+    uint32_t pos_center_offset_;
+    uint32_t pos_extent_offset_;
+    uint32_t tc_center_offset_;
+    uint32_t tc_extent_offset_;
+};
 }

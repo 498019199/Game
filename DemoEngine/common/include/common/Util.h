@@ -59,6 +59,21 @@ namespace std
     } // namespace std
 #endif
 
+#ifdef ZENGINE_EXPORTS		// Build dll
+	#define ZENGINE_CORE_API 
+//ZENGINE_SYMBOL_EXPORT
+#else						// Use dll
+	#define ZENGINE_CORE_API 
+//ZENGINE_SYMBOL_IMPORT
+#endif
+
+#define ZENGINE_NONCOPYABLE(T) \
+T(T const& rhs) = delete; \
+T& operator=(T const& rhs) = delete;
+
+#define ZENGINE_NONMOVEABLE(T) \
+T(T&& rhs) = delete; \
+T& operator=(T&& rhs) = delete;
 
 #if defined(ZENGINE_DEBUG)
     #define _CRTDBG_MAP_ALLOC
@@ -79,6 +94,17 @@ namespace CommonWorker
 	std::string& Convert(std::string& dest, std::wstring_view src);
 	std::wstring& Convert(std::wstring& dest, std::string_view src);
 	std::wstring& Convert(std::wstring& dest, std::wstring_view src);
+
+    // 暂停几毫秒
+	/////////////////////////////////////////////////////////////////////////////////
+	inline void Sleep(uint32_t ms)
+	{
+#if defined KLAYGE_PLATFORM_WINDOWS
+		::Sleep(ms);
+#else
+		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+#endif
+	}
 
     // 产生FourCC常量
     template <unsigned char ch0, unsigned char ch1, unsigned char ch2, unsigned char ch3>

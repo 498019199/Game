@@ -21,6 +21,7 @@ public:
     ~EditorManagerD3D11();
 
     virtual void OnCreate() override;
+	void OnResize(uint32_t width, uint32_t height) override;
     void DoUpdateOverlay();
     virtual void OnDestroy() override;
 
@@ -48,6 +49,9 @@ private:
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
 
     RenderWorker::RenderModelPtr model_;
+    RenderWorker::LightSourcePtr light_;
+	bool depth_texture_support_;
+	RenderWorker::FrameBufferPtr back_face_depth_fb_;
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 };

@@ -15,6 +15,14 @@ SceneNode::SceneNode(std::wstring_view name, uint32_t attrib)
 
 SceneNode::~SceneNode()
 {
+    for (auto& component : components_)
+    {
+        component->BindSceneNode(nullptr);
+    }
+    for (auto& child : children_)
+    {
+        child->Parent(nullptr);
+    }
     if (parent_)
     {
         parent_->RemoveChild(this);
@@ -276,6 +284,33 @@ BoundOverlap SceneNode::VisibleMark(uint32_t camera_index) const
 {
     COMMON_ASSERT(camera_index < visible_marks_.size());
     return visible_marks_[camera_index];
+}
+
+void SceneNode::SubThreadUpdate(float app_time, float elapsed_time)
+{
+    sub_thread_update_event_(*this, app_time, elapsed_time);
+
+    for (auto const& component : components_)
+    {
+        component->SubThreadUpdate(app_time, elapsed_time);
+    }
+}
+
+void SceneNode::MainThreadUpdate(float app_time, float elapsed_time)
+{
+    main_thread_update_event_(*this, app_time, elapsed_time);
+
+    for (auto const& component : components_)
+    {
+        component->MainThreadUpdate(app_time, elapsed_time);
+    }
+
+    if (!updated_)
+    {
+        this->EmitSceneChanged();
+
+        updated_ = true;
+    }
 }
 
 uint32_t SceneNode::Attrib() const

@@ -88,6 +88,8 @@ struct ZENGINE_CORE_API RenderDeviceCaps
     bool UavFormatSupport(ElementFormat format) const;
 
 	ElementFormat BestMatchVertexFormat(std::span<ElementFormat const> formats) const;
+	ElementFormat BestMatchTextureRenderTargetFormat(std::span<ElementFormat const> formats,
+		uint32_t sample_count, uint32_t sample_quality) const;
 
     static constexpr uint32_t EncodeSampleCountQuality(uint32_t sample_count, uint32_t sample_quality) noexcept
     {

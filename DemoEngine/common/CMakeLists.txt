@@ -13,6 +13,7 @@ set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/Log.h
     ${PROJECT_SOURCE_DIR}/common/include/common/macro.h
     ${PROJECT_SOURCE_DIR}/common/include/common/ResIdentifier.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/Signal.h
     ${PROJECT_SOURCE_DIR}/common/include/common/span.h
     ${PROJECT_SOURCE_DIR}/common/include/common/StringUtil.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Timer.h
@@ -27,6 +28,7 @@ set(COMMON_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/common/src/common/ErrorHandling.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/JsonDom.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Log.cpp
+    ${PROJECT_SOURCE_DIR}/common/src/common/Signal.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Timer.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Util.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/XMLDom.cpp
@@ -67,6 +69,8 @@ add_library(ZENGINE_common ${ZENGINE_PREFERRED_LIB_TYPE}
 target_link_libraries(ZENGINE_common
 	PUBLIC
 		fmt
+        scope-lite
+        
 	PRIVATE
 		rapidjson
 		rapidxml

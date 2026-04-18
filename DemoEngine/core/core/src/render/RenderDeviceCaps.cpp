@@ -57,6 +57,22 @@ ElementFormat RenderDeviceCaps::BestMatchVertexFormat(std::span<ElementFormat co
     return ret;
 }
 
+ElementFormat RenderDeviceCaps::BestMatchTextureRenderTargetFormat(std::span<ElementFormat const> formats,
+    uint32_t sample_count, uint32_t sample_quality) const
+{
+    ElementFormat ret = EF_Unknown;
+    for (auto fmt : formats)
+    {
+        if (this->TextureRenderTargetFormatSupport(fmt, sample_count, sample_quality))
+        {
+            ret = fmt;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 void RenderDeviceCaps::AssignVertexFormats(std::vector<ElementFormat> vertex_formats)
 {
     std::sort(vertex_formats.begin(), vertex_formats.end());

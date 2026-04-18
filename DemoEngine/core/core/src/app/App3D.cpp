@@ -158,10 +158,11 @@ WindowPtr App3D::MakeWindow(std::string const & name, RenderSettings const & set
 
 void App3D::OnResize(uint32_t width, uint32_t height)
 {
-    
+    this->Proj(this->ActiveCamera().NearPlane(), this->ActiveCamera().FarPlane());
 }
 
-
+// 更新场景
+/////////////////////////////////////////////////////////////////////////////////
 uint32_t App3D::Update(uint32_t pass)
 {
     if(0 == pass)

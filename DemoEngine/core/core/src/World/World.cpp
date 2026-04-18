@@ -1,6 +1,8 @@
 #include <base/ZEngine.h>
 #include <base/App3D.h>
+#include <base/Window.h>
 #include <world/World.h>
+#include <base/Thread.h>
 
 #include <render/RenderEffect.h>
 #include <render/Renderable.h>
@@ -141,40 +143,78 @@ void World::Flush(uint32_t urt)
 void World::Update()
 {
 	auto& context = Context::Instance();
-    //auto& app = context.AppInstance();
-    //const float app_time = app.AppTime();
-    //const float frame_time = app.FrameTime();
+    auto& app = context.AppInstance();
+    const float app_time = app.AppTime();
+    const float frame_time = app.FrameTime();
 
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     re.BeginFrame();
+
+    if (!update_thread_ && !quit_)
+    {
+        update_thread_ = context.ThreadPoolInstance().QueueThread([this] { this->UpdateThreadFunc(); });
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(update_mutex_);
+
+        scene_root_.Traverse([this, app_time, frame_time](SceneNode& node) {
+            node.MainThreadUpdate(app_time, frame_time);
+            node.UpdateTransforms();
+
+            if (node.Visible())
+            {
+                node.ForEachComponentOfType<Camera>([this](Camera& camera) {
+                    frame_cameras_.push_back(camera.shared_from_this());
+                });
+
+                node.ForEachComponentOfType<LightSource>([this](LightSource& light) {
+                    frame_lights_.push_back(light.shared_from_this());
+                });
+            }
+
+            return true;
+        });
+        scene_root_.UpdatePosBoundSubtree();
+
+        overlay_root_.ClearChildren();
+    }
+
+	nodes_updated_ = true;
 
     this->FlushScene();
 
     FrameBuffer& fb = *re.ScreenFrameBuffer();
     fb.SwapBuffers();
+
+    frame_cameras_.clear();
+    frame_lights_.clear();
+
 	fb.WaitOnSwapBuffers();
 
     re.EndFrame();
+
+    nodes_updated_ = false;
 }
 
 void World::FlushScene()
 {
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     
-    /// 临时修改，清除屏幕
-    re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 1.0f, 0);
-    ///
-    
     uint32_t urt;
     auto& app = Context::Instance().AppInstance();
     for (uint32_t pass = 0;; ++ pass)
     {
+        re.BeginPass();
+
         urt = app.Update(pass);
 
         if (urt & App3D::URV_NeedFlush)
         {
             this->Flush(urt);
         }
+
+        re.EndPass();
 
         if (urt & App3D::URV_Finished)
         {
@@ -190,6 +230,38 @@ void World::FlushScene()
     this->Flush(App3D::URV_Overlay);
 }
 
+void World::UpdateThreadFunc()
+{
+    Timer timer;
+    float app_time = 0;
+    while (!quit_)
+    {
+        float const frame_time = static_cast<float>(timer.elapsed());
+        timer.restart();
+        app_time += frame_time;
+
+        if (Context::Instance().AppValid())
+        {
+            WindowPtr const & win = Context::Instance().AppInstance().MainWnd();
+            if (win && win->Active())
+            {
+                std::lock_guard<std::mutex> lock(update_mutex_);
+
+                auto updater = [app_time, frame_time](SceneNode& node) {
+                    node.SubThreadUpdate(app_time, frame_time);
+                    return true;
+                };
+                scene_root_.Traverse(updater);
+                overlay_root_.Traverse(updater);
+            }
+
+            if (frame_time < update_elapse_)
+            {
+                CommonWorker::Sleep(static_cast<uint32_t>((update_elapse_ - frame_time) * 1000));
+            }
+        }
+    }
+}
 }
 
 extern "C"

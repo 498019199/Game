@@ -13,8 +13,8 @@ add_library(ZENGINE_Render_D3D11 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/D3D11FrameBuffer.h
 	src/D3D11GraphicsBuffer.cpp
 	src/D3D11GraphicsBuffer.h
-	#src/D3D11Query.cpp
-	#src/D3D11Query.h
+	src/D3D11Query.cpp
+	src/D3D11Query.h
 	src/D3D11RenderEngine.cpp
 	src/D3D11RenderEngine.h
 	src/D3D11RenderFactory.cpp
@@ -54,6 +54,7 @@ target_precompile_headers(ZENGINE_Render_D3D11
 target_include_directories(ZENGINE_Render_D3D11
 	PUBLIC
 		${ZENGINE_ROOT_HEADER}
+		${ZENGINE_ROOT_DIR}/core/include
 		${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
 )
 

@@ -119,6 +119,20 @@ public:
 	void VisibleMark(uint32_t camera_index, BoundOverlap vm);
 	BoundOverlap VisibleMark(uint32_t camera_index) const;
 
+    using UpdateEvent = Signal::Signal<void(SceneNode&, float, float)>;
+    UpdateEvent& OnSubThreadUpdate()
+    {
+        return sub_thread_update_event_;
+    }
+    UpdateEvent& OnMainThreadUpdate()
+    {
+        return main_thread_update_event_;
+    }
+
+    void SubThreadUpdate(float app_time, float elapsed_time);
+    void MainThreadUpdate(float app_time, float elapsed_time);
+
+
     uint32_t Attrib() const;
 	bool Visible() const;
 	void Visible(bool vis);
@@ -144,6 +158,11 @@ private:
 	std::array<BoundOverlap, PredefinedCameraCBuffer::max_num_cameras> visible_marks_;
 
 	bool pos_aabb_dirty_ = true;
+
+    UpdateEvent sub_thread_update_event_;
+    UpdateEvent main_thread_update_event_;
+
+    bool updated_ = false;
 };
 
 

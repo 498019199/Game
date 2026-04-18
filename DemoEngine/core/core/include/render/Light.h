@@ -1,147 +1,280 @@
+// Light.hpp
+// KlayGE Light header file
+// Ver 3.12.0
+// Copyright(C) Minmin Gong, 2011
+// Homepage: http://www.klayge.org
+//
+// 3.12.0
+// First release (2011.1.12)
+//
+// CHANGE LIST
+/////////////////////////////////////////////////////////////////////////////////
+
+#ifndef _LIGHT_HPP
+#define _LIGHT_HPP
+
 #pragma once
-// #include <core/SceneNode.h>
-#include <common/common.h>
-// class LightSource: public SceneNode
-// {
-// public:
-//     // 光照模型
-//     enum LightType
-//     {
-//         LT_Ambient = 0,
-//         LT_Directional,     //平行光
-//         LT_Point,           //点光
-//         LT_Spot,            // 聚光灯
-//         LT_SphereArea,
-//         LT_TubeArea,
 
-//         LT_NumLightTypes
-//     };
+#include <world/SceneComponent.h>
 
-//     enum LightSrcAttrib
-//     {
-//         LSA_NoShadow = 1UL << 0,
-//         LSA_NoDiffuse = 1UL << 1,
-//         LSA_NoSpecular = 1UL << 2,
-//         LSA_IndirectLighting = 1UL << 3,
-//         LSA_Temporary = 1UL << 4
-//     };
-// public:
-// 	explicit LightSource(LightType type);
-// 	virtual ~LightSource() noexcept;
+#include <array>
+#include <memory>
 
-// 	LightType Type() const;
-
-//     const float3& Position() const;
-//     const float3& Direction() const;
-//     quater Rotation() const;
-
-//     virtual const float3& Falloff() const;
-// 	virtual void Falloff(float3 const & fall_off);
-
-//     virtual float Range() const;
-// 	virtual void Range(float range);
-// private:
-//     LightType type_;
-//     float4 color_ = float4(0, 0, 0, 0); // 光源颜色
-//     float range_ = -1; // 光照范围
-//     float3 falloff_; // 衰退系数
-// };
-
-// class AmbientLightSource: public LightSource
-// {
-
-// };
-
-// class DirectionalLightSource: public LightSource
-// {
-
-// };
-
-// class PointLightSource: public LightSource
-// {
-
-// };
-
-// class SpotLightSource: public LightSource
-// {
-
-// };
-
-// class SphereAreaLightSource: public LightSource
-// {
-
-// };
-
-// class TubeAreaLightSource: public LightSource
-// {
-
-// };
+#include <render/Query.h>
+#include <render/Camera.h>
+#include <render/Texture.h>
 
 namespace RenderWorker
 {
-struct DirectionalLightSource
-{
-    DirectionalLightSource() { memset(this, 0, sizeof(DirectionalLightSource)); }
+	class ZENGINE_CORE_API LightSource : public SceneComponent, public std::enable_shared_from_this<LightSource>
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(SceneComponent)
 
-    float4 ambient_;
-    float4 diffuse_;
-    float4 specular_;
-    float3 direction_;
-    float pad_;// 占位最后一个float，这样我们就可以设置光源数组了。
-};
+		enum LightType
+		{
+			LT_Ambient = 0,
+			LT_Directional,
+			LT_Point,
+			LT_Spot,
+			LT_SphereArea,
+			LT_TubeArea,
 
-struct PointLightSource
-{
-    PointLightSource() { memset(this, 0, sizeof(PointLightSource)); }
+			LT_NumLightTypes
+		};
 
-    float4 ambient_;
-    float4 diffuse_;
-    float4 specular_;
+		enum LightSrcAttrib
+		{
+			LSA_NoShadow = 1UL << 0,
+			LSA_NoDiffuse = 1UL << 1,
+			LSA_NoSpecular = 1UL << 2,
+			LSA_IndirectLighting = 1UL << 3,
+			LSA_Temporary = 1UL << 4
+		};
 
-    // 打包到4D矢量: (Position, Range)
-	float3 pos_;
-	float range_;
 
-	// 打包到4D矢量: (A0, A1, A2, Pad)
-	float3 att_;
-	float pad_; // 占位最后一个float，，这样我们就可以设置光源数组了。
-};
+	public:
+		explicit LightSource(LightType type);
+		virtual ~LightSource() noexcept;
 
-struct SpotLightSource
-{
-    SpotLightSource() { memset(this, 0, sizeof(SpotLightSource)); }
+		LightType Type() const;
 
-    float4 ambient_;
-    float4 diffuse_;
-    float4 specular_;
+		int32_t Attrib() const;
+		virtual void Attrib(int32_t attrib);
 
-	// 打包到4D矢量: (Position, Range)
-	float3 pos_;
-	float range_;
+		float4 const & Color() const;
+		void Color(float3 const & clr);
 
-	// 打包到4D矢量: (Direction, Spot)
-	float3 direction_;
-	float spot_;
+		virtual TexturePtr const & SkylightTexY() const;
+		virtual TexturePtr const & SkylightTexC() const;
+		virtual TexturePtr const & SkylightTex() const;
+		virtual void SkylightTex(TexturePtr const & tex_y, TexturePtr const & tex_c);
+		virtual void SkylightTex(TexturePtr const & tex);
 
-	// 打包到4D矢量: (Att, Pad)
-	float3 att_;
-	float pad_; // 占位最后一个float，，这样我们就可以设置光源数组了。
-};
+		float3 const & Position() const;
+		float3 const & Direction() const;
+		quater Rotation() const;
+		virtual float3 const & Falloff() const;
+		virtual void Falloff(float3 const & fall_off);
+		virtual float CosInnerAngle() const;
+		virtual void InnerAngle(float angle);
+		virtual float CosOuterAngle() const;
+		virtual void OuterAngle(float angle);
+		virtual float4 const & CosOuterInner() const;
+		virtual float Range() const;
+		virtual void Range(float range);
 
-// 物体表面材质
-struct Material
-{
-    Material() = default;
+		virtual TexturePtr const & ProjectiveTexture() const;
+		virtual void ProjectiveTexture(TexturePtr const & tex);
 
-    Material(const Material&) = default;
-    Material& operator=(const Material&) = default;
+		virtual ConditionalRenderPtr const & ConditionalRenderQuery(uint32_t index) const;
+		virtual CameraPtr const & SMCamera(uint32_t index) const;
 
-    Material(Material&&) = default;
-    Material& operator=(Material&&) = default;
+		// For sphere area
+		virtual float Radius() const;
+		virtual void Radius(float radius);
 
-    float4 ambient_;
-    float4 diffuse_;
-    float4 specular_; // w = 镜面反射强度
-    float4 reflect_;
-};
+		// For tube area
+		virtual float3 const & Extend() const;
+		virtual void Extend(float3 const & extend);
+
+	protected:
+		void CloneTo(LightSource& light) const;
+
+	protected:
+		LightType type_;
+		int32_t attrib_ = 0;
+		float4 color_ = float4(0, 0, 0, 0);
+		float3 falloff_;
+		float range_ = -1;
+
+		std::function<void(LightSource&, float, float)> update_func_;
+	};
+
+	using LightSourcePtr = std::shared_ptr<LightSource>;
+
+	class ZENGINE_CORE_API AmbientLightSource final : public LightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		AmbientLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		using LightSource::Attrib;
+		virtual void Attrib(int32_t attrib) override;
+
+		virtual TexturePtr const & SkylightTexY() const override;
+		virtual TexturePtr const & SkylightTexC() const override;
+		virtual TexturePtr const & SkylightTex() const override;
+		virtual void SkylightTex(TexturePtr const & tex_y, TexturePtr const & tex_c) override;
+		virtual void SkylightTex(TexturePtr const & tex) override;
+
+	private:
+		mutable TexturePtr sky_tex_y_;
+		mutable TexturePtr sky_tex_c_;
+	};
+
+	using AmbientLightSourcePtr = std::shared_ptr<AmbientLightSource>;
+
+	class ZENGINE_CORE_API PointLightSource : public LightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		PointLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		void BindSceneNode(SceneNode* node) override;
+
+		void MainThreadUpdate(float app_time, float elapsed_time) override;
+
+		virtual TexturePtr const & ProjectiveTexture() const override;
+		virtual void ProjectiveTexture(TexturePtr const & tex) override;
+
+		virtual ConditionalRenderPtr const & ConditionalRenderQuery(uint32_t index) const override;
+		virtual CameraPtr const & SMCamera(uint32_t index) const override;
+
+	protected:
+		void CloneToPoint(PointLightSource& point_light) const;
+		void UpdateCameras();
+
+	protected:
+		TexturePtr projective_tex_;
+
+		std::array<ConditionalRenderPtr, 7> crs_;
+		std::array<CameraPtr, 6> sm_cameras_;
+	};
+
+	using PointLightSourcePtr = std::shared_ptr<PointLightSource>;
+
+	class ZENGINE_CORE_API SpotLightSource final : public LightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		SpotLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		void BindSceneNode(SceneNode* node) override;
+
+		void MainThreadUpdate(float app_time, float elapsed_time) override;
+
+		virtual float CosInnerAngle() const override;
+		virtual void InnerAngle(float angle) override;
+
+		virtual float CosOuterAngle() const override;
+		virtual void OuterAngle(float angle) override;
+
+		virtual float4 const & CosOuterInner() const override;
+
+		virtual TexturePtr const & ProjectiveTexture() const override;
+		virtual void ProjectiveTexture(TexturePtr const & tex) override;
+
+		virtual ConditionalRenderPtr const & ConditionalRenderQuery(uint32_t index) const override;
+		virtual CameraPtr const & SMCamera(uint32_t index) const override;
+
+	protected:
+		void UpdateCamera();
+
+	protected:
+		float4 cos_outer_inner_;
+
+		TexturePtr projective_tex_;
+
+		ConditionalRenderPtr cr_;
+		CameraPtr sm_camera_;
+	};
+
+	using SpotLightSourcePtr = std::shared_ptr<SpotLightSource>;
+
+	class ZENGINE_CORE_API DirectionalLightSource final : public LightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		DirectionalLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		void BindSceneNode(SceneNode* node) override;
+
+		void MainThreadUpdate(float app_time, float elapsed_time) override;
+
+		using LightSource::Attrib;
+		virtual void Attrib(int32_t attrib) override;
+
+		virtual CameraPtr const & SMCamera(uint32_t index) const override;
+
+	protected:
+		void UpdateCamera();
+
+	protected:
+		CameraPtr sm_camera_;
+	};
+
+	using DirectionalLightSourcePtr = std::shared_ptr<DirectionalLightSource>;
+
+	class ZENGINE_CORE_API SphereAreaLightSource final : public PointLightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		SphereAreaLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		virtual float Radius() const override;
+		virtual void Radius(float radius) override;
+
+	protected:
+		float radius_;
+	};
+
+	using SphereAreaLightSourcePtr = std::shared_ptr<SphereAreaLightSource>;
+
+	class ZENGINE_CORE_API TubeAreaLightSource final : public PointLightSource
+	{
+	public:
+		NANO_RTTI_REGISTER_RUNTIME_CLASS(LightSource)
+
+		TubeAreaLightSource();
+
+		SceneComponentPtr Clone() const override;
+
+		using LightSource::Falloff;
+		void Falloff(float3 const & fall_off) override;
+		float3 const & Extend() const override;
+		void Extend(float3 const & extend) override;
+
+	protected:
+		float3 extend_;
+	};
+
+	using TubeAreaLightSourcePtr = std::shared_ptr<TubeAreaLightSource>;
 }
+
+#endif		// _LIGHT_HPP

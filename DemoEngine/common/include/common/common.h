@@ -9,6 +9,7 @@
 #include <common/Hash.h>
 #include <common/StringUtil.h>
 #include <common/com_ptr.h>
+#include <common/Signal.h>
 
 #include <vector>
 #include <map>

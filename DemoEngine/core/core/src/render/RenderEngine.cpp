@@ -5,6 +5,7 @@
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 
+
 #include <mutex>
 namespace
 {
@@ -412,6 +413,19 @@ void RenderEngine::Refresh() const
     {
         context.WorldInstance().Update();
     }
+}
+
+PredefinedMeshCBuffer const& RenderEngine::PredefinedMeshCBufferInstance() const
+{
+    if (!predefined_mesh_cb_)
+    {
+        std::lock_guard<std::mutex> lock(mesh_cb_instance_mutex);
+        if (!predefined_mesh_cb_)
+        {
+            predefined_mesh_cb_ = MakeUniquePtr<PredefinedMeshCBuffer>();
+        }
+    }
+    return *predefined_mesh_cb_;
 }
 
 PredefinedMaterialCBuffer const& RenderEngine::PredefinedMaterialCBufferInstance() const

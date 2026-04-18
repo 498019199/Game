@@ -69,6 +69,13 @@ int main()
     child->type = AssetType::Model;
     app->SetSelectedAssert( child );
 
+    auto light_ = MakeSharedPtr<PointLightSource>();
+	light_->Attrib(0);
+	light_->Color(float3(1.5f, 1.5f, 1.5f));
+	light_->Falloff(float3(1, 0.5f, 0.0f));
+	auto light_proxy = LoadLightSourceProxyModel(light_);
+	light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+
     app->Run();
     return 0;
 }

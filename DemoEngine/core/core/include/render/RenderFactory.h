@@ -6,6 +6,8 @@
 #include <render/RenderStateObject.h>
 #include <render/RenderView.h>
 #include <render/RenderEngine.h>
+#include <render/Query.h>
+#include <render/Fence.h>
 
 namespace RenderWorker
 {
@@ -19,6 +21,7 @@ public:
 
     RenderEngine& RenderEngineInstance();
     virtual RenderLayoutPtr MakeRenderLayout() = 0;
+    virtual FrameBufferPtr MakeFrameBuffer() = 0;
 
     virtual GraphicsBufferPtr MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
         uint32_t structure_byte_stride = 0) = 0;
@@ -132,6 +135,9 @@ public:
     virtual GraphicsBufferPtr MakeConstantBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte, void const * init_data,
         uint32_t structure_byte_stride = 0) = 0;
 
+    virtual QueryPtr MakeConditionalRender() = 0;
+
+    virtual FencePtr MakeFence() = 0;
 private:
     virtual std::unique_ptr<RenderEngine> DoMakeRenderEngine() = 0;
 

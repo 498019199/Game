@@ -5005,24 +5005,19 @@ namespace RenderWorker
 
 		uint32_t fourcc = Native2LE(MakeFourCC<'K', 'F', 'X', ' '>::value);
 		os.write(reinterpret_cast<char const *>(&fourcc), sizeof(fourcc));
-		std::cout << "StreamOut: fourcc = " << std::hex << fourcc << std::dec << std::endl;
 
 		uint32_t ver = Native2LE(KFX_VERSION);
 		os.write(reinterpret_cast<char const *>(&ver), sizeof(ver));
-		std::cout << "StreamOut: version = " << std::hex << ver << std::dec << std::endl;
 
 		uint32_t shader_fourcc = Native2LE(re.NativeShaderFourCC());
 		os.write(reinterpret_cast<char const *>(&shader_fourcc), sizeof(shader_fourcc));
-		std::cout << "StreamOut: shader_fourcc = " << std::hex << shader_fourcc << std::dec << std::endl;
 
 		uint32_t shader_ver = Native2LE(re.NativeShaderVersion());
 		os.write(reinterpret_cast<char const *>(&shader_ver), sizeof(shader_ver));
-		std::cout << "StreamOut: shader_ver = " << std::hex << shader_ver << std::dec << std::endl;
 
 		uint8_t shader_platform_name_len = static_cast<uint8_t>(re.NativeShaderPlatformName().size());
 		os.write(reinterpret_cast<char const *>(&shader_platform_name_len), sizeof(shader_platform_name_len));
 		os.write(&re.NativeShaderPlatformName()[0], shader_platform_name_len);
-		std::cout << "StreamOut: shader_platform_name = " << re.NativeShaderPlatformName() << std::endl;
 
 		uint64_t timestamp = Native2LE(immutable_->timestamp);
 		os.write(reinterpret_cast<char const *>(&timestamp), sizeof(timestamp));

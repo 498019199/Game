@@ -24,4 +24,14 @@ namespace RenderWorker
 	{
 		enabled_ = enabled;
 	}
+
+	void SceneComponent::SubThreadUpdate(float app_time, float elapsed_time)
+	{
+		sub_thread_update_event_(*this, app_time, elapsed_time);
+	}
+
+	void SceneComponent::MainThreadUpdate(float app_time, float elapsed_time)
+	{
+		main_thread_update_event_(*this, app_time, elapsed_time);
+	}
 }

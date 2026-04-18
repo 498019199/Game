@@ -57,11 +57,13 @@ SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
     
 set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Camera.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/CascadedShadowLayer.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ElementFormat.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/render/Fen.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Fence.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/GraphicsBuffer.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Light.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Mesh.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/Query.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Renderable.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderableHelper.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderDeviceCaps.h
@@ -80,11 +82,13 @@ set(RENDER_HEADER_FILES
 
 set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Camera.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/CascadedShadowLayer.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ElementFormat.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/FrameBuffer.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/GraphicsBuffer.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Light.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Mesh.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/Query.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Renderable.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderDeviceCaps.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEffect.cpp 

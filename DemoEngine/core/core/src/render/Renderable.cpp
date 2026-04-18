@@ -242,6 +242,21 @@ void Renderable::Material(const RenderMaterialPtr& mtl)
     }
 }
 
+void Renderable::UpdateBoundBox()
+{
+    auto const& pmcb = Context::Instance().RenderFactoryInstance().RenderEngineInstance().PredefinedMeshCBufferInstance();
+
+    AABBox const & pos_bb = this->PosBound();
+    AABBox const & tc_bb = this->TexcoordBound();
+
+    pmcb.PosCenter(*mesh_cbuffer_) = pos_bb.Center();
+    pmcb.PosExtent(*mesh_cbuffer_) = pos_bb.HalfSize();
+    pmcb.TcCenter(*mesh_cbuffer_) = float2(tc_bb.Center().x(), tc_bb.Center().y());
+    pmcb.TcExtent(*mesh_cbuffer_) = float2(tc_bb.HalfSize().x(), tc_bb.HalfSize().y());
+
+    mesh_cbuffer_->Dirty(true);
+}
+
 void Renderable::BindDeferredEffect(RenderEffectPtr const & deferred_effect)
 {
     effect_ = deferred_effect;

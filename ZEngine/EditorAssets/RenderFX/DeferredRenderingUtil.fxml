@@ -1,0 +1,86 @@
+<?xml version='1.0'?>
+
+<effect>
+	<include name="Lighting.fxml"/>
+
+	<shader>
+		<![CDATA[
+void StoreGBuffer(float3 normal, float3 albedo, float2 metalness_glossiness, float2 motion_vec, float occlusion,
+			out float4 rt0, out float4 rt1, out float4 rt2)
+{
+	float p = sqrt(-normal.z * 8 + 8);
+	float2 enc = normal.xy / p + 0.5f;
+	float2 enc255 = enc * 255;
+	float2 residual = floor(frac(enc255) * 16);
+	rt0 = float4(float3(floor(enc255), residual.x * 16 + residual.y) / 255, metalness_glossiness.y);
+
+	rt1 = float4(albedo, metalness_glossiness.x);
+
+	rt2 = float4(motion_vec * 0.5f + 0.5f, occlusion, 1);
+}
+
+float3 GetNormal(float4 rt0)
+{
+	float nz = floor(rt0.z * 255) / 16;
+	rt0.xy += float2(floor(nz) / 16, frac(nz)) / 255;
+	float2 fenc = rt0.xy * 4 - 2;
+	float f = dot(fenc, fenc);
+	float g = sqrt(1 - f / 4);
+	float3 normal;
+	normal.xy = fenc * g;
+	normal.z = f / 2 - 1;
+	return normal;
+}
+
+float GetGlossiness(float4 rt0)
+{
+	return rt0.w;
+}
+
+float3 GetDiffuse(float4 rt1)
+{
+	return DiffuseColor(rt1.xyz, rt1.w);
+}
+
+float3 GetSpecular(float4 rt1)
+{
+	return SpecularColor(rt1.xyz, rt1.w);
+}
+
+float2 GetMotionVec(float4 rt2)
+{
+	return rt2.xy * 2 - 1;
+}
+
+float GetOcclusion(float4 rt2)
+{
+	return rt2.z;
+}
+
+
+float3 NearestDepthUpsampling(float2 tc, float4 z_half, float z_full, float2 l1_inv_width_height, float threshold)
+{
+	float4 dist_z = abs(z_half - z_full);
+	float nearest_z = dist_z.x;
+	float2 nearest_tc = tc;
+	if (dist_z.y < nearest_z)
+	{
+		nearest_z = dist_z.y;
+		nearest_tc = tc + float2(l1_inv_width_height.x, 0);
+	}
+	if (dist_z.z < nearest_z)
+	{
+		nearest_z = dist_z.z;
+		nearest_tc = tc + float2(0, l1_inv_width_height.y);
+	}
+	if (dist_z.w < nearest_z)
+	{
+		nearest_z = dist_z.w;
+		nearest_tc = tc + l1_inv_width_height;
+	}
+
+	return float3(nearest_tc, all(dist_z < threshold) ? 1 : -1);
+}
+		]]>
+	</shader>
+</effect>

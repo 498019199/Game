@@ -957,6 +957,8 @@ namespace RenderWorker
 	void StaticMesh::BuildMeshInfo(const RenderModel& model)
 	{
 		this->DoBuildMeshInfo(model);
+		this->UpdateBoundBox();
+
 		hw_res_ready_ = true;
 	}
 
@@ -2295,4 +2297,194 @@ struct NodeInfo
 		}
 #endif
     }
+
+
+	RenderableLightSourceProxy::RenderableLightSourceProxy(std::wstring_view name)
+		: StaticMesh(name)
+	{
+		auto effect = SyncLoadRenderEffect("LightSourceProxy.fxml");
+		this->Technique(effect, effect->TechniqueByName("LightSourceProxy"));
+		effect_attrs_ |= EA_SimpleForward;
+
+		mtl_ = MakeSharedPtr<RenderMaterial>();
+	}
+
+	void RenderableLightSourceProxy::Technique(RenderEffectPtr const & effect, RenderTechnique* tech)
+	{
+		StaticMesh::Technique(effect, tech);
+
+		simple_forward_tech_ = tech;
+		if (tech)
+		{
+			light_is_projective_param_ = effect_->ParameterByName("light_is_projective");
+			projective_map_2d_tex_param_ = effect_->ParameterByName("projective_map_2d_tex");
+			projective_map_cube_tex_param_ = effect_->ParameterByName("projective_map_cube_tex");
+
+			select_mode_object_id_param_ = effect_->ParameterByName("object_id");
+			select_mode_tech_ = effect_->TechniqueByName("SelectModeTech");
+		}
+	}
+
+	void RenderableLightSourceProxy::AttachLightSrc(LightSourcePtr const & light)
+	{
+		light_ = light;
+	}
+
+	void RenderableLightSourceProxy::OnRenderBegin()
+	{
+		mtl_->Albedo(light_->Color());
+		if (light_is_projective_param_)
+		{
+			*light_is_projective_param_ = int2(light_->ProjectiveTexture() ? 1 : 0, LightSource::LT_Point == light_->Type());
+		}
+		if (LightSource::LT_Point == light_->Type())
+		{
+			if (projective_map_cube_tex_param_)
+			{
+				*projective_map_cube_tex_param_ = light_->ProjectiveTexture();
+			}
+		}
+		else
+		{
+			if (projective_map_2d_tex_param_)
+			{
+				*projective_map_2d_tex_param_ = light_->ProjectiveTexture();
+			}
+		}
+
+		StaticMesh::OnRenderBegin();
+	}
+
+
+	RenderableCameraProxy::RenderableCameraProxy(std::wstring_view name)
+		: StaticMesh(name)
+	{
+		auto effect = SyncLoadRenderEffect("CameraProxy.fxml");
+		this->Technique(effect, effect->TechniqueByName("CameraProxy"));
+		effect_attrs_ |= EA_SimpleForward;
+
+		mtl_ = MakeSharedPtr<RenderMaterial>();
+		mtl_->Albedo(float4(1, 1, 1, 1));
+	}
+
+	void RenderableCameraProxy::Technique(RenderEffectPtr const & effect, RenderTechnique* tech)
+	{
+		StaticMesh::Technique(effect, tech);
+
+		simple_forward_tech_ = tech;
+		if (tech)
+		{
+			select_mode_object_id_param_ = effect_->ParameterByName("object_id");
+			select_mode_tech_ = effect_->TechniqueByName("SelectModeTech");
+		}
+	}
+
+	void RenderableCameraProxy::AttachCamera(CameraPtr const & camera)
+	{
+		camera_ = camera;
+	}
+
+
+	RenderModelPtr LoadLightSourceProxyModel(LightSourcePtr const& light)
+	{
+		char const* mesh_name;
+		switch (light->Type())
+		{
+		case LightSource::LT_Ambient:
+			mesh_name = "AmbientLightProxy.glb";
+			break;
+
+		case LightSource::LT_Point:
+		case LightSource::LT_SphereArea:
+			mesh_name = "PointLightProxy.glb";
+			break;
+
+		case LightSource::LT_Directional:
+			mesh_name = "DirectionalLightProxy.glb";
+			break;
+
+		case LightSource::LT_Spot:
+			mesh_name = "SpotLightProxy.glb";
+			break;
+
+		case LightSource::LT_TubeArea:
+			mesh_name = "TubeLightProxy.glb";
+			break;
+
+		default:
+			ZENGINE_UNREACHABLE("Invalid light type");
+		}
+
+		auto light_model = SyncLoadModel(mesh_name, EAH_GPU_Read | EAH_Immutable,
+			SceneNode::SOA_Cullable | SceneNode::SOA_Moveable | SceneNode::SOA_NotCastShadow, nullptr, CreateModelFactory<RenderModel>,
+			CreateMeshFactory<RenderableLightSourceProxy>);
+
+		for (uint32_t i = 0; i < light_model->NumMeshes(); ++i)
+		{
+			checked_pointer_cast<RenderableLightSourceProxy>(light_model->Mesh(i))->AttachLightSrc(light);
+		}
+
+		if (light->Type() == LightSource::LT_Spot)
+		{
+			float const radius = light->CosOuterInner().w();
+			light_model->RootNode()->TransformToParent(
+				MathWorker::scaling(radius, radius, 1.0f) * light_model->RootNode()->TransformToParent());
+		}
+
+		return light_model;
+	}
+
+	RenderModelPtr LoadCameraProxyModel(CameraPtr const& camera)
+	{
+		auto camera_model = SyncLoadModel("CameraProxy.glb", EAH_GPU_Read | EAH_Immutable,
+			SceneNode::SOA_Cullable | SceneNode::SOA_Moveable | SceneNode::SOA_NotCastShadow, nullptr, CreateModelFactory<RenderModel>,
+			CreateMeshFactory<RenderableCameraProxy>);
+
+		for (uint32_t i = 0; i < camera_model->NumMeshes(); ++i)
+		{
+			checked_pointer_cast<RenderableCameraProxy>(camera_model->Mesh(i))->AttachCamera(camera);
+		}
+
+		camera_model->RootNode()->OnMainThreadUpdate().Connect(
+			[&camera](SceneNode& node, [[maybe_unused]] float app_time, [[maybe_unused]] float elapsed_time)
+			{ node.TransformToParent(camera->InverseViewMatrix()); });
+
+		return camera_model;
+	}	
+
+	PredefinedMeshCBuffer::PredefinedMeshCBuffer()
+	{
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+		predefined_cbuffer_ = effect_->CBufferByName("klayge_mesh");
+
+		pos_center_offset_ = effect_->ParameterByName("pos_center")->CBufferOffset();
+		pos_extent_offset_ = effect_->ParameterByName("pos_extent")->CBufferOffset();
+		tc_center_offset_ = effect_->ParameterByName("tc_center")->CBufferOffset();
+		tc_extent_offset_ = effect_->ParameterByName("tc_extent")->CBufferOffset();
+
+		this->PosCenter(*predefined_cbuffer_) = float3(0, 0, 0);
+		this->PosExtent(*predefined_cbuffer_) = float3(1, 1, 1);
+		this->TcCenter(*predefined_cbuffer_) = float2(0.5f, 0.5f);
+		this->TcExtent(*predefined_cbuffer_) = float2(0.5f, 0.5f);
+	}
+
+	float3& PredefinedMeshCBuffer::PosCenter(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float3>(pos_center_offset_);
+	}
+
+	float3& PredefinedMeshCBuffer::PosExtent(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float3>(pos_extent_offset_);
+	}
+
+	float2& PredefinedMeshCBuffer::TcCenter(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float2>(tc_center_offset_);
+	}
+
+	float2& PredefinedMeshCBuffer::TcExtent(RenderEffectConstantBuffer& cbuff) const
+	{
+		return *cbuff.template VariableInBuff<float2>(tc_extent_offset_);
+	}
 }

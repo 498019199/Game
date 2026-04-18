@@ -12,6 +12,7 @@
 
 #include <base/App3D.h>
 #include <base/Window.h>
+#include <world/World.h>
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
@@ -80,6 +81,93 @@ void EditorManagerD3D11::OnCreate()
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorConsolePanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorGameViewPanel>() );
 #endif // EDITOR_DEBUG_MODE
+
+    auto& context = Context::Instance();
+	RenderFactory& rf = context.RenderFactoryInstance();
+	RenderEngine& re = rf.RenderEngineInstance();
+	const RenderDeviceCaps& caps = re.DeviceCaps();
+    depth_texture_support_ = caps.depth_texture_support;
+
+    back_face_depth_fb_ = rf.MakeFrameBuffer();
+	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
+	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
+
+    light_ = MakeSharedPtr<PointLightSource>();
+	light_->Attrib(0);
+	light_->Color(float3(1.5f, 1.5f, 1.5f));
+	light_->Falloff(float3(1, 0.5f, 0.0f));
+
+	auto light_proxy = LoadLightSourceProxyModel(light_);
+	light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+
+	auto light_node = MakeSharedPtr<SceneNode>(SceneNode::SOA_Cullable);
+	light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+	light_node->AddComponent(light_);
+	light_node->AddChild(light_proxy->RootNode());
+	context.WorldInstance().SceneRootNode().AddChild(light_node);
+}
+
+void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
+{
+    App3D::OnResize(width, height);
+
+    auto& context = Context::Instance();
+	RenderFactory& rf = context.RenderFactoryInstance();
+	RenderEngine& re = rf.RenderEngineInstance();
+	RenderDeviceCaps const & caps = re.DeviceCaps();
+
+	RenderWorker::TexturePtr back_face_depth_tex;
+	RenderWorker::TexturePtr back_face_ds_tex;
+	RenderWorker::DepthStencilViewPtr back_face_ds_view;
+	ElementFormat fmt;
+	if (depth_texture_support_)
+	{
+		fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_ABGR8, EF_ARGB8}), 1, 0);
+		COMMON_ASSERT(fmt != EF_Unknown);
+
+		// Just dummy
+		back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
+
+		fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_D24S8, EF_D16}), 1, 0);
+		COMMON_ASSERT(fmt != EF_Unknown);
+
+		float4 constexpr back_face_ds_clear_value(0, 0, 0, 0);
+		back_face_ds_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write, {}, &back_face_ds_clear_value);
+		back_face_ds_view = rf.Make2DDsv(back_face_ds_tex, 0, 1, 0);
+
+        if( model_ )
+        {		
+            model_->ForEachMesh([back_face_ds_tex](Renderable& mesh)
+			    {
+				    checked_cast<DetailedMesh&>(mesh).BackFaceDepthTex(back_face_ds_tex);
+			    });
+        }
+	}
+	else
+	{
+		if (caps.pack_to_rgba_required)
+		{
+			fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_ABGR8, EF_ARGB8}), 1, 0);
+			COMMON_ASSERT(fmt != EF_Unknown);
+		}
+		else
+		{
+			fmt = EF_R16F;
+		}
+		back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
+		back_face_ds_view = rf.Make2DDsv(width, height, EF_D16, 1, 0);
+
+        if( model_ )
+        {
+            model_->ForEachMesh([back_face_depth_tex](Renderable& mesh)
+                {
+                    checked_cast<DetailedMesh&>(mesh).BackFaceDepthTex(back_face_depth_tex);
+                });
+        }
+	}
+
+	back_face_depth_fb_->Attach(FrameBuffer::Attachment::Color0, rf.Make2DRtv(back_face_depth_tex, 0, 1, 0));
+	back_face_depth_fb_->Attach(back_face_ds_view);
 }
 
 void EditorManagerD3D11::DoUpdateOverlay()
@@ -109,7 +197,16 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     {
         case 0:
         {
+            re.BindFrameBuffer(back_face_depth_fb_);
+            re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
 
+            if( model_ )
+            {
+                model_->ForEachMesh([](Renderable& mesh)
+                    {
+                        checked_cast<DetailedMesh&>(mesh).BackFaceDepthPass(true);
+                    });
+            }
         }
             return App3D::URV_NeedFlush;
         default:
@@ -130,9 +227,9 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
                 {
                     auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
 
-                    //detailed_mesh.LightPos(light_->Position());
-                    //detailed_mesh.LightColor(light_->Color());
-                    //detailed_mesh.LightFalloff(light_->Falloff());
+                    detailed_mesh.LightPos(light_->Position());
+                    detailed_mesh.LightColor(light_->Color());
+                    detailed_mesh.LightFalloff(light_->Falloff());
                     detailed_mesh.EyePos(this->ActiveCamera().EyePos());
                     detailed_mesh.BackFaceDepthPass(false);
                 });

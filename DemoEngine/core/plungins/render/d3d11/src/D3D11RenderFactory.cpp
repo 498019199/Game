@@ -1,11 +1,14 @@
 #include "D3D11GraphicsBuffer.h"
 #include "D3D11RenderFactory.h"
 #include "D3D11RenderLayout.h"
+#include "D3D11FrameBuffer.h"
 #include "D3D11ShaderObject.h"
 #include "D3D11Texture.h"
 #include "D3D11RenderStateObject.h"
 #include "D3D11RenderView.h"
 #include "D3D11RenderEngine.h"
+#include "D3D11Fence.h"
+#include "D3D11Query.h"
 
 namespace RenderWorker
 {
@@ -14,6 +17,11 @@ D3D11RenderFactory::D3D11RenderFactory() = default;
 RenderLayoutPtr D3D11RenderFactory::MakeRenderLayout()
 {
     return MakeSharedPtr<D3D11RenderLayout>();
+}
+
+FrameBufferPtr D3D11RenderFactory::MakeFrameBuffer()
+{
+    return MakeSharedPtr<D3D11FrameBuffer>();
 }
 
 GraphicsBufferPtr D3D11RenderFactory::MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint,
@@ -261,6 +269,28 @@ GraphicsBufferPtr D3D11RenderFactory::MakeConstantBuffer(BufferUsage usage, uint
 	auto ret = MakeSharedPtr<D3D11GraphicsBuffer>(usage, access_hint, D3D11_BIND_CONSTANT_BUFFER, size_in_byte, structure_byte_stride);
     ret->CreateHWResource(init_data);
 	return ret;
+}
+
+QueryPtr D3D11RenderFactory::MakeConditionalRender()
+{
+    return MakeSharedPtr<D3D11ConditionalRender>();
+}
+
+FencePtr D3D11RenderFactory::MakeFence()
+{
+    FencePtr ret;
+
+    auto* d3d_device_5 = checked_cast<D3D11RenderEngine&>(*re_).D3DDevice5();
+    if (d3d_device_5 != nullptr)
+    {
+        ret = MakeSharedPtr<D3D11_4Fence>();
+    }
+    else
+    {
+        ret = MakeSharedPtr<D3D11Fence>();
+    }
+
+    return ret;
 }
 
 std::unique_ptr<RenderEngine> D3D11RenderFactory::DoMakeRenderEngine()

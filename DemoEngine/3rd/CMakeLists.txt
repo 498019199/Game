@@ -120,7 +120,7 @@ add_subdirectory(NanoRtti)
 add_subdirectory(ogg)
 add_subdirectory(rapidjson)
 add_subdirectory(rapidxml)
-
+add_subdirectory(scope-lite)
 #add_subdirectory(d3dcompiler)
 add_subdirectory(vorbis)
 if(ZENGINE_IS_DEV_PLATFORM)

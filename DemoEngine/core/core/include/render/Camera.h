@@ -8,7 +8,7 @@ class RenderEffectConstantBuffer;
 class RenderEffect;
 using RenderEffectPtr = std::shared_ptr<RenderEffect>;
 
-class ZENGINE_CORE_API Camera: public SceneComponent
+class ZENGINE_CORE_API Camera: public SceneComponent, public std::enable_shared_from_this<Camera>
 {
 public:
     NANO_RTTI_REGISTER_RUNTIME_CLASS(SceneComponent)

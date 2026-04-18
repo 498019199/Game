@@ -31,9 +31,23 @@ public:
     bool Enabled() const;
 	void Enabled(bool enabled);
 
+    using UpdateEvent = Signal::Signal<void(SceneComponent&, float, float)>;
+    UpdateEvent& OnSubThreadUpdate()
+    {
+        return sub_thread_update_event_;
+    }
+    UpdateEvent& OnMainThreadUpdate()
+    {
+        return main_thread_update_event_;
+    }
+    virtual void SubThreadUpdate(float app_time, float elapsed_time);
+	virtual void MainThreadUpdate(float app_time, float elapsed_time);
 protected:
     SceneNode* node_ {nullptr};
 	bool enabled_ {true};
+
+    UpdateEvent sub_thread_update_event_;
+    UpdateEvent main_thread_update_event_;
 };
 
 }

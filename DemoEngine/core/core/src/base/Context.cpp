@@ -67,6 +67,11 @@ public:
         app_ = &app;
     }
 
+    bool AppValid() const noexcept
+    {
+        return app_ != nullptr;
+    }
+
     App3D& AppInstance() noexcept
     {
         COMMON_ASSERT(app_);
@@ -533,6 +538,11 @@ void Context::AppInstance(App3D& app) noexcept
 App3D& Context::AppInstance() noexcept
 {
     return pimpl_->AppInstance();
+}
+
+bool Context::AppValid() const noexcept
+{
+    return pimpl_->AppValid();
 }
 
 RenderFactory& Context::RenderFactoryInstance() noexcept
