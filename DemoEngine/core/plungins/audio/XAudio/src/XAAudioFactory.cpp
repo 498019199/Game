@@ -36,7 +36,7 @@
 
 extern "C"
 {
-	ZENGINE_CORE_API void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr)
+	ZENGINE_SYMBOL_EXPORT void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr)
 	{
 		ptr = CommonWorker::MakeUniquePtr<RenderWorker::ConcreteAudioFactory<RenderWorker::XAAudioEngine,
 			RenderWorker::XASoundBuffer, RenderWorker::XAMusicBuffer>>(L"XAudio Audio Factory");

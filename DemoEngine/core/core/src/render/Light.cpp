@@ -116,7 +116,7 @@ namespace RenderWorker
 		return 0;
 	}
 
-	float4 const & LightSource::CosOuterInner() const
+	const float4& LightSource::CosOuterInner() const
 	{
 		return float4::Zero();
 	}

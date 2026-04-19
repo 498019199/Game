@@ -98,7 +98,7 @@ function(ApplyPatch name patch)
 	execute_process(COMMAND "${GIT_EXECUTABLE}" "apply" "--check" "--ignore-space-change" "${patch}" WORKING_DIRECTORY ${external_lib_folder} RESULT_VARIABLE checkout_err)
 	if(NOT checkout_err)
 		message(STATUS "Applying ${patch}...")
-		execute_process(COMMAND "${GIT_EXECUTABLE}" "am" "--ignore-space-change" "${patch}" WORKING_DIRECTORY ${external_lib_folder})
+		execute_process(COMMAND "${GIT_EXECUTABLE}" "apply" "--ignore-space-change" "${patch}" WORKING_DIRECTORY ${external_lib_folder})
 	endif()
 endfunction()
 

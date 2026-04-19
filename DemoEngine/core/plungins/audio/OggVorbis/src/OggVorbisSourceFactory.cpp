@@ -42,7 +42,7 @@ namespace RenderWorker
 
 extern "C"
 {
-	ZENGINE_CORE_API void MakeAudioDataSourceFactory(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr)
+	ZENGINE_SYMBOL_EXPORT void MakeAudioDataSourceFactory(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr)
 	{
 		ptr = CommonWorker::MakeUniquePtr<RenderWorker::OggVorbisAudioDataSourceFactory>();
 	}

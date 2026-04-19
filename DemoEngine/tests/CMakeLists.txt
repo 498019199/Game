@@ -27,9 +27,5 @@ target_link_libraries(Tests
 	PRIVATE
         ZENGINE_common
         ZENGINE_core
-		ZENGINE_Render_D3D11
-        ZENGINE_AudioEngine_XAudio
-        ZENGINE_AudioDataSource_OggVorbis
-        ZENGINE_DevHelps
 		gtest
 )

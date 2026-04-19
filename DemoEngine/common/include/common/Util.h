@@ -59,14 +59,6 @@ namespace std
     } // namespace std
 #endif
 
-#ifdef ZENGINE_EXPORTS		// Build dll
-	#define ZENGINE_CORE_API 
-//ZENGINE_SYMBOL_EXPORT
-#else						// Use dll
-	#define ZENGINE_CORE_API 
-//ZENGINE_SYMBOL_IMPORT
-#endif
-
 #define ZENGINE_NONCOPYABLE(T) \
 T(T const& rhs) = delete; \
 T& operator=(T const& rhs) = delete;

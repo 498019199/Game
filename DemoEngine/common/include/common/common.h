@@ -9,6 +9,16 @@
 #include <common/Hash.h>
 #include <common/StringUtil.h>
 #include <common/com_ptr.h>
+
+#ifndef ZENGINE_CORE_API
+#ifdef ZENGINE_EXPORTS		// Build dll
+	#define ZENGINE_CORE_API ZENGINE_SYMBOL_EXPORT
+//ZENGINE_SYMBOL_EXPORT
+#else						// Use dll
+	#define ZENGINE_CORE_API
+#endif
+#endif
+
 #include <common/Signal.h>
 
 #include <vector>
@@ -18,6 +28,7 @@
 #include <string_view>
 
 #include <math/math.h>
+
 namespace RenderWorker
 {
     using ResIdentifier = CommonWorker::ResIdentifier;

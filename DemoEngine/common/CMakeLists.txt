@@ -87,6 +87,11 @@ set_target_properties(ZENGINE_common PROPERTIES
     FOLDER "ZENGINE"
 )
 
+target_compile_definitions(ZENGINE_common
+    PRIVATE
+        -DZENGINE_EXPORTS
+)
+
 target_precompile_headers(ZENGINE_common
 	PRIVATE
 		include/common/common.h

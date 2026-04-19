@@ -150,7 +150,7 @@ set(INPUT_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/input/Joystick.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/input/Keyboard.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/input/Mouse.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/input/Touch.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/input/Sensor.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/input/Touch.cpp
 )
 
@@ -178,6 +178,11 @@ target_precompile_headers(ZENGINE_core
 set_target_properties(ZENGINE_core PROPERTIES
     OUTPUT_NAME ZENGINE_core${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "ZENGINE"
+)
+
+target_compile_definitions(ZENGINE_core
+    PRIVATE
+        -DZENGINE_EXPORTS
 )
 
 target_link_libraries(ZENGINE_core

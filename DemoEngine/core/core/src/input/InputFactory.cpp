@@ -46,4 +46,32 @@ namespace RenderWorker
 			ie_->Resume();
 		}
 	}
+
+	// Concrete null input factory implementation
+	class NullInputFactory : public InputFactory
+	{
+	public:
+		NullInputFactory() noexcept = default;
+		virtual ~NullInputFactory() noexcept = default;
+
+		std::wstring const& Name() const override
+		{
+			static const std::wstring name = L"Null Input Factory";
+			return name;
+		}
+
+	private:
+		std::unique_ptr<InputEngine> DoMakeInputEngine() override
+		{
+			return nullptr;
+		}
+
+		void DoSuspend() override
+		{
+		}
+
+		void DoResume() override
+		{
+		}
+	};
 }

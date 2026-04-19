@@ -110,7 +110,7 @@ public:
 	}
 
 	//       
-	static Vector_T const Zero() noexcept
+	static const Vector_T& Zero() noexcept
 	{
 		static Vector_T<T, N> const zero(value_type(0));
 		return zero;

@@ -80,7 +80,7 @@ namespace RenderWorker
 		virtual void InnerAngle(float angle);
 		virtual float CosOuterAngle() const;
 		virtual void OuterAngle(float angle);
-		virtual float4 const & CosOuterInner() const;
+		virtual const float4& CosOuterInner() const;
 		virtual float Range() const;
 		virtual void Range(float range);
 

@@ -10,7 +10,7 @@
 #include <audio/AudioFactory.h>
 #include <world/World.h>
 
-//#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+///#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
 	#define ZENGINE_STATIC_LINK_PLUGINS
 //#endif
 
@@ -31,15 +31,16 @@ extern "C"
 }
 namespace RenderWorker
 {
-	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderFactory>& ptr);
-    typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<AudioFactory>& ptr);
-    typedef void (*MakeAudioDataSourceFactoryFunc)(std::unique_ptr<AudioDataSourceFactory>& ptr);
-    typedef void (*MakeInputFactoryFunc)(std::unique_ptr<InputFactory>& ptr);
+	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+    typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
+    typedef void (*MakeAudioDataSourceFactoryFunc)(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr);
+    typedef void (*MakeInputFactoryFunc)(std::unique_ptr<RenderWorker::InputFactory>& ptr);
+#define ZENGINE_DLL_PREFIX DLL_PREFIX ZENGINE_STRINGIZE(ZENGINE_NAME)
 #if ZENGINE_IS_DEV_PLATFORM
-	typedef void (*MakeDevHelperFunc)(std::unique_ptr<DevHelper>& ptr);
+	typedef void (*MakeDevHelperFunc)(std::unique_ptr<RenderWorker::DevHelper>& ptr);
 #endif
 }
-#define ZENGINE_DLL_PREFIX DLL_PREFIX ZENGINE_STRINGIZE(ZENGINE_NAME)
+
 #endif// ZENGINE_STATIC_LINK_PLUGINS
 
 
@@ -51,7 +52,12 @@ using namespace CommonWorker;
 
 class Context::Impl final
 {
+    ZENGINE_NONCOPYABLE(Impl);
+
 public:
+
+    Impl() = default;
+
     static Context& Instance()
     {
         if (!context_instance_)
@@ -63,6 +69,15 @@ public:
             }
         }
         return *context_instance_;
+    }
+    static void Destroy() noexcept
+    {
+        std::lock_guard<std::mutex> lock(singleton_mutex_);
+        if(context_instance_)
+        {
+            context_instance_->pimpl_->DestroyAll();
+            context_instance_.reset();
+        }
     }
 
     void AppInstance(App3D& app) noexcept
@@ -233,7 +248,7 @@ public:
         audio_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string audio_path = res_loader.Locate("audio");
-        std::string fn = ZENGINE_DLL_PREFIX"_Audio_" + af_name + DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_Audio" + af_name + DLL_SUFFIX;
 
         std::string path = audio_path + "/" + fn;
         audio_loader_.Load(res_loader.Locate(path));
@@ -254,14 +269,14 @@ public:
 #endif// ZENGINE_STATIC_LINK_PLUGINS
     }
 
-    void LoadAudioDataSourceFactory( std::string const& adsf_name )
+    void LoadAudioDataSourceFactory( std::string const& af_name )
     {
         audio_data_src_factory_.reset();
 #ifndef ZENGINE_STATIC_LINK_PLUGINS
         ads_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string adsf_path = res_loader.Locate("audio");
-        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource_" + af_name + DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource" + af_name + DLL_SUFFIX;
 
         std::string path = adsf_path + "/" + fn;
         ads_loader_.Load(res_loader.Locate(path));
@@ -269,7 +284,7 @@ public:
         auto* madsf = reinterpret_cast<MakeAudioDataSourceFactoryFunc>(ads_loader_.GetProcAddress("MakeAudioDataSourceFactory"));
         if (madsf != nullptr)
         {
-            madsf(audio_factory_);
+            madsf(audio_data_src_factory_);
         }
         else
         {
@@ -277,7 +292,7 @@ public:
             ads_loader_.Free();
         }
 #else
-        KFL_UNUSED(adsf_name);
+        KFL_UNUSED(af_name);
         MakeAudioDataSourceFactory(audio_data_src_factory_);
 #endif// ZENGINE_STATIC_LINK_PLUGINS
     }
@@ -290,7 +305,7 @@ public:
 
         auto& res_loader = ResLoaderInstance();
         std::string input_path = res_loader.Locate("Input");
-        std::string fn = ZENGINE_DLL_PREFIX"_InputEngine_" + if_name + DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_InputEngine_Input" + if_name + DLL_SUFFIX;
 
         std::string path = input_path + "/" + fn;
         input_loader_.Load(res_loader.Locate(path));
@@ -329,7 +344,7 @@ public:
         std::string path = render_path + "/" + fn;
         dev_helper_loader_.Load(res_loader.Locate(path));
 
-        auto* mdh = reinterpret_cast<MakeRenderFactoryFunc>(dev_helper_loader_.GetProcAddress("MakeDevHelper"));
+        auto* mdh = reinterpret_cast<MakeDevHelperFunc>(dev_helper_loader_.GetProcAddress("MakeDevHelper"));
         if (mdh != nullptr)
         {
             mdh(dev_helper_);
@@ -526,6 +541,24 @@ public:
     {
         
     }
+
+    void DestroyAll() noexcept
+    {
+        if(res_loader_.Valid())
+        {
+            res_loader_.Destroy();
+        }
+
+        render_world_.reset();
+        render_factory_.reset();
+        audio_factory_.reset();
+        audio_data_src_factory_.reset();
+        input_factory_.reset();
+#if ZENGINE_IS_DEV_PLATFORM
+        dev_helper_.reset();
+#endif
+        app_ = nullptr;
+    }
 private:
 	static std::mutex singleton_mutex_;
 	static std::unique_ptr<Context> context_instance_;
@@ -551,11 +584,16 @@ private:
 #if ZENGINE_IS_DEV_PLATFORM
     // 开发辅助工具
     std::unique_ptr<DevHelper> dev_helper_;
-	DllLoader dev_helper_loader_;
 #endif
 
     DllLoader render_loader_;
-
+    DllLoader audio_loader_;
+    DllLoader input_loader_;
+    DllLoader ads_loader_;
+#if ZENGINE_IS_DEV_PLATFORM
+	DllLoader dev_helper_loader_;
+#endif
+    
     // 全局线程池
     ThreadPool global_thread_pool_;
 };

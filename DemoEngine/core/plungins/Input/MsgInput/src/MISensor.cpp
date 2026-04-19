@@ -687,7 +687,7 @@ namespace RenderWorker
 
 #elif defined ZENGINE_PLATFORM_WINDOWS_STORE
 
-namespace KlayGE
+namespace RenderWorker
 {
 	MsgInputSensor::MsgInputSensor()
 	{
