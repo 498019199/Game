@@ -49,7 +49,7 @@
 #include <vector>
 
 
-#include <base/CpuInfo.h>
+#include <common/CpuInfo.h>
 
 namespace
 {
@@ -262,7 +262,7 @@ namespace
 }
 
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	CpuInfo::CpuInfo()
 	{

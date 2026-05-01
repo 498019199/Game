@@ -5,6 +5,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/Compiler.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(PROJECT_3RD_DIR ${PROJECT_SOURCE_DIR}/3rd)
 set(ZENGINE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 get_filename_component(ZENGINE_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
@@ -29,9 +30,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${ZENGINE_BIN_DIR})
 
 
 add_subdirectory(3rd)
-file(COPY ${PROJECT_SOURCE_DIR}/common/include DESTINATION "${ZENGINE_PARENT_DIR}/ZEngine")
 add_subdirectory(common)
-file(COPY ${PROJECT_SOURCE_DIR}/core/core/include DESTINATION "${ZENGINE_PARENT_DIR}/ZEngine")
 add_subdirectory(core)
 add_subdirectory(editor)
 

@@ -29,7 +29,7 @@
  */
 #pragma once
 
-#include <base/Thread.h>
+#include <common/Thread.h>
 #include <base/SALWrapper.h>
 
 #include <vector>

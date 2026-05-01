@@ -31,7 +31,7 @@
 
 #include <string>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 class CpuInfo final
 {

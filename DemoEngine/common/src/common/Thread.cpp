@@ -28,18 +28,16 @@
  * from http://www.klayge.org/licensing/.
  */
 
-#include <base/Thread.h>
-#include <base/CpuInfo.h>
+#include <common/Thread.h>
+#include <common/CpuInfo.h>
 #include <common/common.h>
 
 #include <condition_variable>
 #include <mutex>
 #include <vector>
 
-namespace RenderWorker
+namespace CommonWorker
 {
-    using namespace CommonWorker;
-
 	// A class used to storage information of the thread pool. It stores the pooled thread information container
 	//  and the functor that will envelop users Threadable to return it to the pool.
 	class ThreadPool::Impl final

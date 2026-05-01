@@ -2,8 +2,8 @@
 #include <dev_helps/TexMetadata.h>
 
 #include <base/ZEngine.h>
-#include <base/CpuInfo.h>
-#include <base/Thread.h>
+#include <common/CpuInfo.h>
+#include <common/Thread.h>
 #include <math/math.h>
 #include <render/RenderEngine.h>
 #include <render/TexCompression.h>

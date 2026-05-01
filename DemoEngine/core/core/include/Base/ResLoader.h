@@ -1,9 +1,13 @@
 #pragma once
 #include <base/ZEngine.h>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 class ThreadPool;
+}
+
+namespace RenderWorker
+{
 
 class ZENGINE_CORE_API ResLoadingDesc
 {

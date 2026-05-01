@@ -2,7 +2,7 @@
 #include <base/App3D.h>
 #include <base/Window.h>
 #include <world/World.h>
-#include <base/Thread.h>
+#include <common/Thread.h>
 
 #include <render/RenderEffect.h>
 #include <render/Renderable.h>

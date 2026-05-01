@@ -30,7 +30,7 @@
 #include <common/common.h>
 #include <common/Util.h>
 #include <base/Package.h>
-#include <base/Thread.h>
+#include <common/Thread.h>
 
 #if defined ZENGINE_PLATFORM_LINUX
 #include <cstring>

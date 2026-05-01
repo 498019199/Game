@@ -24,26 +24,22 @@ SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
 
 set(BASE_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Context.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/base/CpuInfo.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/DevHelper.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Input.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/InputFactory.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/LZMACodec.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/Package.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/ResLoader.h
-    ${PROJECT_SOURCE_DIR}/core/core/include/base/Thread.h
     ${PROJECT_SOURCE_DIR}/core/core/include/base/RenderSettings.h
     ${PROJECT_SOURCE_DIR}/core/core/src/TableGen/Tables.h
 )
 
 set(BASE_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/base/Context.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/base/CpuInfo.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/DevHelper.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/RenderableHelper.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/ResLoader.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/base/TexCompression.cpp
-    ${PROJECT_SOURCE_DIR}/core/core/src/base/Thread.cpp
 
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveExtractCallback.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/pack/ArchiveOpenCallback.cpp

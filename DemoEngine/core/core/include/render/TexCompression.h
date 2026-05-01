@@ -20,11 +20,11 @@ enum TexCompressionErrorMetric
     TCEM_Nonuniform,  // { 0.3, 0.59, 0.11 }
 };
 
-uint32_t BlockWidth(ElementFormat format);
-uint32_t BlockHeight(ElementFormat format);
-uint32_t BlockDepth(ElementFormat format);
-uint32_t BlockBytes(ElementFormat format);
-ElementFormat DecodedFormat(ElementFormat format);
+ZENGINE_CORE_API uint32_t BlockWidth(ElementFormat format);
+ZENGINE_CORE_API uint32_t BlockHeight(ElementFormat format);
+ZENGINE_CORE_API uint32_t BlockDepth(ElementFormat format);
+ZENGINE_CORE_API uint32_t BlockBytes(ElementFormat format);
+ZENGINE_CORE_API ElementFormat DecodedFormat(ElementFormat format);
 
 class ZENGINE_CORE_API TexCompression
 {

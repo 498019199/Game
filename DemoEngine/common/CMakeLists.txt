@@ -20,6 +20,8 @@ set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/Util.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Uuid.h
     ${PROJECT_SOURCE_DIR}/common/include/common/XMLDom.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/Thread.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/CpuInfo.h
 )
 
 set(COMMON_SOURCE_FILES
@@ -32,6 +34,8 @@ set(COMMON_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/common/src/common/Timer.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Util.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/XMLDom.cpp
+    ${PROJECT_SOURCE_DIR}/common/src/common/Thread.cpp
+    ${PROJECT_SOURCE_DIR}/common/src/common/CpuInfo.cpp
 )
 
 set(MATH_HEADER_FILES
@@ -61,7 +65,7 @@ source_group("Base\\Header Files" FILES ${COMMON_SOURCE_FILES})
 source_group("Math\\Source Files" FILES ${MATH_SOURCE_FILES})
 source_group("Math\\Header Files" FILES ${MATH_HEADER_FILES})
 
-add_library(ZENGINE_common ${ZENGINE_PREFERRED_LIB_TYPE}
+add_library(ZENGINE_common STATIC
 	${COMMON_SOURCE_FILES} ${COMMON_HEADER_FILES}
 	${MATH_SOURCE_FILES} ${MATH_HEADER_FILES}
 )
@@ -85,6 +89,11 @@ target_include_directories(ZENGINE_common
 set_target_properties(ZENGINE_common PROPERTIES
     OUTPUT_NAME ZENGINE_common${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "ZENGINE"
+)
+
+include_directories(
+    ${PROJECT_SOURCE_DIR}/common/include
+    ${PROJECT_SOURCE_DIR}/common/math
 )
 
 target_compile_definitions(ZENGINE_common

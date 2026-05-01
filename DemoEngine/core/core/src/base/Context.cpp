@@ -1,8 +1,8 @@
+#include <common/Thread.h>
 #include <base/ZEngine.h>
 #include <common/DllLoader.h>
 
 #include <base/ResLoader.h>
-#include <base/Thread.h>
 #include <base/DevHelper.h>
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
@@ -10,9 +10,9 @@
 #include <audio/AudioFactory.h>
 #include <world/World.h>
 
-///#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
-	#define ZENGINE_STATIC_LINK_PLUGINS
-//#endif
+#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+    #define ZENGINE_STATIC_LINK_PLUGINS
+#endif
 
 #ifdef ZENGINE_STATIC_LINK_PLUGINS
 extern "C"

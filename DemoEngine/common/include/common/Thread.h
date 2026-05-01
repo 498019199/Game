@@ -29,7 +29,7 @@
  */
 
 #pragma once
-#include <base/ZEngine.h>
+#include <common/macro.h>
 #include <functional>
 #ifdef ZENGINE_COMPILER_MSVC
 #pragma warning(push)
@@ -41,7 +41,7 @@
 #endif
 #include <thread>
 
-namespace RenderWorker
+namespace CommonWorker
 {
 	template <typename Threadable>
 	inline std::future<std::invoke_result_t<Threadable>> CreateThread(Threadable func)

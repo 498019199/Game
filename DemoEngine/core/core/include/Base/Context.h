@@ -4,9 +4,15 @@
 #include <common/common.h>
 #include <base/RenderSettings.h>
 
+namespace CommonWorker
+{
+class ThreadPool;
+}
+
 namespace RenderWorker
 {
 using namespace CommonWorker;
+using ThreadPool = CommonWorker::ThreadPool;
 
 struct ContextConfig
 {
@@ -29,7 +35,6 @@ class InputFactory;
 class AudioFactory;
 class AudioDataSourceFactory;
 class World;
-class ThreadPool;
 class ResLoader;
 class DevHelper;
 

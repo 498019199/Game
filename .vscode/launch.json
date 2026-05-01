@@ -1,31 +1,26 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "test",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}\\bin\\Debug\\TestEngine.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}\\bin\\Debug",
-            "environment": [],
-            //"preLaunchTask": 
-        },
-
-        {
-            "name": "editor",
+            "name": "vscode-editor",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_editor.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}\\ZEngine\\bin",
-            "environment": [],
-            //"preLaunchTask": 
+            "cwd": "${workspaceFolder}\\ZEngine\\bin\\win_x64",
+            "environment": []
+        },
+
+
+        {
+            "name": "cursor-editor",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_editor.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}\\ZEngine\\bin\\win_x64",
+            "env": {}
         }
     ]
 }

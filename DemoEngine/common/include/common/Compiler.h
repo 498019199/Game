@@ -1,7 +1,9 @@
 #pragma once
 
+#define ZENGINE_DO_JOIN(X, Y) X##Y
+
 #if defined(__clang__)
-    #define CLANG_VERSION KFL_JOIN(__clang_major__, __clang_minor__)
+    #define CLANG_VERSION ZENGINE_DO_JOIN(__clang_major__, __clang_minor__)
 
 	#if __cplusplus < 202002L
 		#error "-std=c++20 must be turned on."
@@ -68,7 +70,7 @@
 		#define ZENGINE_COMPILER_NAME gcc
 	#endif
 
-    #define GCC_VERSION KFL_JOIN(__GNUC__, __GNUC_MINOR__)
+    #define GCC_VERSION ZENGINE_DO_JOIN(__GNUC__, __GNUC_MINOR__)
 	#if GCC_VERSION >= 110
 		#define ZENGINE_COMPILER_VERSION GCC_VERSION
 	#else
