@@ -14,6 +14,15 @@ class ZENGINE_CORE_API Window final
 {
     ZENGINE_NONCOPYABLE(Window);
 public:
+    enum WindowRotation
+    {
+        WR_Unspecified,
+        WR_Identity,
+        WR_Rotate90,
+        WR_Rotate180,
+        WR_Rotate270
+    };
+
     Window(const std::string& name, const RenderSettings& settings, void* native_wnd);
     ~Window();
 
@@ -37,6 +46,16 @@ public:
     float DPIScale() const
     {
         return dpi_scale_;
+    }
+
+    float EffectiveDPIScale() const
+    {
+        return effective_dpi_scale_;
+    }
+
+    WindowRotation Rotation() const
+    {
+        return win_rotation_;
     }
 private:
     void UpdateDpiScale(float scale);
@@ -121,13 +140,14 @@ protected:
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif //ZENGINE_PLATFORM_WINDOWS
 
-    float dpi_scale_ {1.f};
-    float effective_dpi_scale_ {1.f};
+    float dpi_scale_;
+    float effective_dpi_scale_;
+    WindowRotation win_rotation_;
 
-    bool active_ {false};
-	bool ready_ {false};
-	bool closed_ {false};
-	bool keep_screen_on_ {false};
+    bool active_;
+	bool ready_;
+	bool closed_;
+	bool keep_screen_on_;
 };
 
 

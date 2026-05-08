@@ -499,12 +499,40 @@ void D3D11RenderWindow::UpdateSurfacesPtrs()
     if (dxgi_allow_tearing_)
 #endif
     {
+        WindowPtr const & main_wnd = Context::Instance().AppInstance().MainWnd();
+        const Window::WindowRotation rotation = main_wnd->Rotation();
+
+        DXGI_MODE_ROTATION dxgi_rotation;
+        switch (rotation)
+        {
+        case Window::WR_Identity:
+            dxgi_rotation = DXGI_MODE_ROTATION_IDENTITY;
+            break;
+
+        case Window::WR_Rotate90:
+            dxgi_rotation = DXGI_MODE_ROTATION_ROTATE90;
+            break;
+
+        case Window::WR_Rotate180:
+            dxgi_rotation = DXGI_MODE_ROTATION_ROTATE180;
+            break;
+
+        case Window::WR_Rotate270:
+            dxgi_rotation = DXGI_MODE_ROTATION_ROTATE270;
+            break;
+
+        default:
+            ZENGINE_UNREACHABLE("Invalid rotation mode");
+        }
+
+        TIFHR(swap_chain_1_->SetRotation(dxgi_rotation));
     }
 
     // 创建渲染目标视图
     ID3D11Texture2DPtr back_buffer;
     TIFHR(swap_chain_1_->GetBuffer(0, UuidOf<ID3D11Texture2D>(), back_buffer.put_void()));
     back_buffer_ = MakeSharedPtr<D3D11Texture2D>(back_buffer);
+    
 	render_target_view_ = rf.Make2DRtv(back_buffer_, 0, 1, 0);
 
 	bool stereo = (STM_LCDShutter == Context::Instance().Config().graphics_cfg.stereo_method) && dxgi_stereo_support_;

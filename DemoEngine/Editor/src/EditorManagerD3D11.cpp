@@ -279,7 +279,7 @@ void EditorManagerD3D11::RenderEditorPanels() const
         }
     }
 
-    //EditorDialogBoxManager::Instance().OnRender();
+    EditorDialogBoxManager::Instance().OnRender();
     ImGui::Render();
 
     // 下面这句话会触发ImGui在Direct3D的绘制
@@ -351,9 +351,9 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
 
     case AssetType::Model:
         {
-            auto ptr = CommonWorker::MakeSharedPtr<AssetMaterialInfo>();
+            auto ptr = CommonWorker::MakeSharedPtr<AssetModelInfo>();
             ptr->name = pAssert->name;
-            ptr->name = pAssert->extension;
+            ptr->format = pAssert->extension;
             selected_asset_info_ = ptr;
 
             model_ = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
@@ -365,7 +365,17 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                 }, CreateModelFactory<RenderModel>, CreateMeshFactory<DetailedMesh>);
             
             this->LookAt(float3(-0.4f, 1, 3.9f), float3(0, 1, 0), float3(0.0f, 1.0f, 0.0f));
-	        this->Proj(0.1f, 200.0f);;
+	        this->Proj(0.1f, 200.0f);
+
+            if( !light_ )
+            {
+                light_ = MakeSharedPtr<PointLightSource>();
+                light_->Attrib(0);
+                light_->Color(float3(1.5f, 1.5f, 1.5f));
+                light_->Falloff(float3(1, 0.5f, 0.0f));
+                auto light_proxy = LoadLightSourceProxyModel(light_);
+                light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+            }
         }
         break;
 

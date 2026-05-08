@@ -7,7 +7,7 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx11.h>
 
-#define EDITOR_DEBUG_MODE 1
+//#define EDITOR_DEBUG_MODE 1
 
 using namespace CommonWorker;
 using namespace RenderWorker;

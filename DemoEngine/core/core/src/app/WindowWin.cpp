@@ -51,7 +51,8 @@ BOOL Window::EnumMonProc(HMONITOR mon, [[maybe_unused]] HDC dc_mon, [[maybe_unus
 #endif
 
 Window::Window(const std::string& name, const RenderSettings& settings, void* native_wnd)
-    :keep_screen_on_(settings.keep_screen_on), hide_(settings.hide_win)
+    : active_(false), ready_(false), closed_(false), keep_screen_on_(settings.keep_screen_on), 
+	dpi_scale_(1), effective_dpi_scale_(1), win_rotation_(WR_Identity), hide_(settings.hide_win)
 {
     this->DetectsDpi();
     this->KeepScreenOn();

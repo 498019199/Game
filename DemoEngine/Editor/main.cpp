@@ -61,22 +61,22 @@ int main()
     app->MainWnd()->BindMsgProc(ImGui_ImplWin32_WndProcHandler);
 #endif //EDITOR_DEBUG_MODE
 
-    // test model
-    std::filesystem::path current_dir = std::filesystem::current_path().parent_path();
-    EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
-    child->parent = nullptr;
-    child->path = "G:/shareData/project/github/Game/ZEngine/Assets/Models/Dragon/Dragon.glb";
-    child->name = "Dragon";
-    child->extension = ".glb";
-    child->type = AssetType::Model;
-    app->SetSelectedAssert( child );
+    // // test model
+    // std::filesystem::path current_dir = std::filesystem::current_path().parent_path();
+    // EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
+    // child->parent = nullptr;
+    // child->path = "G:/shareData/project/github/Game/ZEngine/Assets/Models/Dragon/Dragon.glb";
+    // child->name = "Dragon";
+    // child->extension = ".glb";
+    // child->type = AssetType::Model;
+    // app->SetSelectedAssert( child );
 
-    auto light_ = MakeSharedPtr<PointLightSource>();
-	light_->Attrib(0);
-	light_->Color(float3(1.5f, 1.5f, 1.5f));
-	light_->Falloff(float3(1, 0.5f, 0.0f));
-	auto light_proxy = LoadLightSourceProxyModel(light_);
-	light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+    // auto light_ = MakeSharedPtr<PointLightSource>();
+	// light_->Attrib(0);
+	// light_->Color(float3(1.5f, 1.5f, 1.5f));
+	// light_->Falloff(float3(1, 0.5f, 0.0f));
+	// auto light_proxy = LoadLightSourceProxyModel(light_);
+	// light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
     app->Run();
     return 0;
