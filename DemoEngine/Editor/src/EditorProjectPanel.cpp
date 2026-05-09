@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <string>
 #include <filesystem>
+#include <algorithm>
 
 
 namespace EditorWorker
@@ -129,19 +130,24 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
         // 当前路径文件数量
         std::size_t childNum = curPathNode->children.size();
         // 当前窗口的x最大值(右边界位置)
-        float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
-        // 记录当前绘制的一排文件名
-        std::vector<std::string> fileNames;
-        // 当前绘制的文件在当前这一行里是第几个
-        int rowIdx = 0;
-        // 记录当前选中的文件在当前这一行里是第几个
-        int curRowIdx = -1;
+        float const window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+        // 图标列宽（含 FramePadding）；名字列宽按实际文本计算，避免固定宽度裁掉末尾字符
+        float const iconItemW = iconSize.x + style.FramePadding.x * 2.f;
+
         for (size_t i = 0; i < childNum; i++)
         {
             auto node = curPathNode->children[i];
+            ImGui::PushID(static_cast<int>(i));
+
+            float const nameTextW = ImGui::CalcTextSize(node->name.c_str()).x + style.FramePadding.x * 2.f;
+            float const cellW = std::max(iconItemW, nameTextW);
+
+            ImGui::BeginGroup();
+
+            float const groupX = ImGui::GetCursorPosX();
+
             if (i == selected_)
             {
-                curRowIdx = rowIdx;
                 ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
             }
             else
@@ -149,57 +155,48 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
                 ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
             }
 
-            // 无论是否点击都必须PopStyleColor，所以没有直接写在if中
-            std::string label = "##File" + std::to_string(i);
+            ImGui::SetCursorPosX(groupX + (cellW - iconItemW) * 0.5f);
             auto icon = fileIcons_[(int)node->type]->GetShaderResourceView();
-            bool click = ImGui::ImageButton(label.c_str(), (ImTextureID)(intptr_t)icon, iconSize);
+            bool const click = ImGui::ImageButton("##icon", (ImTextureID)(intptr_t)icon, iconSize);
             ImGui::PopStyleColor(1);
+
             if (click)
             {
                 selected_ = static_cast<int>(i);
-                SetCurNode( node );
+                SetCurNode(node);
                 if (node->type == AssetType::Folder)
                 {
-                    // 切换路径的时候刷新选中状态
                     selected_ = -1;
+                    ImGui::EndGroup();
+                    ImGui::PopID();
                     break;
                 }
             }
-            fileNames.push_back(node->name);
 
-            // 计算是否换行
-            float last_button_x2 = ImGui::GetItemRectMax().x;
-            float next_button_x2 = last_button_x2 + style.ItemSpacing.x; //+ iconSize.x;
-            if (i + 1 < childNum && next_button_x2 < window_visible_x2)
+            ImGui::Dummy(ImVec2(0.f, 0.5f * std::min(style.ItemSpacing.y, 4.f)));
+
+            ImGui::SetCursorPosX(groupX);
+            if (i == selected_)
             {
-                rowIdx++;
-                ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
+                ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
             }
             else
             {
-                rowIdx = 0;
-                // 绘制下一行文件前，先把这一行的文件名绘制出来
-                for (size_t j = 0; j < fileNames.size(); j++)
-                {
-                    if (j > 0)
-                        ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+                ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
+            }
 
-                    if (curRowIdx == j)
-                    {
-                        ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
-                        ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
-                    }
-                    else
-                    {
-                        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-                        ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
-                    }
+            ImGui::Button(node->name.c_str(), ImVec2(cellW, nameSize.y));
+            ImGui::PopStyleColor(2);
 
-                    ImGui::Button(fileNames[j].c_str(), nameSize);
-                    ImGui::PopStyleColor(2);
-                }
-                fileNames.clear();
-                curRowIdx = -1;
+            ImGui::EndGroup();
+            ImGui::PopID();
+
+            float const last_x2 = ImGui::GetItemRectMax().x;
+            if (i + 1 < childNum && last_x2 + style.ItemSpacing.x + cellW <= window_visible_x2)
+            {
+                ImGui::SameLine();
             }
         }
     }

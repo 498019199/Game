@@ -55,6 +55,31 @@ void EditorSetting::SetWindowSize(uint32_t _srcWidth, uint32_t _srcHeight, int h
     srcHeight = inspectorHeight + mainBarHeight;
 }
 
+void EditorSetting::ApplyDpiScale(float scale)
+{
+    if (scale <= 0.f)
+    {
+        return;
+    }
+    auto mul = [scale](int& v) {
+        v = static_cast<int>(static_cast<float>(v) * scale + 0.5f);
+    };
+    mul(hierarchyWidth);
+    mul(hierarchyHeight);
+    mul(consoleWidth);
+    mul(consoleHeight);
+    mul(projectWidth);
+    mul(projectHeight);
+    mul(inspectorWidth);
+    mul(inspectorHeight);
+    mul(mainBarWidth);
+    mul(mainBarHeight);
+    mul(srcWidth);
+    mul(srcHeight);
+    mul(gameViewWidth);
+    mul(gameViewHeight);
+}
+
 EditorManagerD3D11::EditorManagerD3D11()
     :App3D("Editor App <DirectX 11>")
 {
@@ -85,12 +110,18 @@ void EditorManagerD3D11::OnCreate()
     // 设置Dear ImGui风格
     ImGui::StyleColorsDark();
 
+    // 高 DPI / 4K：默认字体与样式按未缩放像素设计，需与 HWND 的 DPI 一致放大
+    float const imgui_dpi_scale = Context::Instance().AppInstance().MainWnd()->DPIScale();
+    ImGui::GetStyle().ScaleAllSizes(imgui_dpi_scale);
+    io.FontGlobalScale = imgui_dpi_scale;
+
     //设置平台/渲染器后端
     ImGui_ImplWin32_Init(Context::Instance().AppInstance().MainWnd()->GetHWND()); 
     auto re = static_cast<ID3D11Device*>(d3d11_re.GetD3DDevice());
     auto ctx = static_cast<ID3D11DeviceContext*>(d3d11_re.GetD3DDeviceImmContext());
     ImGui_ImplDX11_Init(re, ctx);
-    
+    setting_.ApplyDpiScale(Context::Instance().AppInstance().MainWnd()->DPIScale());
+
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
@@ -211,12 +242,6 @@ void EditorManagerD3D11::OnDestroy()
 
 uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
 {
-    if( nullptr == model_ )
-    {
-        RenderEditorPanels();
-        return App3D::URV_NeedFlush | App3D::URV_Finished;
-    }
-
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     switch (pass)
     {
@@ -248,7 +273,9 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
 
             RenderEditorPanels();
 
-            model_->ForEachMesh([this](Renderable& mesh)
+            if( model_ )
+            {
+                model_->ForEachMesh([this](Renderable& mesh)
                 {
                     auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
 
@@ -258,7 +285,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
                     detailed_mesh.EyePos(this->ActiveCamera().EyePos());
                     detailed_mesh.BackFaceDepthPass(false);
                 });
-
+            }
         }
             return App3D::URV_NeedFlush | App3D::URV_Finished;
     }

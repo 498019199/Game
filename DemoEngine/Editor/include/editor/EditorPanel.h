@@ -37,6 +37,10 @@ struct EditorSetting
     bool is_game_paused_ {false};
 
     void SetWindowSize(uint32_t srcWidth, uint32_t srcHeight, int hWidth, int pHeight, int iWidth);
+
+    // Layout from SetWindowSize matches cfg / RenderSettings (96-DPI style units). ImGui uses the
+    // HWND client rect in physical pixels; scale layout when Window was created with DPIScale() != 1.
+    void ApplyDpiScale(float scale);
 };
 
 

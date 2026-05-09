@@ -23,7 +23,7 @@ struct EditorAssetNode
 
 class EditorProjectPanel: public EditorPanel
 {
-    // 文件名大小
+    // 名字按钮高度；宽度按文件名实时计算（避免固定宽度裁字）
     const ImVec2 nameSize = ImVec2(72.0f, 20.0f);
     // 文件icon大小
     const ImVec2 iconSize = ImVec2(64.0f, 64.0f);
