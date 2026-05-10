@@ -1,0 +1,75 @@
+body.window {
+	font-family: Segoe UI;
+	font-size: 15dp;
+	color: #e8eaf0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	background-color: transparent;
+}
+
+#login_box {
+	position: absolute;
+	left: 80dp;
+	top: 60dp;
+	width: 300dp;
+	padding: 22dp 24dp 20dp 24dp;
+	background: #2a2f3ae6;
+	border-radius: 10dp;
+	border-color: #4a5568;
+	border-width: 1dp;
+}
+
+h1 {
+	font-size: 22dp;
+	font-weight: bold;
+	margin: 0 0 6dp 0;
+	text-align: center;
+	color: #f7fafc;
+}
+
+.subtitle {
+	text-align: center;
+	font-size: 12dp;
+	color: #a0aec0;
+	margin: 0 0 18dp 0;
+}
+
+.field_label {
+	display: block;
+	margin-top: 10dp;
+	margin-bottom: 4dp;
+	font-size: 12dp;
+	color: #cbd5e0;
+}
+
+input {
+	width: 100%;
+	height: 34dp;
+	padding: 6dp 8dp;
+	box-sizing: border-box;
+	background: #1a202c;
+	border-color: #4a5568;
+	border-width: 1dp;
+	color: #f7fafc;
+}
+
+input:focus {
+	border-color: #63b3ed;
+}
+
+#login_btn {
+	width: 100%;
+	margin-top: 18dp;
+	height: 38dp;
+	background: #3182ce;
+	color: #ffffff;
+	border-width: 0;
+	font-size: 15dp;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+#login_btn:hover {
+	background: #2b6cb0;
+}

@@ -12,6 +12,8 @@ set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorInspectorPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorMainBarPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorManagerD3D11.cpp
+    ${PROJECT_SOURCE_DIR}/Editor/src/EditorRmlUiHost.cpp
+    ${PROJECT_SOURCE_DIR}/Editor/src/RmlUiRenderInterfaceD3D11.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorProjectPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/Model.cpp)
 
@@ -38,4 +40,8 @@ target_link_libraries(ZENGINE_editor
         ZENGINE_AudioEngine_XAudio
         ZENGINE_AudioDataSource_OggVorbis
         ZENGINE_InputEngine_Input
+    PRIVATE
+        rmlui
+        rmlui_debugger
+        d3dcompiler
 )

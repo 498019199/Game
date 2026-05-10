@@ -1,4 +1,7 @@
 #include <editor/EditorManagerD3D11.h>
+#ifndef EDITOR_DEBUG_MODE
+#include <editor/EditorRmlUiHost.h>
+#endif
 #include <editor/EditorConsolePanel.h>
 #include <editor/EditorHierarchyPanel.h>
 #include <editor/EditorMainBarPanel.h>
@@ -83,7 +86,10 @@ void EditorSetting::ApplyDpiScale(float scale)
 }
 
 EditorManagerD3D11::EditorManagerD3D11()
-    :App3D("Editor App <DirectX 11>")
+    : App3D("Editor App <DirectX 11>")
+#ifndef EDITOR_DEBUG_MODE
+	, rml_ui_host_(std::make_unique<EditorRmlUiHost>())
+#endif
 {
 }
 
@@ -124,6 +130,8 @@ void EditorManagerD3D11::OnCreate()
     ImGui_ImplDX11_Init(re, ctx);
     setting_.ApplyDpiScale(Context::Instance().AppInstance().MainWnd()->DPIScale());
 
+	rml_ui_host_->Init(re, ctx, setting_.gameViewWidth, setting_.gameViewHeight);
+
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorHierarchyPanel>() );
@@ -149,20 +157,6 @@ void EditorManagerD3D11::OnCreate()
     back_face_depth_fb_ = rf.MakeFrameBuffer();
 	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
-
-    light_ = MakeSharedPtr<PointLightSource>();
-	light_->Attrib(0);
-	light_->Color(float3(1.5f, 1.5f, 1.5f));
-	light_->Falloff(float3(1, 0.5f, 0.0f));
-
-	auto light_proxy = LoadLightSourceProxyModel(light_);
-	light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
-
-	auto light_node = MakeSharedPtr<SceneNode>(SceneNode::SOA_Cullable);
-	light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-	light_node->AddComponent(light_);
-	light_node->AddChild(light_proxy->RootNode());
-	context.WorldInstance().SceneRootNode().AddChild(light_node);
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
@@ -263,6 +257,13 @@ void EditorManagerD3D11::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDe
 	game_view_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
 	game_view_srv_ = rf.MakeTextureSrv(game_view_color_tex_);
+
+#ifndef EDITOR_DEBUG_MODE
+	if (rml_ui_host_)
+	{
+		rml_ui_host_->SetDimensions(static_cast<int>(setting_.gameViewWidth), static_cast<int>(setting_.gameViewHeight));
+	}
+#endif
 }
 
 void* EditorManagerD3D11::GameViewShaderResourceView() const
@@ -284,6 +285,10 @@ void EditorManagerD3D11::DoUpdateOverlay()
 void EditorManagerD3D11::OnDestroy()
 {
 #ifndef EDITOR_DEBUG_MODE
+	if (rml_ui_host_)
+	{
+		rml_ui_host_->Shutdown();
+	}
     ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
@@ -293,6 +298,21 @@ void EditorManagerD3D11::OnDestroy()
 uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
 {
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+
+	auto const editor_screen_pass = [&re, this]() -> uint32_t {
+		re.BindFrameBuffer(FrameBufferPtr());
+		Color clear_clr(0.2f, 0.4f, 0.6f, 1);
+		if (Context::Instance().Config().graphics_cfg.gamma)
+		{
+			clear_clr.r() = 0.029f;
+			clear_clr.g() = 0.133f;
+			clear_clr.b() = 0.325f;
+		}
+		re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
+		RenderEditorPanels();
+		return App3D::URV_Finished;
+	};
+
     switch (pass)
     {
         case 0:
@@ -338,20 +358,24 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
         }
         case 2:
         {
-            // 后备缓冲区：仅 ImGui；3D 已由 pass 1 写入 game_view_srv_
-            re.BindFrameBuffer(FrameBufferPtr());
-            Color clear_clr(0.2f, 0.4f, 0.6f, 1);
-            if (Context::Instance().Config().graphics_cfg.gamma)
-            {
-                clear_clr.r() = 0.029f;
-                clear_clr.g() = 0.133f;
-                clear_clr.b() = 0.325f;
-            }
-            re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
-
-            RenderEditorPanels();
-            return App3D::URV_Finished;
+#ifndef EDITOR_DEBUG_MODE
+            // RmlUi 叠加到 Game 视图 RT（不清颜色，保留 pass 1 的 3D）
+            re.BindFrameBuffer(game_view_fb_);
+			if (rml_ui_host_)
+			{
+				rml_ui_host_->RenderIntoGameView();
+			}
+            return 0;
+#else
+			return editor_screen_pass();
+#endif
         }
+#ifndef EDITOR_DEBUG_MODE
+        case 3:
+        {
+			return editor_screen_pass();
+        }
+#endif
         default:
             COMMON_ASSERT(false);
             return 0;
@@ -469,6 +493,13 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                 light_->Falloff(float3(1, 0.5f, 0.0f));
                 auto light_proxy = LoadLightSourceProxyModel(light_);
                 light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+
+                auto& context = Context::Instance();
+                auto light_node = MakeSharedPtr<SceneNode>(SceneNode::SOA_Cullable);
+                light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+                light_node->AddComponent(light_);
+                light_node->AddChild(light_proxy->RootNode());
+                context.WorldInstance().SceneRootNode().AddChild(light_node);
             }
         }
         break;

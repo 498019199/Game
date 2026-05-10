@@ -1,0 +1,17 @@
+<rml>
+<head>
+	<title>Login</title>
+	<link type="text/rcss" href="login.rcss"/>
+</head>
+<body class="window">
+	<div id="login_box">
+		<h1>登录</h1>
+		<p class="subtitle">Game 视图 · RmlUi 叠加层</p>
+		<label class="field_label">用户名</label>
+		<input type="text" name="username"/>
+		<label class="field_label">密码</label>
+		<input type="password" name="password"/>
+		<button id="login_btn">进入</button>
+	</div>
+</body>
+</rml>
