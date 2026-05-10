@@ -19,6 +19,8 @@
 #include <render/RenderFactory.h>
 #include "Model.h"
 
+#include <algorithm>
+
 namespace
 {
 	enum
@@ -224,6 +226,54 @@ void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
 
 	back_face_depth_fb_->Attach(FrameBuffer::Attachment::Color0, rf.Make2DRtv(back_face_depth_tex, 0, 1, 0));
 	back_face_depth_fb_->Attach(back_face_ds_view);
+
+	RebuildGameViewRenderTarget(rf, caps);
+}
+
+void EditorManagerD3D11::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDeviceCaps const& caps)
+{
+	uint32_t const gw = (std::max)(1, setting_.gameViewWidth);
+	uint32_t const gh = (std::max)(1, setting_.gameViewHeight);
+
+	ElementFormat color_fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({ EF_ABGR8, EF_ARGB8 }), 1, 0);
+	COMMON_ASSERT(color_fmt != EF_Unknown);
+
+	game_view_color_tex_ = rf.MakeTexture2D(gw, gh, 1, 1, color_fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
+	RenderWorker::RenderTargetViewPtr color_rtv = rf.Make2DRtv(game_view_color_tex_, 0, 1, 0);
+
+	RenderWorker::DepthStencilViewPtr game_dsv;
+	if (depth_texture_support_)
+	{
+		ElementFormat ds_fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({ EF_D24S8, EF_D16 }), 1, 0);
+		COMMON_ASSERT(ds_fmt != EF_Unknown);
+		float4 constexpr ds_clear(0, 0, 0, 0);
+		TexturePtr ds_tex = rf.MakeTexture2D(gw, gh, 1, 1, ds_fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write, {}, &ds_clear);
+		game_dsv = rf.Make2DDsv(ds_tex, 0, 1, 0);
+	}
+	else
+	{
+		game_dsv = rf.Make2DDsv(gw, gh, EF_D16, 1, 0);
+	}
+
+	game_view_fb_ = rf.MakeFrameBuffer();
+	game_view_fb_->Attach(FrameBuffer::Attachment::Color0, color_rtv);
+	game_view_fb_->Attach(game_dsv);
+
+	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
+	game_view_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
+
+	game_view_srv_ = rf.MakeTextureSrv(game_view_color_tex_);
+}
+
+void* EditorManagerD3D11::GameViewShaderResourceView() const
+{
+#ifndef EDITOR_DEBUG_MODE
+	if (game_view_srv_)
+	{
+		return game_view_srv_->GetShaderResourceView();
+	}
+#endif
+	return nullptr;
 }
 
 void EditorManagerD3D11::DoUpdateOverlay()
@@ -259,8 +309,36 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
             }
         }
             return App3D::URV_NeedFlush;
-        default:
+        case 1:
         {
+            // 离屏渲染 3D 到 Game 视图 RT（尺寸见 setting_.gameViewWidth/Height）
+            re.BindFrameBuffer(game_view_fb_);
+            Color clear_clr(0.2f, 0.4f, 0.6f, 1);
+            if (Context::Instance().Config().graphics_cfg.gamma)
+            {
+                clear_clr.r() = 0.029f;
+                clear_clr.g() = 0.133f;
+                clear_clr.b() = 0.325f;
+            }
+            re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
+
+            if (model_)
+            {
+                model_->ForEachMesh([this](Renderable& mesh)
+                    {
+                        auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
+                        detailed_mesh.LightPos(light_->Position());
+                        detailed_mesh.LightColor(light_->Color());
+                        detailed_mesh.LightFalloff(light_->Falloff());
+                        detailed_mesh.EyePos(this->ActiveCamera().EyePos());
+                        detailed_mesh.BackFaceDepthPass(false);
+                    });
+            }
+            return App3D::URV_NeedFlush;
+        }
+        case 2:
+        {
+            // 后备缓冲区：仅 ImGui；3D 已由 pass 1 写入 game_view_srv_
             re.BindFrameBuffer(FrameBufferPtr());
             Color clear_clr(0.2f, 0.4f, 0.6f, 1);
             if (Context::Instance().Config().graphics_cfg.gamma)
@@ -272,22 +350,11 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
             re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
 
             RenderEditorPanels();
-
-            if( model_ )
-            {
-                model_->ForEachMesh([this](Renderable& mesh)
-                {
-                    auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
-
-                    detailed_mesh.LightPos(light_->Position());
-                    detailed_mesh.LightColor(light_->Color());
-                    detailed_mesh.LightFalloff(light_->Falloff());
-                    detailed_mesh.EyePos(this->ActiveCamera().EyePos());
-                    detailed_mesh.BackFaceDepthPass(false);
-                });
-            }
+            return App3D::URV_Finished;
         }
-            return App3D::URV_NeedFlush | App3D::URV_Finished;
+        default:
+            COMMON_ASSERT(false);
+            return 0;
     }
 }
 

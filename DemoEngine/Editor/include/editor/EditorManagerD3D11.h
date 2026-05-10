@@ -4,6 +4,12 @@
 #include <editor/EditorPanel.h>
 #include <editor/EditorProjectPanel.h>
 
+#include <render/FrameBuffer.h>
+#include <render/Texture.h>
+#include <render/RenderView.h>
+#include <render/RenderDeviceCaps.h>
+#include <render/RenderFactory.h>
+
 #include <vector>
 
 enum class ETransformType
@@ -38,12 +44,17 @@ public:
     void GetEditorSetting( const EditorSetting& setting) { setting_ = setting; }
     void RenderEditorPanels() const;
 
+    /// ID3D11ShaderResourceView* for ImGui::Image；场景先渲染到离屏 RT 再采样（勿在绑定为 RT 时采样）
+    void* GameViewShaderResourceView() const;
+
     void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
     
     std::string LoadTextFile(const std::string_view& path);
+
+    void RebuildGameViewRenderTarget(RenderWorker::RenderFactory& rf, RenderWorker::RenderDeviceCaps const& caps);
 private:
     std::vector<EditorPanelPtr> panel_list_;
     EditorSetting setting_;
@@ -57,6 +68,10 @@ private:
     RenderWorker::LightSourcePtr light_;
 	bool depth_texture_support_;
 	RenderWorker::FrameBufferPtr back_face_depth_fb_;
+
+    RenderWorker::FrameBufferPtr game_view_fb_;
+    RenderWorker::TexturePtr game_view_color_tex_;
+    RenderWorker::ShaderResourceViewPtr game_view_srv_;
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 };

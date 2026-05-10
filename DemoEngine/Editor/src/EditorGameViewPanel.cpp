@@ -1,8 +1,12 @@
 
 #include <editor/EditorGameViewPanel.h>
+#include <editor/EditorManagerD3D11.h>
+
+#include <base/ZEngine.h>
 
 namespace EditorWorker
 {
+using namespace RenderWorker;
 
 EditorGameViewPanel::EditorGameViewPanel()
 {
@@ -27,7 +31,16 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
         {
             if (ImGui::BeginTabItem("Game"))
             {
-                //EditorDataManager::GetInstance()->isGameView = true;
+                ImVec2 const avail = ImGui::GetContentRegionAvail();
+                void* const game_srv = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance()).GameViewShaderResourceView();
+                if (game_srv != nullptr && avail.x > 1.f && avail.y > 1.f)
+                {
+                    ImGui::Image((ImTextureID)(intptr_t)game_srv, avail);
+                }
+                else
+                {
+                    ImGui::TextUnformatted("Game view RT unavailable");
+                }
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Scene"))
