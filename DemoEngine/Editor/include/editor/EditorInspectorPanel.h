@@ -17,12 +17,12 @@ public:
 
 private:
     // Asset
-    void DrawScript(const AssertBaseInfo& info);
-    void DrawShader(const AssertBaseInfo& info);
-    void DrawTexture(const AssertBaseInfo& info);
-    void DrawMaterial(const AssertBaseInfo& info);
-    void DrawModel(const AssertBaseInfo& info);
-    void DrawAudio(const AssertBaseInfo& info);
+    void DrawScript(AssertBaseInfo& info);
+    void DrawShader(AssertBaseInfo& info);
+    void DrawTexture(AssertBaseInfo& info);
+    void DrawMaterial(AssertBaseInfo& info);
+    void DrawModel(AssertBaseInfo& info);
+    void DrawAudio(AssertBaseInfo& info);
 
 private:
     int inspector_width_ {0};

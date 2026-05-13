@@ -108,9 +108,9 @@ SOURCE_GROUP("Rendering System\\Header Files" FILES ${RENDERING_HEADER_FILES})
 
 
 SET(AUDIO_HEADER_FILES
-	${PROJECT_SOURCE_DIR}/core/core/include/audio/Audio.h
-	${PROJECT_SOURCE_DIR}/core/core/include/audio/AudioDataSource.h
-	${PROJECT_SOURCE_DIR}/core/core/include/audio/AudioFactory.h
+	${PROJECT_SOURCE_DIR}/core/core/include/base/Audio.h
+	${PROJECT_SOURCE_DIR}/core/core/include/base/AudioDataSource.h
+	${PROJECT_SOURCE_DIR}/core/core/include/base/AudioFactory.h
 )
 SET(AUDIO_SOURCE_FILES
 	${PROJECT_SOURCE_DIR}/core/core/src/audio/AudioBuffer.cpp

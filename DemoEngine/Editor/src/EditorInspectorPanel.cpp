@@ -77,7 +77,7 @@ void EditorInspectorPanel::OnResize()
     
 }
 
-void EditorInspectorPanel::DrawScript(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawScript(AssertBaseInfo& info)
 {
     const auto& script_info  = checked_cast<const AssetScriptInfo&>(info);
     std::string title = script_info.name + " (Lua Script)";
@@ -92,7 +92,7 @@ void EditorInspectorPanel::DrawScript(const AssertBaseInfo& info)
     ImGui::PopTextWrapPos();
 }
 
-void EditorInspectorPanel::DrawShader(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawShader(AssertBaseInfo& info)
 {
     const auto& script_info = checked_cast<const AssetScriptInfo&>(info);
     std::string title = script_info.name + " (Shader)";
@@ -108,7 +108,7 @@ void EditorInspectorPanel::DrawShader(const AssertBaseInfo& info)
 }
 
 
-void EditorInspectorPanel::DrawTexture(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawTexture(AssertBaseInfo& info)
 {
     const auto& tex_info = checked_cast<const AssetTextureInfo&>(info);
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -143,9 +143,9 @@ void EditorInspectorPanel::DrawTexture(const AssertBaseInfo& info)
     ImGui::Image((ImTextureID)(intptr_t)srv, ImVec2((float)width, (float)height));
 }
 
-void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
 {
-    const auto& audio_info = checked_cast<const AssetAudioInfo&>(info);
+    auto& audio_info = checked_cast<AssetAudioInfo&>(info);
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (!ImGui::CollapsingHeader("Audio"))
         return;
@@ -193,16 +193,65 @@ void EditorInspectorPanel::DrawAudio(const AssertBaseInfo& info)
     }
 }
 
-void EditorInspectorPanel::DrawModel(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawModel(AssertBaseInfo& info)
 {
-    const auto& model_info = checked_cast<const AssetModelInfo&>(info);
+    auto& model_info = checked_cast<AssetModelInfo&>(info);
 
     ImGui::Text("Name:");
     ImGui::SameLine(120);
     ImGui::Text("%s", model_info.name.c_str());
+
+    if (ImGui::TreeNode("Transform"))
+    {
+        static float pos[3] = { 0.0f, 0.0f, 0.0f };
+        static float rot[3] = { 0.0f, 0.0f, 0.0f };
+        static float scl[3] = { 1.0f, 1.0f, 1.0f };
+        ImGui::DragFloat3("Position##pos", pos, 0.1f);
+        ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
+        ImGui::DragFloat3("Scale##scl", scl, 0.1f);
+        ImGui::TreePop();
+    }
+    ImGui::Spacing();
+
+    if (ImGui::TreeNode("Mesh Fileter"))
+    {
+        ImGui::TreePop();
+    }
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Mesh Renderer"))
+    {
+        if (ImGui::TreeNode("Materials"))
+        {
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Lighting"))
+        {
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Lightmaping"))
+        {
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Probes"))
+        {
+            ImGui::TreePop();
+        }
+
+       if (ImGui::TreeNode("Additional Settings"))
+        {
+            ImGui::TreePop();
+        }
+    }
+    ImGui::Spacing();
+
+
 }
 
-void EditorInspectorPanel::DrawMaterial(const AssertBaseInfo& info)
+void EditorInspectorPanel::DrawMaterial(AssertBaseInfo& info)
 {
     
 }
