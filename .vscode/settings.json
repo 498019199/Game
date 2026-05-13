@@ -140,4 +140,6 @@
         "VCPKG_TARGET_TRIPLET": "x64-windows",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
     }*/
+
+    "cmake.configureOnOpen": true,
 }

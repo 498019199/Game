@@ -1,6 +1,7 @@
 #include <world/CameraController.h>
 #include <world/SceneNode.h>
 #include <base/InputFactory.h>
+#include <base/UIManager.h>
 
 namespace RenderWorker
 {
@@ -160,7 +161,7 @@ TrackballCameraController::TrackballCameraController(bool use_input_engine, uint
 
 void TrackballCameraController::InputHandler(InputEngine const & /*ie*/, InputAction const & action)
 {
-    if (camera_ /*&& !Context::Instance().UIManagerInstance().MouseOnUI()*/ )
+    if (camera_ && !Context::Instance().UIManagerInstance().MouseOnUI() )
     {
         switch (action.first)
         {

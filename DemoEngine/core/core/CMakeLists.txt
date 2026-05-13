@@ -152,12 +152,22 @@ set(INPUT_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/input/Touch.cpp
 )
 
+set(UI_HEADER_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/UIManager.h
+)
+set(UI_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/src/ui/UIManager.cpp
+)
+SOURCE_GROUP("UI\\Source Files" FILES ${UI_SOURCE_FILES})
+SOURCE_GROUP("UI\\Header Files" FILES ${UI_HEADER_FILES})
+
 add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
     ${APP_HEADER_FILES} ${APP_SOURCE_FILES}
     ${BASE_HEADER_FILES} ${BASE_SOURCE_FILES}
     ${WORLD_HEADER_FILES} ${WORLD_SOURCE_FILES}
     ${RENDER_HEADER_FILES} ${RENDER_SOURCE_FILES}
     ${AUDIO_HEADER_FILES} ${AUDIO_SOURCE_FILES}
+    ${UI_HEADER_FILES} ${UI_SOURCE_FILES}
     ${INPUT_SOURCE_FILES}
 )
 
@@ -166,6 +176,7 @@ target_include_directories(ZENGINE_core
         ${ZENGINE_ROOT_DIR}/common/include
         ${ZENGINE_ROOT_DIR}/core/core/include
         ${ZENGINE_ROOT_DIR}/3rd/dxsdk/dxsdk/include
+        ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Include
         ${ZENGINE_ROOT_DIR}/3rd/7z/7z
 )
 
@@ -190,6 +201,8 @@ target_link_libraries(ZENGINE_core
     PRIVATE
         7zxa
         LZMA
+        rmlui
+        rmlui_debugger
 )
 
 

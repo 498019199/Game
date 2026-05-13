@@ -7,8 +7,9 @@
 #include <render/ElementFormat.h>
 #include <render/RenderFactory.h>
 #include <base/InputFactory.h>
-#include <audio/AudioFactory.h>
+#include <base/AudioFactory.h>
 #include <world/World.h>
+#include <base/UIManager.h>
 
 #if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
     #define ZENGINE_STATIC_LINK_PLUGINS
@@ -115,6 +116,11 @@ public:
         return *render_factory_;
     }
 
+    bool AudioFactoryValid() const noexcept
+    {
+        return audio_factory_ != nullptr;
+    }
+
     AudioFactory& AudioFactoryInstance()
     {
         if (!audio_factory_)
@@ -149,6 +155,7 @@ public:
     {
         return input_factory_ != nullptr;
     }
+
     InputFactory& InputFactoryInstance()
     {
         if (!input_factory_)
@@ -160,6 +167,11 @@ public:
             }
         }
         return *input_factory_;
+    }
+
+    bool WorldValid() const noexcept
+    {
+        return render_world_ != nullptr;
     }
 
     World& WorldInstance() noexcept
@@ -212,6 +224,20 @@ public:
         return *dev_helper_;
     }
 #endif// ZENGINE_IS_DEV_PLATFORM
+
+    UIManager& UIManagerInstance()
+    {
+        if (!ui_mgr_.Valid())
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!ui_mgr_.Valid())
+            {
+                ui_mgr_.Init();
+            }
+        }
+
+        return ui_mgr_;
+    }
 
     void LoadRenderFactory( std::string const& rf_name )
     {
@@ -548,6 +574,10 @@ public:
         {
             res_loader_.Destroy();
         }
+        if (ui_mgr_.Valid())
+        {
+            ui_mgr_.Destroy();
+        }
 
         render_world_.reset();
         render_factory_.reset();
@@ -573,8 +603,6 @@ private:
     std::unique_ptr<RenderFactory> render_factory_;
     // 场景对象管理
     std::unique_ptr<World> render_world_;
-    // 载入资源管理器
-    ResLoader res_loader_;
     // 音频工厂
     std::unique_ptr<AudioFactory> audio_factory_;
     // 音频解析
@@ -594,6 +622,10 @@ private:
 	DllLoader dev_helper_loader_;
 #endif
     
+    // 载入资源管理器
+    ResLoader res_loader_;
+    // UI管理器
+    UIManager ui_mgr_;
     // 全局线程池
     ThreadPool global_thread_pool_;
 };
@@ -664,9 +696,19 @@ InputFactory& Context::InputFactoryInstance()
     return pimpl_->InputFactoryInstance();
 }
 
+bool Context::AudioFactoryValid() const noexcept
+{
+    return pimpl_->AudioFactoryValid();
+}
+
 AudioFactory& Context::AudioFactoryInstance()
 {
     return pimpl_->AudioFactoryInstance();
+}
+
+bool Context::WorldValid() const noexcept
+{
+    return pimpl_->WorldValid();
 }
 
 World& Context::WorldInstance() noexcept
@@ -682,6 +724,11 @@ ResLoader& Context::ResLoaderInstance()
 ThreadPool& Context::ThreadPoolInstance()
 {
     return pimpl_->ThreadPoolInstance();
+}
+
+UIManager& Context::UIManagerInstance()
+{
+    return pimpl_->UIManagerInstance();
 }
 
 #if ZENGINE_IS_DEV_PLATFORM

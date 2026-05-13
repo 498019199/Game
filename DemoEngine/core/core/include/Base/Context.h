@@ -37,6 +37,7 @@ class AudioDataSourceFactory;
 class World;
 class ResLoader;
 class DevHelper;
+class UIManager;
 
 class ZENGINE_CORE_API Context final
 {
@@ -60,12 +61,15 @@ public:
     bool AppValid() const noexcept;
     App3D& AppInstance() noexcept;
     
+    bool AudioFactoryValid() const noexcept;
 	AudioFactory& AudioFactoryInstance();
+
+    bool WorldValid() const noexcept;
     World& WorldInstance() noexcept;
     
-    RenderFactory& RenderFactoryInstance() noexcept;
     bool RenderFactoryValid() const noexcept;
-
+    RenderFactory& RenderFactoryInstance() noexcept;
+    
     bool AudioDataSourceFactoryValid() const noexcept;
     AudioDataSourceFactory& AudioDataSourceFactoryInstance();
 
@@ -79,7 +83,7 @@ public:
 
     ThreadPool& ThreadPoolInstance();
     ResLoader& ResLoaderInstance();
-
+    UIManager& UIManagerInstance();
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

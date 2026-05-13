@@ -39,7 +39,5 @@ target_link_libraries(ZENGINE_editor
         ZENGINE_AudioDataSource_OggVorbis
         ZENGINE_InputEngine_Input
     PRIVATE
-        rmlui
-        rmlui_debugger
         d3dcompiler
 )

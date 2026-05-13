@@ -1,4 +1,4 @@
-#include <editor/UIManager.h>
+#include <base/UIManager.h>
 
 #include <base/Context.h>
 #include <base/ResLoader.h>
@@ -12,25 +12,21 @@
 
 #include <base/App3D.h>
 
-#include <imgui/imgui.h>
 
 #include <algorithm>
 
-namespace EditorWorker {
+namespace RenderWorker {
 
 class EditorRmlSystemInterface final : public Rml::SystemInterface {
 public:
-    double GetElapsedTime() override { return RenderWorker::Context::Instance().AppInstance().AppTime(); }
+    double GetElapsedTime() override { return Context::Instance().AppInstance().AppTime(); }
 };
 
 UIManager::UIManager() = default;
+UIManager::~UIManager() = default;
 
-UIManager::~UIManager()
-{
-	Shutdown();
-}
 
-void UIManager::Init(int width, int height)
+void UIManager::Init()
 {
 	system_interface_ = CommonWorker::MakeUniquePtr<EditorRmlSystemInterface>();
 	Rml::SetSystemInterface(reinterpret_cast<Rml::SystemInterface*>(system_interface_.get()));
@@ -40,9 +36,6 @@ void UIManager::Init(int width, int height)
 		system_interface_.reset();
 		return;
 	}
-
-	width_ = (std::max)(1, width);
-	height_ = (std::max)(1, height);
 
 	rml_context_ = Rml::CreateContext("editor_game_view", Rml::Vector2i(width_, height_));
 	if (!rml_context_)
@@ -178,62 +171,4 @@ void UIManager::ProcessGameViewPointer(bool image_hovered, int mouse_x, int mous
 	}
 }
 
-void UIManager::ProcessGameViewImGuiKeyboardRelay(bool enabled, ImGuiIO const* io)
-{
-	if (!enabled || !rml_context_ || !io)
-	{
-		return;
-	}
-
-	int mods = 0;
-	if (io->KeyCtrl)
-	{
-		mods |= int(Rml::Input::KM_CTRL);
-	}
-	if (io->KeyShift)
-	{
-		mods |= int(Rml::Input::KM_SHIFT);
-	}
-	if (io->KeyAlt)
-	{
-		mods |= int(Rml::Input::KM_ALT);
-	}
-	if (io->KeySuper)
-	{
-		mods |= int(Rml::Input::KM_META);
-	}
-
-	for (int n = 0; n < io->InputQueueCharacters.Size; n++)
-	{
-		unsigned int const c = static_cast<unsigned int>(io->InputQueueCharacters[n]);
-		if (c > 0 && c < 0x110000u)
-		{
-			rml_context_->ProcessTextInput(static_cast<Rml::Character>(c));
-		}
-	}
-
-	auto relay = [this, mods](ImGuiKey key, Rml::Input::KeyIdentifier kid) {
-		if (ImGui::IsKeyPressed(key, false))
-		{
-			rml_context_->ProcessKeyDown(kid, mods);
-		}
-		if (ImGui::IsKeyReleased(key))
-		{
-			rml_context_->ProcessKeyUp(kid, mods);
-		}
-	};
-
-	relay(ImGuiKey_Backspace, Rml::Input::KI_BACK);
-	relay(ImGuiKey_Delete, Rml::Input::KI_DELETE);
-	relay(ImGuiKey_Tab, Rml::Input::KI_TAB);
-	relay(ImGuiKey_Enter, Rml::Input::KI_RETURN);
-	relay(ImGuiKey_LeftArrow, Rml::Input::KI_LEFT);
-	relay(ImGuiKey_RightArrow, Rml::Input::KI_RIGHT);
-	relay(ImGuiKey_UpArrow, Rml::Input::KI_UP);
-	relay(ImGuiKey_DownArrow, Rml::Input::KI_DOWN);
-	relay(ImGuiKey_Home, Rml::Input::KI_HOME);
-	relay(ImGuiKey_End, Rml::Input::KI_END);
-	relay(ImGuiKey_Escape, Rml::Input::KI_ESCAPE);
-}
-
-} // namespace EditorWorker
+} // namespace RenderWorker
