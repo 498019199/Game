@@ -14,25 +14,25 @@ pushd "%TARGET_DIR%" >nul 2>&1 || (
 	exit /b 1
 )
 
-echo Running git pull in repository: %CD%
+echo Running git push in repository: %CD%
 
 rem The retry delay in seconds can be set via environment variable, default is 5 seconds
-if defined GIT_PULL_RETRY_DELAY (
-	set /a RETRY_DELAY=%GIT_PULL_RETRY_DELAY%
+if defined GIT_PUSH_RETRY_DELAY (
+	set /a RETRY_DELAY=%GIT_PUSH_RETRY_DELAY%
 ) else (
 	set /a RETRY_DELAY=5
 )
 
 :RETRY
-echo [%date% %time%] Running: git pull
-git pull
+echo [%date% %time%] Running: git push
+git push
 set "GIT_EXIT=%ERRORLEVEL%"
 if %GIT_EXIT%==0 (
-	echo git pull successful.
+	echo git push successful.
 	popd >nul
 	exit /b 0
 ) else (
-	echo git pull failed, exit code %GIT_EXIT%. Retrying in %RETRY_DELAY% seconds...
+	echo git push failed, exit code %GIT_EXIT%. Retrying in %RETRY_DELAY% seconds...
 	timeout /t %RETRY_DELAY% /nobreak >nul
 	goto RETRY
 )
