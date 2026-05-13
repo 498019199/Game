@@ -30,7 +30,7 @@
 
 #include <base/ZEngine.h>
 #include <common/Util.h>
-#include <audio/AudioFactory.h>
+#include <base/AudioFactory.h>
 
 #include "XAAudio.h"
 

@@ -1,4 +1,6 @@
 #include <editor/EditorHierarchyPanel.h>
+#include <base/Context.h>
+#include <world/World.h>
 
 namespace EditorWorker
 {
@@ -22,10 +24,12 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
     // 设置面板具体内容
     if (ImGui::Begin("Hierarchy", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
-        // nodeIdx = 0;
-        // auto scene = SceneManager::GetInstance()->GetCurScene();
-        // for (auto gameObject : scene->gameObjects)
-        //     DrawNode(gameObject);
+        for( const auto& node : Context::Instance().WorldInstance().SceneRootNode().Children() )
+        {
+            std::string node_name;
+            CommonWorker::Convert(node_name, node->Name());
+            ImGui::BulletText(node_name.c_str());
+        }
     }
     ImGui::End();
 }

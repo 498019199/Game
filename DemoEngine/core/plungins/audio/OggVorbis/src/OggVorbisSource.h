@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <audio/AudioDataSource.h>
+#include <base/AudioDataSource.h>
 
 #include <istream>
 #include <vorbis/codec.h>

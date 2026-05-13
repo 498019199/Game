@@ -1,0 +1,62 @@
+<?xml version='1.0'?>
+
+<effect>
+	<cbuffer name="per_frame">
+		<parameter type="float4x4" name="Transform"/>
+	</cbuffer>
+
+	<parameter type="texture2D" name="ui_tex"/>
+	<parameter type="sampler" name="texUISampler">
+		<state name="filtering" value="min_mag_mip_linear"/>
+		<state name="address_u" value="clamp"/>
+		<state name="address_v" value="clamp"/>
+        <state name="address_w" value="clamp"/>
+        <state name="cmp_func" value="always_fail"/>
+        <state name="cmp_func" value="always_fail"/>
+	</parameter>
+
+	<shader>
+		<![CDATA[
+struct VS_IN {
+	float2 pos : POSITION;
+	float4 col : COLOR;
+	float2 uv : TEXCOORD0;
+};
+struct VS_OUT {
+	float4 pos : SV_Position;
+	float4 col : COLOR;
+	float2 uv : TEXCOORD0;
+};
+
+VS_OUT RmlVS(VS_IN vin) {
+	VS_OUT vout;
+	vout.pos = mul(float4(vin.pos, 0.f, 1.f), Transform);
+	vout.col = vin.col;
+	vout.uv = vin.uv;
+
+	return vout;
+}
+
+float4 RmlPS(VS_OUT pin) : SV_Target {
+	float4 s = ui_tex.Sample(texUISampler, pin.uv);
+	return pin.col * s;
+}
+		]]>
+	</shader>
+
+	<technique name="UITec">
+		<pass name="p0">
+			<state name="depth_enable" value="false"/>
+			<state name="depth_write_mask" value="false"/>
+
+			<state name="blend_enable" value="true"/>
+			<state name="src_blend" value="src_alpha"/>
+			<state name="dest_blend" value="inv_src_alpha"/>
+			<state name="src_blend_alpha" value="src_alpha"/>
+			<state name="dest_blend_alpha" value="inv_src_alpha"/>
+			
+			<state name="vertex_shader" value="RmlVS()"/>
+			<state name="pixel_shader" value="RmlPS()"/>
+		</pass>
+	</technique>
+</effect>

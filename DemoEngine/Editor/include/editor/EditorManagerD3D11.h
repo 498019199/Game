@@ -22,10 +22,6 @@ enum class ETransformType
 
 namespace EditorWorker
 {
-#ifndef EDITOR_DEBUG_MODE
-class EditorRmlUiHost;
-#endif
-
 class EditorManagerD3D11: public RenderWorker::App3D
 {
 public:
@@ -54,9 +50,6 @@ public:
 
     void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 
-#ifndef EDITOR_DEBUG_MODE
-    EditorRmlUiHost* RmlUiHost() { return rml_ui_host_.get(); }
-#endif
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
@@ -84,9 +77,7 @@ private:
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 
-#ifndef EDITOR_DEBUG_MODE
-	std::unique_ptr<EditorRmlUiHost> rml_ui_host_;
-#endif
+
 };
 
 

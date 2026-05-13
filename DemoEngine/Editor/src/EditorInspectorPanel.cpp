@@ -6,7 +6,7 @@
 #include <common/Util.h>
 
 #include <render/RenderFactory.h>
-#include <audio/AudioFactory.h>
+#include <base/AudioFactory.h>
 
 namespace EditorWorker
 {

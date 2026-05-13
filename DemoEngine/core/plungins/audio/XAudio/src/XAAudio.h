@@ -147,7 +147,7 @@ struct X3DAUDIO_LISTENER
 
 #include <common/com_ptr.h>
 #include <common/DllLoader.h>
-#include <audio/Audio.h>
+#include <base/Audio.h>
 
 namespace RenderWorker
 {

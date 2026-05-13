@@ -29,8 +29,8 @@
  */
 
 #include <base/ZEngine.h>
-#include <audio/AudioFactory.h>
-#include <audio/AudioDataSource.h>
+#include <base/AudioFactory.h>
+#include <base/AudioDataSource.h>
 
 #include <functional>
 #include <limits>

@@ -12,8 +12,6 @@ set(SRC_LIST
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorInspectorPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorMainBarPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorManagerD3D11.cpp
-    ${PROJECT_SOURCE_DIR}/Editor/src/EditorRmlUiHost.cpp
-    ${PROJECT_SOURCE_DIR}/Editor/src/RmlUiRenderInterfaceD3D11.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/EditorProjectPanel.cpp
     ${PROJECT_SOURCE_DIR}/Editor/src/Model.cpp)
 

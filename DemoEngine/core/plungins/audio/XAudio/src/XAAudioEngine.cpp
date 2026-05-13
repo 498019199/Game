@@ -31,7 +31,7 @@
 #include <base/ZEngine.h>
 #define INITGUID
 #include <common/ErrorHandling.h>
-#include <audio/AudioDataSource.h>
+#include <base/AudioDataSource.h>
 
 #include <cmath>
 #include <cstring>

@@ -1,7 +1,4 @@
 #include <editor/EditorManagerD3D11.h>
-#ifndef EDITOR_DEBUG_MODE
-#include <editor/EditorRmlUiHost.h>
-#endif
 #include <editor/EditorConsolePanel.h>
 #include <editor/EditorHierarchyPanel.h>
 #include <editor/EditorMainBarPanel.h>
@@ -87,9 +84,7 @@ void EditorSetting::ApplyDpiScale(float scale)
 
 EditorManagerD3D11::EditorManagerD3D11()
     : App3D("Editor App <DirectX 11>")
-#ifndef EDITOR_DEBUG_MODE
-	, rml_ui_host_(std::make_unique<EditorRmlUiHost>())
-#endif
+
 {
 }
 
@@ -129,8 +124,6 @@ void EditorManagerD3D11::OnCreate()
     auto ctx = static_cast<ID3D11DeviceContext*>(d3d11_re.GetD3DDeviceImmContext());
     ImGui_ImplDX11_Init(re, ctx);
     setting_.ApplyDpiScale(Context::Instance().AppInstance().MainWnd()->DPIScale());
-
-	rml_ui_host_->Init(re, ctx, setting_.gameViewWidth, setting_.gameViewHeight);
 
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorProjectPanel>() );
     panel_list_.push_back( CommonWorker::MakeSharedPtr<EditorMainBarPanel>() );
@@ -257,13 +250,6 @@ void EditorManagerD3D11::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDe
 	game_view_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
 	game_view_srv_ = rf.MakeTextureSrv(game_view_color_tex_);
-
-#ifndef EDITOR_DEBUG_MODE
-	if (rml_ui_host_)
-	{
-		rml_ui_host_->SetDimensions(static_cast<int>(setting_.gameViewWidth), static_cast<int>(setting_.gameViewHeight));
-	}
-#endif
 }
 
 void* EditorManagerD3D11::GameViewShaderResourceView() const
@@ -285,10 +271,6 @@ void EditorManagerD3D11::DoUpdateOverlay()
 void EditorManagerD3D11::OnDestroy()
 {
 #ifndef EDITOR_DEBUG_MODE
-	if (rml_ui_host_)
-	{
-		rml_ui_host_->Shutdown();
-	}
     ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
@@ -358,24 +340,8 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
         }
         case 2:
         {
-#ifndef EDITOR_DEBUG_MODE
-            // RmlUi 叠加到 Game 视图 RT（不清颜色，保留 pass 1 的 3D）
-            re.BindFrameBuffer(game_view_fb_);
-			if (rml_ui_host_)
-			{
-				rml_ui_host_->RenderIntoGameView();
-			}
-            return 0;
-#else
-			return editor_screen_pass();
-#endif
-        }
-#ifndef EDITOR_DEBUG_MODE
-        case 3:
-        {
 			return editor_screen_pass();
         }
-#endif
         default:
             COMMON_ASSERT(false);
             return 0;
@@ -495,7 +461,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                 light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
                 auto& context = Context::Instance();
-                auto light_node = MakeSharedPtr<SceneNode>(SceneNode::SOA_Cullable);
+                auto light_node = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
                 light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
                 light_node->AddComponent(light_);
                 light_node->AddChild(light_proxy->RootNode());

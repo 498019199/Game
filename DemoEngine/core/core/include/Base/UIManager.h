@@ -2,8 +2,6 @@
 
 #include <memory>
 
-struct ID3D11Device;
-struct ID3D11DeviceContext;
 
 namespace Rml {
 class Context;
@@ -11,27 +9,40 @@ class Context;
 
 struct ImGuiIO; // Dear ImGui (forward declaration)
 
-namespace EditorWorker {
-
-class RmlUiRenderInterfaceD3D11;
-
+namespace EditorWorker 
+{
 class EditorRmlSystemInterface;
 
 /// RmlUi overlay drawn into the game-view render target after the 3D pass (same RT as ImGui preview samples).
-class EditorRmlUiHost {
+class UIManager 
+{
+	ZENGINE_NONCOPYABLE(UIManager);
 public:
-	EditorRmlUiHost();
-	~EditorRmlUiHost();
+	struct VertexFormat
+	{
+		float3 pos;
+		Color clr;
+		float2 tex;
 
-	void Init(ID3D11Device* device, ID3D11DeviceContext* ctx, int width, int height);
+		VertexFormat()
+		{
+		}
+		VertexFormat(float3 const & p, Color const & c, float2 const & t)
+			: pos(p), clr(c), tex(t)
+		{
+		}
+	};
+
+	UIManager();
+	~UIManager();
+
+	void Init(int width, int height);
 	void Shutdown();
 
 	void SetDimensions(int width, int height);
 
 	/// Call with `game_view_fb_` bound; runs layout/update/render for one frame.
 	void RenderIntoGameView();
-
-	bool Initialized() const { return initialized_; }
 
 	/// RmlUi built-in debugger (element tree / styles). Off by default.
 	void SetDebuggerVisible(bool visible);
@@ -46,15 +57,14 @@ public:
 	void ProcessGameViewImGuiKeyboardRelay(bool enabled, ImGuiIO const* io);
 
 private:
-	bool initialized_{false};
 	bool debugger_initialized_{false};
+
 	bool game_image_hovered_last_{false};
 	int width_{1};
 	int height_{1};
 
 	std::unique_ptr<EditorRmlSystemInterface> system_interface_;
-	std::unique_ptr<RmlUiRenderInterfaceD3D11> render_interface_;
-	Rml::Context* context_{nullptr};
+	Rml::Context* rml_context_{nullptr};
 };
 
 } // namespace EditorWorker

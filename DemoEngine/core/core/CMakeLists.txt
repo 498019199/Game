@@ -75,6 +75,7 @@ set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderObject.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompression.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompressionBC.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/TransientBuffer.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/Texture.h
 )
 
@@ -99,6 +100,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/TexCompressionBC.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Texture.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/TransientBuffer.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Viewport.cpp
 )
 SOURCE_GROUP("Rendering System\\Source Files" FILES ${RENDERING_SOURCE_FILES})

@@ -1,5 +1,4 @@
-#include <editor/EditorRmlUiHost.h>
-#include <editor/RmlUiRenderInterfaceD3D11.h>
+#include <editor/UIManager.h>
 
 #include <base/Context.h>
 #include <base/ResLoader.h>
@@ -15,8 +14,6 @@
 
 #include <imgui/imgui.h>
 
-#include <d3d11.h>
-
 #include <algorithm>
 
 namespace EditorWorker {
@@ -26,45 +23,31 @@ public:
     double GetElapsedTime() override { return RenderWorker::Context::Instance().AppInstance().AppTime(); }
 };
 
-EditorRmlUiHost::EditorRmlUiHost() = default;
+UIManager::UIManager() = default;
 
-EditorRmlUiHost::~EditorRmlUiHost()
+UIManager::~UIManager()
 {
 	Shutdown();
 }
 
-void EditorRmlUiHost::Init(ID3D11Device* device, ID3D11DeviceContext* ctx, int width, int height)
+void UIManager::Init(int width, int height)
 {
-	if (initialized_)
-	{
-		return;
-	}
-	if (!device || !ctx)
-	{
-		return;
-	}
-
-	system_interface_ = std::make_unique<EditorRmlSystemInterface>();
-	render_interface_ = std::make_unique<RmlUiRenderInterfaceD3D11>(device, ctx);
+	system_interface_ = CommonWorker::MakeUniquePtr<EditorRmlSystemInterface>();
 	Rml::SetSystemInterface(reinterpret_cast<Rml::SystemInterface*>(system_interface_.get()));
-	Rml::SetRenderInterface(render_interface_.get());
 
 	if (!Rml::Initialise())
 	{
-		render_interface_.reset();
 		system_interface_.reset();
 		return;
 	}
 
 	width_ = (std::max)(1, width);
 	height_ = (std::max)(1, height);
-	render_interface_->SetViewportSize(width_, height_);
 
-	context_ = Rml::CreateContext("editor_game_view", Rml::Vector2i(width_, height_), render_interface_.get());
-	if (!context_)
+	rml_context_ = Rml::CreateContext("editor_game_view", Rml::Vector2i(width_, height_));
+	if (!rml_context_)
 	{
 		Rml::Shutdown();
-		render_interface_.reset();
 		system_interface_.reset();
 		return;
 	}
@@ -73,82 +56,59 @@ void EditorRmlUiHost::Init(ID3D11Device* device, ID3D11DeviceContext* ctx, int w
 	Rml::LoadFontFace("C:\\Windows\\Fonts\\segoeui.ttf", true);
 #endif
 
-	std::string const doc_path = RenderWorker::Context::Instance().ResLoaderInstance().Locate("EditorAssets/rmlui/login.rml");
-	if (!doc_path.empty())
-	{
-		// RmlUi 6：LoadDocument 结束后 ProcessHeader 会把文档设为 Visibility::Hidden，未 Show 时不会进入 stacking context，
-		// Render() 不会产生任何 Geometry，CompileGeometry / RenderGeometry 永远不会被调用。
-		if (Rml::ElementDocument* doc = context_->LoadDocument(Rml::String(doc_path)))
-		{
-			doc->Show(Rml::ModalFlag::None, Rml::FocusFlag::None);
-		}
-	}
-
-	debugger_initialized_ = Rml::Debugger::Initialise(context_);
+	debugger_initialized_ = Rml::Debugger::Initialise(rml_context_);
 	if (debugger_initialized_)
 	{
-		Rml::Debugger::SetContext(context_);
+		Rml::Debugger::SetContext(rml_context_);
 		Rml::Debugger::SetVisible(false);
 	}
 
 	game_image_hovered_last_ = false;
-	initialized_ = true;
 }
 
-void EditorRmlUiHost::Shutdown()
+void UIManager::Shutdown()
 {
-	if (!initialized_)
-	{
-		return;
-	}
-
-	if (context_)
+	if (rml_context_)
 	{
 		if (debugger_initialized_)
 		{
 			Rml::Debugger::Shutdown();
 			debugger_initialized_ = false;
 		}
-		context_->UnloadAllDocuments();
-		context_->Update();
+		rml_context_->UnloadAllDocuments();
+		rml_context_->Update();
 		Rml::RemoveContext("editor_game_view");
-		context_ = nullptr;
+		rml_context_ = nullptr;
 	}
 
 	Rml::ReleaseRenderManagers();
 	Rml::Shutdown();
 
-	render_interface_.reset();
 	system_interface_.reset();
-	initialized_ = false;
 }
 
-void EditorRmlUiHost::SetDimensions(int width, int height)
+void UIManager::SetDimensions(int width, int height)
 {
 	width_ = (std::max)(1, width);
 	height_ = (std::max)(1, height);
-	if (render_interface_)
+	if (rml_context_)
 	{
-		render_interface_->SetViewportSize(width_, height_);
-	}
-	if (context_)
-	{
-		context_->SetDimensions(Rml::Vector2i(width_, height_));
+		rml_context_->SetDimensions(Rml::Vector2i(width_, height_));
 	}
 }
 
-void EditorRmlUiHost::RenderIntoGameView()
+void UIManager::RenderIntoGameView()
 {
-	if (!initialized_ || !context_ || !render_interface_)
+	if ( !rml_context_ )
 	{
 		return;
 	}
-	render_interface_->SetViewportSize(width_, height_);
-	context_->Update();
-	context_->Render();
+	
+	rml_context_->Update();
+	rml_context_->Render();
 }
 
-void EditorRmlUiHost::SetDebuggerVisible(bool visible)
+void UIManager::SetDebuggerVisible(bool visible)
 {
 	if (debugger_initialized_)
 	{
@@ -156,16 +116,16 @@ void EditorRmlUiHost::SetDebuggerVisible(bool visible)
 	}
 }
 
-bool EditorRmlUiHost::IsDebuggerVisible() const
+bool UIManager::IsDebuggerVisible() const
 {
 	return debugger_initialized_ && Rml::Debugger::IsVisible();
 }
 
-void EditorRmlUiHost::ProcessGameViewPointer(bool image_hovered, int mouse_x, int mouse_y, int key_modifier_state,
+void UIManager::ProcessGameViewPointer(bool image_hovered, int mouse_x, int mouse_y, int key_modifier_state,
 	bool left_pressed, bool left_released, bool right_pressed, bool right_released, bool middle_pressed,
 	bool middle_released, float wheel_x, float wheel_y)
 {
-	if (!initialized_ || !context_)
+	if ( !rml_context_ )
 	{
 		return;
 	}
@@ -174,7 +134,7 @@ void EditorRmlUiHost::ProcessGameViewPointer(bool image_hovered, int mouse_x, in
 	{
 		if (game_image_hovered_last_)
 		{
-			context_->ProcessMouseLeave();
+			rml_context_->ProcessMouseLeave();
 		}
 		game_image_hovered_last_ = false;
 		return;
@@ -184,43 +144,43 @@ void EditorRmlUiHost::ProcessGameViewPointer(bool image_hovered, int mouse_x, in
 
 	int const mx = (std::clamp)(mouse_x, 0, width_ - 1);
 	int const my = (std::clamp)(mouse_y, 0, height_ - 1);
-	context_->ProcessMouseMove(mx, my, key_modifier_state);
+	rml_context_->ProcessMouseMove(mx, my, key_modifier_state);
 
 	if (left_pressed)
 	{
-		context_->ProcessMouseButtonDown(0, key_modifier_state);
+		rml_context_->ProcessMouseButtonDown(0, key_modifier_state);
 	}
 	if (right_pressed)
 	{
-		context_->ProcessMouseButtonDown(1, key_modifier_state);
+		rml_context_->ProcessMouseButtonDown(1, key_modifier_state);
 	}
 	if (middle_pressed)
 	{
-		context_->ProcessMouseButtonDown(2, key_modifier_state);
+		rml_context_->ProcessMouseButtonDown(2, key_modifier_state);
 	}
 
 	if (left_released)
 	{
-		context_->ProcessMouseButtonUp(0, key_modifier_state);
+		rml_context_->ProcessMouseButtonUp(0, key_modifier_state);
 	}
 	if (right_released)
 	{
-		context_->ProcessMouseButtonUp(1, key_modifier_state);
+		rml_context_->ProcessMouseButtonUp(1, key_modifier_state);
 	}
 	if (middle_released)
 	{
-		context_->ProcessMouseButtonUp(2, key_modifier_state);
+		rml_context_->ProcessMouseButtonUp(2, key_modifier_state);
 	}
 
 	if (wheel_x != 0.f || wheel_y != 0.f)
 	{
-		context_->ProcessMouseWheel(Rml::Vector2f(wheel_x, wheel_y), key_modifier_state);
+		rml_context_->ProcessMouseWheel(Rml::Vector2f(wheel_x, wheel_y), key_modifier_state);
 	}
 }
 
-void EditorRmlUiHost::ProcessGameViewImGuiKeyboardRelay(bool enabled, ImGuiIO const* io)
+void UIManager::ProcessGameViewImGuiKeyboardRelay(bool enabled, ImGuiIO const* io)
 {
-	if (!enabled || !initialized_ || !context_ || !io)
+	if (!enabled || !rml_context_ || !io)
 	{
 		return;
 	}
@@ -248,18 +208,18 @@ void EditorRmlUiHost::ProcessGameViewImGuiKeyboardRelay(bool enabled, ImGuiIO co
 		unsigned int const c = static_cast<unsigned int>(io->InputQueueCharacters[n]);
 		if (c > 0 && c < 0x110000u)
 		{
-			context_->ProcessTextInput(static_cast<Rml::Character>(c));
+			rml_context_->ProcessTextInput(static_cast<Rml::Character>(c));
 		}
 	}
 
 	auto relay = [this, mods](ImGuiKey key, Rml::Input::KeyIdentifier kid) {
 		if (ImGui::IsKeyPressed(key, false))
 		{
-			context_->ProcessKeyDown(kid, mods);
+			rml_context_->ProcessKeyDown(kid, mods);
 		}
 		if (ImGui::IsKeyReleased(key))
 		{
-			context_->ProcessKeyUp(kid, mods);
+			rml_context_->ProcessKeyUp(kid, mods);
 		}
 	};
 

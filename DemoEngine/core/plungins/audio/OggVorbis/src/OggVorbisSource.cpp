@@ -14,7 +14,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <base/ZEngine.h>
-#include <audio/AudioDataSource.h>
+#include <base/AudioDataSource.h>
 
 #include <vector>
 #include <cstring>
