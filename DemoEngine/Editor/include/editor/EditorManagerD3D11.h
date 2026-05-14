@@ -64,8 +64,6 @@ private:
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
 
-    RenderWorker::TrackballCameraController tbController_;
-
     RenderWorker::RenderModelPtr model_;
     RenderWorker::LightSourcePtr light_;
 	bool depth_texture_support_;

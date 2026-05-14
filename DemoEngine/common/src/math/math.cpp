@@ -327,24 +327,6 @@ namespace RenderWorker
             return translation(Move.x(), Move.y(), Move.z());
         }
 
-        template float4x4 MatrixScale(float X, float Y, float Z);
-        template<typename T>
-        Matrix4_T<T> MatrixScale(T X, T Y, T Z)
-        {
-            return Matrix4_T<float>(
-                X, 0, 0, 0,
-                0, Y, 0, 0,
-                0, 0, Z, 0,
-                0, 0, 0, 1);
-        }
-
-        template float4x4 MatrixScale(const float3& Scale);
-        template<typename T>
-        Matrix4_T<T> MatrixScale(const Vector_T<T, 3> &Scale)
-        {
-            return MatrixScale(Scale.x(), Scale.y(), Scale.z());
-        }
-
         template float4x4 rotation_x(float Angle);
         template<typename T>
         Matrix4_T<T> rotation_x(T Angle)

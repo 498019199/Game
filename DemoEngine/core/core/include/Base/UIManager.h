@@ -1,12 +1,12 @@
 #pragma once
 #include <base/ZEngine.h>
 
-namespace RenderWorker
-{
-namespace Rml 
-{
+namespace Rml {
 	class Context;
 }
+
+namespace RenderWorker
+{
 
 class EditorRmlSystemInterface;
 
@@ -34,8 +34,8 @@ public:
 	~UIManager();
 
 	void Init();
-	void Destroy();
-	bool Valid();
+	void Destroy() noexcept;
+	bool Valid() const noexcept;
 
 	void SetDimensions(int width, int height);
 
@@ -54,10 +54,11 @@ public:
 	bool MouseOnUI() const noexcept;
 private:
 	bool debugger_initialized_{false};
-
 	bool game_image_hovered_last_{false};
 	int width_{1};
 	int height_{1};
+
+	bool mouse_on_ui_ {false};
 
 	std::unique_ptr<EditorRmlSystemInterface> system_interface_;
 	Rml::Context* rml_context_{nullptr};

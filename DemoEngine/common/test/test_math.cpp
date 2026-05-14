@@ -140,7 +140,7 @@ void checkmatrix()
     auto _1 = float4x4(1,0,0,0,  0,1,0,0,  0,0,1,0,  1,2,3,1);
 	assert(_1 == translation(1.f, 2.f, 3.f));
 	// Scale
-	assert(float4x4(2,0,0,0,  0,0.5,0,0,  0,0,2,0,  0,0,0,1) == MatrixScale(2.f, 0.5f, 2.f));
+	assert(float4x4(2,0,0,0,  0,0.5,0,0,  0,0,2,0,  0,0,0,1) == scaling(2.f, 0.5f, 2.f));
 
 	// test rotation matrix
     // rotation matrix

@@ -1,3 +1,6 @@
+#include <base/Context.h>
+#include <base/App3D.h>
+
 #include <render/RenderableHelper.h>
 #include <render/RenderEffect.h>
 #include <render/RenderFactory.h>
@@ -207,8 +210,131 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
     // effect_->AttackPixelShader(currentPath + "Light_PS");
 }
 
-RenderablePlane::RenderablePlane(float width, float depth, float texU, float texV, const Color & color)
+RenderablePlane::RenderablePlane(float length, float width,
+		int length_segs, int width_segs, bool has_tex_coord, bool has_tangent)
+	: Renderable(L"RenderablePlane")
 {
+    RenderFactory& rf = Context::Instance().RenderFactoryInstance();
+
+    rls_[0] = rf.MakeRenderLayout();
+    rls_[0]->TopologyType(RenderLayout::TT_TriangleList);
+
+    std::vector<int16_t> positions;
+    for (int y = 0; y < width_segs + 1; ++ y)
+    {
+        for (int x = 0; x < length_segs + 1; ++ x)
+        {
+            float3 pos(static_cast<float>(x) / length_segs, 1 - (static_cast<float>(y) / width_segs), 0.5f);
+            int16_t s_pos[4] = 
+            {
+                static_cast<int16_t>(MathWorker::clamp(static_cast<int32_t>(pos.x() * 65535 - 32768), -32768, 32767)),
+                static_cast<int16_t>(MathWorker::clamp(static_cast<int32_t>(pos.y() * 65535 - 32768), -32768, 32767)),
+                static_cast<int16_t>(MathWorker::clamp(static_cast<int32_t>(pos.z() * 65535 - 32768), -32768, 32767)),
+                32767
+            };
+
+            positions.push_back(s_pos[0]);
+            positions.push_back(s_pos[1]);
+            positions.push_back(s_pos[2]);
+            positions.push_back(s_pos[3]);
+        }
+    }
+
+    GraphicsBufferPtr pos_vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable,
+        static_cast<uint32_t>(positions.size() * sizeof(positions[0])), &positions[0]);
+    rls_[0]->BindVertexStream(pos_vb, VertexElement(VEU_Position, 0, EF_SIGNED_ABGR16));
+
+    if (has_tex_coord)
+    {
+        std::vector<int16_t> tex_coords;
+        for (int y = 0; y < width_segs + 1; ++ y)
+        {
+            for (int x = 0; x < length_segs + 1; ++ x)
+            {
+                float3 tex_coord(static_cast<float>(x) / length_segs * 0.5f + 0.5f,
+                    static_cast<float>(y) / width_segs * 0.5f + 0.5f, 0.5f);
+                int16_t s_tc[2] = 
+                {
+                    static_cast<int16_t>(MathWorker::clamp(static_cast<int32_t>(tex_coord.x() * 65535 - 32768), -32768, 32767)),
+                    static_cast<int16_t>(MathWorker::clamp(static_cast<int32_t>(tex_coord.y() * 65535 - 32768), -32768, 32767)),
+                };
+
+                tex_coords.push_back(s_tc[0]);
+                tex_coords.push_back(s_tc[1]);
+            }
+        }
+
+        GraphicsBufferPtr tex_vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable,
+            static_cast<uint32_t>(tex_coords.size() * sizeof(tex_coords[0])), &tex_coords[0]);
+        rls_[0]->BindVertexStream(tex_vb, VertexElement(VEU_TextureCoord, 0, EF_SIGNED_GR16));
+    }
+
+    if (has_tangent)
+    {
+        std::vector<uint32_t> tangent(positions.size() / 4);
+        ElementFormat fmt;
+        if (rf.RenderEngineInstance().DeviceCaps().VertexFormatSupport(EF_ABGR8))
+        {
+            fmt = EF_ABGR8;
+            tangent.assign(tangent.size(), 0x807F7FFE);
+        }
+        else
+        {
+            COMMON_ASSERT(rf.RenderEngineInstance().DeviceCaps().VertexFormatSupport(EF_ARGB8));
+
+            fmt = EF_ARGB8;
+            tangent.assign(tangent.size(), 0x80FE7F7F);
+        }
+
+        GraphicsBufferPtr tex_vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable,
+            static_cast<uint32_t>(tangent.size() * sizeof(tangent[0])), &tangent[0]);
+        rls_[0]->BindVertexStream(tex_vb, VertexElement(VEU_Tangent, 0, fmt));
+    }
+
+    std::vector<uint16_t> index;
+    for (int y = 0; y < width_segs; ++ y)
+    {
+        for (int x = 0; x < length_segs; ++ x)
+        {
+            index.push_back(static_cast<uint16_t>((y + 0) * (length_segs + 1) + (x + 0)));
+            index.push_back(static_cast<uint16_t>((y + 0) * (length_segs + 1) + (x + 1)));
+            index.push_back(static_cast<uint16_t>((y + 1) * (length_segs + 1) + (x + 1)));
+
+            index.push_back(static_cast<uint16_t>((y + 1) * (length_segs + 1) + (x + 1)));
+            index.push_back(static_cast<uint16_t>((y + 1) * (length_segs + 1) + (x + 0)));
+            index.push_back(static_cast<uint16_t>((y + 0) * (length_segs + 1) + (x + 0)));
+        }
+    }
+
+    GraphicsBufferPtr ib = rf.MakeIndexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable,
+        static_cast<uint32_t>(index.size() * sizeof(index[0])), &index[0]);
+    rls_[0]->BindIndexStream(ib, EF_R16UI);
+
+    pos_aabb_ = AABBox(float3(-length / 2, -width / 2, 0), float3(+length / 2, +width / 2, 0));
+    tc_aabb_ = AABBox(float3(0, 0, 0), float3(1, 1, 0));
+
+    this->UpdateBoundBox();
 }
 
+
+TerrainRenderable::TerrainRenderable(TexturePtr const & height_map, TexturePtr const & normal_map)
+    : RenderablePlane(4, 4, 64, 64, true, false)
+{
+    effect_ = SyncLoadRenderEffect("Terrain.fxml");
+    technique_ = effect_->TechniqueByName("Terrain");
+    *(effect_->ParameterByName("grass_tex")) = ASyncLoadTexture("grass.dds", EAH_GPU_Read | EAH_Immutable);
+    *(effect_->ParameterByName("height_map_tex")) = height_map;
+    *(effect_->ParameterByName("normal_map_tex")) = normal_map;
+}
+
+void TerrainRenderable::OnRenderBegin()
+{
+    RenderablePlane::OnRenderBegin();
+
+    const auto& app = Context::Instance().AppInstance();
+    Camera const & camera = app.ActiveCamera();
+
+    *(effect_->ParameterByName("mvp")) = camera.ViewProjMatrix();
+    *(effect_->ParameterByName("inv_far")) = 1 / camera.FarPlane();
+}
 }

@@ -1,0 +1,46 @@
+<?xml version='1.0'?>
+
+<effect>
+	<include name="util.fxml"/>
+
+	<parameter type="float4x4" name="pp_mvp"/>
+	
+	<shader>
+		<![CDATA[
+float2 TexCoordFromPos(float4 pos)
+{
+	float2 tex = pos.xy / 2;
+	tex.y *= KLAYGE_FLIPPING;
+	tex += 0.5;
+	return tex;
+}
+
+float3 VolTexCoordFromPos(float4 pos)
+{
+	float3 tex = pos.xyz / 2;
+	tex.y *= KLAYGE_FLIPPING;
+	tex += 0.5;
+	return tex;
+}
+
+void PostProcessVS(float4 pos : POSITION,
+					out float2 oTex : TEXCOORD0,
+					out float4 oPos : SV_Position)
+{
+	oTex = TexCoordFromPos(pos);
+	oPos = pos;
+}
+
+void VolPostProcessVS(float4 pos : POSITION,
+					out float3 oTex : TEXCOORD0,
+					out SS_TEXCOORD_TYPE oScreenTc : TEXCOORD1,
+					out float4 oPos : SV_Position)
+{
+	oTex = VolTexCoordFromPos(pos);
+	oPos = mul(pos, pp_mvp);
+
+	oScreenTc = EncodeSSTexcoord(oPos);
+}
+		]]>
+	</shader>
+</effect>

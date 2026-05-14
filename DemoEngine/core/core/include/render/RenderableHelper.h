@@ -5,33 +5,39 @@
 namespace RenderWorker
 {
 
-class RenderableTriangle : public Renderable
+class ZENGINE_CORE_API RenderableTriangle : public Renderable
 {
 
 };
 
-class RenderableBox : public Renderable
+class ZENGINE_CORE_API RenderableBox : public Renderable
 {
 public:
     RenderableBox(float width, float height, float depth, const Color & color);
 };
 
-class RenderableSphere : public Renderable
+class ZENGINE_CORE_API RenderableSphere : public Renderable
 {
 public:
     RenderableSphere(float radius, int levels, int slices, const Color & color);
 };
 
-class RenderablePlane : public Renderable
+class ZENGINE_CORE_API RenderablePlane : public Renderable
 {
 public:
-    RenderablePlane(float width, float depth, float texU, float texV, const Color & color);
+    RenderablePlane(float length, float width,
+		int length_segs, int width_segs, bool has_tex_coord, bool has_tangent);
+};
+
+class ZENGINE_CORE_API TerrainRenderable : public RenderablePlane
+{
+public:
+    explicit TerrainRenderable(TexturePtr const & height_map, TexturePtr const & normal_map);
+    void OnRenderBegin() override;
 };
 
 
-
-
-class RenderDecal : public Renderable
+class ZENGINE_CORE_API RenderDecal : public Renderable
 {
 public:
     

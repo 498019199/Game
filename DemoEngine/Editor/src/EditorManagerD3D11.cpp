@@ -17,6 +17,7 @@
 #include <render/RenderEngine.h>
 #include <base/InputFactory.h>
 #include <render/RenderFactory.h>
+#include <render/RenderableHelper.h>
 #include "Model.h"
 
 #include <algorithm>
@@ -95,10 +96,8 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::OnCreate()
 {
-    tbController_.AttachCamera(this->ActiveCamera());
-	tbController_.Scalers(0.01f, 0.01f);
-    this->LookAt(float3(-25.72f, 29.65f, 24.57f), float3(-24.93f, 29.09f, 24.32f));
-	this->Proj(0.05f, 300.0f);
+    this->LookAt(float3(-0.4f, 1, 3.9f), float3(0, 1, 0), float3(0.0f, 1.0f, 0.0f));
+    this->Proj(0.1f, 200.0f);
 
     auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
@@ -136,7 +135,7 @@ void EditorManagerD3D11::OnCreate()
 	InputEngine& inputEngine(context.InputFactoryInstance().InputEngineInstance());
 	InputActionMap actionMap;
 	actionMap.AddActions(actions, actions + std::size(actions));
-    action_handler_t input_handler = MakeSharedPtr<input_signal>();
+    action_handler_t input_handler = CommonWorker::MakeSharedPtr<input_signal>();
 	input_handler->Connect(
 		[this](InputEngine const & sender, InputAction const & action)
 		{
@@ -150,6 +149,26 @@ void EditorManagerD3D11::OnCreate()
     back_face_depth_fb_ = rf.MakeFrameBuffer();
 	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
+
+    TexturePtr terrain_height_tex = SyncLoadTexture("terrain_height.dds", EAH_GPU_Read | EAH_Immutable);
+	TexturePtr terrain_normal_tex = SyncLoadTexture("terrain_normal.dds", EAH_GPU_Read | EAH_Immutable);
+    auto terrain_mesh = CommonWorker::MakeSharedPtr<TerrainRenderable>(terrain_height_tex, terrain_normal_tex);
+    auto terrain = CommonWorker::MakeSharedPtr<SceneNode>(L"TerrainNode", SceneNode::SOA_Cullable);
+    terrain->AddComponent(CommonWorker::MakeSharedPtr<RenderableComponent>(terrain_mesh));
+    context.WorldInstance().SceneRootNode().AddChild(terrain);
+
+    light_ = MakeSharedPtr<PointLightSource>();
+    light_->Attrib(0);
+    light_->Color(float3(1.5f, 1.5f, 1.5f));
+    light_->Falloff(float3(1, 0.5f, 0.0f));
+    auto light_proxy = LoadLightSourceProxyModel(light_);
+    light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+
+    auto light_node = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
+    light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+    light_node->AddComponent(light_);
+    light_node->AddChild(light_proxy->RootNode());
+    context.WorldInstance().SceneRootNode().AddChild(light_node);
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
@@ -440,33 +459,25 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             ptr->format = pAssert->extension;
             selected_asset_info_ = ptr;
 
-            model_ = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
+            ptr->model = SyncLoadModel(pAssert->path , EAH_GPU_Read | EAH_Immutable,
 			    SceneNode::SOA_Cullable, 
                 [](RenderModel& model)
                 {
-                    model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 5.0f, 0.0f));
+                    model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
                     AddToSceneRootHelper(model);
                 }, CreateModelFactory<RenderModel>, CreateMeshFactory<DetailedMesh>);
-            
-            this->LookAt(float3(-0.4f, 1, 3.9f), float3(0, 1, 0), float3(0.0f, 1.0f, 0.0f));
-	        this->Proj(0.1f, 200.0f);
 
-            if( !light_ )
+            ptr->model->ForEachMesh([&](Renderable& mesh)
             {
-                light_ = MakeSharedPtr<PointLightSource>();
-                light_->Attrib(0);
-                light_->Color(float3(1.5f, 1.5f, 1.5f));
-                light_->Falloff(float3(1, 0.5f, 0.0f));
-                auto light_proxy = LoadLightSourceProxyModel(light_);
-                light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+                checked_cast<DetailedMesh&>(mesh).BackFaceDepthPass(true);
 
-                auto& context = Context::Instance();
-                auto light_node = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
-                light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-                light_node->AddComponent(light_);
-                light_node->AddChild(light_proxy->RootNode());
-                context.WorldInstance().SceneRootNode().AddChild(light_node);
-            }
+                auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
+                detailed_mesh.LightPos(light_->Position());
+                detailed_mesh.LightColor(light_->Color());
+                detailed_mesh.LightFalloff(light_->Falloff());
+                detailed_mesh.EyePos(this->ActiveCamera().EyePos());
+                detailed_mesh.BackFaceDepthPass(false);
+            });
         }
         break;
 

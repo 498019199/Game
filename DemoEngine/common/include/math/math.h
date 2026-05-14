@@ -217,12 +217,6 @@ namespace RenderWorker
 		template<typename T>
 		Matrix4_T<T> translation(const Vector_T<T, 3>& Move);
 
-		// 矩形缩放
-		template<typename T>
-		Matrix4_T<T> MatrixScale(T X, T Y, T Z);
-		template<typename T>
-		Matrix4_T<T> MatrixScale(const Vector_T<T, 3>& Scale);
-
 		//矩阵旋转
 		template<typename T>
 		Matrix4_T<T> rotation_x(T Angle);
@@ -233,6 +227,7 @@ namespace RenderWorker
 		template <typename T>
 		Matrix4_T<T> rotation_matrix_yaw_pitch_roll(const T& yaw, const T& pitch, const T& roll) noexcept;
 
+		// 矩形缩放
 		template <typename T>
 		Matrix4_T<T> scaling(const T& sx, const T& sy, const T& sz) noexcept;
 		template<typename T>
