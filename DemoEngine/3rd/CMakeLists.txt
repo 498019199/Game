@@ -126,6 +126,7 @@ add_subdirectory(scope-lite)
 add_subdirectory(vorbis)
 
 if(ZENGINE_IS_DEV_PLATFORM)
+	add_subdirectory(imgui)
 	#add_subdirectory(d3dcompiler)
 	add_subdirectory(assimp)
 	add_subdirectory(FreeImage)
