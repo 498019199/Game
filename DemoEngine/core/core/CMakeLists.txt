@@ -73,6 +73,7 @@ set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderStateObject.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderView.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderObject.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/SkyBox.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompression.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TexCompressionBC.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/TransientBuffer.h
@@ -98,6 +99,7 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderStateObject.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderView.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderObject.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/SkyBox.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/TexCompressionBC.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Texture.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/TransientBuffer.cpp

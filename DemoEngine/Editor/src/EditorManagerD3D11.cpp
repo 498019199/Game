@@ -150,12 +150,23 @@ void EditorManagerD3D11::OnCreate()
 	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
+    auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
+    // create terrain
     TexturePtr terrain_height_tex = SyncLoadTexture("terrain_height.dds", EAH_GPU_Read | EAH_Immutable);
 	TexturePtr terrain_normal_tex = SyncLoadTexture("terrain_normal.dds", EAH_GPU_Read | EAH_Immutable);
     auto terrain_mesh = CommonWorker::MakeSharedPtr<TerrainRenderable>(terrain_height_tex, terrain_normal_tex);
     auto terrain = CommonWorker::MakeSharedPtr<SceneNode>(L"TerrainNode", SceneNode::SOA_Cullable);
     terrain->AddComponent(CommonWorker::MakeSharedPtr<RenderableComponent>(terrain_mesh));
-    context.WorldInstance().SceneRootNode().AddChild(terrain);
+    root_node.AddChild(terrain);
+
+    // create light
+    c_cube_ = ASyncLoadTexture("Lake_CraterLake03_filtered_c.dds", EAH_GPU_Read | EAH_Immutable);
+	y_cube_ = ASyncLoadTexture("Lake_CraterLake03_filtered_y.dds", EAH_GPU_Read | EAH_Immutable);
+    
+    AmbientLightSourcePtr ambient_light = MakeSharedPtr<AmbientLightSource>();
+	ambient_light->SkylightTex(y_cube, c_cube);
+	ambient_light->Color(float3(0.1f, 0.1f, 0.1f));
+	root_node.AddComponent(ambient_light);
 
     light_ = MakeSharedPtr<PointLightSource>();
     light_->Attrib(0);
@@ -168,7 +179,12 @@ void EditorManagerD3D11::OnCreate()
     light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
     light_node->AddComponent(light_);
     light_node->AddChild(light_proxy->RootNode());
-    context.WorldInstance().SceneRootNode().AddChild(light_node);
+    root_node.AddChild(light_node);
+
+    // create skybox
+	auto skybox = MakeSharedPtr<RenderableSkyBox>();
+	skybox->CompressedCubeMap(y_cube, c_cube);
+	root_node.AddChild(MakeSharedPtr<SceneNode>(MakeSharedPtr<RenderableComponent>(skybox), SceneNode::SOA_NotCastShadow));
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
