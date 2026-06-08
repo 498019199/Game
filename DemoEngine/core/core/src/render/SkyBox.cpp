@@ -1,4 +1,8 @@
 #include <render/SkyBox.h>
+#include <base/Context.h>
+#include <base/App3D.h>
+#include <render/RenderFactory.h>
+#include <render/RenderEffect.h>
 
 namespace RenderWorker
 {
@@ -9,16 +13,16 @@ namespace RenderWorker
 		RenderFactory& rf = context.RenderFactoryInstance();
 
 		RenderEffectPtr effect = SyncLoadRenderEffect("SkyBox.fxml");
-		if (context.DeferredRenderingLayerValid())
-		{
-			effect_attrs_ |= EA_SpecialShading;
+		// if (context.DeferredRenderingLayerValid())
+		// {
+		// 	effect_attrs_ |= EA_SpecialShading;
 
-			this->BindDeferredEffect(effect);
-			gbuffer_tech_ = effect->TechniqueByName("GBufferSkyBoxTech");
-			special_shading_tech_ = effect->TechniqueByName("SkyBoxTech");
-			this->Technique(effect, gbuffer_tech_);
-		}
-		else
+		// 	this->BindDeferredEffect(effect);
+		// 	gbuffer_tech_ = effect->TechniqueByName("GBufferSkyBoxTech");
+		// 	special_shading_tech_ = effect->TechniqueByName("SkyBoxTech");
+		// 	this->Technique(effect, gbuffer_tech_);
+		// }
+		// else
 		{
 			this->Technique(effect, effect->TechniqueByName("SkyBoxTech"));
 		}
@@ -37,7 +41,7 @@ namespace RenderWorker
 		GraphicsBufferPtr vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable, sizeof(xyzs), xyzs);
 		rls_[0]->BindVertexStream(vb, VertexElement(VEU_Position, 0, EF_BGR32F));
 
-		pos_aabb_ = MathLib::compute_aabbox(&xyzs[0], &xyzs[4]);
+		pos_aabb_ = MathWorker::compute_aabbox(&xyzs[0], &xyzs[4]);
 		tc_aabb_ = AABBox(float3(0, 0, 0), float3(0, 0, 0));
     }
 
@@ -85,8 +89,8 @@ void RenderableSkyBox::Pass(PassType type)
 
 void RenderableSkyBox::OnRenderBegin()
 {
-    App3DFramework const & app = Context::Instance().AppInstance();
-    Camera const & camera = app.ActiveCamera();
+    const App3D& app = Context::Instance().AppInstance();
+    const Camera& camera = app.ActiveCamera();
 
     *depth_far_ep_ = camera.FarPlane();
 
@@ -94,7 +98,7 @@ void RenderableSkyBox::OnRenderBegin()
     rot_view(3, 0) = 0;
     rot_view(3, 1) = 0;
     rot_view(3, 2) = 0;
-    *inv_mvp_ep_ = MathLib::inverse(rot_view * camera.ProjMatrix());
+    *inv_mvp_ep_ = MathWorker::inverse(rot_view * camera.ProjMatrix());
 }
 
 }

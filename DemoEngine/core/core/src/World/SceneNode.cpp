@@ -13,6 +13,18 @@ SceneNode::SceneNode(std::wstring_view name, uint32_t attrib)
     name_ = std::wstring(name);
 }
 
+SceneNode::SceneNode(SceneComponentPtr const& component, uint32_t attrib)
+    : SceneNode(attrib)
+{
+    this->AddComponent(component);
+}
+
+SceneNode::SceneNode(SceneComponentPtr const& component, std::wstring_view name, uint32_t attrib)
+    : SceneNode(component, attrib)
+{
+    name_ = std::wstring(name);
+}
+
 SceneNode::~SceneNode()
 {
     for (auto& component : components_)

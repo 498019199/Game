@@ -15,12 +15,11 @@
 #include <world/World.h>
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
+#include <render/SkyBox.h>
 #include <base/InputFactory.h>
 #include <render/RenderFactory.h>
 #include <render/RenderableHelper.h>
 #include "Model.h"
-
-#include <algorithm>
 
 namespace
 {
@@ -160,10 +159,10 @@ void EditorManagerD3D11::OnCreate()
     root_node.AddChild(terrain);
 
     // create light
-    c_cube_ = ASyncLoadTexture("Lake_CraterLake03_filtered_c.dds", EAH_GPU_Read | EAH_Immutable);
-	y_cube_ = ASyncLoadTexture("Lake_CraterLake03_filtered_y.dds", EAH_GPU_Read | EAH_Immutable);
+    auto c_cube = ASyncLoadTexture("Lake_CraterLake03_filtered_c.dds", EAH_GPU_Read | EAH_Immutable);
+	auto y_cube = ASyncLoadTexture("Lake_CraterLake03_filtered_y.dds", EAH_GPU_Read | EAH_Immutable);
     
-    AmbientLightSourcePtr ambient_light = MakeSharedPtr<AmbientLightSource>();
+    auto ambient_light = CommonWorker::MakeSharedPtr<AmbientLightSource>();
 	ambient_light->SkylightTex(y_cube, c_cube);
 	ambient_light->Color(float3(0.1f, 0.1f, 0.1f));
 	root_node.AddComponent(ambient_light);
@@ -184,7 +183,8 @@ void EditorManagerD3D11::OnCreate()
     // create skybox
 	auto skybox = MakeSharedPtr<RenderableSkyBox>();
 	skybox->CompressedCubeMap(y_cube, c_cube);
-	root_node.AddChild(MakeSharedPtr<SceneNode>(MakeSharedPtr<RenderableComponent>(skybox), SceneNode::SOA_NotCastShadow));
+	root_node.AddChild(MakeSharedPtr<SceneNode>(
+        MakeSharedPtr<RenderableComponent>(skybox), L"SkyBox", SceneNode::SOA_NotCastShadow));
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)

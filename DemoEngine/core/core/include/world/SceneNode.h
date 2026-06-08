@@ -29,6 +29,8 @@ public:
 public:
     explicit SceneNode(uint32_t attrib);
     SceneNode(std::wstring_view name, uint32_t attrib);
+    SceneNode(SceneComponentPtr const& component, uint32_t attrib);
+	SceneNode(SceneComponentPtr const& component, std::wstring_view name, uint32_t attrib);
 	~SceneNode();
 
     std::wstring_view Name() const;

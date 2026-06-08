@@ -19,6 +19,9 @@ struct VertexPosNormalColor
 
 RenderableBox::  RenderableBox(float width, float height, float depth, const Color & color)
 {
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
+
     float w2 = width / 2, h2 = height / 2, d2 = depth / 2;
     auto& rf = Context::Instance().RenderFactoryInstance();
     rls_[0] = rf.MakeRenderLayout();
@@ -100,10 +103,22 @@ RenderableBox::  RenderableBox(float width, float height, float depth, const Col
     };
     auto ib = rf.MakeIndexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable, sizeof(indices), indices);
     rls_[0]->BindIndexStream(ib, EF_R16UI);
+
+    tc_aabb_ = AABBox(float3(0, 0, 0), float3(0, 0, 0));
+
+    *(effect_->ParameterByName("pos_center")) = float3(0, 0, 0);
+    *(effect_->ParameterByName("pos_extent")) = float3(1, 1, 1);
+
+	effect_attrs_ |= EA_SimpleForward;
+
+	this->UpdateBoundBox();
 }
 
 RenderableSphere::RenderableSphere(float radius, int levels, int slices, const Color & color)
 {
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
+
     uint32_t vertexCount = 2 + (levels - 1) * (slices + 1);
     uint32_t indexCount = 6 * (levels - 1) * slices;
 
@@ -208,6 +223,15 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
     // effect_->CreateConstant();
     // effect_->AttackVertexShader(currentPath + "Light_VS");
     // effect_->AttackPixelShader(currentPath + "Light_PS");
+
+    tc_aabb_ = AABBox(float3(0, 0, 0), float3(0, 0, 0));
+
+    *(effect_->ParameterByName("pos_center")) = float3(0, 0, 0);
+    *(effect_->ParameterByName("pos_extent")) = float3(1, 1, 1);
+
+	effect_attrs_ |= EA_SimpleForward;
+
+	this->UpdateBoundBox();
 }
 
 RenderablePlane::RenderablePlane(float length, float width,
