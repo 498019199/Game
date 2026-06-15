@@ -1,0 +1,11 @@
+{
+    "SkyBox":
+    {
+        "YCube": "Lake_CraterLake03_filtered_y.dds",
+        "CCube": "Lake_CraterLake03_filtered_c.dds"
+    },
+    "GameObjects": 
+    [
+        "Prefabs/Floor.prefab"
+    ]
+}

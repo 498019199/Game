@@ -64,7 +64,7 @@ private:
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
 
-    RenderWorker::RenderModelPtr model_;
+    RenderModelPtr model_;
     RenderWorker::LightSourcePtr light_;
 	bool depth_texture_support_;
 	RenderWorker::FrameBufferPtr back_face_depth_fb_;

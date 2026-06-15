@@ -19,7 +19,7 @@
 #include <base/InputFactory.h>
 #include <render/RenderFactory.h>
 #include <render/RenderableHelper.h>
-#include "Model.h"
+#include <game/Model.h>
 
 namespace
 {
@@ -481,7 +481,7 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                 {
                     model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
                     AddToSceneRootHelper(model);
-                }, CreateModelFactory<RenderModel>, CreateMeshFactory<DetailedMesh>);
+                }, CreateModelFactory<RenderModel>, CreateDetailedMesh);
 
             ptr->model->ForEachMesh([&](Renderable& mesh)
             {

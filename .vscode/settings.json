@@ -5,7 +5,7 @@
     // "git.showInlineOpenFileAction": false,
     // // 禁用 Git 相关的状态通知
     // "gitlens.enabled": false,
-    "cmake.sourceDirectory": "${workspaceFolder}/DemoEngine",
+    "cmake.sourceDirectory": "${workspaceFolder}",
     "files.associations": {
     "*.mat": "json",
     "*.prefab": "json",
