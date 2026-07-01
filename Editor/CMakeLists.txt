@@ -13,7 +13,11 @@ set(SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorInspectorPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorMainBarPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerD3D11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GameApp.cpp)
+
+set(GAME_APP_SRC_LIST
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GameApp.cpp)
 
 set(IMGUI_SRC_LIST
     ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_demo.cpp
@@ -40,6 +44,34 @@ endif()
 add_dependencies(ZENGINE_editor ZENGINE_game)
 
 target_link_libraries(ZENGINE_editor
+    PUBLIC
+        ZENGINE_game
+        ZENGINE_common
+        ZENGINE_core
+        ZENGINE_Render_D3D11
+        ZENGINE_DevHelps
+        ZENGINE_AudioEngine_XAudio
+        ZENGINE_AudioDataSource_OggVorbis
+        ZENGINE_InputEngine_Input
+    PRIVATE
+        d3dcompiler
+)
+
+add_executable(ZENGINE_game_app
+    ${GAME_APP_SRC_LIST}
+    ${CMAKE_CURRENT_SOURCE_DIR}/game_main.cpp)
+
+set_target_properties(ZENGINE_game_app PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON)
+
+if(MSVC)
+    target_compile_options(ZENGINE_game_app PRIVATE /std:c++20)
+endif()
+
+add_dependencies(ZENGINE_game_app ZENGINE_game)
+
+target_link_libraries(ZENGINE_game_app
     PUBLIC
         ZENGINE_game
         ZENGINE_common

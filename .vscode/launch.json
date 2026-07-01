@@ -11,16 +11,16 @@
             "cwd": "${workspaceFolder}\\ZEngine\\bin\\win_x64",
             "environment": []
         },
-
-
         {
-            "name": "cursor-editor",
-            "type": "lldb",
+            "name": "vscode-game",
+            "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_editor.exe",
+            "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_game_app.exe",
             "args": [],
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}\\ZEngine\\bin\\win_x64",
-            "env": {}
-        }
+            "environment": []
+        },
+
     ]
 }

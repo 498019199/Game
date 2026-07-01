@@ -132,14 +132,5 @@
       }
     },
     "C_Cpp.errorSquiggles": "disabled",
-
-    /*"cmake.configureSettings":{
-        "cmake.cmakePath": "${workspaceFolder}",
-        //"CMAKE_TOOLCHAIN_FILE": "D:/tool/vcpkg-master/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_TOOLCHAIN_FILE": "D:/Project/498019199/studyrecord/GameWeb/Games101/3rd/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows",
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
-    }*/
-
     "cmake.configureOnOpen": true,
 }

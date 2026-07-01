@@ -27,5 +27,5 @@ add_subdirectory(${DEMOENGINE_DIR})
 add_subdirectory(Game)
 
 if(WIN32)
-    add_subdirectory(editor)
+    add_subdirectory(Editor)
 endif()
