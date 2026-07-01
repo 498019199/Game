@@ -4,6 +4,12 @@
 #include <render/Mesh.h>
 #include <base/ZEngine.h>
 
+// StaticMesh / RenderModel live in ZENGINE_core (static lib), not exported as DLL types.
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4275)
+#endif
+
 class GAME_API DetailedMesh : public RenderWorker::StaticMesh
 {
 public:
@@ -31,11 +37,16 @@ private:
 class GAME_API AModel : public RenderWorker::RenderModel
 {
 public:
-	explicit AModel(const SceneNodePtr& root_node);
+	explicit AModel(const RenderWorker::SceneNodePtr& root_node);
 	AModel(std::wstring_view name, uint32_t node_attrib);
 
-	void BuildModelInfo() override;
+	void DoBuildModelInfo() override;
 };
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 using ModelPtr = std::shared_ptr<AModel>;
 
 GAME_API RenderWorker::StaticMeshPtr CreateDetailedMesh(std::wstring_view name);

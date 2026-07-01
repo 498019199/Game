@@ -120,10 +120,8 @@ AModel::AModel(std::wstring_view name, uint32_t node_attrib)
 {
 }
 
-void AModel::BuildModelInfo()
+void AModel::DoBuildModelInfo()
 {
-	RenderModel::BuildModelInfo();
-
 	this->ForEachMesh([this](Renderable& mesh) {
 		if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&mesh))
 		{

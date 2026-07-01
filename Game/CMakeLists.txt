@@ -1,6 +1,6 @@
 set(GAME_SRC_LIST
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Scene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Scene.cpp
 )
 
 add_library(ZENGINE_game SHARED ${GAME_SRC_LIST})

@@ -45,7 +45,7 @@ namespace
 		return default_value;
 	}
 
-	MathWorker::float3 GetFloat3(CommonWorker::JsonValue const& value, MathWorker::float3 const& default_value)
+	RenderWorker::float3 GetFloat3(CommonWorker::JsonValue const& value, RenderWorker::float3 const& default_value)
 	{
 		if (value.Type() != CommonWorker::JsonValueType::Array)
 		{
@@ -53,7 +53,7 @@ namespace
 		}
 
 		auto const& arr = value.ValueArray();
-		MathWorker::float3 result = default_value;
+		RenderWorker::float3 result = default_value;
 		if (arr.size() > 0)
 		{
 			result.x() = GetFloat(arr[0]);
@@ -76,13 +76,13 @@ namespace
 		return dest;
 	}
 
-	MathWorker::float4x4 BuildTransformMatrix(
-		MathWorker::float3 const& position,
-		MathWorker::float3 const& rotation_deg,
-		MathWorker::float3 const& scale)
+	RenderWorker::float4x4 BuildTransformMatrix(
+		RenderWorker::float3 const& position,
+		RenderWorker::float3 const& rotation_deg,
+		RenderWorker::float3 const& scale)
 	{
-		using namespace MathWorker;
-		float4x4 const rot = rotation_matrix_yaw_pitch_roll(
+		using namespace RenderWorker::MathWorker;
+		RenderWorker::float4x4 const rot = rotation_matrix_yaw_pitch_roll(
 			DegToRad(rotation_deg.y()),
 			DegToRad(rotation_deg.x()),
 			DegToRad(rotation_deg.z()));
@@ -246,9 +246,9 @@ void AScene::LoadPrefab(std::string_view prefab_path)
 		}
 	}
 
-	MathWorker::float3 position(0.0f, 0.0f, 0.0f);
-	MathWorker::float3 rotation(0.0f, 0.0f, 0.0f);
-	MathWorker::float3 scale(1.0f, 1.0f, 1.0f);
+	float3 position(0.0f, 0.0f, 0.0f);
+	float3 rotation(0.0f, 0.0f, 0.0f);
+	float3 scale(1.0f, 1.0f, 1.0f);
 	std::string mesh_path;
 	std::string material_path;
 	bool cast_shadow = true;

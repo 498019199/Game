@@ -1,4 +1,6 @@
 /.idea
+/.codegraph
+/.cursor
 .vscode/settings.json
 
 /build

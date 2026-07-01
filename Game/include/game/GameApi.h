@@ -9,3 +9,6 @@
 #define GAME_API ZENGINE_SYMBOL_IMPORT
 #endif
 #endif
+
+using namespace RenderWorker;
+using namespace CommonWorker;
