@@ -5,7 +5,6 @@
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 #include <render/Renderable.h>
-#include <render/Light.h>
 #include <render/Mesh.h>
 #include <world/World.h>
 #include <game/Model.h>
@@ -65,31 +64,6 @@ void GameApp::OnCreate()
 	back_face_depth_fb_ = rf.MakeFrameBuffer();
 	FrameBufferPtr screen_buffer = re.CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
-
-	camera_controller_ = MakeSharedPtr<TrackballCameraController>();
-	camera_controller_->AttachCamera(ActiveCamera());
-
-	auto& root_node = context.WorldInstance().SceneRootNode();
-
-	auto ambient_light = MakeSharedPtr<AmbientLightSource>();
-	ambient_light->Color(float3(0.1f, 0.1f, 0.1f));
-	root_node.AddComponent(ambient_light);
-
-	light_ = MakeSharedPtr<PointLightSource>();
-	light_->Attrib(0);
-	light_->Color(float3(1.5f, 1.5f, 1.5f));
-	light_->Falloff(float3(1.0f, 0.5f, 0.0f));
-
-	auto light_proxy = LoadLightSourceProxyModel(light_);
-	light_proxy->RootNode()->TransformToParent(
-		MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
-
-	auto light_node = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
-	light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-	light_node->AddComponent(light_);
-	light_node->AddChild(light_proxy->RootNode());
-	root_node.AddChild(light_node);
-
 	scene_.LoadScene(scene_path_);
 }
 
@@ -103,11 +77,6 @@ void GameApp::OnResize(uint32_t width, uint32_t height)
 
 void GameApp::OnDestroy()
 {
-	if (camera_controller_)
-	{
-		camera_controller_->DetachCamera();
-		camera_controller_.reset();
-	}
 }
 
 void GameApp::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps const& caps, uint32_t width, uint32_t height)
@@ -169,35 +138,6 @@ void GameApp::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps con
 	back_face_depth_fb_->Attach(back_face_ds_view);
 }
 
-void GameApp::UpdateDetailedMeshes(bool back_face_depth_pass)
-{
-	float3 const eye_pos = ActiveCamera().EyePos();
-	float3 const light_pos = light_->Position();
-	float3 const light_color = light_->Color();
-	float3 const light_falloff = light_->Falloff();
-
-	Context::Instance().WorldInstance().SceneRootNode().Traverse([&](SceneNode& node) {
-		node.ForEachComponentOfType<RenderableComponent>([&](RenderableComponent& comp) {
-			if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&comp.BoundRenderable()))
-			{
-				if (back_face_depth_pass)
-				{
-					detailed_mesh->BackFaceDepthPass(true);
-				}
-				else
-				{
-					detailed_mesh->EyePos(eye_pos);
-					detailed_mesh->LightPos(light_pos);
-					detailed_mesh->LightColor(light_color);
-					detailed_mesh->LightFalloff(light_falloff);
-					detailed_mesh->BackFaceDepthPass(false);
-				}
-			}
-		});
-		return true;
-	});
-}
-
 uint32_t GameApp::DoUpdate(uint32_t pass)
 {
 	auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
@@ -207,7 +147,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 	case 0:
 		re.BindFrameBuffer(back_face_depth_fb_);
 		re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
-		UpdateDetailedMeshes(true);
+		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
 		return URV_NeedFlush;
 
 	case 1:
@@ -222,7 +162,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 			}
 			re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
 		}
-		UpdateDetailedMeshes(false);
+		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
 		return URV_Finished;
 
 	default:

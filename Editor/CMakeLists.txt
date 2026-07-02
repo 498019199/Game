@@ -13,8 +13,7 @@ set(SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorInspectorPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorMainBarPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerD3D11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/GameApp.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp)
 
 set(GAME_APP_SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GameApp.cpp)
@@ -69,7 +68,7 @@ if(MSVC)
     target_compile_options(ZENGINE_game_app PRIVATE /std:c++20)
 endif()
 
-add_dependencies(ZENGINE_game_app ZENGINE_game)
+add_dependencies(ZENGINE_game_app ZENGINE_game ZENGINE_DevHelps)
 
 target_link_libraries(ZENGINE_game_app
     PUBLIC

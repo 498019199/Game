@@ -30,14 +30,11 @@ private:
 
 	void InputHandler(RenderWorker::InputEngine const& sender, RenderWorker::InputAction const& action);
 	void RebuildBackFaceDepthTarget(RenderWorker::RenderFactory& rf, RenderWorker::RenderDeviceCaps const& caps, uint32_t width, uint32_t height);
-	void UpdateDetailedMeshes(bool back_face_depth_pass);
 
 private:
 	std::string scene_path_;
 	AScene scene_;
 
-	RenderWorker::LightSourcePtr light_;
-	std::shared_ptr<RenderWorker::TrackballCameraController> camera_controller_;
 
 	bool depth_texture_support_ { false };
 	RenderWorker::FrameBufferPtr back_face_depth_fb_;

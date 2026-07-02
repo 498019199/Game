@@ -211,6 +211,18 @@ public:
     {
         return dev_helper_ != nullptr;
     }
+    bool EnsureDevHelper()
+    {
+        if (!dev_helper_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!dev_helper_)
+            {
+                this->LoadDevHelper();
+            }
+        }
+        return dev_helper_ != nullptr;
+    }
     DevHelper& DevHelperInstance()
     {
         if (!dev_helper_)
@@ -221,6 +233,7 @@ public:
                 this->LoadDevHelper();
             }
         }
+        Verify(dev_helper_ != nullptr);
         return *dev_helper_;
     }
 #endif// ZENGINE_IS_DEV_PLATFORM
@@ -365,7 +378,7 @@ public:
         dev_helper_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string render_path = res_loader.Locate("render");
-        std::string fn = ZENGINE_DLL_PREFIX"_DevHelper" DLL_SUFFIX;
+		std::string fn = ZENGINE_DLL_PREFIX"_DevHelps" DLL_SUFFIX;
 
         std::string path = render_path + "/" + fn;
         dev_helper_loader_.Load(res_loader.Locate(path));
@@ -735,6 +748,11 @@ UIManager& Context::UIManagerInstance()
 bool Context::DevHelperValid() const noexcept
 {
     return pimpl_->DevHelperValid();
+}
+
+bool Context::EnsureDevHelper()
+{
+    return pimpl_->EnsureDevHelper();
 }
 
 DevHelper& Context::DevHelperInstance()

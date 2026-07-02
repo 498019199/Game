@@ -1526,15 +1526,16 @@ namespace RenderWorker
 
 			if (jit)
 			{
-#if ZENGINE_IS_DEV_PLATFORM
+				if (!context.EnsureDevHelper())
+				{
+					LogError() << "Could NOT locate " << runtime_name << " and DevHelper is unavailable." << std::endl;
+					return RenderModelPtr();
+				}
+
 				RenderFactory& rf = context.RenderFactoryInstance();
 				RenderDeviceCaps const & caps = rf.RenderEngineInstance().DeviceCaps();
 
 				return context.DevHelperInstance().ConvertModel(model_name, metadata_name, runtime_name, &caps);
-#else
-				LogError() << "Could NOT locate " << runtime_name << std::endl;
-				return RenderModelPtr();
-#endif
 			}
 		}
 struct NodeInfo

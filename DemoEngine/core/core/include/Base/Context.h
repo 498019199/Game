@@ -78,6 +78,7 @@ public:
 
 #if ZENGINE_IS_DEV_PLATFORM
 	bool DevHelperValid() const noexcept;
+	bool EnsureDevHelper();
 	DevHelper& DevHelperInstance();
 #endif
 

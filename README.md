@@ -30,3 +30,13 @@ Direct3D 11.4
 
 2025年9月16日
 移植klayGE 图片读取相关代码，完全没有看，仅仅移植
+
+
+# 使用方式
+在 ZEngine/bin/win_x64/ 目录下运行：
+```shell
+.\ZENGINE_model_convert.exe Models/Spring.obj
+.\ZENGINE_model_convert.exe Models/Foo.glb Models/Bar.fbx
+.\ZENGINE_model_convert.exe -f Models/Spring.obj          # 强制重建
+.\ZENGINE_model_convert.exe --assets-dir D:\my\models MyModel.obj
+```

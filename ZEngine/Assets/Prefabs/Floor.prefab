@@ -10,7 +10,7 @@
         },
         {
             "Type": "MeshRenderer",
-            "Mesh": "Models/plane.fbx",
+            "Mesh": "Models/Spring.obj",
             "Material": "Materials/Terrain.mat",
             "CastShadow": false,
             "ReceiveShadow": true

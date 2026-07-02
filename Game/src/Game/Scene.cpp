@@ -4,6 +4,7 @@
 #include <common/JsonDom.h>
 #include <common/Log.h>
 #include <common/Util.h>
+#include <render/Light.h>
 #include <render/RenderMaterial.h>
 #include <render/Renderable.h>
 #include <render/SkyBox.h>
@@ -102,6 +103,7 @@ AScene::~AScene() noexcept
 		RemoveModel(models_.back());
 	}
 	ClearSkyBox();
+	ClearLights();
 }
 
 void AScene::AddModel(RenderModelPtr const& model)
@@ -138,6 +140,8 @@ void AScene::LoadScene(std::string_view scene_path)
 		RemoveModel(models_.back());
 	}
 	ClearSkyBox();
+	ClearLights();
+	SetupDefaultLights();
 
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 	ResIdentifierPtr scene_file = res_loader.Open(scene_path);
@@ -348,4 +352,82 @@ void AScene::LoadPrefab(std::string_view prefab_path)
 
 	model->BuildModelInfo();
 	AddModel(model);
+}
+
+void AScene::SetupDefaultLights()
+{
+	auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
+
+	ambient_light_ = MakeSharedPtr<AmbientLightSource>();
+	ambient_light_->Color(float3(0.1f, 0.1f, 0.1f));
+	root_node.AddComponent(ambient_light_);
+
+	light_ = MakeSharedPtr<PointLightSource>();
+	light_->Attrib(0);
+	light_->Color(float3(1.5f, 1.5f, 1.5f));
+	light_->Falloff(float3(1.0f, 0.5f, 0.0f));
+
+	auto light_proxy = LoadLightSourceProxyModel(light_);
+	light_proxy->RootNode()->TransformToParent(
+		MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+
+	light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
+	light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+	light_node_->AddComponent(light_);
+	light_node_->AddChild(light_proxy->RootNode());
+	root_node.AddChild(light_node_);
+}
+
+void AScene::ClearLights()
+{
+	auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
+
+	if (ambient_light_)
+	{
+		root_node.RemoveComponent(ambient_light_);
+		ambient_light_.reset();
+	}
+
+	if (light_node_)
+	{
+		if (auto* parent = light_node_->Parent())
+		{
+			parent->RemoveChild(light_node_);
+		}
+		light_node_.reset();
+	}
+
+	light_.reset();
+}
+
+void AScene::UpdateDetailedMeshes(float3 const& eye_pos, bool back_face_depth_pass)
+{
+	float3 const light_pos = light_ ? light_->Position() : float3(0.0f, 0.0f, 0.0f);
+	float3 light_color(0.0f, 0.0f, 0.0f);
+	float3 const light_falloff = light_ ? light_->Falloff() : float3(1.0f, 0.0f, 0.0f);
+	if (light_)
+	{
+		light_color = light_->Color();
+	}
+
+	Context::Instance().WorldInstance().SceneRootNode().Traverse([&](SceneNode& node) {
+		node.ForEachComponentOfType<RenderableComponent>([&](RenderableComponent& comp) {
+			if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&comp.BoundRenderable()))
+			{
+				if (back_face_depth_pass)
+				{
+					detailed_mesh->BackFaceDepthPass(true);
+				}
+				else
+				{
+					detailed_mesh->EyePos(eye_pos);
+					detailed_mesh->LightPos(light_pos);
+					detailed_mesh->LightColor(light_color);
+					detailed_mesh->LightFalloff(light_falloff);
+					detailed_mesh->BackFaceDepthPass(false);
+				}
+			}
+		});
+		return true;
+	});
 }

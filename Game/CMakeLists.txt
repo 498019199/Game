@@ -33,3 +33,7 @@ target_link_libraries(ZENGINE_game
         ZENGINE_core
         ZENGINE_common
 )
+
+if(ZENGINE_IS_DEV_PLATFORM)
+    add_subdirectory(Tool)
+endif()
