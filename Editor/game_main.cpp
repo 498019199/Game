@@ -13,16 +13,9 @@ int main()
 	Context::Instance().LoadConfig(cfg_path.c_str());
 
 	auto& res_loader = Context::Instance().ResLoaderInstance();
-	res_loader.AddPath("../../Assets/Audio");
 	res_loader.AddPath("../../Assets/Config");
-	res_loader.AddPath("../../Assets/Materials");
-	res_loader.AddPath("../../Assets/Models");
 	res_loader.AddPath("../../Assets/Prefabs");
 	res_loader.AddPath("../../Assets/RenderFX");
-	res_loader.AddPath("../../Assets/Script");
-	res_loader.AddPath("../../Assets/Scenes");
-	res_loader.AddPath("../../Assets/Shaders");
-	res_loader.AddPath("../../Assets/Textures");
 
 	auto app = MakeUniquePtr<GameApp>();
 	app->Create();

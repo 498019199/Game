@@ -76,7 +76,6 @@ target_link_libraries(ZENGINE_game_app
         ZENGINE_common
         ZENGINE_core
         ZENGINE_Render_D3D11
-        ZENGINE_DevHelps
         ZENGINE_AudioEngine_XAudio
         ZENGINE_AudioDataSource_OggVorbis
         ZENGINE_InputEngine_Input

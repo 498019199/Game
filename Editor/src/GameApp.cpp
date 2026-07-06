@@ -163,7 +163,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 			re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
 		}
 		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
-		return URV_Finished;
+		return URV_NeedFlush | URV_Finished;  // 或 Editor 一样只 return URV_NeedFlush，再加 pass 2
 
 	default:
 		COMMON_ASSERT(false);

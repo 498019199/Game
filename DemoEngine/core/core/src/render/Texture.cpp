@@ -3320,6 +3320,36 @@ namespace RenderWorker
 		{
 		case Texture::TT_1D:
 			{
+				init_data.resize(array_size * num_mipmaps);
+				base.resize(array_size * num_mipmaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					for (uint32_t level = 0; level < num_mipmaps; ++ level)
+					{
+						size_t const index = array_index * num_mipmaps + level;
+						uint32_t image_size;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							image_size = ((the_width + 3) / 4) * block_size;
+						}
+						else
+						{
+							image_size = (padding ? ((the_width + 3) & ~3) : the_width) * fmt_size;
+						}
+
+						base[index] = data_block.size();
+						data_block.resize(base[index] + image_size);
+						init_data[index].row_pitch = image_size;
+						init_data[index].slice_pitch = image_size;
+
+						tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(image_size));
+						COMMON_ASSERT(tex_res->gcount() == static_cast<int>(image_size));
+
+						the_width = std::max(the_width / 2, 1U);
+					}
+				}
 			}
 			break;
 
@@ -3367,11 +3397,90 @@ namespace RenderWorker
 
 		case Texture::TT_3D:
 			{
+				init_data.resize(array_size * num_mipmaps);
+				base.resize(array_size * num_mipmaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					uint32_t the_width = width;
+					uint32_t the_height = height;
+					uint32_t the_depth = depth;
+					for (uint32_t level = 0; level < num_mipmaps; ++ level)
+					{
+						size_t const index = array_index * num_mipmaps + level;
+						if (IsCompressedFormat(format))
+						{
+							uint32_t const block_size = NumFormatBytes(format) * 4;
+							uint32_t image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * the_depth * block_size;
+
+							base[index] = data_block.size();
+							data_block.resize(base[index] + image_size);
+							init_data[index].row_pitch = (the_width + 3) / 4 * block_size;
+							init_data[index].slice_pitch = ((the_width + 3) / 4) * ((the_height + 3) / 4) * block_size;
+
+							tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(image_size));
+							COMMON_ASSERT(tex_res->gcount() == static_cast<int>(image_size));
+						}
+						else
+						{
+							init_data[index].row_pitch = (padding ? ((the_width + 3) & ~3) : the_width) * fmt_size;
+							init_data[index].slice_pitch = init_data[index].row_pitch * the_height;
+							base[index] = data_block.size();
+							data_block.resize(base[index] + init_data[index].slice_pitch * the_depth);
+
+							tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(init_data[index].slice_pitch * the_depth));
+							COMMON_ASSERT(tex_res->gcount() == static_cast<int>(init_data[index].slice_pitch * the_depth));
+						}
+
+						the_width = std::max(the_width / 2, 1U);
+						the_height = std::max(the_height / 2, 1U);
+						the_depth = std::max(the_depth / 2, 1U);
+					}
+				}
 			}
 			break;    
 
 		case Texture::TT_Cube:
 			{
+				init_data.resize(array_size * 6 * num_mipmaps);
+				base.resize(array_size * 6 * num_mipmaps);
+				for (uint32_t array_index = 0; array_index < array_size; ++ array_index)
+				{
+					for (uint32_t face = Texture::CF_Positive_X; face <= Texture::CF_Negative_Z; ++ face)
+					{
+						uint32_t the_width = width;
+						uint32_t the_height = height;
+						for (uint32_t level = 0; level < num_mipmaps; ++ level)
+						{
+							size_t const index = (array_index * 6 + face - Texture::CF_Positive_X) * num_mipmaps + level;
+							if (IsCompressedFormat(format))
+							{
+								uint32_t const block_size = NumFormatBytes(format) * 4;
+								uint32_t image_size = ((the_width + 3) / 4) * ((the_height + 3) / 4) * block_size;
+
+								base[index] = data_block.size();
+								data_block.resize(base[index] + image_size);
+								init_data[index].row_pitch = (the_width + 3) / 4 * block_size;
+								init_data[index].slice_pitch = image_size;
+
+								tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(image_size));
+								COMMON_ASSERT(tex_res->gcount() == static_cast<int>(image_size));
+							}
+							else
+							{
+								init_data[index].row_pitch = (padding ? ((the_width + 3) & ~3) : the_width) * fmt_size;
+								init_data[index].slice_pitch = init_data[index].row_pitch * the_width;
+								base[index] = data_block.size();
+								data_block.resize(base[index] + init_data[index].slice_pitch);
+
+								tex_res->read(&data_block[base[index]], static_cast<std::streamsize>(init_data[index].slice_pitch));
+								COMMON_ASSERT(tex_res->gcount() == static_cast<int>(init_data[index].slice_pitch));
+							}
+
+							the_width = std::max(the_width / 2, 1U);
+							the_height = std::max(the_height / 2, 1U);
+						}
+					}
+				}
 			}
 			break;
 		}

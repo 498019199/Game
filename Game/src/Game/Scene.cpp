@@ -358,24 +358,24 @@ void AScene::SetupDefaultLights()
 {
 	auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
 
-	ambient_light_ = MakeSharedPtr<AmbientLightSource>();
-	ambient_light_->Color(float3(0.1f, 0.1f, 0.1f));
-	root_node.AddComponent(ambient_light_);
+	// ambient_light_ = MakeSharedPtr<AmbientLightSource>();
+	// ambient_light_->Color(float3(0.1f, 0.1f, 0.1f));
+	// root_node.AddComponent(ambient_light_);
 
-	light_ = MakeSharedPtr<PointLightSource>();
-	light_->Attrib(0);
-	light_->Color(float3(1.5f, 1.5f, 1.5f));
-	light_->Falloff(float3(1.0f, 0.5f, 0.0f));
+	// light_ = MakeSharedPtr<PointLightSource>();
+	// light_->Attrib(0);
+	// light_->Color(float3(1.5f, 1.5f, 1.5f));
+	// light_->Falloff(float3(1.0f, 0.5f, 0.0f));
 
-	auto light_proxy = LoadLightSourceProxyModel(light_);
-	light_proxy->RootNode()->TransformToParent(
-		MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+	// auto light_proxy = LoadLightSourceProxyModel(light_);
+	// light_proxy->RootNode()->TransformToParent(
+	// 	MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
-	light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
-	light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-	light_node_->AddComponent(light_);
-	light_node_->AddChild(light_proxy->RootNode());
-	root_node.AddChild(light_node_);
+	// light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
+	// light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+	// light_node_->AddComponent(light_);
+	// light_node_->AddChild(light_proxy->RootNode());
+	// root_node.AddChild(light_node_);
 }
 
 void AScene::ClearLights()

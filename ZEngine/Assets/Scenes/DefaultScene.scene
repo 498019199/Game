@@ -1,8 +1,8 @@
 {
     "SkyBox":
     {
-        "YCube": "Lake_CraterLake03_filtered_y.dds",
-        "CCube": "Lake_CraterLake03_filtered_c.dds"
+        "YCube": "Textures/terrain/Lake_CraterLake03_filtered_y.dds",
+        "CCube": "Textures/terrain/Lake_CraterLake03_filtered_c.dds"
     }
 
 }
