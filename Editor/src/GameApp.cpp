@@ -42,9 +42,6 @@ void GameApp::SetScenePath(std::string_view scene_path)
 
 void GameApp::OnCreate()
 {
-	LookAt(float3(-0.4f, 1.0f, 3.9f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 1.0f, 0.0f));
-	Proj(0.1f, 200.0f);
-
 	auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
 	RenderEngine& re = rf.RenderEngineInstance();
@@ -65,6 +62,34 @@ void GameApp::OnCreate()
 	FrameBufferPtr screen_buffer = re.CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 	scene_.LoadScene(scene_path_);
+	ApplySceneCamera();
+}
+
+void GameApp::ApplySceneCamera()
+{
+	if (scene_.HasSceneCamera())
+	{
+		LookAt(scene_.CameraEye(), scene_.CameraLookAt(), scene_.CameraUp());
+		Proj(scene_.CameraNear(), scene_.CameraFar());
+
+		if (scene_.CameraFovDeg() > 0.0f)
+		{
+			RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+			FrameBuffer& fb = *re.CurFrameBuffer();
+			ActiveCamera().ProjParams(
+				scene_.CameraFovDeg() * 3.14159265358979323846f / 180.0f,
+				static_cast<float>(fb.Width()) / fb.Height(),
+				scene_.CameraNear(),
+				scene_.CameraFar());
+		}
+	}
+	else
+	{
+		LookAt(float3(-0.4f, 1.0f, 3.9f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 1.0f, 0.0f));
+		Proj(0.1f, 200.0f);
+	}
+
+	scene_.SetupCameraController(ActiveCamera());
 }
 
 void GameApp::OnResize(uint32_t width, uint32_t height)

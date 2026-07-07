@@ -3,6 +3,21 @@
     {
         "YCube": "Textures/terrain/Lake_CraterLake03_filtered_y.dds",
         "CCube": "Textures/terrain/Lake_CraterLake03_filtered_c.dds"
-    }
-
+    },
+    "Camera":
+    {
+        "Eye": [-0.4, 1.0, 3.9],
+        "LookAt": [0.0, 1.0, 0.0],
+        "Up": [0.0, 1.0, 0.0],
+        "Near": 0.1,
+        "Far": 200.0
+    },
+    "CameraController":
+    {
+        "Type": "Trackball",
+        "RotateButton": "Left",
+        "ZoomButton": "Right",
+        "MoveButton": "Middle"
+    },
+    "GameObjects": []
 }

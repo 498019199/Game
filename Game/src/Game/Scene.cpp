@@ -1,6 +1,7 @@
 #include <game/Scene.h>
 #include <game/Model.h>
 
+#include <base/Input.h>
 #include <common/JsonDom.h>
 #include <common/Log.h>
 #include <common/Util.h>
@@ -89,6 +90,23 @@ namespace
 			DegToRad(rotation_deg.z()));
 		return translation(position) * rot * scaling(scale);
 	}
+
+	uint32_t ParseMouseButton(std::string_view name, uint32_t default_value)
+	{
+		if (name == "Left")
+		{
+			return RenderWorker::MB_Left;
+		}
+		if (name == "Right")
+		{
+			return RenderWorker::MB_Right;
+		}
+		if (name == "Middle")
+		{
+			return RenderWorker::MB_Middle;
+		}
+		return default_value;
+	}
 }
 
 using namespace RenderWorker;
@@ -141,6 +159,7 @@ void AScene::LoadScene(std::string_view scene_path)
 	}
 	ClearSkyBox();
 	ClearLights();
+	ClearCamera();
 	SetupDefaultLights();
 
 	auto& res_loader = Context::Instance().ResLoaderInstance();
@@ -180,19 +199,126 @@ void AScene::LoadScene(std::string_view scene_path)
 		}
 	}
 
+	LoadCameraConfig(root);
+
 	JsonValue const* game_objects = root.Member("GameObjects");
-	if (!game_objects || game_objects->Type() != JsonValueType::Array)
+	if (game_objects && game_objects->Type() == JsonValueType::Array)
+	{
+		for (auto const& entry : game_objects->ValueArray())
+		{
+			if (entry.Type() == JsonValueType::String)
+			{
+				LoadPrefab(entry.ValueString());
+			}
+		}
+	}
+}
+
+void AScene::LoadCameraConfig(JsonValue const& root)
+{
+	has_camera_ = false;
+	has_camera_controller_ = false;
+	camera_controller_type_.clear();
+
+	JsonValue const* camera_config = root.Member("Camera");
+	if (camera_config && camera_config->Type() == JsonValueType::Object)
+	{
+		has_camera_ = true;
+
+		if (JsonValue const* eye_val = camera_config->Member("Eye"))
+		{
+			camera_eye_ = GetFloat3(*eye_val, camera_eye_);
+		}
+		if (JsonValue const* look_at_val = camera_config->Member("LookAt"))
+		{
+			camera_look_at_ = GetFloat3(*look_at_val, camera_look_at_);
+		}
+		if (JsonValue const* up_val = camera_config->Member("Up"))
+		{
+			camera_up_ = GetFloat3(*up_val, camera_up_);
+		}
+		if (JsonValue const* near_val = camera_config->Member("Near"))
+		{
+			camera_near_ = GetFloat(*near_val);
+		}
+		if (JsonValue const* far_val = camera_config->Member("Far"))
+		{
+			camera_far_ = GetFloat(*far_val);
+		}
+		if (JsonValue const* fov_val = camera_config->Member("FOV"))
+		{
+			camera_fov_deg_ = GetFloat(*fov_val);
+		}
+	}
+
+	JsonValue const* controller_config = root.Member("CameraController");
+	if (controller_config && controller_config->Type() == JsonValueType::Object)
+	{
+		has_camera_controller_ = true;
+
+		if (JsonValue const* type_val = controller_config->Member("Type"))
+		{
+			if (type_val->Type() == JsonValueType::String)
+			{
+				camera_controller_type_ = std::string(type_val->ValueString());
+			}
+		}
+
+		if (JsonValue const* rotate_val = controller_config->Member("RotateButton"))
+		{
+			if (rotate_val->Type() == JsonValueType::String)
+			{
+				controller_rotate_button_ = ParseMouseButton(rotate_val->ValueString(), controller_rotate_button_);
+			}
+		}
+		if (JsonValue const* zoom_val = controller_config->Member("ZoomButton"))
+		{
+			if (zoom_val->Type() == JsonValueType::String)
+			{
+				controller_zoom_button_ = ParseMouseButton(zoom_val->ValueString(), controller_zoom_button_);
+			}
+		}
+		if (JsonValue const* move_val = controller_config->Member("MoveButton"))
+		{
+			if (move_val->Type() == JsonValueType::String)
+			{
+				controller_move_button_ = ParseMouseButton(move_val->ValueString(), controller_move_button_);
+			}
+		}
+	}
+}
+
+void AScene::SetupCameraController(Camera& camera)
+{
+	camera_controller_.reset();
+	if (!has_camera_controller_)
 	{
 		return;
 	}
 
-	for (auto const& entry : game_objects->ValueArray())
+	if (camera_controller_type_.empty() || camera_controller_type_ == "Trackball")
 	{
-		if (entry.Type() == JsonValueType::String)
-		{
-			LoadPrefab(entry.ValueString());
-		}
+		camera_controller_ = MakeSharedPtr<TrackballCameraController>(
+			true, controller_rotate_button_, controller_zoom_button_, controller_move_button_);
 	}
+	else if (camera_controller_type_ == "FirstPerson")
+	{
+		camera_controller_ = MakeSharedPtr<FirstPersonController>();
+	}
+	else
+	{
+		LogError() << "Unknown camera controller type: " << camera_controller_type_ << std::endl;
+		return;
+	}
+
+	camera_controller_->AttachCamera(camera);
+}
+
+void AScene::ClearCamera()
+{
+	camera_controller_.reset();
+	has_camera_ = false;
+	has_camera_controller_ = false;
 }
 
 void AScene::LoadSkyBox(std::string_view y_cube_path, std::string_view c_cube_path)

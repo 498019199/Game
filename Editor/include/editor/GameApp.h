@@ -1,7 +1,6 @@
 #pragma once
 
 #include <base/App3D.h>
-#include <world/CameraController.h>
 #include <render/FrameBuffer.h>
 #include <render/RenderDeviceCaps.h>
 
@@ -29,6 +28,7 @@ private:
 	uint32_t DoUpdate(uint32_t pass) override;
 
 	void InputHandler(RenderWorker::InputEngine const& sender, RenderWorker::InputAction const& action);
+	void ApplySceneCamera();
 	void RebuildBackFaceDepthTarget(RenderWorker::RenderFactory& rf, RenderWorker::RenderDeviceCaps const& caps, uint32_t width, uint32_t height);
 
 private:

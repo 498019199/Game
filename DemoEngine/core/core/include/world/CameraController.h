@@ -1,3 +1,5 @@
+#pragma once
+
 #include <render/Camera.h>
 #include <base/ZEngine.h>
 #include <base/Input.h>
