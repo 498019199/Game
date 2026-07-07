@@ -1,8 +1,8 @@
 #pragma once
 #include <base/App3D.h>
-#include <world/CameraController.h>
 #include <editor/EditorPanel.h>
 #include <editor/EditorProjectPanel.h>
+#include <game/Scene.h>
 
 #include <render/FrameBuffer.h>
 #include <render/Texture.h>
@@ -11,6 +11,8 @@
 #include <render/RenderFactory.h>
 
 #include <memory>
+#include <string>
+#include <string_view>
 #include <vector>
 
 enum class ETransformType
@@ -53,19 +55,20 @@ public:
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;
 
-    
     std::string LoadTextFile(const std::string_view& path);
-
+    void ApplySceneCamera();
+    void RebuildBackFaceDepthTarget(RenderWorker::RenderFactory& rf, RenderWorker::RenderDeviceCaps const& caps, uint32_t width, uint32_t height);
     void RebuildGameViewRenderTarget(RenderWorker::RenderFactory& rf, RenderWorker::RenderDeviceCaps const& caps);
-private:
+
     std::vector<EditorPanelPtr> panel_list_;
     EditorSetting setting_;
 
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
 
-    RenderModelPtr model_;
-    RenderWorker::LightSourcePtr light_;
+    std::string scene_path_;
+    AScene scene_;
+
 	bool depth_texture_support_;
 	RenderWorker::FrameBufferPtr back_face_depth_fb_;
 
@@ -74,22 +77,6 @@ private:
     RenderWorker::ShaderResourceViewPtr game_view_srv_;
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
-
-
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

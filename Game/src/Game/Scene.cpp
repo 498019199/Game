@@ -8,6 +8,7 @@
 #include <render/Light.h>
 #include <render/RenderMaterial.h>
 #include <render/Renderable.h>
+#include <render/RenderableHelper.h>
 #include <render/SkyBox.h>
 #include <render/Texture.h>
 #include <world/SceneNode.h>
@@ -121,6 +122,7 @@ AScene::~AScene() noexcept
 		RemoveModel(models_.back());
 	}
 	ClearSkyBox();
+	ClearTerrain();
 	ClearLights();
 }
 
@@ -158,9 +160,9 @@ void AScene::LoadScene(std::string_view scene_path)
 		RemoveModel(models_.back());
 	}
 	ClearSkyBox();
+	ClearTerrain();
 	ClearLights();
 	ClearCamera();
-	SetupDefaultLights();
 
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 	ResIdentifierPtr scene_file = res_loader.Open(scene_path);
@@ -198,6 +200,35 @@ void AScene::LoadScene(std::string_view scene_path)
 			LoadSkyBox(y_cube_path, c_cube_path);
 		}
 	}
+
+	JsonValue const* terrain_config = root.Member("Terrain");
+	if (terrain_config && terrain_config->Type() == JsonValueType::Object)
+	{
+		std::string height_map_path;
+		std::string normal_map_path;
+
+		if (JsonValue const* height_val = terrain_config->Member("HeightMap"))
+		{
+			if (height_val->Type() == JsonValueType::String)
+			{
+				height_map_path = std::string(height_val->ValueString());
+			}
+		}
+		if (JsonValue const* normal_val = terrain_config->Member("NormalMap"))
+		{
+			if (normal_val->Type() == JsonValueType::String)
+			{
+				normal_map_path = std::string(normal_val->ValueString());
+			}
+		}
+
+		if (!height_map_path.empty() && !normal_map_path.empty())
+		{
+			LoadTerrain(height_map_path, normal_map_path);
+		}
+	}
+
+	SetupDefaultLights();
 
 	LoadCameraConfig(root);
 
@@ -333,6 +364,8 @@ void AScene::LoadSkyBox(std::string_view y_cube_path, std::string_view c_cube_pa
 
 	auto skybox = MakeSharedPtr<RenderableSkyBox>();
 	skybox->CompressedCubeMap(y_cube, c_cube);
+	skybox_y_cube_ = y_cube;
+	skybox_c_cube_ = c_cube;
 
 	skybox_node_ = MakeSharedPtr<SceneNode>(
 		MakeSharedPtr<RenderableComponent>(skybox),
@@ -353,6 +386,38 @@ void AScene::ClearSkyBox()
 		parent->RemoveChild(skybox_node_);
 	}
 	skybox_node_.reset();
+	skybox_y_cube_.reset();
+	skybox_c_cube_.reset();
+}
+
+void AScene::LoadTerrain(std::string_view height_map_path, std::string_view normal_map_path)
+{
+	TexturePtr height_map = SyncLoadTexture(height_map_path, EAH_GPU_Read | EAH_Immutable);
+	TexturePtr normal_map = SyncLoadTexture(normal_map_path, EAH_GPU_Read | EAH_Immutable);
+	if (!height_map || !normal_map)
+	{
+		LogError() << "Could NOT load terrain textures." << std::endl;
+		return;
+	}
+
+	auto terrain_mesh = MakeSharedPtr<TerrainRenderable>(height_map, normal_map);
+	terrain_node_ = MakeSharedPtr<SceneNode>(L"TerrainNode", SceneNode::SOA_Cullable);
+	terrain_node_->AddComponent(MakeSharedPtr<RenderableComponent>(terrain_mesh));
+	Context::Instance().WorldInstance().SceneRootNode().AddChild(terrain_node_);
+}
+
+void AScene::ClearTerrain()
+{
+	if (!terrain_node_)
+	{
+		return;
+	}
+
+	if (auto* parent = terrain_node_->Parent())
+	{
+		parent->RemoveChild(terrain_node_);
+	}
+	terrain_node_.reset();
 }
 
 void AScene::LoadPrefab(std::string_view prefab_path)
@@ -484,24 +549,28 @@ void AScene::SetupDefaultLights()
 {
 	auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
 
-	// ambient_light_ = MakeSharedPtr<AmbientLightSource>();
-	// ambient_light_->Color(float3(0.1f, 0.1f, 0.1f));
-	// root_node.AddComponent(ambient_light_);
+	ambient_light_ = MakeSharedPtr<AmbientLightSource>();
+	ambient_light_->Color(float3(0.1f, 0.1f, 0.1f));
+	if (skybox_y_cube_ && skybox_c_cube_)
+	{
+		ambient_light_->SkylightTex(skybox_y_cube_, skybox_c_cube_);
+	}
+	root_node.AddComponent(ambient_light_);
 
-	// light_ = MakeSharedPtr<PointLightSource>();
-	// light_->Attrib(0);
-	// light_->Color(float3(1.5f, 1.5f, 1.5f));
-	// light_->Falloff(float3(1.0f, 0.5f, 0.0f));
+	light_ = MakeSharedPtr<PointLightSource>();
+	light_->Attrib(0);
+	light_->Color(float3(1.5f, 1.5f, 1.5f));
+	light_->Falloff(float3(1.0f, 0.5f, 0.0f));
 
-	// auto light_proxy = LoadLightSourceProxyModel(light_);
-	// light_proxy->RootNode()->TransformToParent(
-	// 	MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
+	auto light_proxy = LoadLightSourceProxyModel(light_);
+	light_proxy->RootNode()->TransformToParent(
+		MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
-	// light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
-	// light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-	// light_node_->AddComponent(light_);
-	// light_node_->AddChild(light_proxy->RootNode());
-	// root_node.AddChild(light_node_);
+	light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
+	light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
+	light_node_->AddComponent(light_);
+	light_node_->AddChild(light_proxy->RootNode());
+	root_node.AddChild(light_node_);
 }
 
 void AScene::ClearLights()

@@ -15,10 +15,8 @@
 #include <world/World.h>
 #include <common/ResIdentifier.h>
 #include <render/RenderEngine.h>
-#include <render/SkyBox.h>
 #include <base/InputFactory.h>
 #include <render/RenderFactory.h>
-#include <render/RenderableHelper.h>
 #include <game/Model.h>
 
 namespace
@@ -84,7 +82,7 @@ void EditorSetting::ApplyDpiScale(float scale)
 
 EditorManagerD3D11::EditorManagerD3D11()
     : App3D("Editor App <DirectX 11>")
-
+    , scene_path_("Scenes/DefaultScene.scene")
 {
 }
 
@@ -95,9 +93,6 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::OnCreate()
 {
-    this->LookAt(float3(-0.4f, 1, 3.9f), float3(0, 1, 0), float3(0.0f, 1.0f, 0.0f));
-    this->Proj(0.1f, 200.0f);
-
     auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
 	auto& d3d11_re = rf.RenderEngineInstance();
@@ -149,107 +144,104 @@ void EditorManagerD3D11::OnCreate()
 	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
-    auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
-    // create terrain
-    TexturePtr terrain_height_tex = SyncLoadTexture("terrain_height.dds", EAH_GPU_Read | EAH_Immutable);
-	TexturePtr terrain_normal_tex = SyncLoadTexture("terrain_normal.dds", EAH_GPU_Read | EAH_Immutable);
-    auto terrain_mesh = CommonWorker::MakeSharedPtr<TerrainRenderable>(terrain_height_tex, terrain_normal_tex);
-    auto terrain = CommonWorker::MakeSharedPtr<SceneNode>(L"TerrainNode", SceneNode::SOA_Cullable);
-    terrain->AddComponent(CommonWorker::MakeSharedPtr<RenderableComponent>(terrain_mesh));
-    root_node.AddChild(terrain);
-
-    // create light
-    auto c_cube = ASyncLoadTexture("Lake_CraterLake03_filtered_c.dds", EAH_GPU_Read | EAH_Immutable);
-	auto y_cube = ASyncLoadTexture("Lake_CraterLake03_filtered_y.dds", EAH_GPU_Read | EAH_Immutable);
-    
-    auto ambient_light = CommonWorker::MakeSharedPtr<AmbientLightSource>();
-	ambient_light->SkylightTex(y_cube, c_cube);
-	ambient_light->Color(float3(0.1f, 0.1f, 0.1f));
-	root_node.AddComponent(ambient_light);
-
-    light_ = MakeSharedPtr<PointLightSource>();
-    light_->Attrib(0);
-    light_->Color(float3(1.5f, 1.5f, 1.5f));
-    light_->Falloff(float3(1, 0.5f, 0.0f));
-    auto light_proxy = LoadLightSourceProxyModel(light_);
-    light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
-
-    auto light_node = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
-    light_node->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
-    light_node->AddComponent(light_);
-    light_node->AddChild(light_proxy->RootNode());
-    root_node.AddChild(light_node);
-
-    // create skybox
-	auto skybox = MakeSharedPtr<RenderableSkyBox>();
-	skybox->CompressedCubeMap(y_cube, c_cube);
-	root_node.AddChild(MakeSharedPtr<SceneNode>(
-        MakeSharedPtr<RenderableComponent>(skybox), L"SkyBox", SceneNode::SOA_NotCastShadow));
+    scene_.LoadScene(scene_path_);
+    ApplySceneCamera();
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
 {
     App3D::OnResize(width, height);
 
-    auto& context = Context::Instance();
-	RenderFactory& rf = context.RenderFactoryInstance();
-	RenderEngine& re = rf.RenderEngineInstance();
-	RenderDeviceCaps const & caps = re.DeviceCaps();
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    RenderDeviceCaps const& caps = rf.RenderEngineInstance().DeviceCaps();
+    RebuildBackFaceDepthTarget(rf, caps, width, height);
+    RebuildGameViewRenderTarget(rf, caps);
+}
 
-	RenderWorker::TexturePtr back_face_depth_tex;
-	RenderWorker::TexturePtr back_face_ds_tex;
-	RenderWorker::DepthStencilViewPtr back_face_ds_view;
-	ElementFormat fmt;
-	if (depth_texture_support_)
-	{
-		fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_ABGR8, EF_ARGB8}), 1, 0);
-		COMMON_ASSERT(fmt != EF_Unknown);
+void EditorManagerD3D11::ApplySceneCamera()
+{
+    if (scene_.HasSceneCamera())
+    {
+        LookAt(scene_.CameraEye(), scene_.CameraLookAt(), scene_.CameraUp());
+        Proj(scene_.CameraNear(), scene_.CameraFar());
 
-		// Just dummy
-		back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
-
-		fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_D24S8, EF_D16}), 1, 0);
-		COMMON_ASSERT(fmt != EF_Unknown);
-
-		float4 constexpr back_face_ds_clear_value(0, 0, 0, 0);
-		back_face_ds_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write, {}, &back_face_ds_clear_value);
-		back_face_ds_view = rf.Make2DDsv(back_face_ds_tex, 0, 1, 0);
-
-        if( model_ )
-        {		
-            model_->ForEachMesh([back_face_ds_tex](Renderable& mesh)
-			    {
-				    checked_cast<DetailedMesh&>(mesh).BackFaceDepthTex(back_face_ds_tex);
-			    });
-        }
-	}
-	else
-	{
-		if (caps.pack_to_rgba_required)
-		{
-			fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({EF_ABGR8, EF_ARGB8}), 1, 0);
-			COMMON_ASSERT(fmt != EF_Unknown);
-		}
-		else
-		{
-			fmt = EF_R16F;
-		}
-		back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
-		back_face_ds_view = rf.Make2DDsv(width, height, EF_D16, 1, 0);
-
-        if( model_ )
+        if (scene_.CameraFovDeg() > 0.0f)
         {
-            model_->ForEachMesh([back_face_depth_tex](Renderable& mesh)
-                {
-                    checked_cast<DetailedMesh&>(mesh).BackFaceDepthTex(back_face_depth_tex);
-                });
+            RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+            FrameBuffer& fb = *re.CurFrameBuffer();
+            ActiveCamera().ProjParams(
+                scene_.CameraFovDeg() * 3.14159265358979323846f / 180.0f,
+                static_cast<float>(fb.Width()) / fb.Height(),
+                scene_.CameraNear(),
+                scene_.CameraFar());
         }
-	}
+    }
+    else
+    {
+        LookAt(float3(-0.4f, 1.0f, 3.9f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 1.0f, 0.0f));
+        Proj(0.1f, 200.0f);
+    }
 
-	back_face_depth_fb_->Attach(FrameBuffer::Attachment::Color0, rf.Make2DRtv(back_face_depth_tex, 0, 1, 0));
-	back_face_depth_fb_->Attach(back_face_ds_view);
+    scene_.SetupCameraController(ActiveCamera());
+}
 
-	RebuildGameViewRenderTarget(rf, caps);
+void EditorManagerD3D11::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps const& caps, uint32_t width, uint32_t height)
+{
+    TexturePtr back_face_depth_tex;
+    DepthStencilViewPtr back_face_ds_view;
+    ElementFormat fmt;
+
+    if (depth_texture_support_)
+    {
+        fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({ EF_ABGR8, EF_ARGB8 }), 1, 0);
+        COMMON_ASSERT(fmt != EF_Unknown);
+        back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
+
+        fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({ EF_D24S8, EF_D16 }), 1, 0);
+        COMMON_ASSERT(fmt != EF_Unknown);
+
+        float4 constexpr back_face_ds_clear_value(0, 0, 0, 0);
+        TexturePtr back_face_ds_tex = rf.MakeTexture2D(
+            width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write, {}, &back_face_ds_clear_value);
+        back_face_ds_view = rf.Make2DDsv(back_face_ds_tex, 0, 1, 0);
+
+        Context::Instance().WorldInstance().SceneRootNode().Traverse([&back_face_ds_tex](SceneNode& node) {
+            node.ForEachComponentOfType<RenderableComponent>([back_face_ds_tex](RenderableComponent& comp) {
+                if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&comp.BoundRenderable()))
+                {
+                    detailed_mesh->BackFaceDepthTex(back_face_ds_tex);
+                }
+            });
+            return true;
+        });
+    }
+    else
+    {
+        if (caps.pack_to_rgba_required)
+        {
+            fmt = caps.BestMatchTextureRenderTargetFormat(MakeSpan({ EF_ABGR8, EF_ARGB8 }), 1, 0);
+            COMMON_ASSERT(fmt != EF_Unknown);
+        }
+        else
+        {
+            fmt = EF_R16F;
+        }
+        back_face_depth_tex = rf.MakeTexture2D(width, height, 1, 1, fmt, 1, 0, EAH_GPU_Read | EAH_GPU_Write);
+        back_face_ds_view = rf.Make2DDsv(width, height, EF_D16, 1, 0);
+
+        Context::Instance().WorldInstance().SceneRootNode().Traverse([&back_face_depth_tex](SceneNode& node) {
+            node.ForEachComponentOfType<RenderableComponent>([back_face_depth_tex](RenderableComponent& comp) {
+                if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&comp.BoundRenderable()))
+                {
+                    detailed_mesh->BackFaceDepthTex(back_face_depth_tex);
+                }
+            });
+            return true;
+        });
+    }
+
+    back_face_depth_fb_->Attach(FrameBuffer::Attachment::Color0, rf.Make2DRtv(back_face_depth_tex, 0, 1, 0));
+    back_face_depth_fb_->Attach(back_face_ds_view);
 }
 
 void EditorManagerD3D11::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDeviceCaps const& caps)
@@ -336,19 +328,11 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
         {
             re.BindFrameBuffer(back_face_depth_fb_);
             re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
-
-            if( model_ )
-            {
-                model_->ForEachMesh([](Renderable& mesh)
-                    {
-                        checked_cast<DetailedMesh&>(mesh).BackFaceDepthPass(true);
-                    });
-            }
+            scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
         }
             return App3D::URV_NeedFlush;
         case 1:
         {
-            // 离屏渲染 3D 到 Game 视图 RT（尺寸见 setting_.gameViewWidth/Height）
             re.BindFrameBuffer(game_view_fb_);
             Color clear_clr(0.2f, 0.4f, 0.6f, 1);
             if (Context::Instance().Config().graphics_cfg.gamma)
@@ -358,19 +342,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
                 clear_clr.b() = 0.325f;
             }
             re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
-
-            if (model_)
-            {
-                model_->ForEachMesh([this](Renderable& mesh)
-                    {
-                        auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
-                        detailed_mesh.LightPos(light_->Position());
-                        detailed_mesh.LightColor(light_->Color());
-                        detailed_mesh.LightFalloff(light_->Falloff());
-                        detailed_mesh.EyePos(this->ActiveCamera().EyePos());
-                        detailed_mesh.BackFaceDepthPass(false);
-                    });
-            }
+            scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
             return App3D::URV_NeedFlush;
         }
         case 2:
@@ -482,18 +454,6 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
                     model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
                     AddToSceneRootHelper(model);
                 }, CreateModelFactory<RenderModel>, CreateDetailedMesh);
-
-            ptr->model->ForEachMesh([&](Renderable& mesh)
-            {
-                checked_cast<DetailedMesh&>(mesh).BackFaceDepthPass(true);
-
-                auto& detailed_mesh = checked_cast<DetailedMesh&>(mesh);
-                detailed_mesh.LightPos(light_->Position());
-                detailed_mesh.LightColor(light_->Color());
-                detailed_mesh.LightFalloff(light_->Falloff());
-                detailed_mesh.EyePos(this->ActiveCamera().EyePos());
-                detailed_mesh.BackFaceDepthPass(false);
-            });
         }
         break;
 

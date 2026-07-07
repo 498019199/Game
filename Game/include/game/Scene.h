@@ -37,14 +37,19 @@ public:
 private:
 	void LoadPrefab(std::string_view prefab_path);
 	void LoadSkyBox(std::string_view y_cube_path, std::string_view c_cube_path);
+	void LoadTerrain(std::string_view height_map_path, std::string_view normal_map_path);
 	void LoadCameraConfig(CommonWorker::JsonValue const& root);
 	void ClearSkyBox();
+	void ClearTerrain();
 	void ClearCamera();
 	void SetupDefaultLights();
 	void ClearLights();
 
 	std::vector<RenderModelPtr> models_;
 	SceneNodePtr skybox_node_;
+	SceneNodePtr terrain_node_;
+	TexturePtr skybox_y_cube_;
+	TexturePtr skybox_c_cube_;
 	RenderWorker::LightSourcePtr ambient_light_;
 	RenderWorker::LightSourcePtr light_;
 	SceneNodePtr light_node_;
