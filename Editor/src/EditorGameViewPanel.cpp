@@ -23,6 +23,8 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
     ImGui::SetNextWindowPos(ImVec2((float)setting.hierarchyWidth, (float)setting.mainBarHeight));
     ImGui::SetNextWindowSize(ImVec2((float)setting.gameViewWidth, (float)setting.gameViewHeight));
 
+    bool game_view_input_active = false;
+
     // 设置面板具体内容
 	if (ImGui::Begin("Game", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse))
 	{
@@ -36,6 +38,7 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
                 if (game_srv != nullptr && avail.x > 1.f && avail.y > 1.f)
                 {
                     ImGui::Image((ImTextureID)(intptr_t)game_srv, avail);
+                    game_view_input_active = ImGui::IsItemHovered() || ImGui::IsItemActive();
                 }
                 else
                 {
@@ -53,6 +56,8 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
     }
 
     ImGui::End();
+
+    checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance()).GameViewInputActive(game_view_input_active);
 }
 
 void EditorGameViewPanel::OnResize()

@@ -17,6 +17,16 @@ void CameraController::Scalers(float rotationScaler, float moveScaler)
     moveScaler_ = moveScaler;
 }
 
+void CameraController::InputEnabled(bool enabled)
+{
+    input_enabled_ = enabled;
+}
+
+bool CameraController::InputEnabled() const
+{
+    return input_enabled_;
+}
+
 void CameraController::AttachCamera(Camera&  camera)
 {
     camera_ = &camera;
@@ -161,7 +171,7 @@ TrackballCameraController::TrackballCameraController(bool use_input_engine, uint
 
 void TrackballCameraController::InputHandler(InputEngine const & /*ie*/, InputAction const & action)
 {
-    if (camera_ && !Context::Instance().UIManagerInstance().MouseOnUI() )
+    if (input_enabled_ && camera_ && !Context::Instance().UIManagerInstance().MouseOnUI() )
     {
         switch (action.first)
         {

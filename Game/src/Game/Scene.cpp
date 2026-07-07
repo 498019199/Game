@@ -19,11 +19,6 @@
 
 namespace
 {
-	constexpr float DegToRad(float deg)
-	{
-		return deg * 3.14159265358979323846f / 180.0f;
-	}
-
 	float GetFloat(CommonWorker::JsonValue const& value)
 	{
 		switch (value.Type())
@@ -86,9 +81,9 @@ namespace
 	{
 		using namespace RenderWorker::MathWorker;
 		RenderWorker::float4x4 const rot = rotation_matrix_yaw_pitch_roll(
-			DegToRad(rotation_deg.y()),
-			DegToRad(rotation_deg.x()),
-			DegToRad(rotation_deg.z()));
+			Deg2Rad(rotation_deg.y()),
+			Deg2Rad(rotation_deg.x()),
+			Deg2Rad(rotation_deg.z()));
 		return translation(position) * rot * scaling(scale);
 	}
 
@@ -343,6 +338,14 @@ void AScene::SetupCameraController(Camera& camera)
 	}
 
 	camera_controller_->AttachCamera(camera);
+}
+
+void AScene::SetCameraControllerInputEnabled(bool enabled)
+{
+	if (camera_controller_)
+	{
+		camera_controller_->InputEnabled(enabled);
+	}
 }
 
 void AScene::ClearCamera()

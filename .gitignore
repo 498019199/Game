@@ -3,6 +3,7 @@
 /.cursor
 .vscode/settings.json
 
+/out
 /build
 /DemoEngine/example
 /DemoEngine/lib

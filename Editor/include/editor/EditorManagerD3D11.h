@@ -49,6 +49,7 @@ public:
 
     /// ID3D11ShaderResourceView* for ImGui::Image；场景先渲染到离屏 RT 再采样（勿在绑定为 RT 时采样）
     void* GameViewShaderResourceView() const;
+    void GameViewInputActive(bool active);
 
     void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 
@@ -75,6 +76,7 @@ private :
     RenderWorker::FrameBufferPtr game_view_fb_;
     RenderWorker::TexturePtr game_view_color_tex_;
     RenderWorker::ShaderResourceViewPtr game_view_srv_;
+    bool game_view_input_active_ { false };
 
     ETransformType current_transform_type_ { ETransformType::TransformType_Position };
 };

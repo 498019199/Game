@@ -183,6 +183,7 @@ void EditorManagerD3D11::ApplySceneCamera()
     }
 
     scene_.SetupCameraController(ActiveCamera());
+    scene_.SetCameraControllerInputEnabled(game_view_input_active_);
 }
 
 void EditorManagerD3D11::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps const& caps, uint32_t width, uint32_t height)
@@ -288,6 +289,17 @@ void* EditorManagerD3D11::GameViewShaderResourceView() const
 	}
 #endif
 	return nullptr;
+}
+
+void EditorManagerD3D11::GameViewInputActive(bool active)
+{
+	if (game_view_input_active_ == active)
+	{
+		return;
+	}
+
+	game_view_input_active_ = active;
+	scene_.SetCameraControllerInputEnabled(active);
 }
 
 void EditorManagerD3D11::DoUpdateOverlay()

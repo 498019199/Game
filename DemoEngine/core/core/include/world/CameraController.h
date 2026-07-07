@@ -12,6 +12,8 @@ public:
     CameraController();
 
     void Scalers(float rotationScaler, float moveScaler);
+    void InputEnabled(bool enabled);
+    bool InputEnabled() const;
     
     virtual void AttachCamera(Camera& camera);
     virtual void DetachCamera();
@@ -20,6 +22,7 @@ protected:
     float		rotationScaler_;	// Scaler for rotation
     float		moveScaler_;		// Scaler for movement
     Camera*     camera_;
+    bool        input_enabled_ { true };
 };
 
 

@@ -37,7 +37,7 @@ void DetailedMesh::OnRenderBegin()
 	StaticMesh::OnRenderBegin();
 
 	auto& app = Context::Instance().AppInstance();
-	*(effect_->ParameterByName("worldviewproj")) = app.ActiveCamera().ViewProjMatrix();
+	*(effect_->ParameterByName("worldviewproj")) = model_mat_ * app.ActiveCamera().ViewProjMatrix();
 }
 
 void DetailedMesh::EyePos(float3 const& eye_pos)

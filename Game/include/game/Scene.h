@@ -23,6 +23,7 @@ public:
 
 	void LoadScene(std::string_view scene_path);
 	void SetupCameraController(RenderWorker::Camera& camera);
+	void SetCameraControllerInputEnabled(bool enabled);
 
 	bool HasSceneCamera() const { return has_camera_; }
 	RenderWorker::float3 const& CameraEye() const { return camera_eye_; }
