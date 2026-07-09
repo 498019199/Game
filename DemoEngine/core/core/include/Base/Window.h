@@ -71,7 +71,7 @@ private:
     void KeepScreenOn();
 
     // Windows 系统 DPI 适配
-    void DetectsDpi();
+    void DetectsDpi(int32_t left, int32_t top);
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
 public:

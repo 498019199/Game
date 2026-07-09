@@ -15,6 +15,7 @@
     "CameraController":
     {
         "Type": "Trackball",
+        "Distance": 3.92,
         "RotateButton": "Left",
         "ZoomButton": "Right",
         "MoveButton": "Middle"

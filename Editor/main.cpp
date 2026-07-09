@@ -9,6 +9,45 @@ using namespace EditorWorker;
 using namespace RenderWorker;
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+namespace
+{
+    bool EnableDpiAwareness()
+    {
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+        HMODULE const user32 = ::LoadLibraryW(L"user32.dll");
+        if (!user32)
+        {
+            return false;
+        }
+
+        typedef BOOL (WINAPI *SetProcessDpiAwarenessContextFunc)(DPI_AWARENESS_CONTEXT value);
+        auto* set_process_dpi_awareness_context =
+            reinterpret_cast<SetProcessDpiAwarenessContextFunc>(::GetProcAddress(user32, "SetProcessDpiAwarenessContext"));
+        if (set_process_dpi_awareness_context)
+        {
+            set_process_dpi_awareness_context(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
+        ::FreeLibrary(user32);
+        return set_process_dpi_awareness_context != nullptr;
+#else
+        return false;
+#endif
+    }
+
+    uint32_t To96DpiUnits(int value, int dpi)
+    {
+        if (value <= 0)
+        {
+            return 0;
+        }
+        if (dpi <= 0)
+        {
+            return static_cast<uint32_t>(value);
+        }
+        return static_cast<uint32_t>(static_cast<float>(value) * USER_DEFAULT_SCREEN_DPI / dpi + 0.5f);
+    }
+}
+
 int main()
 {
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
@@ -26,11 +65,20 @@ int main()
     uint32_t pHeight = defaultProjectHeight;
     uint32_t iWidth = defaultInspectorWidth;
 
-    //这种方式获取的是屏幕的实际物理分辨率
+    bool const dpi_aware = EnableDpiAwareness();
+    RECT work_area = {};
+    if (!::SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0))
+    {
+        work_area.right = ::GetSystemMetrics(SM_CXSCREEN);
+        work_area.bottom = ::GetSystemMetrics(SM_CYSCREEN);
+    }
+
     HDC hdc = GetDC(NULL);
-    uint32_t screenResolutionX = GetDeviceCaps(hdc, DESKTOPHORZRES);
-    uint32_t screenResolutionY = GetDeviceCaps(hdc, DESKTOPVERTRES);
+    int const dpi_x = dpi_aware ? GetDeviceCaps(hdc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
+    int const dpi_y = dpi_aware ? GetDeviceCaps(hdc, LOGPIXELSY) : USER_DEFAULT_SCREEN_DPI;
     ReleaseDC(NULL, hdc);
+    uint32_t const screenResolutionX = To96DpiUnits(work_area.right - work_area.left, dpi_x);
+    uint32_t const screenResolutionY = To96DpiUnits(work_area.bottom - work_area.top, dpi_y);
 
     // 宽度已经超过了屏幕分辨率，自适应缩小
     if (fullWidth > screenResolutionX && screenResolutionX > 0)
@@ -41,7 +89,7 @@ int main()
         srcWidth = static_cast<uint32_t>(static_cast<float>(srcWidth) * scaleRatio);
     }
     // 高度已经超过了屏幕分辨率，自适应缩小
-    if (fullHeight > screenResolutionY && screenResolutionY > 0)
+    if (fullHeight > screenResolutionY && screenResolutionY > defaultMainBarHeight)
     {
         float scaleRatio = static_cast<float>(screenResolutionY - defaultMainBarHeight) / static_cast<float>(fullHeight - defaultMainBarHeight);
         pHeight = static_cast<uint32_t>(static_cast<float>(pHeight) * scaleRatio);

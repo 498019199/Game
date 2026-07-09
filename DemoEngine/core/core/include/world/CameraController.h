@@ -63,11 +63,13 @@ public:
     void Move(float offset_x, float offset_y);
     void Rotate(float offset_x, float offset_y);
     void Zoom(float offset_x, float offset_y);
+    void Distance(float distance);
 
 private:
     bool reverse_target_;
     float3 target_;
     float3 right_;
+    float distance_ { 0.0f };
     uint32_t move_button_;
     uint32_t rotate_button_;
     uint32_t zoom_button_;

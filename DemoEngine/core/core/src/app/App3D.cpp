@@ -54,10 +54,12 @@ App3D::~App3D()
 void App3D::Create()
 {
     ContextConfig cfg = Context::Instance().Config();
-    Context::Instance().RenderFactoryInstance().RenderEngineInstance().CreateRenderWindow(name_, cfg.graphics_cfg);
+    RenderEngine& render_engine = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+    render_engine.CreateRenderWindow(name_, cfg.graphics_cfg);
 
     OnCreate();
-    OnResize(cfg.graphics_cfg.width, cfg.graphics_cfg.height);
+    FrameBuffer& frame_buffer = *render_engine.CurFrameBuffer();
+    OnResize(frame_buffer.Width(), frame_buffer.Height());
 }
 
 void App3D::Run()

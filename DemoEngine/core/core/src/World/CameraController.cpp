@@ -3,8 +3,16 @@
 #include <base/InputFactory.h>
 #include <base/UIManager.h>
 
+#include <algorithm>
+
 namespace RenderWorker
 {
+namespace
+{
+    constexpr float MinTrackballDistance = 0.01f;
+    constexpr float MouseWheelZoomScale = 0.01f;
+}
+
 CameraController::CameraController()
     :rotationScaler_(0.05f), moveScaler_(1), camera_(nullptr)
 {
@@ -150,6 +158,7 @@ TrackballCameraController::TrackballCameraController(bool use_input_engine, uint
         {
             InputActionDefine(Turn, MS_X),
             InputActionDefine(Turn, MS_Y),
+            InputActionDefine(ZoomInOut, MS_Z),
             InputActionDefine(Turn, TS_Pan),
             InputActionDefine(Turn, TS_Pan),
             InputActionDefine(ZoomInOut, TS_Zoom)
@@ -219,6 +228,13 @@ void TrackballCameraController::InputHandler(InputEngine const & /*ie*/, InputAc
         case ZoomInOut:
             switch (action.second->type)
             {
+            case InputEngine::IDT_Mouse:
+                {
+                    InputMouseActionParamPtr param = checked_pointer_cast<InputMouseActionParam>(action.second);
+                    this->Zoom(static_cast<float>(param->wheel_delta) * MouseWheelZoomScale, 0);
+                }
+                break;
+
             case InputEngine::IDT_Touch:
                 {
                     InputTouchActionParamPtr param = checked_pointer_cast<InputTouchActionParam>(action.second);
@@ -241,6 +257,10 @@ void TrackballCameraController::AttachCamera(Camera& camera)
     reverse_target_ = false;
     target_ = camera_->LookAt();
     right_ = camera_->RightVec();
+    if (distance_ > 0.0f)
+    {
+        Distance(distance_);
+    }
 }
 
 void TrackballCameraController::Move(float offset_x, float offset_y)
@@ -294,21 +314,24 @@ void TrackballCameraController::Rotate(float offset_x, float offset_y)
 
 void TrackballCameraController::Zoom(float offset_x, float offset_y)
 {
-    float3 offset = camera_->ForwardVec() * ((offset_x + offset_y) * moveScaler_ * 2);
-    float3 pos = camera_->EyePos() + offset;
+    Distance(camera_->LookAtDist() - (offset_x + offset_y) * moveScaler_ * 2);
+}
 
-    if (MathWorker::dot(target_ - pos, camera_->ForwardVec()) <= 0)
+void TrackballCameraController::Distance(float distance)
+{
+    if (!camera_)
     {
-        reverse_target_ = true;
-    }
-    else
-    {
-        reverse_target_ = false;
+        distance_ = distance;
+        return;
     }
 
+    distance_ = std::max(distance, MinTrackballDistance);
+    float3 const pos = target_ - camera_->ForwardVec() * distance_;
+
+    reverse_target_ = false;
+    camera_->LookAtDist(distance_);
     auto& camera_node = *camera_->BoundSceneNode();
-    camera_node.TransformToWorld(
-        MathWorker::inverse(MathWorker::look_at_lh(pos, pos + camera_->ForwardVec() * camera_->LookAtDist(), camera_->UpVec())));
+    camera_node.TransformToWorld(MathWorker::inverse(MathWorker::look_at_lh(pos, target_, camera_->UpVec())));
 
     camera_->Dirty();
 }

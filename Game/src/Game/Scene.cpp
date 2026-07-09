@@ -311,6 +311,10 @@ void AScene::LoadCameraConfig(JsonValue const& root)
 				controller_move_button_ = ParseMouseButton(move_val->ValueString(), controller_move_button_);
 			}
 		}
+		if (JsonValue const* distance_val = controller_config->Member("Distance"))
+		{
+			controller_distance_ = GetFloat(*distance_val);
+		}
 	}
 }
 
@@ -324,8 +328,15 @@ void AScene::SetupCameraController(Camera& camera)
 
 	if (camera_controller_type_.empty() || camera_controller_type_ == "Trackball")
 	{
-		camera_controller_ = MakeSharedPtr<TrackballCameraController>(
+		auto trackball_controller = MakeSharedPtr<TrackballCameraController>(
 			true, controller_rotate_button_, controller_zoom_button_, controller_move_button_);
+		camera_controller_ = trackball_controller;
+		camera_controller_->AttachCamera(camera);
+		if (controller_distance_ > 0.0f)
+		{
+			trackball_controller->Distance(controller_distance_);
+		}
+		return;
 	}
 	else if (camera_controller_type_ == "FirstPerson")
 	{

@@ -68,5 +68,6 @@ private:
 	uint32_t controller_rotate_button_ { RenderWorker::MB_Left };
 	uint32_t controller_zoom_button_ { RenderWorker::MB_Right };
 	uint32_t controller_move_button_ { RenderWorker::MB_Middle };
+	float controller_distance_ { 0.0f };
 	RenderWorker::ControllerPtr camera_controller_;
 };
