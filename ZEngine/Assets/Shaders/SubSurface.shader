@@ -1,11 +1,14 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/SubSurface"
+{
+    // Converted from RenderFX/SubSurface.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="Lighting.fxml"/>
-	<include name="util.fxml"/>
-	<include name="Quaternion.fxml"/>
-	<include name="Material.fxml"/>
-	<include name="Mesh.fxml"/>
+	<include name="Lighting.shader"/>
+	<include name="util.shader"/>
+	<include name="Quaternion.shader"/>
+	<include name="Material.shader"/>
+	<include name="Mesh.shader"/>
 
 	<parameter type="float4x4" name="worldviewproj" semantic="WORLDVIEWPROJECTION"/>
 	<parameter type="float3" name="eye_pos"/>
@@ -176,3 +179,5 @@ float4 SubSurfacePS(float2 uv : TEXCOORD0,
 		<macro name="NO_DEPTH_TEXTURE" value="1"/>
 	</technique>
 </effect>
+    ENDFXML
+}

@@ -1,13 +1,16 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/GBuffer"
+{
+    // Converted from RenderFX/GBuffer.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="DeferredRenderingUtil.fxml"/>
-	<include name="Quaternion.fxml"/>
-	<include name="util.fxml"/>
-	<include name="Lighting.fxml"/>
-	<include name="Material.fxml"/>
-	<include name="Mesh.fxml"/>
-	<include name="ModelCamera.fxml"/>
+	<include name="DeferredRenderingUtil.shader"/>
+	<include name="Quaternion.shader"/>
+	<include name="util.shader"/>
+	<include name="Lighting.shader"/>
+	<include name="Material.shader"/>
+	<include name="Mesh.shader"/>
+	<include name="ModelCamera.shader"/>
 
 	<cbuffer name="per_frame">
 		<parameter type="float4" name="object_id"/>
@@ -843,3 +846,5 @@ float2 DefaultTexcoordAdjustmentNode(float2 texcoord, float3 view_ray)
 		]]>
 	</shader>
 </effect>
+    ENDFXML
+}

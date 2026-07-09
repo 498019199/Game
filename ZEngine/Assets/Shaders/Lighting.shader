@@ -1,5 +1,8 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/Lighting"
+{
+    // Converted from RenderFX/Lighting.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
 	<macro name="MAX_SHININESS" value="8192.0f"/>
 
@@ -183,3 +186,5 @@ float Glossiness2Shininess(float glossiness)
 		]]>
 	</shader>
 </effect>
+    ENDFXML
+}

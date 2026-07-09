@@ -12,20 +12,21 @@ namespace RenderWorker
 		auto& context = Context::Instance();
 		RenderFactory& rf = context.RenderFactoryInstance();
 
-		RenderEffectPtr effect = SyncLoadRenderEffect("SkyBox.fxml");
-		// if (context.DeferredRenderingLayerValid())
-		// {
-		// 	effect_attrs_ |= EA_SpecialShading;
-
-		// 	this->BindDeferredEffect(effect);
-		// 	gbuffer_tech_ = effect->TechniqueByName("GBufferSkyBoxTech");
-		// 	special_shading_tech_ = effect->TechniqueByName("SkyBoxTech");
-		// 	this->Technique(effect, gbuffer_tech_);
-		// }
-		// else
-		{
-			this->Technique(effect, effect->TechniqueByName("SkyBoxTech"));
-		}
+			// ShaderLab Lite test path 
+			RenderEffectPtr effect = SyncLoadRenderEffect("SkyBox.shader");
+			// if (context.DeferredRenderingLayerValid())
+			// {
+			// 	effect_attrs_ |= EA_SpecialShading;
+	
+			// 	this->BindDeferredEffect(effect);
+			// 	gbuffer_tech_ = effect->TechniqueByName("GBufferSkyBoxTech");
+			// 	special_shading_tech_ = effect->TechniqueByName("SkyBoxTech");
+			// 	this->Technique(effect, gbuffer_tech_);
+			// }
+			// else
+			{
+				this->Technique(effect, effect->TechniqueByName("SkyBoxTech"));
+			}
 
 		float3 xyzs[] =
 		{

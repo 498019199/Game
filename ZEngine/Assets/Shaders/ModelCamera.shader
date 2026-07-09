@@ -1,5 +1,8 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/ModelCamera"
+{
+    // Converted from RenderFX/ModelCamera.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
 	<cbuffer name="klayge_model">
 		<parameter type="float4x4" name="model"/>
@@ -48,3 +51,5 @@ uint RenderTargetIndex(uint camera_id)
 	</shader>
 
 </effect>
+    ENDFXML
+}

@@ -2303,7 +2303,7 @@ struct NodeInfo
 	RenderableLightSourceProxy::RenderableLightSourceProxy(std::wstring_view name)
 		: StaticMesh(name)
 	{
-		auto effect = SyncLoadRenderEffect("LightSourceProxy.fxml");
+		auto effect = SyncLoadRenderEffect("LightSourceProxy.shader");
 		this->Technique(effect, effect->TechniqueByName("LightSourceProxy"));
 		effect_attrs_ |= EA_SimpleForward;
 
@@ -2360,7 +2360,7 @@ struct NodeInfo
 	RenderableCameraProxy::RenderableCameraProxy(std::wstring_view name)
 		: StaticMesh(name)
 	{
-		auto effect = SyncLoadRenderEffect("CameraProxy.fxml");
+		auto effect = SyncLoadRenderEffect("CameraProxy.shader");
 		this->Technique(effect, effect->TechniqueByName("CameraProxy"));
 		effect_attrs_ |= EA_SimpleForward;
 
@@ -2455,7 +2455,7 @@ struct NodeInfo
 
 	PredefinedMeshCBuffer::PredefinedMeshCBuffer()
 	{
-		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
 		predefined_cbuffer_ = effect_->CBufferByName("klayge_mesh");
 
 		pos_center_offset_ = effect_->ParameterByName("pos_center")->CBufferOffset();
@@ -2492,7 +2492,7 @@ struct NodeInfo
 
 	PredefinedModelCBuffer::PredefinedModelCBuffer()
 	{
-		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
 		predefined_cbuffer_ = effect_->CBufferByName("klayge_model");
 
 		model_offset_ = effect_->ParameterByName("model")->CBufferOffset();

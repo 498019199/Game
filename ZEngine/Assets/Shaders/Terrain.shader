@@ -1,9 +1,12 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/Terrain"
+{
+    // Converted from RenderFX/Terrain.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="util.fxml"/>
-	<include name="PostProcess.fxml"/>
-	<include name="Mesh.fxml"/>
+	<include name="util.shader"/>
+	<include name="PostProcess.shader"/>
+	<include name="Mesh.shader"/>
 
 	<parameter type="sampler" name="point_sampler">
 		<state name="filtering" value="min_mag_mip_point"/>
@@ -98,3 +101,5 @@ float4 BlendPS(float2 tex : TEXCOORD0) : SV_Target
 		</pass>
 	</technique>
 </effect>
+    ENDFXML
+}

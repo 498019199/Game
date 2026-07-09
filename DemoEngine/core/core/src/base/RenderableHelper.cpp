@@ -19,7 +19,7 @@ struct VertexPosNormalColor
 
 RenderableBox::  RenderableBox(float width, float height, float depth, const Color & color)
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
 	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
 
     float w2 = width / 2, h2 = height / 2, d2 = depth / 2;
@@ -116,7 +116,7 @@ RenderableBox::  RenderableBox(float width, float height, float depth, const Col
 
 RenderableSphere::RenderableSphere(float radius, int levels, int slices, const Color & color)
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
 	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
 
     uint32_t vertexCount = 2 + (levels - 1) * (slices + 1);
@@ -344,7 +344,7 @@ RenderablePlane::RenderablePlane(float length, float width,
 TerrainRenderable::TerrainRenderable(TexturePtr const & height_map, TexturePtr const & normal_map)
     : RenderablePlane(4, 4, 64, 64, true, false)
 {
-    effect_ = SyncLoadRenderEffect("Terrain.fxml");
+    effect_ = SyncLoadRenderEffect("Terrain.shader");
     technique_ = effect_->TechniqueByName("Terrain");
     *(effect_->ParameterByName("grass_tex")) = ASyncLoadTexture("grass.dds", EAH_GPU_Read | EAH_Immutable);
     *(effect_->ParameterByName("height_map_tex")) = height_map;

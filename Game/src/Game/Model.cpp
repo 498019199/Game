@@ -10,7 +10,7 @@ using namespace CommonWorker;
 DetailedMesh::DetailedMesh(std::wstring_view name)
 	: StaticMesh(name)
 {
-	effect_ = SyncLoadRenderEffect("SubSurface.fxml");
+	effect_ = SyncLoadRenderEffect("SubSurface.shader");
 	technique_ = effect_->TechniqueByName("BackFaceDepthTech");
 }
 

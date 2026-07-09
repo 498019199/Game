@@ -1,9 +1,12 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/PredefinedCBuffers"
+{
+    // Converted from RenderFX/PredefinedCBuffers.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="Material.fxml"/>
-	<include name="Mesh.fxml"/>
-	<include name="ModelCamera.fxml"/>
+	<include name="Material.shader"/>
+	<include name="Mesh.shader"/>
+	<include name="ModelCamera.shader"/>
 
 	<shader>
 		<![CDATA[
@@ -32,3 +35,5 @@ float4 PredefinedCBuffersNoopPS() : SV_Target0
 		</pass>
 	</technique>
 </effect>
+    ENDFXML
+}

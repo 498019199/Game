@@ -66,6 +66,7 @@ set(RENDER_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderableHelper.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderDeviceCaps.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderEffect.h 
+    ${PROJECT_SOURCE_DIR}/core/core/include/render/ShaderLabLite.h
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderEngine.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderFactory.h 
     ${PROJECT_SOURCE_DIR}/core/core/include/render/RenderLayout.h
@@ -92,6 +93,8 @@ set(RENDER_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/render/Renderable.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderDeviceCaps.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEffect.cpp 
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderVariable.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/render/ShaderLabLite.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderEngine.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderFactory.cpp 
     ${PROJECT_SOURCE_DIR}/core/core/src/render/RenderLayout.cpp

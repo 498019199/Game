@@ -1,5 +1,8 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/Quaternion"
+{
+    // Converted from RenderFX/Quaternion.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
 	<shader>
 		<![CDATA[
@@ -276,3 +279,5 @@ float4x4 udq_to_matrix(float4 ndp, float4 dp)
 		]]>
 	</shader>
 </effect>
+    ENDFXML
+}

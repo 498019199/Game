@@ -1,7 +1,10 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/PostProcess"
+{
+    // Converted from RenderFX/PostProcess.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="util.fxml"/>
+	<include name="util.shader"/>
 
 	<parameter type="float4x4" name="pp_mvp"/>
 	
@@ -44,3 +47,5 @@ void VolPostProcessVS(float4 pos : POSITION,
 		]]>
 	</shader>
 </effect>
+    ENDFXML
+}

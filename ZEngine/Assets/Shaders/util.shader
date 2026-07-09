@@ -1,8 +1,7 @@
-<?xml version='1.0'?>
-
-<effect>
-	<shader>
-		<![CDATA[
+Shader "Lib/Util"
+{
+    // Converted from util.fxml — HLSL helper library (no Pass).
+    HLSLPROGRAM
 float get_x_channel(float4 v)
 {
 #ifdef KLAYGE_BC4_AS_G
@@ -359,6 +358,6 @@ uint4 reverse(uint4 v)
 	return (v >> 16) | (v << 16);
 }
 #endif
-		]]>
-	</shader>
-</effect>
+		
+    ENDHLSL
+}

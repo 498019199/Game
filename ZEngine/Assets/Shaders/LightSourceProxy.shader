@@ -1,8 +1,11 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/LightSourceProxy"
+{
+    // Converted from RenderFX/LightSourceProxy.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="Lighting.fxml"/>
-	<include name="GBuffer.fxml"/>
+	<include name="Lighting.shader"/>
+	<include name="GBuffer.shader"/>
 
 	<parameter type="int2" name="light_is_projective"/>
 
@@ -67,3 +70,5 @@ float4 LightSourceProxyPS(float3 pos_os : TEXCOORD0, float3 normal : TEXCOORD1) 
 		</pass>
 	</technique>
 </effect>
+    ENDFXML
+}

@@ -742,6 +742,7 @@ private:
     void ResolveOverrideTechs(XMLNode& root);
 
     void Load(XMLNode const& root);
+    bool LoadFromShaderLab(ResIdentifier& source);
 #endif
 
 private:

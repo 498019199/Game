@@ -1,7 +1,10 @@
-<?xml version='1.0'?>
-
+Shader "RenderFX/DeferredRenderingUtil"
+{
+    // Converted from RenderFX/DeferredRenderingUtil.fxml
+    // Full effect XML embedded for 1:1 runtime compatibility.
+    FXMLPROGRAM
 <effect>
-	<include name="Lighting.fxml"/>
+	<include name="Lighting.shader"/>
 
 	<shader>
 		<![CDATA[
@@ -84,3 +87,5 @@ float3 NearestDepthUpsampling(float2 tc, float4 z_half, float z_full, float2 l1_
 		]]>
 	</shader>
 </effect>
+    ENDFXML
+}

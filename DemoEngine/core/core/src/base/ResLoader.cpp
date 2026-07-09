@@ -185,6 +185,7 @@ namespace RenderWorker
 #if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP) || defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN)
 			this->AddPath("..");
 			this->AddPath("../../Assets/RenderFX");
+			this->AddPath("../../Assets/Shaders");
 			this->AddPath("../../EditorAssets/Models");
 #endif
 			this->AddPath("");

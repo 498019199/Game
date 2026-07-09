@@ -1202,7 +1202,7 @@ void SaveRenderMaterial(RenderMaterialPtr const & mtl, std::string const & mtlml
 
 PredefinedMaterialCBuffer::PredefinedMaterialCBuffer()
 {
-	effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+	effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
 	predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
 
 	albedo_clr_offset_ = effect_->ParameterByName("albedo_clr")->CBufferOffset();

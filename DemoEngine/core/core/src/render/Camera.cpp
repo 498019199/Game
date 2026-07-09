@@ -189,7 +189,7 @@ void Camera::Active(RenderEffectConstantBuffer& camera_cbuffer, uint32_t index, 
 
 PredefinedCameraCBuffer::PredefinedCameraCBuffer()
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.fxml");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
     predefined_cbuffer_ = effect_->CBufferByName("klayge_camera");
 
     num_cameras_offset_ = effect_->ParameterByName("num_cameras")->CBufferOffset();
