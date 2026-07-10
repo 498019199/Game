@@ -1,39 +1,33 @@
-Shader "RenderFX/PredefinedCBuffers"
+Shader "PredefinedCBuffers"
 {
-    // Converted from RenderFX/PredefinedCBuffers.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<include name="Material.shader"/>
-	<include name="Mesh.shader"/>
-	<include name="ModelCamera.shader"/>
+    Include "Material.shader"
+    Include "Mesh.shader"
+    Include "ModelCamera.shader"
 
-	<shader>
-		<![CDATA[
-// Just dummy shaders
+    SubShader
+    {
+        Pass
+        {
+            Name "PredefinedCBuffersNoopTech"
 
-void PredefinedCBuffersNoopVS(out float4 oPositionOS : PositionOS, out float4 oPosition : SV_Position)
-{
-	oPositionOS = mul(float4(pos_center, 1), model);
+            HLSLPROGRAM
+            #pragma vertex PredefinedCBuffersNoopVS
+            #pragma fragment PredefinedCBuffersNoopPS
 
-	KlayGECameraInfo camera = CameraFromInstance(0);
-	float4x4 mvp = camera.mvp;
-	oPosition = mul(float4(pos_center, 1), mvp);
-}
+            void PredefinedCBuffersNoopVS(out float4 oPositionOS : PositionOS, out float4 oPosition : SV_Position)
+            {
+                oPositionOS = mul(float4(pos_center, 1), model);
 
-float4 PredefinedCBuffersNoopPS() : SV_Target0
-{
-	return albedo_clr;
-}
-		]]>
-	</shader>
+                KlayGECameraInfo camera = CameraFromInstance(0);
+                float4x4 mvp = camera.mvp;
+                oPosition = mul(float4(pos_center, 1), mvp);
+            }
 
-	<technique name="PredefinedCBuffersNoopTech">
-		<pass name="p0">
-			<state name="vertex_shader" value="PredefinedCBuffersNoopVS()"/>
-			<state name="pixel_shader" value="PredefinedCBuffersNoopPS()"/>
-		</pass>
-	</technique>
-</effect>
-    ENDFXML
+            float4 PredefinedCBuffersNoopPS() : SV_Target0
+            {
+                return albedo_clr;
+            }
+            ENDHLSL
+        }
+    }
 }

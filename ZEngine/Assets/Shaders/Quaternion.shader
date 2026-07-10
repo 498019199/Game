@@ -1,11 +1,6 @@
-Shader "RenderFX/Quaternion"
+Shader "Lib/Quaternion"
 {
-    // Converted from RenderFX/Quaternion.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<shader>
-		<![CDATA[
+    HLSLPROGRAM
 float4 conjugate_quat(float4 rhs)
 {
 	return float4(-rhs.xyz, rhs.w);
@@ -276,8 +271,5 @@ float4x4 udq_to_matrix(float4 ndp, float4 dp)
 
 	return m;
 }
-		]]>
-	</shader>
-</effect>
-    ENDFXML
+    ENDHLSL
 }

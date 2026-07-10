@@ -1,10 +1,10 @@
 {
     // // 禁用当前工作区的 Git 集成
-    // "git.enabled": false,
-    // // 隐藏源代码管理面板的 Git 视图
-    // "git.showInlineOpenFileAction": false,
-    // // 禁用 Git 相关的状态通知
-    // "gitlens.enabled": false,
+    //"git.enabled": false,
+    // 隐藏源代码管理面板的 Git 视图
+    //"git.showInlineOpenFileAction": false,
+    // 禁用 Git 相关的状态通知
+   // "gitlens.enabled": false,
     "cmake.sourceDirectory": "${workspaceFolder}",
     "files.associations": {
     "*.mat": "json",
@@ -104,11 +104,15 @@
     "files.exclude": {
       "build": true,
       "bin": true,
+
+      "**/.kfx": true,
     },
     "search.exclude": {
       "build": true,
       "bin": true,
       "lib": true,
+
+      "**/.kfx": true,
     },
     //terminal
     "terminal.integrated.profiles.windows": {

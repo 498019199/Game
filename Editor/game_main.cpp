@@ -15,7 +15,7 @@ int main()
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 	res_loader.AddPath("../../Assets/Config");
 	res_loader.AddPath("../../Assets/Prefabs");
-	res_loader.AddPath("../../Assets/RenderFX");
+	res_loader.AddPath("../../Assets/Shaders");
 
 	auto app = MakeUniquePtr<GameApp>();
 	app->Create();

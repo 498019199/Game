@@ -184,7 +184,6 @@ namespace RenderWorker
 			paths_.emplace_back(PathInfo{CtHash(""), 0U, std::filesystem::path(), PackagePtr()});
 #if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP) || defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN)
 			this->AddPath("..");
-			this->AddPath("../../Assets/RenderFX");
 			this->AddPath("../../Assets/Shaders");
 			this->AddPath("../../EditorAssets/Models");
 #endif

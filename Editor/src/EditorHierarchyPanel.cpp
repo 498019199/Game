@@ -5,8 +5,59 @@
 #include <render/Mesh.h>
 #include <common/Util.h>
 
+#include <string>
+#include <vector>
+
 namespace EditorWorker
 {
+namespace
+{
+    void CollectStaticMeshes(RenderWorker::SceneNode const& node, std::vector<RenderWorker::Renderable const*>& meshes)
+    {
+        node.ForEachComponentOfType<RenderWorker::RenderableComponent>(
+            [&meshes](RenderWorker::RenderableComponent& component)
+            {
+                RenderWorker::Renderable& renderable = component.BoundRenderable();
+                if (dynamic_cast<RenderWorker::StaticMesh*>(&renderable))
+                {
+                    meshes.push_back(&renderable);
+                }
+            });
+
+        for (auto const& child : node.Children())
+        {
+            CollectStaticMeshes(*child, meshes);
+        }
+    }
+
+    void RenderModelMeshes(RenderWorker::SceneNode const& node)
+    {
+        std::vector<RenderWorker::Renderable const*> meshes;
+        CollectStaticMeshes(node, meshes);
+        if (meshes.empty())
+        {
+            return;
+        }
+
+        if (ImGui::TreeNode("meshes_"))
+        {
+            for (size_t mesh_index = 0; mesh_index < meshes.size(); ++mesh_index)
+            {
+                std::string mesh_name;
+                CommonWorker::Convert(mesh_name, meshes[mesh_index]->Name());
+                if (mesh_name.empty())
+                {
+                    mesh_name = "Mesh " + std::to_string(mesh_index);
+                }
+
+                ImGui::PushID(static_cast<int>(mesh_index));
+                ImGui::TreeNodeEx(mesh_name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+    }
+}
 
 EditorHierarchyPanel::EditorHierarchyPanel()
 {
@@ -39,9 +90,7 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
 
             if (ImGui::TreeNode("", node_name.c_str(), i))
             {
-                // ImGui::Text(node_name.c_str());
-                // ImGui::SameLine();
-                // if (ImGui::SmallButton("button")) {}
+                RenderModelMeshes(*node);
                 ImGui::TreePop();
             }
             ImGui::PopID();

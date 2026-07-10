@@ -1,183 +1,194 @@
-Shader "RenderFX/SubSurface"
+Shader "SubSurface"
 {
-    // Converted from RenderFX/SubSurface.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<include name="Lighting.shader"/>
-	<include name="util.shader"/>
-	<include name="Quaternion.shader"/>
-	<include name="Material.shader"/>
-	<include name="Mesh.shader"/>
+    Include "Lighting.shader"
+    Include "util.shader"
+    Include "Quaternion.shader"
+    Include "Material.shader"
+    Include "Mesh.shader"
 
-	<parameter type="float4x4" name="worldviewproj" semantic="WORLDVIEWPROJECTION"/>
-	<parameter type="float3" name="eye_pos"/>
-	<parameter type="float3" name="light_pos"/>
-	<parameter type="float3" name="light_color"/>
-	<parameter type="float3" name="light_falloff"/>
-	<parameter type="float3" name="extinction_coefficient"/>
-	<parameter type="float" name="material_thickness"/>
-	<parameter type="float" name="sigma_t"/>
-	<parameter type="float2" name="far_plane"/>
+    Float4x4 worldviewproj semantic="WORLDVIEWPROJECTION"
+    Float3 eye_pos
+    Float3 light_pos
+    Float3 light_color
+    Float3 light_falloff
+    Float3 extinction_coefficient
+    Float material_thickness
+    Float sigma_t
+    Float2 far_plane
+    Float2 near_q
 
-	<parameter type="sampler" name="linear_sampler">
-		<state name="filtering" value="min_mag_mip_linear"/>
-		<state name="address_u" value="wrap"/>
-		<state name="address_v" value="wrap"/>
-	</parameter>
+    Texture2D back_face_depth_tex
 
-	<shader>
-		<![CDATA[
-void BackFaceDepthVS(float2 tex0 : TEXCOORD0,
-				float4 pos : POSITION,
-				out float oDepth : TEXCOORD0,
-				out float4 oPos : SV_Position)
-{
-	pos = float4(pos.xyz * pos_extent + pos_center, 1);
-	oPos = mul(pos, worldviewproj);
-	oDepth = oPos.w;
-}
+    Sampler linear_sampler
+    {
+        State filtering = min_mag_mip_linear
+        State address_u = wrap
+        State address_v = wrap
+    }
 
-float4 BackFaceDepthPS(float depth : TEXCOORD0) : SV_Target
-{
-	return WriteAFloat(depth, far_plane.y);
-}
-		]]>
-	</shader>
+    Sampler point_sampler
+    {
+        State filtering = min_mag_mip_point
+        State address_u = clamp
+        State address_v = clamp
+    }
 
-	<technique name="BackFaceDepthTechWODepthTexture">
-		<pass name="p0">
-			<state name="cull_mode" value="front"/>
-			<state name="depth_func" value="greater"/>
+    SubShader
+    {
+        Pass
+        {
+            Name "BackFaceDepthTechWODepthTexture"
+            Cull Front
+            ZTest Greater
 
-			<state name="vertex_shader" value="BackFaceDepthVS()"/>
-			<state name="pixel_shader" value="BackFaceDepthPS()"/>
-		</pass>
-	</technique>
-	<technique name="BackFaceDepthTech" inherit="BackFaceDepthTechWODepthTexture">
-		<pass name="p0">
-			<state name="color_write_mask" value="0"/>
-		</pass>
-	</technique>
+            HLSLPROGRAM
+            #pragma vertex BackFaceDepthVS
+            #pragma fragment BackFaceDepthPS
 
-	<parameter type="texture2D" name="back_face_depth_tex"/>
-	<parameter type="float2" name="near_q"/>
+            void BackFaceDepthVS(float2 tex0 : TEXCOORD0,
+                        float4 pos : POSITION,
+                        out float oDepth : TEXCOORD0,
+                        out float4 oPos : SV_Position)
+            {
+                pos = float4(pos.xyz * pos_extent + pos_center, 1);
+                oPos = mul(pos, worldviewproj);
+                oDepth = oPos.w;
+            }
 
-	<parameter type="sampler" name="point_sampler">
-		<state name="filtering" value="min_mag_mip_point"/>
-		<state name="address_u" value="clamp"/>
-		<state name="address_v" value="clamp"/>
-	</parameter>
+            float4 BackFaceDepthPS(float depth : TEXCOORD0) : SV_Target
+            {
+                return WriteAFloat(depth, far_plane.y);
+            }
+            ENDHLSL
+        }
 
-	<shader>
-		<![CDATA[
-void SubSurfaceVS(float2 tex0 : TEXCOORD0,
-				float4 pos : POSITION,
-				float4 tangent_quat	: TANGENT,	// in object space
-				
-				out float2 oTex0 : TEXCOORD0,
-				out float3 oL	: TEXCOORD1,
-				out float3 oV	: TEXCOORD2,
-				out float3 oH	: TEXCOORD3,
-				out float3 oTcW : TEXCOORD4,
-				out float4 oPos : SV_Position)
-{
-	pos = float4(pos.xyz * pos_extent + pos_center, 1);
-	tex0 = tex0 * tc_extent + tc_center;
-	tangent_quat = tangent_quat * 2 - 1;
-	
-	oTex0 = tex0;
-	
-	float3x3 obj_to_ts;
-	obj_to_ts[0] = transform_quat(float3(1, 0, 0), tangent_quat);
-	obj_to_ts[1] = transform_quat(float3(0, 1, 0), tangent_quat) * sign(tangent_quat.w);
-	obj_to_ts[2] = transform_quat(float3(0, 0, 1), tangent_quat);
-	
-	float3 view_vec = eye_pos - pos.xyz;
-	float3 light_vec = light_pos - pos.xyz;
-	float3 halfway = normalize(light_vec) + normalize(view_vec);
-	
-	oL = mul(obj_to_ts, light_vec);
-	oV = mul(obj_to_ts, view_vec);
-	oH = mul(obj_to_ts, halfway);
+        Pass
+        {
+            Name "BackFaceDepthTech"
+            Cull Front
+            ZTest Greater
+            State color_write_mask = 0
 
-	oPos = mul(pos, worldviewproj);
-	
-	oTcW.xy = oPos.xy / oPos.w;
-	oTcW.y *= KLAYGE_FLIPPING;
-	oTcW.xy = oTcW.xy * 0.5f + 0.5f;	
-	oTcW.z = oPos.w;
-	oTcW.xy *= oTcW.z;
-}
+            HLSLPROGRAM
+            #pragma vertex BackFaceDepthVS
+            #pragma fragment BackFaceDepthPS
+            ENDHLSL
+        }
 
-float4 SubSurfacePS(float2 uv : TEXCOORD0,
-				float3 L	: TEXCOORD1,
-				float3 V	: TEXCOORD2,
-				float3 H	: TEXCOORD3,
-				float3 tc_w : TEXCOORD4) : SV_Target
-{
-	float attenuation = AttenuationTerm(0, -L.xyz, light_falloff);
+        Pass
+        {
+            Name "SubSurfaceTech"
+            Cull Back
 
-	L = normalize(L);
-	V = normalize(V);
-	H = normalize(H);
-	float3 N;
-	if (normal_map_enabled)
-	{
-		N = decompress_normal(normal_tex.Sample(linear_sampler, uv));
-	}
-	else
-	{
-		N = float3(0, 0, 1);
-	}
-	
-	float3 albedo = albedo_clr.rgb;
-	if (albedo_map_enabled)
-	{
-		albedo *= albedo_tex.Sample(linear_sampler, uv).rgb;
-	}
-	
-	float3 diffuse = DiffuseColor(albedo, 0.5f);
-	float3 specular = SpecularColor(albedo, 0.5f);
-	
-	float glossiness = metalness_glossiness_factor.y;
-	if (metalness_glossiness_factor.z > 0.5f)
-	{
-		glossiness *= get_xy_channel(metalness_glossiness_tex.Sample(linear_sampler, uv)).y;
-	}
-	float shininess = Glossiness2Shininess(glossiness);
+            HLSLPROGRAM
+            #pragma vertex SubSurfaceVS
+            #pragma fragment SubSurfacePS
 
-	float2 tex_coord = tc_w.xy / tc_w.z;
+            void SubSurfaceVS(float2 tex0 : TEXCOORD0,
+                        float4 pos : POSITION,
+                        float4 tangent_quat : TANGENT,
+                        out float2 oTex0 : TEXCOORD0,
+                        out float3 oL : TEXCOORD1,
+                        out float3 oV : TEXCOORD2,
+                        out float3 oH : TEXCOORD3,
+                        out float3 oTcW : TEXCOORD4,
+                        out float4 oPos : SV_Position)
+            {
+                pos = float4(pos.xyz * pos_extent + pos_center, 1);
+                tex0 = tex0 * tc_extent + tc_center;
+                tangent_quat = tangent_quat * 2 - 1;
+
+                oTex0 = tex0;
+
+                float3x3 obj_to_ts;
+                obj_to_ts[0] = transform_quat(float3(1, 0, 0), tangent_quat);
+                obj_to_ts[1] = transform_quat(float3(0, 1, 0), tangent_quat) * sign(tangent_quat.w);
+                obj_to_ts[2] = transform_quat(float3(0, 0, 1), tangent_quat);
+
+                float3 view_vec = eye_pos - pos.xyz;
+                float3 light_vec = light_pos - pos.xyz;
+                float3 halfway = normalize(light_vec) + normalize(view_vec);
+
+                oL = mul(obj_to_ts, light_vec);
+                oV = mul(obj_to_ts, view_vec);
+                oH = mul(obj_to_ts, halfway);
+
+                oPos = mul(pos, worldviewproj);
+
+                oTcW.xy = oPos.xy / oPos.w;
+                oTcW.y *= KLAYGE_FLIPPING;
+                oTcW.xy = oTcW.xy * 0.5f + 0.5f;
+                oTcW.z = oPos.w;
+                oTcW.xy *= oTcW.z;
+            }
+
+            float4 SubSurfacePS(float2 uv : TEXCOORD0,
+                        float3 L : TEXCOORD1,
+                        float3 V : TEXCOORD2,
+                        float3 H : TEXCOORD3,
+                        float3 tc_w : TEXCOORD4) : SV_Target
+            {
+                float attenuation = AttenuationTerm(0, -L.xyz, light_falloff);
+
+                L = normalize(L);
+                V = normalize(V);
+                H = normalize(H);
+                float3 N;
+                if (normal_map_enabled)
+                {
+                    N = decompress_normal(normal_tex.Sample(linear_sampler, uv));
+                }
+                else
+                {
+                    N = float3(0, 0, 1);
+                }
+
+                float3 albedo = albedo_clr.rgb;
+                if (albedo_map_enabled)
+                {
+                    albedo *= albedo_tex.Sample(linear_sampler, uv).rgb;
+                }
+
+                float3 diffuse = DiffuseColor(albedo, 0.5f);
+                float3 specular = SpecularColor(albedo, 0.5f);
+
+                float glossiness = metalness_glossiness_factor.y;
+                if (metalness_glossiness_factor.z > 0.5f)
+                {
+                    glossiness *= get_xy_channel(metalness_glossiness_tex.Sample(linear_sampler, uv)).y;
+                }
+                float shininess = Glossiness2Shininess(glossiness);
+
+                float2 tex_coord = tc_w.xy / tc_w.z;
 #if NO_DEPTH_TEXTURE
-	float back_face_depth = ReadAFloat(back_face_depth_tex.Sample(point_sampler, tex_coord), far_plane.x);
+                float back_face_depth = ReadAFloat(back_face_depth_tex.Sample(point_sampler, tex_coord), far_plane.x);
 #else
-	float back_face_depth = back_face_depth_tex.Sample(point_sampler, tex_coord).x;
-	back_face_depth = non_linear_depth_to_linear(back_face_depth, near_q.x, near_q.y);
+                float back_face_depth = back_face_depth_tex.Sample(point_sampler, tex_coord).x;
+                back_face_depth = non_linear_depth_to_linear(back_face_depth, near_q.x, near_q.y);
 #endif
-	float thickness = clamp(back_face_depth - tc_w.z, 0, 100.0f);
+                float thickness = clamp(back_face_depth - tc_w.z, 0, 100.0f);
 
-	float indirect_light = material_thickness * (min(0, dot(N, L)) + min(0, dot(V, L)));
-	indirect_light *= exp(thickness * sigma_t);
+                float indirect_light = material_thickness * (min(0, dot(N, L)) + min(0, dot(V, L)));
+                indirect_light *= exp(thickness * sigma_t);
 
-	float3 clr = (albedo_clr.rgb * 0.2f * diffuse + CalcBRDFShading(diffuse, specular, shininess, L, H, N)
-		+ indirect_light * extinction_coefficient) * attenuation;
+                float3 clr = (albedo_clr.rgb * 0.2f * diffuse + CalcBRDFShading(diffuse, specular, shininess, L, H, N)
+                    + indirect_light * extinction_coefficient) * attenuation;
 
-	return float4(clr.rgb * light_color, 1);
-}
-		]]>
-	</shader>
+                return float4(clr.rgb * light_color, 1);
+            }
+            ENDHLSL
+        }
 
-	<technique name="SubSurfaceTech">
-		<pass name="p0">
-			<state name="cull_mode" value="back"/>
+        Pass
+        {
+            Name "SubSurfaceTechWODepthTexture"
+            Cull Back
+            Macro NO_DEPTH_TEXTURE = 1
 
-			<state name="vertex_shader" value="SubSurfaceVS()"/>
-			<state name="pixel_shader" value="SubSurfacePS()"/>
-		</pass>
-	</technique>
-	<technique name="SubSurfaceTechWODepthTexture" inherit="SubSurfaceTech">
-		<macro name="NO_DEPTH_TEXTURE" value="1"/>
-	</technique>
-</effect>
-    ENDFXML
+            HLSLPROGRAM
+            #pragma vertex SubSurfaceVS
+            #pragma fragment SubSurfacePS
+            ENDHLSL
+        }
+    }
 }

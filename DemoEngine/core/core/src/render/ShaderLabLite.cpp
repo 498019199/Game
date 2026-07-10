@@ -1358,6 +1358,28 @@ bool LoadEffectXmlFromString(std::string const& xml_text, XMLNode& out_root, std
 		return false;
 	}
 }
+
+bool AppendFxmlSnippetChildren(XMLNode& effect, std::string const& snippets, std::string* err)
+{
+	if (snippets.empty())
+	{
+		return true;
+	}
+	std::string wrapped = std::string("<effect>\n") + snippets + "\n</effect>";
+	XMLNode wrapper(XMLNodeType::Element, "effect");
+	if (!LoadEffectXmlFromString(wrapped, wrapper, err))
+	{
+		return false;
+	}
+	for (const XMLNode* child = wrapper.FirstNode(); child; child = child->NextSibling())
+	{
+		if (XMLNodeType::Element == child->Type())
+		{
+			effect.AppendNode(*child);
+		}
+	}
+	return true;
+}
 } // namespace
 
 bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::string* error_msg)
@@ -1812,7 +1834,10 @@ bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::strin
 		}
 		effect.AppendNode(std::move(st));
 	}
-	(void)fxml_snippets;
+	if (!AppendFxmlSnippetChildren(effect, fxml_snippets, err))
+	{
+		return false;
+	}
 
 	auto is_util_inc = [](std::string const& n) {
 		return n == "util.shader";

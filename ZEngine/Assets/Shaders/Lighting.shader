@@ -1,13 +1,8 @@
-Shader "RenderFX/Lighting"
+Shader "Lib/Lighting"
 {
-    // Converted from RenderFX/Lighting.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<macro name="MAX_SHININESS" value="8192.0f"/>
+    Macro MAX_SHININESS = 8192.0f
 
-	<shader>
-		<![CDATA[
+    HLSLPROGRAM
 float DirectionalLighting(float3 light_dir, float3 normal)
 {
 	return dot(-light_dir, normal);
@@ -183,8 +178,5 @@ float Glossiness2Shininess(float glossiness)
 {
 	return pow(MAX_SHININESS, glossiness);
 }
-		]]>
-	</shader>
-</effect>
-    ENDFXML
+    ENDHLSL
 }

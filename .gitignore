@@ -1,6 +1,7 @@
 /.idea
 /.codegraph
 /.cursor
+/openspec
 .vscode/settings.json
 
 /tools
@@ -30,7 +31,7 @@
 /DemoEngine/3rd/dxsdk/dxsdk
 
 /ZEngine/bin
-/ZEngine/include
+/ZEngine/Assets/Models
 
 
 *.png.dds

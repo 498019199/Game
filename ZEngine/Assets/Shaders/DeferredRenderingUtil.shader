@@ -1,13 +1,8 @@
-Shader "RenderFX/DeferredRenderingUtil"
+Shader "Lib/DeferredRenderingUtil"
 {
-    // Converted from RenderFX/DeferredRenderingUtil.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<include name="Lighting.shader"/>
+    Include "Lighting.shader"
 
-	<shader>
-		<![CDATA[
+    HLSLPROGRAM
 void StoreGBuffer(float3 normal, float3 albedo, float2 metalness_glossiness, float2 motion_vec, float occlusion,
 			out float4 rt0, out float4 rt1, out float4 rt2)
 {
@@ -84,8 +79,5 @@ float3 NearestDepthUpsampling(float2 tc, float4 z_half, float z_full, float2 l1_
 
 	return float3(nearest_tc, all(dist_z < threshold) ? 1 : -1);
 }
-		]]>
-	</shader>
-</effect>
-    ENDFXML
+    ENDHLSL
 }

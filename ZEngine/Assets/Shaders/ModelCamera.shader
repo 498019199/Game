@@ -1,55 +1,49 @@
-Shader "RenderFX/ModelCamera"
+Shader "Lib/ModelCamera"
 {
-    // Converted from RenderFX/ModelCamera.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<cbuffer name="klayge_model">
-		<parameter type="float4x4" name="model"/>
-		<parameter type="float4x4" name="inv_model"/>
-	</cbuffer>
+    Struct KlayGECameraInfo
+    {
+        Float4x4 model_view
+        Float4x4 mvp
+        Float4x4 inv_mv
+        Float4x4 inv_mvp
+        Float3 eye_pos
+        Float3 forward_vec
+        Float3 up_vec
+    }
 
-	<struct name="KlayGECameraInfo">
-		<member type="float4x4" name="model_view"/>
-		<member type="float4x4" name="mvp"/>
-		<member type="float4x4" name="inv_mv"/>
-		<member type="float4x4" name="inv_mvp"/>
-		<member type="float3" name="eye_pos"/>
-		<member type="float3" name="forward_vec"/>
-		<member type="float3" name="up_vec"/>
-	</struct>
+    CBuffer klayge_model
+    {
+        Float4x4 model
+        Float4x4 inv_model
+    }
 
-	<cbuffer name="klayge_camera">
-		<parameter type="uint" name="num_cameras"/>
-		<parameter type="uint4" name="camera_indices" array_size="2"/>
-		<parameter type="KlayGECameraInfo" name="cameras" array_size="8"/>
-		<parameter type="float4x4" name="prev_mvps" array_size="8"/>
-	</cbuffer>
+    CBuffer klayge_camera
+    {
+        UInt num_cameras
+        UInt4 camera_indices array_size="2"
+        KlayGECameraInfo cameras array_size="8"
+        Float4x4 prev_mvps array_size="8"
+    }
 
-	<shader>
-		<![CDATA[
+    HLSLPROGRAM
 uint InstanceIndex(uint instance_id)
 {
-	return instance_id / num_cameras;
+    return instance_id / num_cameras;
 }
 
 uint CameraIndex(uint instance_id)
 {
-	return instance_id % num_cameras;
+    return instance_id % num_cameras;
 }
 
 KlayGECameraInfo CameraFromInstance(uint instance_id)
 {
-	return cameras[CameraIndex(instance_id)];
+    return cameras[CameraIndex(instance_id)];
 }
 
 uint RenderTargetIndex(uint camera_id)
 {
-	return camera_indices[camera_id / 4][camera_id % 4];
+    return camera_indices[camera_id / 4][camera_id % 4];
 }
-		]]>
-	</shader>
-
-</effect>
-    ENDFXML
+    ENDHLSL
 }

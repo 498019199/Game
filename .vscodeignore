@@ -1,4 +1,6 @@
 /.codegraph
+/openspec
+
 build/
 ZEngine/
 out/

@@ -1,74 +1,70 @@
-Shader "RenderFX/LightSourceProxy"
+Shader "LightSourceProxy"
 {
-    // Converted from RenderFX/LightSourceProxy.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<include name="Lighting.shader"/>
-	<include name="GBuffer.shader"/>
+    Include "Lighting.shader"
+    Include "GBuffer.shader"
 
-	<parameter type="int2" name="light_is_projective"/>
+    Int2 light_is_projective
 
-	<parameter type="texture2D" name="projective_map_2d_tex"/>
-	<parameter type="textureCUBE" name="projective_map_cube_tex"/>
+    Texture2D projective_map_2d_tex
+    TextureCube projective_map_cube_tex
 
-	<parameter type="sampler" name="linear_sampler">
-		<state name="filtering" value="min_mag_linear_mip_point"/>
-		<state name="address_u" value="clamp"/>
-		<state name="address_v" value="clamp"/>
-	</parameter>
+    Sampler linear_sampler
+    {
+        State filtering = min_mag_linear_mip_point
+        State address_u = clamp
+        State address_v = clamp
+    }
 
-	<shader>
-		<![CDATA[
-void LightSourceProxyVS(uint instance_id : SV_InstanceID,
-						float4 pos : POSITION,
-						float4 tangent_quat : TANGENT,
-			out float3 oPosOS : TEXCOORD0,
-			out float3 oNormal : TEXCOORD1,
-			out float4 oPos : SV_Position)
-{
-	pos = float4(pos.xyz * pos_extent + pos_center, 1);
-	tangent_quat = tangent_quat * 2 - 1;
+    SubShader
+    {
+        Pass
+        {
+            Name "LightSourceProxy"
+            Cull Back
 
-	KlayGECameraInfo camera = CameraFromInstance(instance_id);
-	float4x4 mvp = camera.mvp;
+            HLSLPROGRAM
+            #pragma vertex LightSourceProxyVS
+            #pragma fragment LightSourceProxyPS
 
-	oPos = mul(pos, mvp);
-	oPosOS = pos.xyz;
-	oNormal = mul(transform_quat(float3(0, 0, 1), tangent_quat), (float3x3)model);
-}
+            void LightSourceProxyVS(uint instance_id : SV_InstanceID,
+                        float4 pos : POSITION,
+                        float4 tangent_quat : TANGENT,
+                out float3 oPosOS : TEXCOORD0,
+                out float3 oNormal : TEXCOORD1,
+                out float4 oPos : SV_Position)
+            {
+                pos = float4(pos.xyz * pos_extent + pos_center, 1);
+                tangent_quat = tangent_quat * 2 - 1;
 
-float4 LightSourceProxyPS(float3 pos_os : TEXCOORD0, float3 normal : TEXCOORD1) : SV_Target
-{
-	float4 clr = albedo_clr;
-	if (light_is_projective.x)
-	{
-		float4 proj_clr;
-		if (light_is_projective.y)
-		{
-			proj_clr = projective_map_cube_tex.Sample(linear_sampler, pos_os);
-		}
-		else
-		{
-			float2 tc = pos_os.xy;
-			tc.y *= KLAYGE_FLIPPING;
-			proj_clr = projective_map_2d_tex.Sample(linear_sampler, tc * 0.5f + 0.5f);
-		}
-		clr *= proj_clr;
-	}
-	return (saturate(dot(normalize(normal), float3(0, 1, 0))) + 0.2f) * clr;
-}
-		]]>
-	</shader>
+                KlayGECameraInfo camera = CameraFromInstance(instance_id);
+                float4x4 mvp = camera.mvp;
 
-	<technique name="LightSourceProxy">
-		<pass name="p0">
-			<state name="cull_mode" value="back"/>
+                oPos = mul(pos, mvp);
+                oPosOS = pos.xyz;
+                oNormal = mul(transform_quat(float3(0, 0, 1), tangent_quat), (float3x3)model);
+            }
 
-			<state name="vertex_shader" value="LightSourceProxyVS()"/>
-			<state name="pixel_shader" value="LightSourceProxyPS()"/>
-		</pass>
-	</technique>
-</effect>
-    ENDFXML
+            float4 LightSourceProxyPS(float3 pos_os : TEXCOORD0, float3 normal : TEXCOORD1) : SV_Target
+            {
+                float4 clr = albedo_clr;
+                if (light_is_projective.x)
+                {
+                    float4 proj_clr;
+                    if (light_is_projective.y)
+                    {
+                        proj_clr = projective_map_cube_tex.Sample(linear_sampler, pos_os);
+                    }
+                    else
+                    {
+                        float2 tc = pos_os.xy;
+                        tc.y *= KLAYGE_FLIPPING;
+                        proj_clr = projective_map_2d_tex.Sample(linear_sampler, tc * 0.5f + 0.5f);
+                    }
+                    clr *= proj_clr;
+                }
+                return (saturate(dot(normalize(normal), float3(0, 1, 0))) + 0.2f) * clr;
+            }
+            ENDHLSL
+        }
+    }
 }

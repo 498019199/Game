@@ -1,15 +1,10 @@
-Shader "RenderFX/PostProcess"
+Shader "Lib/PostProcess"
 {
-    // Converted from RenderFX/PostProcess.fxml
-    // Full effect XML embedded for 1:1 runtime compatibility.
-    FXMLPROGRAM
-<effect>
-	<include name="util.shader"/>
+    Include "util.shader"
 
-	<parameter type="float4x4" name="pp_mvp"/>
-	
-	<shader>
-		<![CDATA[
+    Float4x4 pp_mvp
+
+    HLSLPROGRAM
 float2 TexCoordFromPos(float4 pos)
 {
 	float2 tex = pos.xy / 2;
@@ -44,8 +39,5 @@ void VolPostProcessVS(float4 pos : POSITION,
 
 	oScreenTc = EncodeSSTexcoord(oPos);
 }
-		]]>
-	</shader>
-</effect>
-    ENDFXML
+    ENDHLSL
 }
