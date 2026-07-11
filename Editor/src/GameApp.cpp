@@ -7,6 +7,7 @@
 #include <render/Renderable.h>
 #include <render/Mesh.h>
 #include <world/World.h>
+#include <game/GameContext.h>
 #include <game/Model.h>
 #include <common/Profiler.h>
 
@@ -43,6 +44,8 @@ void GameApp::SetScenePath(std::string_view scene_path)
 
 void GameApp::OnCreate()
 {
+	GameContext::Instance().Startup();
+
 	auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
 	RenderEngine& re = rf.RenderEngineInstance();
@@ -103,6 +106,7 @@ void GameApp::OnResize(uint32_t width, uint32_t height)
 
 void GameApp::OnDestroy()
 {
+	GameContext::Instance().Shutdown();
 }
 
 void GameApp::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps const& caps, uint32_t width, uint32_t height)

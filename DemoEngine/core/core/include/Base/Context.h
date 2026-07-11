@@ -39,15 +39,17 @@ class ResLoader;
 class DevHelper;
 class UIManager;
 
-class ZENGINE_CORE_API Context final
+class ZENGINE_CORE_API Context
 {
     Context(const Context& rhs) = delete; 
     Context& operator=(const Context& rhs) = delete;
 public:
     Context();
-    ~Context() noexcept;
+    virtual ~Context() noexcept;
 
     static Context& Instance();
+    // Install a derived Context (e.g. GameContext) before the first Instance() call.
+    static void InstallInstance(std::unique_ptr<Context> instance);
     static void Destroy() noexcept;
     void Suspend();
     

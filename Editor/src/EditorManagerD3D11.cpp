@@ -18,6 +18,7 @@
 #include <render/RenderEngine.h>
 #include <base/InputFactory.h>
 #include <render/RenderFactory.h>
+#include <game/GameContext.h>
 #include <game/Model.h>
 
 namespace
@@ -94,6 +95,8 @@ EditorManagerD3D11::~EditorManagerD3D11()
 
 void EditorManagerD3D11::OnCreate()
 {
+    GameContext::Instance().Startup();
+
     auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
 	auto& d3d11_re = rf.RenderEngineInstance();
@@ -315,6 +318,8 @@ void EditorManagerD3D11::OnDestroy()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 #endif //EDITOR_DEBUG_MODE
+
+    GameContext::Instance().Shutdown();
 }
 
 uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
