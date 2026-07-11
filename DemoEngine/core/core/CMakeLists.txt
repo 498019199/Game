@@ -161,9 +161,11 @@ set(INPUT_SOURCE_FILES
 
 set(UI_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/UIManager.h
+    ${PROJECT_SOURCE_DIR}/core/core/include/base/RmlUiRenderInterface.h
 )
 set(UI_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/ui/UIManager.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/ui/RmlUiRenderInterface.cpp
 )
 SOURCE_GROUP("UI\\Source Files" FILES ${UI_SOURCE_FILES})
 SOURCE_GROUP("UI\\Header Files" FILES ${UI_HEADER_FILES})
@@ -211,6 +213,10 @@ target_link_libraries(ZENGINE_core
         rmlui
         rmlui_debugger
 )
+
+if(WIN32)
+    target_link_libraries(ZENGINE_core PRIVATE d3d11 dxgi d3dcompiler)
+endif()
 
 if(ZENGINE_ENABLE_TRACY)
     target_link_libraries(ZENGINE_core PUBLIC TracyClient)

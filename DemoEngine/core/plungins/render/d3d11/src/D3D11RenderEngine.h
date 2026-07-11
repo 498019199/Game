@@ -30,6 +30,8 @@ public:
     void BeginFrame() override;
     void EndFrame() override;
 
+    void ScissorRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) override;
+
     IDXGIFactory2* DXGIFactory2() const noexcept;
     IDXGIFactory3* DXGIFactory3() const noexcept;
     IDXGIFactory4* DXGIFactory4() const noexcept;

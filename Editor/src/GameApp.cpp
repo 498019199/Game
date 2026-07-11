@@ -2,6 +2,8 @@
 
 #include <base/App3D.h>
 #include <base/InputFactory.h>
+#include <base/UIManager.h>
+#include <base/Window.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
 #include <render/Renderable.h>
@@ -9,19 +11,41 @@
 #include <world/World.h>
 #include <game/GameContext.h>
 #include <game/Model.h>
+#include <common/Log.h>
 #include <common/Profiler.h>
+#include <common/Util.h>
+
+#include <windows.h>
 
 namespace
 {
 	enum
 	{
 		Exit,
+		ToggleGm,
+		GmSubmit,
 	};
 
 	RenderWorker::InputActionDefine actions[] =
 	{
 		RenderWorker::InputActionDefine(Exit, RenderWorker::KS_Escape),
+		RenderWorker::InputActionDefine(ToggleGm, RenderWorker::KS_Grave),
+		RenderWorker::InputActionDefine(GmSubmit, RenderWorker::KS_Enter),
 	};
+
+	LRESULT CALLBACK GmWndProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM /*lParam*/)
+	{
+		if (msg == WM_CHAR)
+		{
+			auto& gm = GameContext::Instance().GmDebugWindowInstance();
+			if (gm.Visible() && wParam >= 32)
+			{
+				RenderWorker::Context::Instance().UIManagerInstance().ProcessTextInput(static_cast<char32_t>(wParam));
+				return 0;
+			}
+		}
+		return -1;
+	}
 }
 
 namespace EditorWorker
@@ -67,6 +91,18 @@ void GameApp::OnCreate()
 	back_face_depth_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 	scene_.LoadScene(scene_path_);
 	ApplySceneCamera();
+
+	auto& ui = context.UIManagerInstance();
+	ui.SetDimensions(static_cast<int>(re.CurFrameBuffer()->Width()), static_cast<int>(re.CurFrameBuffer()->Height()));
+	if (!GameContext::Instance().GmDebugWindowInstance().Initialize())
+	{
+		LogError() << "GameApp: GM debug window failed to initialize." << std::endl;
+	}
+
+	if (MainWnd())
+	{
+		MainWnd()->BindMsgProc(GmWndProc);
+	}
 }
 
 void GameApp::ApplySceneCamera()
@@ -102,6 +138,7 @@ void GameApp::OnResize(uint32_t width, uint32_t height)
 
 	auto& rf = Context::Instance().RenderFactoryInstance();
 	RebuildBackFaceDepthTarget(rf, rf.RenderEngineInstance().DeviceCaps(), width, height);
+	Context::Instance().UIManagerInstance().SetDimensions(static_cast<int>(width), static_cast<int>(height));
 }
 
 void GameApp::OnDestroy()
@@ -198,7 +235,15 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 			re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
 		}
 		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
-		return URV_NeedFlush | URV_Finished;  // 或 Editor 一样只 return URV_NeedFlush，再加 pass 2
+		// Flush scene first; UI is drawn in pass 2 so it is not overwritten by 3D.
+		return URV_NeedFlush;
+	}
+
+	case 2:
+	{
+		ZENGINE_ZONE("GameApp::Pass2_RmlUI");
+		Context::Instance().UIManagerInstance().RenderIntoGameView();
+		return URV_Finished;
 	}
 
 	default:
@@ -209,9 +254,26 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 
 void GameApp::InputHandler(InputEngine const& /*sender*/, InputAction const& action)
 {
-	if (action.first == Exit)
+	auto const* kb = dynamic_cast<InputKeyboardActionParam const*>(action.second.get());
+	if (!kb)
+	{
+		return;
+	}
+
+	if (action.first == Exit && kb->buttons_down.test(KS_Escape))
 	{
 		Quit();
+	}
+	else if (action.first == ToggleGm && kb->buttons_down.test(KS_Grave))
+	{
+		GameContext::Instance().GmDebugWindowInstance().ToggleVisible();
+	}
+	else if (action.first == GmSubmit && kb->buttons_down.test(KS_Enter))
+	{
+		if (GameContext::Instance().GmDebugWindowInstance().Visible())
+		{
+			GameContext::Instance().GmDebugWindowInstance().Submit();
+		}
 	}
 }
 

@@ -541,10 +541,10 @@ namespace RenderWorker
             const T invWidth(1.f / (right - left));
             const T invHeight(1.f / (top - bottom));
             return Matrix4_T<T>(
-                invWidth + invWidth,    0,                          0,              0,
-                0,                      invHeight + invHeight,      0,              0,
-                0,                      0,                          q,              0,
-                -(left + right)/invWidth,   -(top + bottom)/invHeight, -nearPlane/q,    1);        
+                invWidth + invWidth,	0,						0,				0,
+                0,						invHeight + invHeight,	0,				0,
+                0,						0,						q,				0,
+                -(left + right) * invWidth, -(top + bottom) * invHeight, -nearPlane * q, 1);
         }
 
         template<typename T>

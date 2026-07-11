@@ -2,6 +2,7 @@
 #include <base/Window.h>
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
+#include <base/UIManager.h>
 #include <render/RenderFactory.h>
 #include <common/Profiler.h>
 
@@ -128,7 +129,11 @@ void App3D::Quit()
 void App3D::Destroy()
 {
     this->OnDestroy();
-    
+
+    // Tear down RmlUi while the D3D device is still alive (geometry/texture release).
+    // Context::Destroy() alone is too late if DestroyRenderWindow runs first.
+    Context::Instance().UIManagerInstance().Destroy();
+
     if (Context::Instance().RenderFactoryValid())
     {
         Context::Instance().RenderFactoryInstance().RenderEngineInstance().DestroyRenderWindow();

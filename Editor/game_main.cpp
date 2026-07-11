@@ -2,6 +2,7 @@
 
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
+#include <game/GameContext.h>
 
 using namespace EditorWorker;
 using namespace RenderWorker;
@@ -16,9 +17,14 @@ int main()
 	res_loader.AddPath("../../Assets/Config");
 	res_loader.AddPath("../../Assets/Prefabs");
 	res_loader.AddPath("../../Assets/Shaders");
+	res_loader.AddPath("../../Assets");
+	res_loader.AddPath("../../Assets/rmlui");
 
 	auto app = MakeUniquePtr<GameApp>();
 	app->Create();
 	app->Run();
+	app.reset();
+	GameContext::Instance().Shutdown();
+	Context::Destroy();
 	return 0;
 }

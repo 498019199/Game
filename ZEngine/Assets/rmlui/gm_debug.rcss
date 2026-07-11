@@ -1,0 +1,61 @@
+body.gm-root {
+	font-family: Segoe UI;
+	font-size: 14dp;
+	color: #e8eaf0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	background-color: transparent;
+}
+
+#gm_panel {
+	position: absolute;
+	left: 16dp;
+	bottom: 16dp;
+	width: 420dp;
+	padding: 12dp 14dp 14dp 14dp;
+	/* Opaque-ish panel; avoid border-radius (needs clip-mask layers we don't implement yet). */
+	background-color: #12161ce8;
+	border-color: #5a6a7ecc;
+	border-width: 1dp;
+}
+
+#gm_title {
+	font-size: 15dp;
+	font-weight: bold;
+	color: #f0f4f8;
+	margin-bottom: 2dp;
+}
+
+#gm_hint {
+	font-size: 11dp;
+	color: #8a9bb0;
+	margin-bottom: 10dp;
+}
+
+#gm_input {
+	display: block;
+	width: 100%;
+	height: 34dp;
+	padding: 6dp 10dp;
+	box-sizing: border-box;
+	background-color: #0a0e14cc;
+	border-color: #6a7f99aa;
+	border-width: 1dp;
+	color: #f7fafc;
+	caret-color: #7dd3fc;
+}
+
+#gm_input:focus {
+	border-color: #38bdf8cc;
+	background-color: #0a0e14cc;
+}
+
+#gm_log {
+	margin-top: 8dp;
+	min-height: 18dp;
+	max-height: 120dp;
+	font-size: 12dp;
+	color: #a8c0d8;
+	overflow-y: auto;
+}

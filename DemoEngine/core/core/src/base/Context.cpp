@@ -585,13 +585,12 @@ public:
 
     void DestroyAll() noexcept
     {
-        if(res_loader_.Valid())
+        // RmlUi must shut down before the D3D device / render factory go away.
+        ui_mgr_.Destroy();
+
+        if (res_loader_.Valid())
         {
             res_loader_.Destroy();
-        }
-        if (ui_mgr_.Valid())
-        {
-            ui_mgr_.Destroy();
         }
 
         render_world_.reset();
@@ -783,10 +782,10 @@ void Context::SaveConfig()
     pimpl_->SaveConfig();
 }
 
-void Context::Destroy() noexcept
-{
-    
-}
+	void Context::Destroy() noexcept
+	{
+		Impl::Destroy();
+	}
 
 void Context::Suspend()
 {

@@ -34,6 +34,7 @@ endif()
 set(GAME_SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/DataManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/GameContext.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/GmDebugWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Scene.cpp
     ${GAME_NPC_GEN_SOURCE}

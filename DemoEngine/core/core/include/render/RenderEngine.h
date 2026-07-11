@@ -30,6 +30,9 @@ public:
     // 设置当前Stream output目标
     void BindSOBuffers(const RenderLayoutPtr& rl);
 
+	// Scissor support
+	virtual void ScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
+
 #if ZENGINE_IS_DEV_PLATFORM
     virtual void* GetD3DDevice();
     virtual void* GetD3DDeviceImmContext();

@@ -1,5 +1,7 @@
 #include <game/GameContext.h>
 
+#include <base/UIManager.h>
+#include <base/ZEngine.h>
 #include <common/Log.h>
 
 GameContext& GameContext::Instance()
@@ -20,6 +22,7 @@ void GameContext::Startup()
 		CommonWorker::LogError() << "GameContext: failed to load NPC config." << std::endl;
 	}
 
+	// GmDebugWindow needs UIManager dimensions set by the app after Create/OnResize.
 	started_ = true;
 }
 
@@ -30,6 +33,7 @@ void GameContext::Shutdown()
 		return;
 	}
 
+	gm_debug_window_.Shutdown();
 	data_manager_.Clear();
 	started_ = false;
 }
@@ -42,4 +46,14 @@ DataManager& GameContext::DataManagerInstance() noexcept
 DataManager const& GameContext::DataManagerInstance() const noexcept
 {
 	return data_manager_;
+}
+
+GmDebugWindow& GameContext::GmDebugWindowInstance() noexcept
+{
+	return gm_debug_window_;
+}
+
+GmDebugWindow const& GameContext::GmDebugWindowInstance() const noexcept
+{
+	return gm_debug_window_;
 }

@@ -15,8 +15,11 @@
 #include <world/World.h>
 #include <common/ResIdentifier.h>
 #include <common/Profiler.h>
+#include <common/Util.h>
+#include <common/Log.h>
 #include <render/RenderEngine.h>
 #include <base/InputFactory.h>
+#include <base/UIManager.h>
 #include <render/RenderFactory.h>
 #include <game/GameContext.h>
 #include <game/Model.h>
@@ -26,11 +29,15 @@ namespace
 	enum
 	{
 		Exit,
+		ToggleGm,
+		GmSubmit,
 	};
 
 	InputActionDefine actions[] =
 	{
 		InputActionDefine(Exit, KS_Escape),
+		InputActionDefine(ToggleGm, KS_Grave),
+		InputActionDefine(GmSubmit, KS_Enter),
 	};
 }
 
@@ -150,6 +157,13 @@ void EditorManagerD3D11::OnCreate()
 
     scene_.LoadScene(scene_path_);
     ApplySceneCamera();
+
+    auto& ui = Context::Instance().UIManagerInstance();
+    ui.SetDimensions(static_cast<int>(setting_.gameViewWidth), static_cast<int>(setting_.gameViewHeight));
+    if (!GameContext::Instance().GmDebugWindowInstance().Initialize())
+    {
+        LogError() << "Editor: GM debug window failed to initialize." << std::endl;
+    }
 }
 
 void EditorManagerD3D11::OnResize(uint32_t width, uint32_t height)
@@ -282,6 +296,8 @@ void EditorManagerD3D11::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDe
 	game_view_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
 	game_view_srv_ = rf.MakeTextureSrv(game_view_color_tex_);
+
+	Context::Instance().UIManagerInstance().SetDimensions(static_cast<int>(gw), static_cast<int>(gh));
 }
 
 void* EditorManagerD3D11::GameViewShaderResourceView() const
@@ -364,10 +380,14 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
             }
             re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
             scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
+            // Flush scene into game_view_fb first; Rml UI is drawn in pass 2 on top.
             return App3D::URV_NeedFlush;
         }
         case 2:
         {
+			ZENGINE_ZONE("Editor::Pass2_RmlUI");
+			// Still bound to game_view_fb_ after pass 1 flush.
+			Context::Instance().UIManagerInstance().RenderIntoGameView();
 			return editor_screen_pass();
         }
         default:
@@ -402,10 +422,32 @@ void EditorManagerD3D11::RenderEditorPanels() const
 
 void EditorManagerD3D11::InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action)
 {
+	KFL_UNUSED(sender);
+	auto const* kb = dynamic_cast<InputKeyboardActionParam const*>(action.second.get());
+	if (!kb)
+	{
+		return;
+	}
+
 	switch (action.first)
 	{
 	case Exit:
-		this->Quit();
+		if (kb->buttons_down.test(KS_Escape))
+		{
+			this->Quit();
+		}
+		break;
+	case ToggleGm:
+		if (kb->buttons_down.test(KS_Grave))
+		{
+			GameContext::Instance().GmDebugWindowInstance().ToggleVisible();
+		}
+		break;
+	case GmSubmit:
+		if (kb->buttons_down.test(KS_Enter) && GameContext::Instance().GmDebugWindowInstance().Visible())
+		{
+			GameContext::Instance().GmDebugWindowInstance().Submit();
+		}
 		break;
 	}
 }

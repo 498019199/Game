@@ -3,6 +3,7 @@
 #include <base/ResLoader.h>
 #include <world/World.h>
 #include <base/Window.h>
+#include <game/GameContext.h>
 #include <filesystem>
 
 using namespace EditorWorker;
@@ -106,6 +107,8 @@ int main()
     res_loader.AddPath("../../Assets/Config");
     res_loader.AddPath("../../Assets/Prefabs");
     res_loader.AddPath("../../Assets/Shaders");
+    res_loader.AddPath("../../Assets");
+    res_loader.AddPath("../../Assets/rmlui");
 
     auto app = MakeUniquePtr<EditorManagerD3D11>();
     app->GetEditorSetting( setting );
@@ -132,5 +135,8 @@ int main()
 	// light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
     app->Run();
+    app.reset();
+    GameContext::Instance().Shutdown();
+    Context::Destroy();
     return 0;
 }

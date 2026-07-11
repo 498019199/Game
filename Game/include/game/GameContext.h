@@ -2,6 +2,7 @@
 
 #include <game/DataManager.h>
 #include <game/GameApi.h>
+#include <game/GmDebugWindow.h>
 
 class GAME_API GameContext
 {
@@ -21,9 +22,13 @@ public:
 	DataManager& DataManagerInstance() noexcept;
 	DataManager const& DataManagerInstance() const noexcept;
 
+	GmDebugWindow& GmDebugWindowInstance() noexcept;
+	GmDebugWindow const& GmDebugWindowInstance() const noexcept;
+
 private:
 	GameContext() = default;
 
 	bool started_ { false };
 	DataManager data_manager_;
+	GmDebugWindow gm_debug_window_;
 };

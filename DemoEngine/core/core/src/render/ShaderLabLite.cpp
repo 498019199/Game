@@ -771,6 +771,17 @@ bool ParsePassBody(std::string_view body, PassDesc& pass, std::string* err)
 			pass.states.push_back({"cull_mode", MapCull(v), -1});
 			continue;
 		}
+		if (cmd == "Scissor")
+		{
+			std::string v;
+			if (!ParseIdent(body, i, v, err))
+			{
+				return false;
+			}
+			bool const on = (v == "On" || v == "on" || v == "True" || v == "true" || v == "1");
+			pass.states.push_back({"scissor_enable", on ? "true" : "false", -1});
+			continue;
+		}
 		if (cmd == "ZWrite")
 		{
 			std::string v;

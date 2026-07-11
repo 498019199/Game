@@ -1,0 +1,14 @@
+<rml>
+<head>
+	<title>GM Debug</title>
+	<link type="text/rcss" href="gm_debug.rcss"/>
+</head>
+<body id="GmDebugWindow" class="gm-root">
+	<div id="gm_panel">
+		<div id="gm_title">GM Console</div>
+		<div id="gm_hint">Press ~ to hide · Enter to run</div>
+		<input id="gm_input" type="text" maxlength="256"/>
+		<div id="gm_log"></div>
+	</div>
+</body>
+</rml>

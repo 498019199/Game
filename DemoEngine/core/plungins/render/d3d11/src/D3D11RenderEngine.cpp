@@ -403,6 +403,15 @@ void D3D11RenderEngine::RSSetState(ID3D11RasterizerState* ras)
 	}
 }
 
+// 设置剪除矩阵
+/////////////////////////////////////////////////////////////////////////////////
+void D3D11RenderEngine::ScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+	D3D11_RECT rc = { static_cast<LONG>(x), static_cast<LONG>(y),
+		static_cast<LONG>(width), static_cast<LONG>(height) };
+	d3d_imm_ctx_1_->RSSetScissorRects(1, &rc);
+}
+
 void D3D11RenderEngine::OMSetBlendState(ID3D11BlendState* bs, const Color& blend_factor, uint32_t sample_mask)
 {
 	if ((blend_state_cache_ != bs) || (blend_factor_cache_ != blend_factor) || (sample_mask_cache_ != sample_mask))
