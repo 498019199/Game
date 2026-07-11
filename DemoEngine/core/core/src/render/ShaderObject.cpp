@@ -77,6 +77,12 @@ public:
     HRESULT D3DStripShader(std::vector<uint8_t> const & shader_code, uint32_t strip_flags, std::vector<uint8_t>& stripped_code)
     {
 #ifdef CALL_D3DCOMPILER_DIRECTLY
+        if (shader_code.empty())
+        {
+            stripped_code.clear();
+            return E_INVALIDARG;
+        }
+
         com_ptr<ID3DBlob> stripped_blob;
         HRESULT hr = DynamicD3DStripShader_(&shader_code[0], static_cast<UINT>(shader_code.size()), strip_flags, stripped_blob.put());
 
@@ -96,6 +102,15 @@ public:
     HRESULT D3DReflect(std::vector<uint8_t> const & shader_code, void** reflector)
     {
 #ifdef CALL_D3DCOMPILER_DIRECTLY
+        if (shader_code.empty())
+        {
+            if (reflector)
+            {
+                *reflector = nullptr;
+            }
+            return E_INVALIDARG;
+        }
+
         static GUID const IID_ID3D11ShaderReflection_47
             = { 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } };
 
@@ -331,13 +346,35 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 		}
         macros.emplace_back(D3D_SHADER_MACRO{nullptr, nullptr});
 
-        D3DCompilerLoader::Instance().D3DCompile(hlsl_shader_text, &macros[0],
+        HRESULT const hr = D3DCompilerLoader::Instance().D3DCompile(hlsl_shader_text, &macros[0],
 			func_name, shader_profile,
 			flags, 0, code, err_msg);
-        if (!err_msg.empty())
+        if (FAILED(hr) || code.empty() || !err_msg.empty())
         {
+            LogWarn() << "Error when compiling " << func_name
+				<< " (hr=0x" << std::hex << static_cast<uint32_t>(hr) << std::dec
+				<< ", hlsl_bytes=" << hlsl_shader_text.size()
+				<< ", dxbc_bytes=" << code.size() << "):" << std::endl;
 
-            LogWarn() << "Error when compiling " << func_name << ":" << std::endl;
+			if (hlsl_shader_text.empty())
+			{
+				LogError() << "HLSL source is empty. Check ResLoader path for the .shader and its Includes." << std::endl;
+			}
+
+			if (!err_msg.empty())
+			{
+				// Always dump raw compiler output first (may contain embedded NULs from D3D).
+				std::string raw = err_msg;
+				while (!raw.empty() && (raw.back() == '\0' || raw.back() == '\r' || raw.back() == '\n'))
+				{
+					raw.pop_back();
+				}
+				LogInfo() << raw << std::endl;
+			}
+			else if (FAILED(hr) || code.empty())
+			{
+				LogError() << "D3DCompile failed with no error blob. profile=" << shader_profile << std::endl;
+			}
 
 			std::map<int, std::vector<std::string>> err_lines;
 			{
@@ -422,17 +459,29 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 
 				for (auto const & msg : iter->second)
 				{
-					LogInfo() << msg << std::endl;
+					if (!msg.empty())
+					{
+						LogInfo() << msg << std::endl;
+					}
 				}
 			}
         }
 
         if (reflector != nullptr)
 		{
-			D3DCompilerLoader::Instance().D3DReflect(code, reflector);
+			if (!code.empty())
+			{
+				D3DCompilerLoader::Instance().D3DReflect(code, reflector);
+			}
+			else
+			{
+				LogError() << "Skip D3DReflect for " << func_name
+					<< ": DXBC is empty (compile failed or HLSL source missing)." << std::endl;
+				*reflector = nullptr;
+			}
 		}
 
-        if (strip)
+        if (strip && !code.empty())
 		{
 #ifndef ZENGINE_PLATFORM_WINDOWS
 			enum D3DCOMPILER_STRIP_FLAGS

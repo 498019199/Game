@@ -3,6 +3,7 @@
 #include <base/Window.h>
 #include <world/World.h>
 #include <common/Thread.h>
+#include <common/Profiler.h>
 
 #include <render/RenderEffect.h>
 #include <render/Renderable.h>
@@ -52,6 +53,8 @@ void World::AddRenderable(Renderable* obj)
 
 void World::Flush(uint32_t urt)
 {
+	ZoneScopedN("World::Flush");
+
     std::lock_guard<std::mutex> lock(update_mutex_);
 
 	urt_ = urt;
@@ -143,6 +146,8 @@ void World::Flush(uint32_t urt)
 
 void World::Update()
 {
+	ZoneScopedN("World::Update");
+
 	auto& context = Context::Instance();
     auto& app = context.AppInstance();
     const float app_time = app.AppTime();
@@ -157,6 +162,7 @@ void World::Update()
     }
 
     {
+		ZoneScopedN("World::SceneTraverse");
         std::lock_guard<std::mutex> lock(update_mutex_);
 
         scene_root_.Traverse([this, app_time, frame_time](SceneNode& node) {
@@ -199,10 +205,14 @@ void World::Update()
     re.EndFrame();
 
     nodes_updated_ = false;
+
+	FrameMark;
 }
 
 void World::FlushScene()
 {
+	ZoneScopedN("World::FlushScene");
+
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     
     uint32_t urt;

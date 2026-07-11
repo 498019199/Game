@@ -15,8 +15,10 @@ if(ZENGINE_PLATFORM_WINDOWS)
     set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
     ${PROJECT_SOURCE_DIR}/core/core/src/app/WindowWin.cpp
 )
-elseif(ZENGINE_PLATFORM_ANDROID)
-elseif(ZENGINE_PLATFORM_IOS)
+elseif(ZENGINE_PLATFORM_ANDROID OR ZENGINE_PLATFORM_IOS OR ZENGINE_PLATFORM_LINUX OR ZENGINE_PLATFORM_DARWIN)
+    set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
+    ${PROJECT_SOURCE_DIR}/core/core/src/app/WindowSDL.cpp
+)
 endif()
 
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
@@ -209,6 +211,15 @@ target_link_libraries(ZENGINE_core
         rmlui
         rmlui_debugger
 )
+
+if(ZENGINE_ENABLE_TRACY)
+    target_link_libraries(ZENGINE_core PUBLIC TracyClient)
+    target_compile_definitions(ZENGINE_core PUBLIC ZENGINE_ENABLE_TRACY)
+endif()
+
+if(ZENGINE_PLATFORM_LINUX OR ZENGINE_PLATFORM_DARWIN OR ZENGINE_PLATFORM_ANDROID OR ZENGINE_PLATFORM_IOS)
+	target_link_libraries(ZENGINE_core PRIVATE SDL3::SDL3)
+endif()
 
 
 if(ZENGINE_IS_DEV_PLATFORM)

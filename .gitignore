@@ -19,6 +19,7 @@
 /DemoEngine/3rd/FreeImage/FreeImage
 /DemoEngine/3rd/googletest/googletest
 /DemoEngine/3rd/fmt/fmt
+/DemoEngine/3rd/tracy/tracy
 /DemoEngine/3rd/NanoRtti/NanoRtti
 /DemoEngine/3rd/ogg/ogg
 /DemoEngine/3rd/rapidjson/rapidjson

@@ -3,6 +3,7 @@
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
 #include <render/RenderFactory.h>
+#include <common/Profiler.h>
 
 #include <math/math.h>
 #include <world/SceneNode.h>
@@ -94,14 +95,14 @@ void App3D::Run()
 			re.Refresh();
 		}
     }
-#elif defined ZENGINE_PLATFORM_LINUX
-#elif defined ZENGINE_PLATFORM_ANDROID
-#elif defined ZENGINE_PLATFORM_IOS
-    while (!main_wnd_->Closed())
-    {
-        Window::PumpEvents();
-        re.Refresh();
-    }
+#elif defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
+	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+	const auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+	while (!main_wnd_->Closed())
+	{
+		Window::PumpEvents();
+		re.Refresh();
+	}
 #endif
 
     this->OnDestroy();
@@ -167,6 +168,8 @@ void App3D::OnResize(uint32_t width, uint32_t height)
 /////////////////////////////////////////////////////////////////////////////////
 uint32_t App3D::Update(uint32_t pass)
 {
+	ZoneScopedN("App3D::Update");
+
     if(0 == pass)
     {
         this->UpdateStats();

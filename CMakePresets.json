@@ -12,7 +12,34 @@
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "cl.exe",
-                "CMAKE_CXX_COMPILER": "cl.exe"
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "ZENGINE_ENABLE_TRACY": "ON",
+                "ZENGINE_TRACY_ON_DEMAND": "ON"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "macos-apple-clang",
+            "displayName": "macOS Apple Clang",
+            "description": "Configure with Apple Clang (/usr/bin/clang, /usr/bin/clang++) on macOS",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "13.0",
+                "ZENGINE_ENABLE_TRACY": "ON",
+                "ZENGINE_TRACY_ON_DEMAND": "ON"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
             }
         }
     ],
@@ -21,7 +48,34 @@
             "name": "Visual Studio Community 2022 Release - amd64-debug",
             "displayName": "Visual Studio Community 2022 Release - amd64 - Debug",
             "configurePreset": "Visual Studio Community 2022 Release - amd64",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "macos-apple-clang-debug",
+            "displayName": "macOS Apple Clang - Debug",
+            "configurePreset": "macos-apple-clang",
+            "configuration": "Debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
+            "name": "macos-apple-clang-release",
+            "displayName": "macOS Apple Clang - Release",
+            "configurePreset": "macos-apple-clang",
+            "configuration": "Release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
         }
     ]
 }

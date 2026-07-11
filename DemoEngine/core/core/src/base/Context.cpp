@@ -412,8 +412,10 @@ public:
 
     void LoadConfig(const char* file_name)
     {
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
-        static char const* available_rfs_array[] = {"D3D11", "OpenGL", "OpenGLES", "D3D12"};
+#if defined(ZENGINE_PLATFORM_WINDOWS)
+        static char const* available_rfs_array[] = {"D3D11"};
+#else
+        static char const* available_rfs_array[] = {"SDL3"};
 #endif
 
 

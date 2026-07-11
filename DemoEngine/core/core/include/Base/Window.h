@@ -7,6 +7,8 @@
 using MsgProcFunc = LRESULT(*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
+struct SDL_Window;
+
 namespace RenderWorker
 {
 
@@ -30,6 +32,12 @@ public:
     HWND GetHWND() const { return wnd_; }
     void BindMsgProc(MsgProcFunc func) { msg_proc_ptr_ = func; }
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
+
+#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
+	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+	SDL_Window* GetSDLWindow() const noexcept { return sdl_wnd_; }
+	static void PumpEvents();
+#endif
 
     int32_t Left() const { return left_; }
     int32_t Top() const { return top_; }
@@ -139,6 +147,13 @@ protected:
     MsgProcFunc msg_proc_ptr_ {nullptr};
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif //ZENGINE_PLATFORM_WINDOWS
+
+#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
+	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+	SDL_Window* sdl_wnd_{nullptr};
+	bool hide_{false};
+	std::string name_;
+#endif
 
     float dpi_scale_;
     float effective_dpi_scale_;

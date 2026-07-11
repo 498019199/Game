@@ -8,6 +8,7 @@
 #include <render/Mesh.h>
 #include <world/World.h>
 #include <game/Model.h>
+#include <common/Profiler.h>
 
 namespace
 {
@@ -170,12 +171,17 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 	switch (pass)
 	{
 	case 0:
+	{
+		ZoneScopedN("GameApp::Pass0_BackFaceDepth");
 		re.BindFrameBuffer(back_face_depth_fb_);
 		re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
 		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
 		return URV_NeedFlush;
+	}
 
 	case 1:
+	{
+		ZoneScopedN("GameApp::Pass1_Main");
 		re.BindFrameBuffer(FrameBufferPtr());
 		{
 			Color clear_clr(0.2f, 0.4f, 0.6f, 1.0f);
@@ -189,6 +195,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 		}
 		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
 		return URV_NeedFlush | URV_Finished;  // 或 Editor 一样只 return URV_NeedFlush，再加 pass 2
+	}
 
 	default:
 		COMMON_ASSERT(false);

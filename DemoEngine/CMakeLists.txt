@@ -28,6 +28,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${ZENGINE_BIN_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${ZENGINE_BIN_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${ZENGINE_BIN_DIR})
 
+option(ZENGINE_ENABLE_TRACY "Enable Tracy frame profiler" OFF)
+option(ZENGINE_TRACY_ON_DEMAND "Tracy connects only when a profiler is attached" ON)
+
 add_subdirectory(3rd)
 add_subdirectory(common)
 add_subdirectory(core)

@@ -14,13 +14,13 @@ Shader "PredefinedCBuffers"
             #pragma vertex PredefinedCBuffersNoopVS
             #pragma fragment PredefinedCBuffersNoopPS
 
-            void PredefinedCBuffersNoopVS(out float4 oPositionOS : PositionOS, out float4 oPosition : SV_Position)
+            // Noop pass: only exists so predefined cbuffers (mesh/model/material/camera)
+            // are reflected into .kfx. Keep semantics D3D11-valid (SV_* / TEXCOORD).
+            void PredefinedCBuffersNoopVS(out float4 oPosition : SV_Position)
             {
-                oPositionOS = mul(float4(pos_center, 1), model);
-
+                float4 world_pos = mul(float4(pos_center, 1), model);
                 KlayGECameraInfo camera = CameraFromInstance(0);
-                float4x4 mvp = camera.mvp;
-                oPosition = mul(float4(pos_center, 1), mvp);
+                oPosition = mul(world_pos, camera.mvp);
             }
 
             float4 PredefinedCBuffersNoopPS() : SV_Target0

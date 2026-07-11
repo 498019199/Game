@@ -1823,7 +1823,8 @@ bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::strin
 		st.AppendAttrib(XMLAttribute("name", sd.name));
 		for (auto const& mem : sd.members)
 		{
-			XMLNode p(XMLNodeType::Element, "parameter");
+			// RenderEffectStructType::Load reads <member>, not <parameter>.
+			XMLNode p(XMLNodeType::Element, "member");
 			p.AppendAttrib(XMLAttribute("type", mem.type));
 			p.AppendAttrib(XMLAttribute("name", mem.name));
 			if (!mem.array_size.empty())
@@ -1834,11 +1835,10 @@ bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::strin
 		}
 		effect.AppendNode(std::move(st));
 	}
-	if (!AppendFxmlSnippetChildren(effect, fxml_snippets, err))
-	{
-		return false;
-	}
 
+	// Includes MUST come before HLSL / FXMLPROGRAM shader nodes so that
+	// PreprocessIncludes expands util.shader (etc.) first. Otherwise macros
+	// like SS_TEXCOORD_TYPE are used before they are #define'd.
 	auto is_util_inc = [](std::string const& n) {
 		return n == "util.shader";
 	};
@@ -1867,8 +1867,10 @@ bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::strin
 		inc.AppendAttrib(XMLAttribute("name", inc_name));
 		effect.AppendNode(std::move(inc));
 	}
-	// Default engine helpers for drawable shaders (not for library includes).
-	if (!is_library && !has_util)
+	// Default engine helpers for drawable shaders (Pass-based or hybrid FXMLPROGRAM).
+	// has_util is used as a signal that the author already pulled in engine libs.
+	bool const needs_drawable_defaults = (!is_library || !fxml_snippets.empty()) && !has_util;
+	if (needs_drawable_defaults)
 	{
 		if (!has_model_camera)
 		{
@@ -1924,6 +1926,13 @@ bool ParseShaderLabLite(std::string_view source, XMLNode& out_effect, std::strin
 		cdata.Value(hlsl_text);
 		shader_node.AppendNode(std::move(cdata));
 		effect.AppendNode(std::move(shader_node));
+	}
+
+	// FXMLPROGRAM shaders/techniques after includes + main HLSL so shared
+	// macros from util.shader are already in the fragment list.
+	if (!AppendFxmlSnippetChildren(effect, fxml_snippets, err))
+	{
+		return false;
 	}
 
 	(void)shader_name;

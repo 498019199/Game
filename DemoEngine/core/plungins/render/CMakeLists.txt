@@ -11,4 +11,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_M
 
 if(ZENGINE_PLATFORM_WINDOWS)
     add_subdirectory(d3d11)
+else()
+    # Linux / macOS / iOS / Android — SDL3 GPU
+    add_subdirectory(sdl3)
 endif()

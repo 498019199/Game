@@ -102,6 +102,11 @@ int main()
     config.graphics_cfg.height = setting.srcHeight;
     Context::Instance().Config(config);
 
+    auto& res_loader = Context::Instance().ResLoaderInstance();
+    res_loader.AddPath("../../Assets/Config");
+    res_loader.AddPath("../../Assets/Prefabs");
+    res_loader.AddPath("../../Assets/Shaders");
+
     auto app = MakeUniquePtr<EditorManagerD3D11>();
     app->GetEditorSetting( setting );
     app->Create();
