@@ -172,7 +172,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 	{
 	case 0:
 	{
-		ZoneScopedN("GameApp::Pass0_BackFaceDepth");
+		ZENGINE_ZONE("GameApp::Pass0_BackFaceDepth");
 		re.BindFrameBuffer(back_face_depth_fb_);
 		re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
 		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
@@ -181,7 +181,7 @@ uint32_t GameApp::DoUpdate(uint32_t pass)
 
 	case 1:
 	{
-		ZoneScopedN("GameApp::Pass1_Main");
+		ZENGINE_ZONE("GameApp::Pass1_Main");
 		re.BindFrameBuffer(FrameBufferPtr());
 		{
 			Color clear_clr(0.2f, 0.4f, 0.6f, 1.0f);

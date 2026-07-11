@@ -4,6 +4,7 @@
 #include <world/World.h>
 #include <common/Thread.h>
 #include <common/Profiler.h>
+#include <common/CpuProfiler.h>
 
 #include <render/RenderEffect.h>
 #include <render/Renderable.h>
@@ -53,7 +54,7 @@ void World::AddRenderable(Renderable* obj)
 
 void World::Flush(uint32_t urt)
 {
-	ZoneScopedN("World::Flush");
+	ZENGINE_ZONE("World::Flush");
 
     std::lock_guard<std::mutex> lock(update_mutex_);
 
@@ -144,74 +145,76 @@ void World::Flush(uint32_t urt)
     urt_ = 0;
 }
 
-void World::Update()
-{
-	ZoneScopedN("World::Update");
+	void World::Update()
+	{
+		CommonWorker::CpuProfiler::Instance().BeginFrame();
+		ZENGINE_ZONE("World::Update");
 
-	auto& context = Context::Instance();
-    auto& app = context.AppInstance();
-    const float app_time = app.AppTime();
-    const float frame_time = app.FrameTime();
+		auto& context = Context::Instance();
+	    auto& app = context.AppInstance();
+	    const float app_time = app.AppTime();
+	    const float frame_time = app.FrameTime();
 
-    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
-    re.BeginFrame();
+	    auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+	    re.BeginFrame();
 
-    if (!update_thread_ && !quit_)
-    {
-        update_thread_ = context.ThreadPoolInstance().QueueThread([this] { this->UpdateThreadFunc(); });
-    }
+	    if (!update_thread_ && !quit_)
+	    {
+	        update_thread_ = context.ThreadPoolInstance().QueueThread([this] { this->UpdateThreadFunc(); });
+	    }
 
-    {
-		ZoneScopedN("World::SceneTraverse");
-        std::lock_guard<std::mutex> lock(update_mutex_);
+	    {
+			ZENGINE_ZONE("World::SceneTraverse");
+	        std::lock_guard<std::mutex> lock(update_mutex_);
 
-        scene_root_.Traverse([this, app_time, frame_time](SceneNode& node) {
-            node.MainThreadUpdate(app_time, frame_time);
-            node.UpdateTransforms();
+	        scene_root_.Traverse([this, app_time, frame_time](SceneNode& node) {
+	            node.MainThreadUpdate(app_time, frame_time);
+	            node.UpdateTransforms();
 
-            if (node.Visible())
-            {
-                node.ForEachComponentOfType<Camera>([this](Camera& camera) {
-                    frame_cameras_.push_back(camera.shared_from_this());
-                });
+	            if (node.Visible())
+	            {
+	                node.ForEachComponentOfType<Camera>([this](Camera& camera) {
+	                    frame_cameras_.push_back(camera.shared_from_this());
+	                });
 
-                node.ForEachComponentOfType<LightSource>([this](LightSource& light) {
-                    frame_lights_.push_back(light.shared_from_this());
-                });
-            }
+	                node.ForEachComponentOfType<LightSource>([this](LightSource& light) {
+	                    frame_lights_.push_back(light.shared_from_this());
+	                });
+	            }
 
-            return true;
-        });
-        scene_root_.UpdatePosBoundSubtree();
+	            return true;
+	        });
+	        scene_root_.UpdatePosBoundSubtree();
 
-        overlay_root_.ClearChildren();
-    }
+	        overlay_root_.ClearChildren();
+	    }
 
-	nodes_updated_ = true;
+		nodes_updated_ = true;
 
-    this->FlushScene();
+	    this->FlushScene();
 
-    FrameBuffer& fb = *re.ScreenFrameBuffer();
-    fb.SwapBuffers();
+	    FrameBuffer& fb = *re.ScreenFrameBuffer();
+	    fb.SwapBuffers();
 
-    InputEngine& ie = context.InputFactoryInstance().InputEngineInstance();
-	ie.Update();
+	    InputEngine& ie = context.InputFactoryInstance().InputEngineInstance();
+		ie.Update();
 
-    frame_cameras_.clear();
-    frame_lights_.clear();
+	    frame_cameras_.clear();
+	    frame_lights_.clear();
 
-	fb.WaitOnSwapBuffers();
+		fb.WaitOnSwapBuffers();
 
-    re.EndFrame();
+	    re.EndFrame();
 
-    nodes_updated_ = false;
+	    nodes_updated_ = false;
 
-	FrameMark;
-}
+		CommonWorker::CpuProfiler::Instance().EndFrame();
+		FrameMark;
+	}
 
-void World::FlushScene()
-{
-	ZoneScopedN("World::FlushScene");
+	void World::FlushScene()
+	{
+		ZENGINE_ZONE("World::FlushScene");
 
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
     

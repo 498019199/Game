@@ -322,7 +322,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 
 	auto const editor_screen_pass = [&re, this]() -> uint32_t {
-		ZoneScopedN("Editor::Pass2_UI");
+		ZENGINE_ZONE("Editor::Pass2_UI");
 		re.BindFrameBuffer(FrameBufferPtr());
 		Color clear_clr(0.2f, 0.4f, 0.6f, 1);
 		if (Context::Instance().Config().graphics_cfg.gamma)
@@ -340,7 +340,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
     {
         case 0:
         {
-			ZoneScopedN("Editor::Pass0_BackFaceDepth");
+			ZENGINE_ZONE("Editor::Pass0_BackFaceDepth");
             re.BindFrameBuffer(back_face_depth_fb_);
             re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
             scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
@@ -348,7 +348,7 @@ uint32_t EditorManagerD3D11::DoUpdate(uint32_t pass)
             return App3D::URV_NeedFlush;
         case 1:
         {
-			ZoneScopedN("Editor::Pass1_GameView");
+			ZENGINE_ZONE("Editor::Pass1_GameView");
             re.BindFrameBuffer(game_view_fb_);
             Color clear_clr(0.2f, 0.4f, 0.6f, 1);
             if (Context::Instance().Config().graphics_cfg.gamma)

@@ -33,7 +33,8 @@
 
 /ZEngine/bin
 /ZEngine/Assets/Models
-
+/Config
+/Game/Tool/tracy
 
 *.png.dds
 *.jpg.dds

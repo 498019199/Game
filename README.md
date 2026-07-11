@@ -40,3 +40,12 @@ Direct3D 11.4
 .\ZENGINE_model_convert.exe -f Models/Spring.obj          # 强制重建
 .\ZENGINE_model_convert.exe --assets-dir D:\my\models MyModel.obj
 ```
+
+
+
+工程里用的是 Tracy v0.13.1，官方 GUI 下载方式：
+打开 Releases：https://github.com/wolfpld/tracy/releases/tag/v0.13.1
+下载 windows-0.13.1.zip
+解压后运行 tracy-profiler.exe
+用法：先开 Tracy GUI → 再跑 Editor（需 ZENGINE_ENABLE_TRACY=ON）。On-demand 模式下连上后才会开始采数据。
+文档（可选）：同一页的 tracy.pdf。

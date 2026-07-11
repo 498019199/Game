@@ -168,7 +168,7 @@ void App3D::OnResize(uint32_t width, uint32_t height)
 /////////////////////////////////////////////////////////////////////////////////
 uint32_t App3D::Update(uint32_t pass)
 {
-	ZoneScopedN("App3D::Update");
+	ZENGINE_ZONE("App3D::Update");
 
     if(0 == pass)
     {

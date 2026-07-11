@@ -3,6 +3,8 @@ set(COMMON_PROJECT_DIR "${ZENGINE_ROOT_DIR}/common")
 set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/com_ptr.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Compiler.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/CpuInfo.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/CpuProfiler.h
     ${PROJECT_SOURCE_DIR}/common/include/common/CustomizedStreamBuf.h
     ${PROJECT_SOURCE_DIR}/common/include/common/defer.h
     ${PROJECT_SOURCE_DIR}/common/include/common/DllLoader.h
@@ -12,6 +14,7 @@ set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/JsonDom.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Log.h
     ${PROJECT_SOURCE_DIR}/common/include/common/macro.h
+    ${PROJECT_SOURCE_DIR}/common/include/common/Profiler.h
     ${PROJECT_SOURCE_DIR}/common/include/common/ResIdentifier.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Signal.h
     ${PROJECT_SOURCE_DIR}/common/include/common/span.h
@@ -21,10 +24,11 @@ set(COMMON_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/common/Uuid.h
     ${PROJECT_SOURCE_DIR}/common/include/common/XMLDom.h
     ${PROJECT_SOURCE_DIR}/common/include/common/Thread.h
-    ${PROJECT_SOURCE_DIR}/common/include/common/CpuInfo.h
 )
 
 set(COMMON_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/common/src/common/CpuInfo.cpp
+    ${PROJECT_SOURCE_DIR}/common/src/common/CpuProfiler.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/CustomizedStreamBuf.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/DllLoader.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/ErrorHandling.cpp
@@ -35,7 +39,6 @@ set(COMMON_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/common/src/common/Util.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/XMLDom.cpp
     ${PROJECT_SOURCE_DIR}/common/src/common/Thread.cpp
-    ${PROJECT_SOURCE_DIR}/common/src/common/CpuInfo.cpp
 )
 
 set(MATH_HEADER_FILES

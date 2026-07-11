@@ -1,6 +1,8 @@
 #pragma once
 
-// Thin Tracy wrapper. Prefer this over including tracy headers directly.
+#include <common/CpuProfiler.h>
+
+// Thin Tracy wrapper + local CpuProfiler zones for the Editor panel.
 #if defined(ZENGINE_ENABLE_TRACY)
 #	include <tracy/Tracy.hpp>
 #else
@@ -23,3 +25,11 @@
 #		define TracyMessageL(text)
 #	endif
 #endif
+
+#define ZENGINE_ZONE_CONCAT_INNER(a, b) a##b
+#define ZENGINE_ZONE_CONCAT(a, b) ZENGINE_ZONE_CONCAT_INNER(a, b)
+
+/// Local timing for ImGui profiler + Tracy zone when enabled.
+#define ZENGINE_ZONE(name) \
+	ZoneScopedN(name); \
+	::CommonWorker::ScopedCpuZone ZENGINE_ZONE_CONCAT(_zengine_cpu_zone_, __LINE__)(name)

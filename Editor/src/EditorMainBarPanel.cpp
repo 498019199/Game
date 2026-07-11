@@ -1,6 +1,7 @@
 #include <editor/EditorMainBarPanel.h>
 #include <editor/EditorDialogBoxManager.h>
 #include <editor/EditorManagerD3D11.h>
+#include <editor/EditorProfilerPanel.h>
 
 namespace EditorWorker
 {
@@ -59,6 +60,15 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
 
             if (ImGui::BeginMenu("Assets"))
             {
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Window"))
+            {
+                bool profiler = EditorProfilerPanel::Visible();
+                if (ImGui::MenuItem("Profiler", "F3", profiler))
+                {
+                    EditorProfilerPanel::SetVisible(!profiler);
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
