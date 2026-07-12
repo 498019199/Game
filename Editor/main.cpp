@@ -2,7 +2,7 @@
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
 #include <world/World.h>
-#include <base/Window.h>
+#include <base/UIManager.h>
 #include <game/GameContext.h>
 #include <filesystem>
 
@@ -12,6 +12,18 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 
 namespace
 {
+	LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (GameContext::Instance().GmDebugWindowInstance().Visible())
+		{
+			Context::Instance().UIManagerInstance().ProcessGmWin32Message(msg, wParam, lParam);
+		}
+#ifndef EDITOR_DEBUG_MODE
+		ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+#endif
+		return -1;
+	}
+
     bool EnableDpiAwareness()
     {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
@@ -114,7 +126,7 @@ int main()
     app->GetEditorSetting( setting );
     app->Create();
 #ifndef EDITOR_DEBUG_MODE
-    app->MainWnd()->BindMsgProc(ImGui_ImplWin32_WndProcHandler);
+    app->MainWnd()->BindMsgProc(EditorWndProc);
 #endif //EDITOR_DEBUG_MODE
 
     // // test model

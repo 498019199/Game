@@ -33,16 +33,11 @@ namespace
 		RenderWorker::InputActionDefine(GmSubmit, RenderWorker::KS_Enter),
 	};
 
-	LRESULT CALLBACK GmWndProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM /*lParam*/)
+	LRESULT CALLBACK GmWndProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (msg == WM_CHAR)
+		if (GameContext::Instance().GmDebugWindowInstance().Visible())
 		{
-			auto& gm = GameContext::Instance().GmDebugWindowInstance();
-			if (gm.Visible() && wParam >= 32)
-			{
-				RenderWorker::Context::Instance().UIManagerInstance().ProcessTextInput(static_cast<char32_t>(wParam));
-				return 0;
-			}
+			RenderWorker::Context::Instance().UIManagerInstance().ProcessGmWin32Message(msg, wParam, lParam);
 		}
 		return -1;
 	}

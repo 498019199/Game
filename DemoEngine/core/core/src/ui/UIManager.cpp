@@ -20,10 +20,16 @@
 #include <RmlUi/Debugger/Debugger.h>
 
 #include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <string>
+#endif
 
 namespace RenderWorker
 {
@@ -35,6 +41,86 @@ public:
 	{
 		return Context::Instance().AppInstance().AppTime();
 	}
+
+#if defined(_WIN32)
+	void SetClipboardText(Rml::String const& text_utf8) override
+	{
+		if (!::OpenClipboard(nullptr))
+		{
+			return;
+		}
+
+		::EmptyClipboard();
+
+		int const wide_count = ::MultiByteToWideChar(CP_UTF8, 0, text_utf8.c_str(), static_cast<int>(text_utf8.size()), nullptr, 0);
+		if (wide_count <= 0)
+		{
+			::CloseClipboard();
+			return;
+		}
+
+		std::vector<wchar_t> wide_text(static_cast<size_t>(wide_count), L'\0');
+		::MultiByteToWideChar(
+			CP_UTF8, 0, text_utf8.c_str(), static_cast<int>(text_utf8.size()), wide_text.data(), wide_count);
+
+		size_t const alloc_size = sizeof(wchar_t) * (static_cast<size_t>(wide_count) + 1);
+		HGLOBAL clipboard_data = ::GlobalAlloc(GMEM_MOVEABLE, alloc_size);
+		if (!clipboard_data)
+		{
+			::CloseClipboard();
+			return;
+		}
+
+		void* dest = ::GlobalLock(clipboard_data);
+		if (!dest)
+		{
+			::GlobalFree(clipboard_data);
+			::CloseClipboard();
+			return;
+		}
+
+		std::memcpy(dest, wide_text.data(), alloc_size);
+		::GlobalUnlock(clipboard_data);
+
+		if (::SetClipboardData(CF_UNICODETEXT, clipboard_data) == nullptr)
+		{
+			::GlobalFree(clipboard_data);
+		}
+
+		::CloseClipboard();
+	}
+
+	void GetClipboardText(Rml::String& text) override
+	{
+		text.clear();
+		if (!::OpenClipboard(nullptr))
+		{
+			return;
+		}
+
+		HANDLE const clipboard_data = ::GetClipboardData(CF_UNICODETEXT);
+		if (!clipboard_data)
+		{
+			::CloseClipboard();
+			return;
+		}
+
+		wchar_t const* clipboard_text = static_cast<wchar_t const*>(::GlobalLock(clipboard_data));
+		if (clipboard_text)
+		{
+			int const utf8_count =
+				::WideCharToMultiByte(CP_UTF8, 0, clipboard_text, -1, nullptr, 0, nullptr, nullptr);
+			if (utf8_count > 0)
+			{
+				text.resize(static_cast<size_t>(utf8_count - 1));
+				::WideCharToMultiByte(CP_UTF8, 0, clipboard_text, -1, text.data(), utf8_count, nullptr, nullptr);
+			}
+			::GlobalUnlock(clipboard_data);
+		}
+
+		::CloseClipboard();
+	}
+#endif
 };
 
 class RmlUiFileInterface final : public ::Rml::FileInterface
@@ -420,6 +506,117 @@ void UIManager::ProcessTextInput(char32_t character)
 		rml_context_->ProcessTextInput(character);
 	}
 }
+
+#if defined(_WIN32)
+namespace
+{
+int RmlKeyModifiersFromWin32()
+{
+	int mods = 0;
+	if (::GetKeyState(VK_CONTROL) & 0x8000)
+	{
+		mods |= Rml::Input::KM_CTRL;
+	}
+	if (::GetKeyState(VK_SHIFT) & 0x8000)
+	{
+		mods |= Rml::Input::KM_SHIFT;
+	}
+	if (::GetKeyState(VK_MENU) & 0x8000)
+	{
+		mods |= Rml::Input::KM_ALT;
+	}
+	return mods;
+}
+
+int VkToRmlKeyIdentifier(std::uintptr_t vk)
+{
+	if (vk >= 'A' && vk <= 'Z')
+	{
+		return Rml::Input::KI_A + static_cast<int>(vk - 'A');
+	}
+	if (vk >= '0' && vk <= '9')
+	{
+		return Rml::Input::KI_0 + static_cast<int>(vk - '0');
+	}
+
+	switch (vk)
+	{
+	case VK_BACK:
+		return Rml::Input::KI_BACK;
+	case VK_TAB:
+		return Rml::Input::KI_TAB;
+	case VK_RETURN:
+		return Rml::Input::KI_RETURN;
+	case VK_DELETE:
+		return Rml::Input::KI_DELETE;
+	case VK_INSERT:
+		return Rml::Input::KI_INSERT;
+	case VK_LEFT:
+		return Rml::Input::KI_LEFT;
+	case VK_RIGHT:
+		return Rml::Input::KI_RIGHT;
+	case VK_UP:
+		return Rml::Input::KI_UP;
+	case VK_DOWN:
+		return Rml::Input::KI_DOWN;
+	case VK_HOME:
+		return Rml::Input::KI_HOME;
+	case VK_END:
+		return Rml::Input::KI_END;
+	case VK_PRIOR:
+		return Rml::Input::KI_PRIOR;
+	case VK_NEXT:
+		return Rml::Input::KI_NEXT;
+	default:
+		return -1;
+	}
+}
+} // namespace
+
+void UIManager::ProcessGmWin32Message(unsigned msg, std::uintptr_t w_param, std::intptr_t /*l_param*/)
+{
+	if (!rml_context_)
+	{
+		return;
+	}
+
+	int const mods = RmlKeyModifiersFromWin32();
+	switch (msg)
+	{
+	case WM_CHAR:
+		if ((::GetKeyState(VK_CONTROL) & 0x8000) == 0 && w_param >= 32 && w_param != '`' && w_param != '~')
+		{
+			rml_context_->ProcessTextInput(static_cast<Rml::Character>(w_param));
+		}
+		break;
+
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+	{
+		int const key = VkToRmlKeyIdentifier(w_param);
+		if (key >= 0)
+		{
+			rml_context_->ProcessKeyDown(static_cast<Rml::Input::KeyIdentifier>(key), mods);
+		}
+		break;
+	}
+
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+	{
+		int const key = VkToRmlKeyIdentifier(w_param);
+		if (key >= 0)
+		{
+			rml_context_->ProcessKeyUp(static_cast<Rml::Input::KeyIdentifier>(key), mods);
+		}
+		break;
+	}
+
+	default:
+		break;
+	}
+}
+#endif // _WIN32
 
 void UIManager::SetDebuggerVisible(bool visible)
 {

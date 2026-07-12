@@ -33,6 +33,7 @@ public:
 
 private:
 	void AppendLog(std::string_view text);
+	void CreateNpc(std::string_view id_text);
 
 	Rml::ElementDocument* document_ {nullptr};
 	bool visible_ {false};

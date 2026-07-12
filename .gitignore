@@ -3,6 +3,7 @@
 /.cursor
 /openspec
 .vscode/settings.json
+/.githooks
 
 /tools
 /out
@@ -33,6 +34,9 @@
 
 /ZEngine/bin
 /ZEngine/Assets/Models
+# Private company assets — do not commit or push
+/ZEngine/Assets/Private/**
+!/ZEngine/Assets/Private/README.md
 /Config
 /Game/Tool/tracy
 

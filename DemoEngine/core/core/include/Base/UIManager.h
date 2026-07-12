@@ -66,6 +66,11 @@ public:
 	void ProcessKeyUp(int rml_key_identifier, int key_modifier_state);
 	void ProcessTextInput(char32_t character);
 
+#if defined(_WIN32)
+	/// Forward Win32 WM_CHAR / WM_KEY* to Rml when GM console has keyboard focus.
+	void ProcessGmWin32Message(unsigned msg, std::uintptr_t w_param, std::intptr_t l_param);
+#endif
+
 	void SetDebuggerVisible(bool visible);
 	bool IsDebuggerVisible() const;
 

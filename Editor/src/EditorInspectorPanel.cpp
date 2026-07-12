@@ -194,95 +194,95 @@ void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
 
 void EditorInspectorPanel::DrawModel(AssertBaseInfo& info)
 {
-    auto& model_info = checked_cast<AssetModelInfo&>(info);
+    // auto& model_info = checked_cast<AssetModelInfo&>(info);
 
-    ImGui::Text("Name:");
-    ImGui::SameLine(120);
-    ImGui::Text("%s", model_info.name.c_str());
+    // ImGui::Text("Name:");
+    // ImGui::SameLine(120);
+    // ImGui::Text("%s", model_info.name.c_str());
 
-    if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        static RenderWorker::RenderModel* editing_model = nullptr;
-        static float pos[3] = { 0.0f, 0.0f, 0.0f };
-        static float rot[3] = { 0.0f, 0.0f, 0.0f };
-        static float scl[3] = { 1.0f, 1.0f, 1.0f };
+    // if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    // {
+    //     static RenderWorker::RenderModel* editing_model = nullptr;
+    //     static float pos[3] = { 0.0f, 0.0f, 0.0f };
+    //     static float rot[3] = { 0.0f, 0.0f, 0.0f };
+    //     static float scl[3] = { 1.0f, 1.0f, 1.0f };
 
-        auto node = model_info.model->RootNode();
-        if (editing_model != model_info.model.get())
-        {
-            editing_model = model_info.model.get();
+    //     auto node = model_info.model->RootNode();
+    //     if (editing_model != model_info.model.get())
+    //     {
+    //         editing_model = model_info.model.get();
 
-            RenderWorker::float3 scale;
-            RenderWorker::quater rotation;
-            RenderWorker::float3 translation;
-            MathWorker::decompose(scale, rotation, translation, node->TransformToParent());
+    //         RenderWorker::float3 scale;
+    //         RenderWorker::quater rotation;
+    //         RenderWorker::float3 translation;
+    //         MathWorker::decompose(scale, rotation, translation, node->TransformToParent());
 
-            pos[0] = translation.x();
-            pos[1] = translation.y();
-            pos[2] = translation.z();
-            rot[0] = rot[1] = rot[2] = 0.0f;
-            scl[0] = scale.x();
-            scl[1] = scale.y();
-            scl[2] = scale.z();
-        }
+    //         pos[0] = translation.x();
+    //         pos[1] = translation.y();
+    //         pos[2] = translation.z();
+    //         rot[0] = rot[1] = rot[2] = 0.0f;
+    //         scl[0] = scale.x();
+    //         scl[1] = scale.y();
+    //         scl[2] = scale.z();
+    //     }
 
-        bool changed = false;
-        changed |= ImGui::DragFloat3("Position##pos", pos, 0.1f);
-        changed |= ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
-        changed |= ImGui::DragFloat3("Scale##scl", scl, 0.1f);
+    //     bool changed = false;
+    //     changed |= ImGui::DragFloat3("Position##pos", pos, 0.1f);
+    //     changed |= ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
+    //     changed |= ImGui::DragFloat3("Scale##scl", scl, 0.1f);
 
-        if (changed)
-        {
-            RenderWorker::float4x4 transform =
-                MathWorker::translation(pos[0], pos[1], pos[2]) *
-                MathWorker::rotation_matrix_yaw_pitch_roll(
-                    MathWorker::Deg2Rad(rot[1]),
-                    MathWorker::Deg2Rad(rot[0]),
-                    MathWorker::Deg2Rad(rot[2])) *
-                MathWorker::scaling(scl[0], scl[1], scl[2]);
+    //     if (changed)
+    //     {
+    //         RenderWorker::float4x4 transform =
+    //             MathWorker::translation(pos[0], pos[1], pos[2]) *
+    //             MathWorker::rotation_matrix_yaw_pitch_roll(
+    //                 MathWorker::Deg2Rad(rot[1]),
+    //                 MathWorker::Deg2Rad(rot[0]),
+    //                 MathWorker::Deg2Rad(rot[2])) *
+    //             MathWorker::scaling(scl[0], scl[1], scl[2]);
 
-            node->TransformToParent(transform);
-            node->UpdateTransforms();
-        }
+    //         node->TransformToParent(transform);
+    //         node->UpdateTransforms();
+    //     }
 
-        ImGui::TreePop();
-    }
-    ImGui::Spacing();
+    //     ImGui::TreePop();
+    // }
+    // ImGui::Spacing();
 
-    if (ImGui::TreeNodeEx("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::TreePop();
-    }
-    ImGui::Spacing();
+    // if (ImGui::TreeNodeEx("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen))
+    // {
+    //     ImGui::TreePop();
+    // }
+    // ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        if (ImGui::TreeNode("Materials"))
-        {
-            ImGui::TreePop();
-        }
+    // if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
+    // {
+    //     if (ImGui::TreeNode("Materials"))
+    //     {
+    //         ImGui::TreePop();
+    //     }
 
-        if (ImGui::TreeNode("Lighting"))
-        {
-            ImGui::TreePop();
-        }
+    //     if (ImGui::TreeNode("Lighting"))
+    //     {
+    //         ImGui::TreePop();
+    //     }
 
-        if (ImGui::TreeNode("Lightmaping"))
-        {
-            ImGui::TreePop();
-        }
+    //     if (ImGui::TreeNode("Lightmaping"))
+    //     {
+    //         ImGui::TreePop();
+    //     }
 
-        if (ImGui::TreeNode("Probes"))
-        {
-            ImGui::TreePop();
-        }
+    //     if (ImGui::TreeNode("Probes"))
+    //     {
+    //         ImGui::TreePop();
+    //     }
 
-       if (ImGui::TreeNode("Additional Settings"))
-        {
-            ImGui::TreePop();
-        }
-    }
-    ImGui::Spacing();
+    //    if (ImGui::TreeNode("Additional Settings"))
+    //     {
+    //         ImGui::TreePop();
+    //     }
+    // }
+    // ImGui::Spacing();
 
 
 }

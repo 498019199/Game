@@ -3,8 +3,6 @@
 #include <editor/EditorProfilerPanel.h>
 #include <base/ZEngine.h>
 #include <base/UIManager.h>
-#include <game/GameContext.h>
-
 #include <RmlUi/Core/Input.h>
 
 namespace EditorWorker
@@ -30,40 +28,6 @@ int ImGuiKeyModifiers()
 		mods |= Rml::Input::KM_ALT;
 	}
 	return mods;
-}
-
-void ForwardGmTextInput(UIManager& ui)
-{
-	ImGuiIO& io = ImGui::GetIO();
-	for (ImWchar c : io.InputQueueCharacters)
-	{
-		if (c >= 32 && c != '`' && c != '~')
-		{
-			ui.ProcessTextInput(static_cast<char32_t>(c));
-		}
-	}
-	io.InputQueueCharacters.resize(0);
-
-	if (ImGui::IsKeyPressed(ImGuiKey_Backspace, true))
-	{
-		ui.ProcessKeyDown(Rml::Input::KI_BACK, ImGuiKeyModifiers());
-		ui.ProcessKeyUp(Rml::Input::KI_BACK, ImGuiKeyModifiers());
-	}
-	if (ImGui::IsKeyPressed(ImGuiKey_Delete, true))
-	{
-		ui.ProcessKeyDown(Rml::Input::KI_DELETE, ImGuiKeyModifiers());
-		ui.ProcessKeyUp(Rml::Input::KI_DELETE, ImGuiKeyModifiers());
-	}
-	if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow, true))
-	{
-		ui.ProcessKeyDown(Rml::Input::KI_LEFT, ImGuiKeyModifiers());
-		ui.ProcessKeyUp(Rml::Input::KI_LEFT, ImGuiKeyModifiers());
-	}
-	if (ImGui::IsKeyPressed(ImGuiKey_RightArrow, true))
-	{
-		ui.ProcessKeyDown(Rml::Input::KI_RIGHT, ImGuiKeyModifiers());
-		ui.ProcessKeyUp(Rml::Input::KI_RIGHT, ImGuiKeyModifiers());
-	}
 }
 } // namespace
 
@@ -162,12 +126,6 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 			}
 
 			auto& ui = Context::Instance().UIManagerInstance();
-			auto& gm = GameContext::Instance().GmDebugWindowInstance();
-			if (gm.Visible())
-			{
-				ImGui::GetIO().WantCaptureKeyboard = true;
-				ForwardGmTextInput(ui);
-			}
 
 			if (game_srv != nullptr && image_size.x > 1.f && image_size.y > 1.f)
 			{
