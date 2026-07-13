@@ -133,7 +133,7 @@ int main()
     // std::filesystem::path current_dir = std::filesystem::current_path().parent_path();
     // EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
     // child->parent = nullptr;
-    // child->path = "G:/shareData/project/github/Game/ZEngine/Assets/Models/Dragon/Dragon.glb";
+    // child->path = "Models/Dragon/Dragon.glb";
     // child->name = "Dragon";
     // child->extension = ".glb";
     // child->type = AssetType::Model;

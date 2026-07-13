@@ -218,7 +218,7 @@ namespace
 		bool IsSupported(std::string_view input_name) const;
 
 	private:
-		void RemoveUnusedJoints();
+		void RemoveUnusedJoints();Load
 		void RemoveUnusedMaterials();
 		void CompressKeyFrameSet(KeyFrameSet& kf);
 
