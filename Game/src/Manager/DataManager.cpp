@@ -1,5 +1,5 @@
-#include <game/DataManager.h>
-#include <game/generated/NpcConfig.gen.h>
+#include <Manager/DataManager.h>
+#include <Data/generated/NpcConfig.gen.h>
 
 #include <base/ZEngine.h>
 #include <common/Log.h>

@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1001,
+    "name": "BasicStrike",
+    "slot": 0,
+    "cast_flow_id": 2001,
+    "cost_mp": 0,
+    "cooldown_ms": 0,
+    "blocked_by_tags": ["State.Stunned", "State.Silenced"]
+  },
+  {
+    "id": 1002,
+    "name": "ManaBolt",
+    "slot": 1,
+    "cast_flow_id": 2002,
+    "cost_mp": 10,
+    "cooldown_ms": 1000,
+    "blocked_by_tags": ["State.Stunned", "State.Silenced"]
+  }
+]

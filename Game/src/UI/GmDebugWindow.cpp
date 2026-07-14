@@ -1,4 +1,4 @@
-#include <game/GmDebugWindow.h>
+#include <UI/GmDebugWindow.h>
 
 #include <charconv>
 
@@ -6,8 +6,9 @@
 #include <base/ZEngine.h>
 #include <common/Log.h>
 #include <game/GameContext.h>
-#include <game/DataManager.h>
+#include <Manager/DataManager.h>
 #include <game/Model.h>
+#include <game/gas/CombatService.h>
 #include <render/Mesh.h>
 #include <world/SceneNode.h>
 
@@ -134,7 +135,7 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
 	std::vector<std::string_view> strs = StringUtil::Split(command, StringUtil::EqualTo(' '));
 	if (command == "help")
 	{
-		AppendLog("commands: help, clear");
+		AppendLog("commands: help, clear, /createnpc <id>, /gas smoke, /gas skillsmoke");
 	}
 	else if (command == "clear")
 	{
@@ -150,6 +151,23 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
 	else if (strs[0] == "/createnpc")
 	{
 		CreateNpc(strs.size() >= 2 ? strs[1] : std::string_view {});
+	}
+	else if (strs[0] == "/gas")
+	{
+		if (strs.size() >= 2 && strs[1] == "smoke")
+		{
+			bool const ok = Gas::RunGasSmokeTest();
+			AppendLog(ok ? "gas smoke: OK" : "gas smoke: FAIL (see log)");
+		}
+		else if (strs.size() >= 2 && strs[1] == "skillsmoke")
+		{
+			bool const ok = Gas::RunGasSkillConfigSmokeTest();
+			AppendLog(ok ? "gas skillsmoke: OK" : "gas skillsmoke: FAIL (see log)");
+		}
+		else
+		{
+			AppendLog("usage: /gas smoke|skillsmoke");
+		}
 	}
 	else
 	{

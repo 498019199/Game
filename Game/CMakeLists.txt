@@ -1,6 +1,6 @@
 set(GAME_NPC_JSON "${CMAKE_SOURCE_DIR}/ZEngine/Assets/Config/npc.json")
-set(GAME_NPC_GEN_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/game/generated/NpcConfig.gen.h")
-set(GAME_NPC_GEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/Game/generated/NpcConfig.gen.cpp")
+set(GAME_NPC_GEN_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/Data/generated/NpcConfig.gen.h")
+set(GAME_NPC_GEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/Data/generated/NpcConfig.gen.cpp")
 set(GAME_NPC_GEN_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/Tool/gen_npc_config.py")
 
 find_package(Python3 COMPONENTS Interpreter)
@@ -32,11 +32,19 @@ if(Python3_Interpreter_FOUND)
 endif()
 
 set(GAME_SRC_LIST
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/DataManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Manager/DataManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/GameContext.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/GmDebugWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Scene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/GameplayTag.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/AttributeSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/EffectContainer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/AbilitySystemComponent.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/CombatBeat.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/CombatService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/SkillCatalog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/SkillPipeline.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/UI/GmDebugWindow.cpp
     ${GAME_NPC_GEN_SOURCE}
 )
 

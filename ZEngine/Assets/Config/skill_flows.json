@@ -1,0 +1,38 @@
+[
+  {
+    "id": 2001,
+    "name": "BasicStrikeFlow",
+    "phases": [
+      {
+        "type": "RulePlan",
+        "commit_cost": true
+      },
+      {
+        "type": "Timeline",
+        "events": [
+          { "t_ms": 0, "action": "Cue", "cue": "CastStart" },
+          { "t_ms": 200, "action": "EmitHit", "damage_scale": 1.0 },
+          { "t_ms": 300, "action": "End" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2002,
+    "name": "ManaBoltFlow",
+    "phases": [
+      {
+        "type": "RulePlan",
+        "commit_cost": true
+      },
+      {
+        "type": "Timeline",
+        "events": [
+          { "t_ms": 0, "action": "Cue", "cue": "CastStart" },
+          { "t_ms": 250, "action": "EmitHit", "damage_scale": 1.5 },
+          { "t_ms": 400, "action": "End" }
+        ]
+      }
+    ]
+  }
+]
