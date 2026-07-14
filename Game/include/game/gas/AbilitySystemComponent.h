@@ -65,6 +65,16 @@ private:
 	AttributeSet attributes_;
 	EffectContainer effects_;
 	SkillPipelineRunner pipeline_;
+	void Broadcast(GasEvent const& evt);
+
+	void InitDefaultCombatStats(float max_hp, float atk, float max_mp);
+
+private:
+	std::string debug_name_;
+	GameplayTagContainer tags_;
+	AttributeSet attributes_;
+	EffectContainer effects_;
+	SkillPipelineRunner pipeline_;
 	std::vector<GasEventHandler> handlers_;
 };
 

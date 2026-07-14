@@ -28,5 +28,13 @@ GAME_API bool RunGasSmokeTest();
 
 // Loads skills/flows (or uses injected catalog) and runs BasicStrike via pipeline.
 GAME_API bool RunGasSkillConfigSmokeTest();
+// Builds a sample Atk PercentAdd buff for smoke / GM.
+GAME_API EffectSpec MakeSampleAtkBuff(TimeMs duration_ms, float percent_add);
+
+// Runs ASC + Effect + Damage checks; returns true if all assertions pass.
+GAME_API bool RunGasSmokeTest();
+
+// Loads skills/flows (or uses injected catalog) and runs BasicStrike via pipeline.
+GAME_API bool RunGasSkillConfigSmokeTest();
 
 } // namespace Gas

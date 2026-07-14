@@ -11,3 +11,6 @@
 #include <game/gas/SkillCatalog.h>
 #include <game/gas/SkillDef.h>
 #include <game/gas/SkillPipeline.h>
+#include <game/gas/SkillCatalog.h>
+#include <game/gas/SkillDef.h>
+#include <game/gas/SkillPipeline.h>
