@@ -738,37 +738,57 @@ void ImagePlane::FormatConversion(ElementFormat format)
 
     std::vector<uint8_t> new_tex_data(slice_pitch);
 
-    CpuInfo cpu;
-    uint32_t const num_threads = cpu.NumHWThreads();
-    ThreadPool tp(1, num_threads);
-    std::vector<std::future<void>> joiners(num_threads);
-
-    uint32_t const tex_region_height = ((tex_height + num_threads - 1) / num_threads + block_height - 1) & ~(block_height - 1);
-    std::vector<TexturePtr> new_tex_regions(num_threads);
-    for (uint32_t i = 0; i < num_threads; ++ i)
+    auto encode_region = [block_height, tex_width, tex_height, format, row_pitch, &new_tex_data, this](
+                             uint32_t region_index, uint32_t region_height)
     {
-        joiners[i] = tp.QueueThread(
-            [block_height, tex_width, tex_height, tex_region_height, i, format, row_pitch,
-                &new_tex_data, &new_tex_regions, this]
-            {
-                uint32_t const this_tex_region_height = MathWorker::clamp(static_cast<int>(tex_height - i * tex_region_height),
-                    0, static_cast<int>(tex_region_height));
-                if (this_tex_region_height > 0)
-                {
-                    new_tex_regions[i] = MakeSharedPtr<VirtualTexture>(Texture::TT_2D, tex_width, this_tex_region_height,
-                        1, 1, 1, format, true);
+        uint32_t const this_tex_region_height = MathWorker::clamp(
+            static_cast<int>(tex_height - region_index * region_height), 0, static_cast<int>(region_height));
+        if (this_tex_region_height == 0)
+        {
+            return;
+        }
 
-                    ElementInitData init_data;
-                    init_data.data = new_tex_data.data() + i * tex_region_height / block_height * row_pitch;
-                    init_data.row_pitch = row_pitch;
-                    init_data.slice_pitch = (this_tex_region_height + block_height - 1) / block_height * row_pitch;
+        TexturePtr new_tex_region = MakeSharedPtr<VirtualTexture>(
+            Texture::TT_2D, tex_width, this_tex_region_height, 1, 1, 1, format, true);
 
-                    new_tex_regions[i]->CreateHWResource(MakeSpan<1>(init_data), nullptr);
+        ElementInitData init_data;
+        init_data.data = new_tex_data.data() + region_index * region_height / block_height * row_pitch;
+        init_data.row_pitch = row_pitch;
+        init_data.slice_pitch = (this_tex_region_height + block_height - 1) / block_height * row_pitch;
 
-                    uncompressed_tex_->CopyToSubTexture2D(*new_tex_regions[i], 0, 0, 0, 0, tex_width, this_tex_region_height,
-                        0, 0, 0, i * tex_region_height, tex_width, this_tex_region_height, TextureFilter::Point);
-                }
-            });
+        new_tex_region->CreateHWResource(MakeSpan<1>(init_data), nullptr);
+
+        uncompressed_tex_->CopyToSubTexture2D(*new_tex_region, 0, 0, 0, 0, tex_width, this_tex_region_height, 0, 0, 0,
+            region_index * region_height, tex_width, this_tex_region_height, TextureFilter::Point);
+    };
+
+    // Do not nest ThreadPool::QueueThread + wait here.
+    // FormatConversion often runs on ResLoader's loading thread (itself a ThreadPool worker);
+    // waiting on more work queued to another/local pool can starve and hang at future::wait().
+    CpuInfo cpu;
+    uint32_t num_threads = cpu.NumHWThreads();
+    if (num_threads == 0)
+    {
+        num_threads = 1;
+    }
+    uint32_t const tex_region_height =
+        ((tex_height + num_threads - 1) / num_threads + block_height - 1) & ~(block_height - 1);
+
+    if (num_threads == 1)
+    {
+        encode_region(0, tex_region_height);
+    }
+    else
+    {
+        std::vector<std::future<void>> joiners(num_threads);
+        for (uint32_t i = 0; i < num_threads; ++i)
+        {
+            joiners[i] = CreateThread([encode_region, i, tex_region_height]() { encode_region(i, tex_region_height); });
+        }
+        for (uint32_t i = 0; i < num_threads; ++i)
+        {
+            joiners[i].wait();
+        }
     }
 
     TexturePtr new_tex = MakeSharedPtr<VirtualTexture>(Texture::TT_2D, uncompressed_tex_->Width(0), uncompressed_tex_->Height(0),
@@ -777,11 +797,6 @@ void ImagePlane::FormatConversion(ElementFormat format)
     init_data.data = new_tex_data.data();
     init_data.row_pitch = row_pitch;
     init_data.slice_pitch = slice_pitch;
-
-    for (uint32_t i = 0; i < num_threads; ++ i)
-    {
-        joiners[i].wait();
-    }
 
     new_tex->CreateHWResource(MakeSpan<1>(init_data), nullptr);
 

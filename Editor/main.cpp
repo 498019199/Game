@@ -1,10 +1,13 @@
 #include <editor/EditorManagerD3D11.h>
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
+#include <base/Window.h>
 #include <world/World.h>
 #include <base/UIManager.h>
 #include <game/GameContext.h>
 #include <filesystem>
+
+#include <windows.h>
 
 using namespace EditorWorker;
 using namespace RenderWorker;

@@ -1,4 +1,5 @@
 #include <base/DevHelper.h>
+#include <common/Log.h>
 #include <dev_helps/TexConverter.h>
 #include <dev_helps/MeshMetadata.h>
 #include <dev_helps/MeshConverter.h>
@@ -63,13 +64,24 @@ public:
 
         TexConverter tc;
         auto texture = tc.Load(metadata);
+        if (!texture)
+        {
+            LogError() << "ConvertTexture failed to load: " << input_name
+                << " (metadata=" << metadata_name_ptr << ", source=" << metadata.PlaneFileName(0, 0) << ")" << std::endl;
+            return TexturePtr();
+        }
 
         std::filesystem::path input_path(input_name);
         std::filesystem::path output_path(output_name);
         if (output_path.parent_path() == input_path.parent_path())
         {
-            output_path = std::filesystem::path(Context::Instance().ResLoaderInstance().Locate(input_name)).parent_path() /
-                            output_path.filename();
+            auto const located = Context::Instance().ResLoaderInstance().Locate(input_name);
+            if (located.empty())
+            {
+                LogError() << "ConvertTexture: could not locate input for output path: " << input_name << std::endl;
+                return texture;
+            }
+            output_path = std::filesystem::path(located).parent_path() / output_path.filename();
         }
 
         SaveTexture(texture, output_path.string());

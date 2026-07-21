@@ -11,6 +11,8 @@
 #include <game/gas/CombatService.h>
 #include <render/Mesh.h>
 #include <render/RenderMaterial.h>
+#include <render/Texture.h>
+#include <render/RenderFactory.h>
 #include <world/SceneNode.h>
 
 using namespace RenderWorker;
@@ -19,6 +21,33 @@ namespace
 {
 constexpr char const* kDocPath = "rmlui/gm_debug.rml";
 constexpr char const* kDocId = "GmDebugWindow";
+
+void BindNpcTextureSlot(RenderMaterial& mtl, RenderMaterial::TextureSlot slot, std::string const& tex_path)
+{
+	if (tex_path.empty())
+	{
+		return;
+	}
+
+	mtl.TextureName(slot, tex_path);
+
+	auto& context = Context::Instance();
+	if (!context.RenderFactoryValid())
+	{
+		return;
+	}
+
+	auto& res_loader = context.ResLoaderInstance();
+	if (res_loader.Locate(tex_path).empty() && res_loader.Locate(tex_path + ".dds").empty())
+	{
+		LogError() << "ApplyNpcMaterial: texture not found: " << tex_path << std::endl;
+		return;
+	}
+
+	// Sync load so PS SRVs are HW-ready before the first draw (ASync leaves slots unbound until JIT finishes).
+	auto& rf = context.RenderFactoryInstance();
+	mtl.Texture(slot, rf.MakeTextureSrv(SyncLoadTexture(tex_path, EAH_GPU_Read | EAH_Immutable)));
+}
 
 void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 {
@@ -41,19 +70,9 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 		{
 			mtl->Name(npc.material);
 		}
-		if (!npc.textures.albedo.empty())
-		{
-			mtl->TextureName(RenderMaterial::TS_Albedo, npc.textures.albedo);
-		}
-		if (!npc.textures.metalness_glossiness.empty())
-		{
-			mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness, npc.textures.metalness_glossiness);
-		}
-		if (!npc.textures.normal.empty())
-		{
-			mtl->TextureName(RenderMaterial::TS_Normal, npc.textures.normal);
-		}
-		mtl->LoadTextureSlots();
+		BindNpcTextureSlot(*mtl, RenderMaterial::TS_Albedo, npc.textures.albedo);
+		BindNpcTextureSlot(*mtl, RenderMaterial::TS_MetalnessGlossiness, npc.textures.metalness_glossiness);
+		BindNpcTextureSlot(*mtl, RenderMaterial::TS_Normal, npc.textures.normal);
 	}
 }
 }

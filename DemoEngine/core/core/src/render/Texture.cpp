@@ -6,9 +6,12 @@
 #include <render/RenderFactory.h>
 #include <render/TexCompressionBC.h>
 #include <base/DevHelper.h>
+#include <math/math.h>
+#include <math/color.h>
 
 #include <fstream>
 #include <filesystem>
+#include <memory>
 namespace
 {
 	using namespace RenderWorker;
@@ -1228,7 +1231,6 @@ namespace
 		virtual std::shared_ptr<void> CreateResource() override
 		{
 			TexDesc::TexData& tex_data = *tex_desc_.tex_data;
-
 			{
 				uint32_t row_pitch, slice_pitch;
 				std::string_view image_info_name;
@@ -3743,6 +3745,197 @@ namespace RenderWorker
 	}
 
 	
+	namespace
+	{
+		void EncodeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format,
+			void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch, [[maybe_unused]] ElementFormat src_format,
+			uint32_t src_width, uint32_t src_height, uint32_t src_depth)
+		{
+			COMMON_ASSERT(IsCompressedFormat(dst_format) && !IsCompressedFormat(src_format));
+
+			std::unique_ptr<TexCompression> codec;
+			switch (dst_format)
+			{
+			case EF_BC1:
+			case EF_BC1_SRGB:
+			case EF_SIGNED_BC1:
+				codec = MakeUniquePtr<TexCompressionBC1>();
+				break;
+
+			case EF_BC2:
+			case EF_BC2_SRGB:
+			case EF_SIGNED_BC2:
+				codec = MakeUniquePtr<TexCompressionBC2>();
+				break;
+
+			case EF_BC3:
+			case EF_BC3_SRGB:
+			case EF_SIGNED_BC3:
+				codec = MakeUniquePtr<TexCompressionBC3>();
+				break;
+
+			case EF_BC4:
+			case EF_BC4_SRGB:
+			case EF_SIGNED_BC4:
+				codec = MakeUniquePtr<TexCompressionBC4>();
+				break;
+
+			case EF_BC5:
+			case EF_BC5_SRGB:
+			case EF_SIGNED_BC5:
+				codec = MakeUniquePtr<TexCompressionBC5>();
+				break;
+
+			case EF_BC6:
+				codec = MakeUniquePtr<TexCompressionBC6U>();
+				break;
+
+			case EF_SIGNED_BC6:
+				codec = MakeUniquePtr<TexCompressionBC6S>();
+				break;
+
+			case EF_BC7:
+			case EF_BC7_SRGB:
+				codec = MakeUniquePtr<TexCompressionBC7>();
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid compression format");
+			}
+
+			uint8_t const* src = static_cast<uint8_t const*>(src_data);
+			uint8_t* dst = static_cast<uint8_t*>(dst_data);
+			for (uint32_t z = 0; z < src_depth; ++z)
+			{
+				codec->EncodeMem(src_width, src_height, dst, dst_row_pitch, dst_slice_pitch, src, src_row_pitch, src_slice_pitch,
+					TCM_Quality);
+
+				src += src_slice_pitch;
+				dst += dst_slice_pitch;
+			}
+		}
+
+		void DecodeTexture(std::vector<uint8_t>& dst_data_block, uint32_t& dst_row_pitch, uint32_t& dst_slice_pitch,
+			ElementFormat& dst_format, void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch, ElementFormat src_format,
+			uint32_t src_width, uint32_t src_height, uint32_t src_depth)
+		{
+			COMMON_ASSERT(IsCompressedFormat(src_format));
+
+			switch (src_format)
+			{
+			case EF_BC1:
+			case EF_BC2:
+			case EF_BC3:
+			case EF_BC7:
+				dst_format = EF_ARGB8;
+				break;
+
+			case EF_BC4:
+				dst_format = EF_R8;
+				break;
+
+			case EF_BC5:
+				dst_format = EF_GR8;
+				break;
+
+			case EF_SIGNED_BC1:
+			case EF_SIGNED_BC2:
+			case EF_SIGNED_BC3:
+				dst_format = EF_SIGNED_ABGR8;
+				break;
+
+			case EF_SIGNED_BC4:
+				dst_format = EF_SIGNED_R8;
+				break;
+
+			case EF_SIGNED_BC5:
+				dst_format = EF_SIGNED_GR8;
+				break;
+
+			case EF_BC1_SRGB:
+			case EF_BC2_SRGB:
+			case EF_BC3_SRGB:
+			case EF_BC4_SRGB:
+			case EF_BC5_SRGB:
+			case EF_BC7_SRGB:
+				dst_format = EF_ARGB8_SRGB;
+				break;
+
+			case EF_BC6:
+			case EF_SIGNED_BC6:
+				dst_format = EF_ABGR16F;
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid source format");
+			}
+
+			std::unique_ptr<TexCompression> codec;
+			switch (src_format)
+			{
+			case EF_BC1:
+			case EF_BC1_SRGB:
+			case EF_SIGNED_BC1:
+				codec = MakeUniquePtr<TexCompressionBC1>();
+				break;
+
+			case EF_BC2:
+			case EF_BC2_SRGB:
+			case EF_SIGNED_BC2:
+				codec = MakeUniquePtr<TexCompressionBC2>();
+				break;
+
+			case EF_BC3:
+			case EF_BC3_SRGB:
+			case EF_SIGNED_BC3:
+				codec = MakeUniquePtr<TexCompressionBC3>();
+				break;
+
+			case EF_BC4:
+			case EF_BC4_SRGB:
+			case EF_SIGNED_BC4:
+				codec = MakeUniquePtr<TexCompressionBC4>();
+				break;
+
+			case EF_BC5:
+			case EF_BC5_SRGB:
+			case EF_SIGNED_BC5:
+				codec = MakeUniquePtr<TexCompressionBC5>();
+				break;
+
+			case EF_BC6:
+				codec = MakeUniquePtr<TexCompressionBC6U>();
+				break;
+
+			case EF_SIGNED_BC6:
+				codec = MakeUniquePtr<TexCompressionBC6S>();
+				break;
+
+			case EF_BC7:
+			case EF_BC7_SRGB:
+				codec = MakeUniquePtr<TexCompressionBC7>();
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid source format");
+			}
+
+			dst_row_pitch = src_width * NumFormatBytes(dst_format);
+			dst_slice_pitch = dst_row_pitch * src_height;
+			dst_data_block.resize(src_depth * dst_slice_pitch);
+
+			uint8_t const* src = static_cast<uint8_t const*>(src_data);
+			uint8_t* dst = dst_data_block.data();
+			for (uint32_t z = 0; z < src_depth; ++z)
+			{
+				codec->DecodeMem(src_width, src_height, dst, dst_row_pitch, dst_slice_pitch, src, src_row_pitch, src_slice_pitch);
+
+				src += src_slice_pitch;
+				dst += dst_slice_pitch;
+			}
+		}
+	} // namespace
+
 	void ResizeTexture(void* dst_data, uint32_t dst_row_pitch, uint32_t dst_slice_pitch, ElementFormat dst_format, uint32_t dst_width,
 		uint32_t dst_height, uint32_t dst_depth, void const* src_data, uint32_t src_row_pitch, uint32_t src_slice_pitch,
 		ElementFormat src_format, uint32_t src_width, uint32_t src_height, uint32_t src_depth, TextureFilter filter)
@@ -3754,9 +3947,9 @@ namespace RenderWorker
 		ElementFormat src_cpu_format;
 		if (IsCompressedFormat(src_format))
 		{
-			// DecodeTexture(src_cpu_data_block, src_cpu_row_pitch, src_cpu_slice_pitch, src_cpu_format,
-			// 	src_data, src_row_pitch, src_slice_pitch, src_format, src_width, src_height, src_depth);
-			// src_cpu_data = static_cast<void*>(&src_cpu_data_block[0]);
+			DecodeTexture(src_cpu_data_block, src_cpu_row_pitch, src_cpu_slice_pitch, src_cpu_format, src_data, src_row_pitch,
+				src_slice_pitch, src_format, src_width, src_height, src_depth);
+			src_cpu_data = src_cpu_data_block.data();
 		}
 		else
 		{
@@ -3764,6 +3957,200 @@ namespace RenderWorker
 			src_cpu_row_pitch = src_row_pitch;
 			src_cpu_slice_pitch = src_slice_pitch;
 			src_cpu_format = src_format;
+		}
+
+		std::vector<uint8_t> dst_cpu_data_block;
+		void* dst_cpu_data;
+		uint32_t dst_cpu_row_pitch;
+		uint32_t dst_cpu_slice_pitch;
+		ElementFormat dst_cpu_format;
+		if (IsCompressedFormat(dst_format))
+		{
+			switch (dst_format)
+			{
+			case EF_BC1:
+			case EF_BC2:
+			case EF_BC3:
+			case EF_BC7:
+				dst_cpu_format = EF_ARGB8;
+				break;
+
+			case EF_BC4:
+				dst_cpu_format = EF_R8;
+				break;
+
+			case EF_BC5:
+				dst_cpu_format = EF_GR8;
+				break;
+
+			case EF_SIGNED_BC1:
+			case EF_SIGNED_BC2:
+			case EF_SIGNED_BC3:
+				dst_cpu_format = EF_SIGNED_ABGR8;
+				break;
+
+			case EF_SIGNED_BC4:
+				dst_cpu_format = EF_SIGNED_R8;
+				break;
+
+			case EF_SIGNED_BC5:
+				dst_cpu_format = EF_SIGNED_GR8;
+				break;
+
+			case EF_BC1_SRGB:
+			case EF_BC2_SRGB:
+			case EF_BC3_SRGB:
+			case EF_BC4_SRGB:
+			case EF_BC5_SRGB:
+			case EF_BC7_SRGB:
+				dst_cpu_format = EF_ARGB8_SRGB;
+				break;
+
+			case EF_BC6:
+			case EF_SIGNED_BC6:
+				dst_cpu_format = EF_ABGR16F;
+				break;
+
+			default:
+				ZENGINE_UNREACHABLE("Invalid destination format");
+			}
+
+			dst_cpu_row_pitch = dst_width * NumFormatBytes(dst_cpu_format);
+			dst_cpu_slice_pitch = dst_cpu_row_pitch * dst_height;
+			dst_cpu_data_block.resize(dst_depth * dst_cpu_slice_pitch);
+			dst_cpu_data = dst_cpu_data_block.data();
+		}
+		else
+		{
+			dst_cpu_data = dst_data;
+			dst_cpu_row_pitch = dst_row_pitch;
+			dst_cpu_slice_pitch = dst_slice_pitch;
+			dst_cpu_format = dst_format;
+		}
+
+		uint8_t const* src_ptr = static_cast<uint8_t const*>(src_cpu_data);
+		uint8_t* dst_ptr = static_cast<uint8_t*>(dst_cpu_data);
+		uint32_t const src_elem_size = NumFormatBytes(src_cpu_format);
+		uint32_t const dst_elem_size = NumFormatBytes(dst_cpu_format);
+
+		if (((filter == TextureFilter::Point) || ((src_width == dst_width) && (src_height == dst_height) && (src_depth == dst_depth)))
+			&& (src_cpu_format == dst_cpu_format))
+		{
+			for (uint32_t z = 0; z < dst_depth; ++z)
+			{
+				float const fz = static_cast<float>(z + 0.5f) / dst_depth * src_depth;
+				uint32_t const sz = std::min(static_cast<uint32_t>(fz), src_depth - 1);
+
+				for (uint32_t y = 0; y < dst_height; ++y)
+				{
+					float const fy = static_cast<float>(y + 0.5f) / dst_height * src_height;
+					uint32_t const sy = std::min(static_cast<uint32_t>(fy), src_height - 1);
+
+					uint8_t const* src_p = src_ptr + sz * src_cpu_slice_pitch + sy * src_cpu_row_pitch;
+					uint8_t* dst_p = dst_ptr + z * dst_cpu_slice_pitch + y * dst_cpu_row_pitch;
+
+					if (src_width == dst_width)
+					{
+						std::memcpy(dst_p, src_p, src_width * src_elem_size);
+					}
+					else
+					{
+						for (uint32_t x = 0; x < dst_width; ++x, dst_p += dst_elem_size)
+						{
+							float const fx = static_cast<float>(x + 0.5f) / dst_width * src_width;
+							uint32_t const sx = std::min(static_cast<uint32_t>(fx), src_width - 1);
+							std::memcpy(dst_p, src_p + sx * src_elem_size, src_elem_size);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			std::vector<Color> src_32f(src_width * src_height * src_depth);
+			for (uint32_t z = 0; z < src_depth; ++z)
+			{
+				for (uint32_t y = 0; y < src_height; ++y)
+				{
+					ConvertToABGR32F(src_cpu_format, src_ptr + z * src_cpu_slice_pitch + y * src_cpu_row_pitch, src_width,
+						&src_32f[(z * src_height + y) * src_width]);
+				}
+			}
+
+			std::vector<Color> dst_32f(dst_width * dst_height * dst_depth);
+			if (filter == TextureFilter::Linear)
+			{
+				for (uint32_t z = 0; z < dst_depth; ++z)
+				{
+					float const fz = static_cast<float>(z + 0.5f) / dst_depth * src_depth;
+					uint32_t const sz0 = static_cast<uint32_t>(fz - 0.5f);
+					uint32_t const sz1 = MathWorker::clamp(sz0 + 1, 0U, src_depth - 1);
+					float const weight_z = fz - sz0 - 0.5f;
+
+					for (uint32_t y = 0; y < dst_height; ++y)
+					{
+						float const fy = static_cast<float>(y + 0.5f) / dst_height * src_height;
+						uint32_t const sy0 = static_cast<uint32_t>(fy - 0.5f);
+						uint32_t const sy1 = MathWorker::clamp(sy0 + 1, 0U, src_height - 1);
+						float const weight_y = fy - sy0 - 0.5f;
+
+						for (uint32_t x = 0; x < dst_width; ++x)
+						{
+							float const fx = static_cast<float>(x + 0.5f) / dst_width * src_width;
+							uint32_t const sx0 = static_cast<uint32_t>(fx - 0.5f);
+							uint32_t const sx1 = MathWorker::clamp(sx0 + 1, 0U, src_width - 1);
+							float const weight_x = fx - sx0 - 0.5f;
+							Color const clr_x00 = MathWorker::lerp(src_32f[(sz0 * src_height + sy0) * src_width + sx0],
+								src_32f[(sz0 * src_height + sy0) * src_width + sx1], weight_x);
+							Color const clr_x01 = MathWorker::lerp(src_32f[(sz0 * src_height + sy1) * src_width + sx0],
+								src_32f[(sz0 * src_height + sy1) * src_width + sx1], weight_x);
+							Color const clr_y0 = MathWorker::lerp(clr_x00, clr_x01, weight_y);
+							Color const clr_x10 = MathWorker::lerp(src_32f[(sz1 * src_height + sy0) * src_width + sx0],
+								src_32f[(sz1 * src_height + sy0) * src_width + sx1], weight_x);
+							Color const clr_x11 = MathWorker::lerp(src_32f[(sz1 * src_height + sy1) * src_width + sx0],
+								src_32f[(sz1 * src_height + sy1) * src_width + sx1], weight_x);
+							Color const clr_y1 = MathWorker::lerp(clr_x10, clr_x11, weight_y);
+							dst_32f[(z * dst_height + y) * dst_width + x] = MathWorker::lerp(clr_y0, clr_y1, weight_z);
+						}
+					}
+				}
+			}
+			else
+			{
+				for (uint32_t z = 0; z < dst_depth; ++z)
+				{
+					float const fz = static_cast<float>(z + 0.5f) / dst_depth * src_depth;
+					uint32_t const sz = std::min(static_cast<uint32_t>(fz), src_depth - 1);
+
+					for (uint32_t y = 0; y < dst_height; ++y)
+					{
+						float const fy = static_cast<float>(y + 0.5f) / dst_height * src_height;
+						uint32_t const sy = std::min(static_cast<uint32_t>(fy), src_height - 1);
+
+						for (uint32_t x = 0; x < dst_width; ++x)
+						{
+							float const fx = static_cast<float>(x + 0.5f) / dst_width * src_width;
+							uint32_t const sx = std::min(static_cast<uint32_t>(fx), src_width - 1);
+							dst_32f[(z * dst_height + y) * dst_width + x] = src_32f[(sz * src_height + sy) * src_width + sx];
+						}
+					}
+				}
+			}
+
+			for (uint32_t z = 0; z < dst_depth; ++z)
+			{
+				for (uint32_t y = 0; y < dst_height; ++y)
+				{
+					ConvertFromABGR32F(dst_cpu_format, &dst_32f[(z * dst_height + y) * dst_width], dst_width,
+						dst_ptr + z * dst_cpu_slice_pitch + y * dst_cpu_row_pitch);
+				}
+			}
+		}
+
+		if (IsCompressedFormat(dst_format))
+		{
+			EncodeTexture(dst_data, dst_row_pitch, dst_slice_pitch, dst_format, dst_cpu_data, dst_cpu_row_pitch, dst_cpu_slice_pitch,
+				dst_cpu_format, dst_width, dst_height, dst_depth);
 		}
 	}
 

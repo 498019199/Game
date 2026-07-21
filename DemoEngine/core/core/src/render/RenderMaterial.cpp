@@ -832,7 +832,7 @@ const std::string& RenderMaterial::Name() const
 void RenderMaterial::TextureName(TextureSlot slot, std::string_view name)
 {
 	textures_[slot].first = std::string(name);
-    
+
 }
 
 const std::string& RenderMaterial::TextureName(TextureSlot slot) const
