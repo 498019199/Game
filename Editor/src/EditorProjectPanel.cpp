@@ -232,6 +232,10 @@ void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
         {    
             continue;
         }
+        if( 0 == entry.path().stem().string().compare("Private") )
+        {
+            continue;
+        }
 
         EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
         child->parent = node;

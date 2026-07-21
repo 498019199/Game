@@ -10,6 +10,7 @@
 #include <game/Model.h>
 #include <game/gas/CombatService.h>
 #include <render/Mesh.h>
+#include <render/RenderMaterial.h>
 #include <world/SceneNode.h>
 
 using namespace RenderWorker;
@@ -18,6 +19,43 @@ namespace
 {
 constexpr char const* kDocPath = "rmlui/gm_debug.rml";
 constexpr char const* kDocId = "GmDebugWindow";
+
+void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
+{
+	bool const has_textures = !npc.textures.albedo.empty() || !npc.textures.metalness_glossiness.empty()
+		|| !npc.textures.normal.empty();
+	if (npc.material.empty() && !has_textures)
+	{
+		return;
+	}
+
+	for (size_t i = 0; i < model.NumMaterials(); ++i)
+	{
+		RenderMaterialPtr& mtl = model.GetMaterial(static_cast<int32_t>(i));
+		if (!mtl)
+		{
+			continue;
+		}
+
+		if (!npc.material.empty())
+		{
+			mtl->Name(npc.material);
+		}
+		if (!npc.textures.albedo.empty())
+		{
+			mtl->TextureName(RenderMaterial::TS_Albedo, npc.textures.albedo);
+		}
+		if (!npc.textures.metalness_glossiness.empty())
+		{
+			mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness, npc.textures.metalness_glossiness);
+		}
+		if (!npc.textures.normal.empty())
+		{
+			mtl->TextureName(RenderMaterial::TS_Normal, npc.textures.normal);
+		}
+		mtl->LoadTextureSlots();
+	}
+}
 }
 
 GmDebugWindow::GmDebugWindow() = default;
@@ -200,24 +238,44 @@ void GmDebugWindow::CreateNpc(std::string_view id_text)
 		return;
 	}
 
-	RenderModelPtr model = SyncLoadModel(
-		pNpcData->model,
-		EAH_GPU_Read | EAH_Immutable,
-		SceneNode::SOA_Cullable,
-		[](RenderModel& loaded_model)
-		{
-			loaded_model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
-			AddToSceneRootHelper(loaded_model);
-		},
-		CreateGameModel,
-		CreateDetailedMesh);
-	if (!model)
+	if (pNpcData->models.empty())
 	{
-		AppendLog("failed to load npc model");
+		AppendLog("npc has no models");
 		return;
 	}
 
-	AppendLog(std::string("spawned npc: ") + pNpcData->name);
+	std::size_t loaded = 0;
+	for (std::string const& model_path : pNpcData->models)
+	{
+		RenderModelPtr model = SyncLoadModel(
+			model_path,
+			EAH_GPU_Read | EAH_Immutable,
+			SceneNode::SOA_Cullable,
+			[pNpcData](RenderModel& loaded_model)
+			{
+				ApplyNpcMaterial(loaded_model, *pNpcData);
+				loaded_model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
+				AddToSceneRootHelper(loaded_model);
+			},
+			CreateGameModel,
+			CreateDetailedMesh);
+		if (!model)
+		{
+			AppendLog(std::string("failed to load npc model: ") + model_path);
+			continue;
+		}
+		++loaded;
+	}
+
+	if (loaded == 0)
+	{
+		AppendLog("failed to load npc models");
+		return;
+	}
+
+	AppendLog(
+		std::string("spawned npc: ") + pNpcData->name + " (" + std::to_string(loaded) + "/"
+		+ std::to_string(pNpcData->models.size()) + " parts)");
 }
 
 void GmDebugWindow::AppendLog(std::string_view text)
