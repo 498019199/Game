@@ -19,6 +19,40 @@ def cpp_escape(value: str) -> str:
 	)
 
 
+def optional_string(item: dict, key: str, index: int, json_path: Path) -> str:
+	value = item.get(key)
+	if value is None:
+		return ""
+	if not isinstance(value, str):
+		raise ValueError(f"{json_path}: entry[{index}].{key} must be a string")
+	return value
+
+
+def load_textures(item: dict, index: int, json_path: Path) -> dict[str, str]:
+	textures = item.get("textures")
+	if textures is None:
+		return {"albedo": "", "metalness_glossiness": "", "normal": ""}
+	if not isinstance(textures, dict):
+		raise ValueError(f"{json_path}: entry[{index}].textures must be an object")
+
+	def pick(*keys: str) -> str:
+		for key in keys:
+			value = textures.get(key)
+			if value is None:
+				continue
+			if not isinstance(value, str):
+				raise ValueError(f"{json_path}: entry[{index}].textures.{key} must be a string")
+			return value
+		return ""
+
+	# Engine slot names preferred; UE-style DA/DCSE/NR aliases accepted.
+	return {
+		"albedo": pick("albedo", "da", "DA"),
+		"metalness_glossiness": pick("metalness_glossiness", "dcse", "DCSE"),
+		"normal": pick("normal", "nr", "NR"),
+	}
+
+
 def load_entries(json_path: Path) -> list[dict]:
 	with json_path.open("r", encoding="utf-8") as fp:
 		data = json.load(fp)
@@ -33,16 +67,38 @@ def load_entries(json_path: Path) -> list[dict]:
 
 		npc_id = item.get("id", 0)
 		name = item.get("name", "")
-		model = item.get("model", "")
+		model = item.get("model")
+		models = item.get("models")
 
 		if not isinstance(npc_id, int):
 			raise ValueError(f"{json_path}: entry[{index}].id must be an int")
 		if not isinstance(name, str):
 			raise ValueError(f"{json_path}: entry[{index}].name must be a string")
-		if not isinstance(model, str):
-			raise ValueError(f"{json_path}: entry[{index}].model must be a string")
 
-		entries.append({"id": npc_id, "name": name, "model": model})
+		resolved: list[str] = []
+		if models is not None:
+			if not isinstance(models, list) or not all(isinstance(path, str) for path in models):
+				raise ValueError(f"{json_path}: entry[{index}].models must be an array of strings")
+			resolved.extend(models)
+		if model is not None:
+			if not isinstance(model, str):
+				raise ValueError(f"{json_path}: entry[{index}].model must be a string")
+			if model and model not in resolved:
+				# Single-model field remains supported; prepend if models also present.
+				resolved.insert(0, model) if models is not None else resolved.append(model)
+
+		if not resolved:
+			raise ValueError(f"{json_path}: entry[{index}] needs model or models")
+
+		entries.append(
+			{
+				"id": npc_id,
+				"name": name,
+				"models": resolved,
+				"material": optional_string(item, "material", index, json_path),
+				"textures": load_textures(item, index, json_path),
+			}
+		)
 
 	return entries
 
@@ -61,11 +117,21 @@ def write_header(path: Path) -> None:
 #include <span>
 #include <string_view>
 
+struct NpcConfigTextures
+{
+	char const* albedo;
+	char const* metalness_glossiness;
+	char const* normal;
+};
+
 struct NpcConfigEntry
 {
 	int32_t id;
 	char const* name;
-	char const* model;
+	char const* const* models;
+	std::size_t model_count;
+	char const* material;
+	NpcConfigTextures textures;
 };
 
 class GAME_API NpcConfig
@@ -98,22 +164,47 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 		"",
 		"namespace",
 		"{",
-		"\tNpcConfigEntry const kNpcEntries[] =",
-		"\t{",
 	]
 
 	if entries:
 		for entry in entries:
+			array_name = f"kNpc_{entry['id']}_Models"
+			lines.append(f"\tchar const* const {array_name}[] =")
+			lines.append("\t{")
+			for model_path in entry["models"]:
+				lines.append(f'\t\t"{cpp_escape(model_path)}",')
+			lines.append("\t};")
+			lines.append("")
+
+		lines.append("\tNpcConfigEntry const kNpcEntries[] =")
+		lines.append("\t{")
+		for entry in entries:
+			array_name = f"kNpc_{entry['id']}_Models"
+			count = len(entry["models"])
+			tex = entry["textures"]
 			lines.append(
-				f'\t\t{{ {entry["id"]}, "{cpp_escape(entry["name"])}", "{cpp_escape(entry["model"])}" }},'
+				"\t\t{ "
+				f'{entry["id"]}, "{cpp_escape(entry["name"])}", {array_name}, {count}, '
+				f'"{cpp_escape(entry["material"])}", '
+				f'{{ "{cpp_escape(tex["albedo"])}", '
+				f'"{cpp_escape(tex["metalness_glossiness"])}", '
+				f'"{cpp_escape(tex["normal"])}" }} }},'
 			)
+		lines.append("\t};")
 	else:
-		# Keep a valid array object even when empty; Count() returns 0.
-		lines.append('\t\t{ 0, "", "" },')
+		lines.extend(
+			[
+				"\tchar const* const kNpc_Empty_Models[] = { nullptr };",
+				"",
+				"\tNpcConfigEntry const kNpcEntries[] =",
+				"\t{",
+				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", { "", "", "" } },',
+				"\t};",
+			]
+		)
 
 	lines.extend(
 		[
-			"\t};",
 			"} // namespace",
 			"",
 			"std::span<NpcConfigEntry const> NpcConfig::All() noexcept",

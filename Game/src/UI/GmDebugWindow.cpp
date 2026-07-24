@@ -44,9 +44,15 @@ void BindNpcTextureSlot(RenderMaterial& mtl, RenderMaterial::TextureSlot slot, s
 		return;
 	}
 
-	// Sync load so PS SRVs are HW-ready before the first draw (ASync leaves slots unbound until JIT finishes).
+	// Prefer cached DDS when present so spawn doesn't re-run BC encode on the main thread.
+	std::string load_name = tex_path;
+	if (!res_loader.Locate(tex_path + ".dds").empty())
+	{
+		load_name = tex_path + ".dds";
+	}
+
 	auto& rf = context.RenderFactoryInstance();
-	mtl.Texture(slot, rf.MakeTextureSrv(SyncLoadTexture(tex_path, EAH_GPU_Read | EAH_Immutable)));
+	mtl.Texture(slot, rf.MakeTextureSrv(SyncLoadTexture(load_name, EAH_GPU_Read | EAH_Immutable)));
 }
 
 void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
@@ -70,6 +76,17 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 		{
 			mtl->Name(npc.material);
 		}
+
+		// FBX/MIC often leave diffuse/base color at 0; SubSurface does albedo *= map, so black tint kills all color.
+		if (has_textures)
+		{
+			mtl->Albedo(float4(1.0f, 1.0f, 1.0f, 1.0f));
+			if (mtl->Glossiness() <= 0.0f)
+			{
+				mtl->Glossiness(0.5f);
+			}
+		}
+
 		BindNpcTextureSlot(*mtl, RenderMaterial::TS_Albedo, npc.textures.albedo);
 		BindNpcTextureSlot(*mtl, RenderMaterial::TS_MetalnessGlossiness, npc.textures.metalness_glossiness);
 		BindNpcTextureSlot(*mtl, RenderMaterial::TS_Normal, npc.textures.normal);

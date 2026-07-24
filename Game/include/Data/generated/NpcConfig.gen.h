@@ -9,11 +9,21 @@
 #include <span>
 #include <string_view>
 
+struct NpcConfigTextures
+{
+	char const* albedo;
+	char const* metalness_glossiness;
+	char const* normal;
+};
+
 struct NpcConfigEntry
 {
 	int32_t id;
 	char const* name;
-	char const* model;
+	char const* const* models;
+	std::size_t model_count;
+	char const* material;
+	NpcConfigTextures textures;
 };
 
 class GAME_API NpcConfig

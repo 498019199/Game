@@ -49,3 +49,7 @@ Direct3D 11.4
 解压后运行 tracy-profiler.exe
 用法：先开 Tracy GUI → 再跑 Editor（需 ZENGINE_ENABLE_TRACY=ON）。On-demand 模式下连上后才会开始采数据。
 文档（可选）：同一页的 tracy.pdf。
+
+gm
+/createnpc 100002 1
+/createnpc 100001 1

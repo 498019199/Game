@@ -5,9 +5,32 @@
 
 namespace
 {
+	char const* const kNpc_100000_Models[] =
+	{
+		"Private/Bp_F_C23/Bp_F_C23_C.FBX",
+	};
+
+	char const* const kNpc_100001_Models[] =
+	{
+		"Models/ancient_apparition/ancient_apparition_econ.fbx",
+	};
+
+	char const* const kNpc_100002_Models[] =
+	{
+		"Models/Rabbit.obj",
+	};
+
+	char const* const kNpc_100003_Models[] =
+	{
+		"Models/Spring.obj",
+	};
+
 	NpcConfigEntry const kNpcEntries[] =
 	{
-		{ 100000, "dragon", "Models/Dragon/Dragon.glb" },
+		{ 100000, "Bp_F_C23", kNpc_100000_Models, 1, "Private/Bp_F_C23/Bp_F_C23_C_Mat", { "Private/Bp_F_C23/Da_M_C23_C_DA.TGA", "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA", "Private/Bp_F_C23/Da_M_C23_C_NR.TGA" } },
+		{ 100001, "ancient_apparition", kNpc_100001_Models, 1, "", { "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga", "", "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga" } },
+		{ 100002, "Rabbit", kNpc_100002_Models, 1, "", { "", "", "" } },
+		{ 100003, "Spring", kNpc_100003_Models, 1, "", { "", "", "" } },
 	};
 } // namespace
 
@@ -18,7 +41,7 @@ std::span<NpcConfigEntry const> NpcConfig::All() noexcept
 
 std::size_t NpcConfig::Count() noexcept
 {
-	return 1;
+	return 4;
 }
 
 NpcConfigEntry const* NpcConfig::FindById(int32_t id) noexcept

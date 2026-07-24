@@ -164,7 +164,9 @@ Shader "SubSurface"
                 float back_face_depth = ReadAFloat(back_face_depth_tex.Sample(point_sampler, tex_coord), far_plane.x);
 #else
                 float back_face_depth = back_face_depth_tex.Sample(point_sampler, tex_coord).x;
-                back_face_depth = non_linear_depth_to_linear(back_face_depth, near_q.x, near_q.y);
+                // Unbound/cleared depth + unset near_q → 0/0 NaN blacks the whole pixel.
+                float q = max(near_q.y, 1e-5f);
+                back_face_depth = near_q.x / max(q - back_face_depth, 1e-5f);
 #endif
                 float thickness = clamp(back_face_depth - tc_w.z, 0, 100.0f);
 

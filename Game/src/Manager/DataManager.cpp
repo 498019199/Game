@@ -60,7 +60,17 @@ bool DataManager::LoadNpcConfig()
 		NpcData npc;
 		npc.id = entry.id;
 		npc.name = entry.name ? entry.name : "";
-		npc.model = entry.model ? entry.model : "";
+		npc.models.reserve(entry.model_count);
+		for (std::size_t i = 0; i < entry.model_count; ++i)
+		{
+			char const* path = entry.models[i];
+			npc.models.emplace_back(path ? path : "");
+		}
+		npc.material = entry.material ? entry.material : "";
+		npc.textures.albedo = entry.textures.albedo ? entry.textures.albedo : "";
+		npc.textures.metalness_glossiness =
+			entry.textures.metalness_glossiness ? entry.textures.metalness_glossiness : "";
+		npc.textures.normal = entry.textures.normal ? entry.textures.normal : "";
 		npcs_.push_back(std::move(npc));
 	}
 

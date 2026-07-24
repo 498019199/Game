@@ -1,9 +1,5 @@
 {
-    "SkyBox":
-    {
-        "YCube": "Textures/terrain/Lake_CraterLake03_filtered_y.dds",
-        "CCube": "Textures/terrain/Lake_CraterLake03_filtered_c.dds"
-    },
+
     "Camera":
     {
         "Eye": [-0.4, 1.0, 3.9],

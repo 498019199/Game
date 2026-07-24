@@ -3,6 +3,7 @@
 #include <base/App3D.h>
 #include <render/FrameBuffer.h>
 #include <render/RenderDeviceCaps.h>
+#include <render/Texture.h>
 
 #include <game/Scene.h>
 
@@ -38,5 +39,6 @@ private:
 
 	bool depth_texture_support_ { false };
 	RenderWorker::FrameBufferPtr back_face_depth_fb_;
+	RenderWorker::TexturePtr back_face_depth_srv_;
 };
 } // namespace EditorWorker

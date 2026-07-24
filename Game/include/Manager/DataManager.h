@@ -9,11 +9,23 @@
 #include <unordered_map>
 #include <vector>
 
+struct NpcTextures
+{
+	// Mapped from UE-style packs: DA -> albedo, DCSE -> metalness_glossiness, NR -> normal.
+	std::string albedo;
+	std::string metalness_glossiness;
+	std::string normal;
+};
+
 struct NpcData
 {
 	int32_t id {0};
 	std::string name;
-	std::string model;
+	// One NPC may be assembled from multiple mesh parts (e.g. C/L/U).
+	std::vector<std::string> models;
+	// Shared material ball applied to all mesh parts (UE MIC path or engine name).
+	std::string material;
+	NpcTextures textures;
 };
 
 class GAME_API DataManager

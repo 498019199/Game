@@ -1,7 +1,36 @@
 [
     {
-        "id":100000,
-        "name":"dragon",
-        "model":"Models/Dragon/Dragon.glb"
+        "id": 100000,
+        "name": "Bp_F_C23",
+        "models": [
+            "Private/Bp_F_C23/Bp_F_C23_C.FBX"
+        ],
+        "material": "Private/Bp_F_C23/Bp_F_C23_C_Mat",
+        "textures": {
+            "albedo": "Private/Bp_F_C23/Da_M_C23_C_DA.TGA",
+            "metalness_glossiness": "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA",
+            "normal": "Private/Bp_F_C23/Da_M_C23_C_NR.TGA"
+        }
+    },
+    {
+        "id": 100001,
+        "name": "ancient_apparition",
+        "models": [
+            "Models/ancient_apparition/ancient_apparition_econ.fbx"
+        ],
+        "textures": {
+            "albedo": "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga",
+            "normal": "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga"
+        }
+    },
+    {
+        "id": 100002,
+        "name": "Rabbit",
+        "model": "Models/Rabbit.obj"
+    },
+    {
+        "id": 100003,
+        "name": "Spring",
+        "model": "Models/Spring.obj"
     }
 ]
