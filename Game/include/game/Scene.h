@@ -25,14 +25,6 @@ public:
 	void SetupCameraController(RenderWorker::Camera& camera);
 	void SetCameraControllerInputEnabled(bool enabled);
 
-	bool HasSceneCamera() const { return has_camera_; }
-	RenderWorker::float3 const& CameraEye() const { return camera_eye_; }
-	RenderWorker::float3 const& CameraLookAt() const { return camera_look_at_; }
-	RenderWorker::float3 const& CameraUp() const { return camera_up_; }
-	float CameraNear() const { return camera_near_; }
-	float CameraFar() const { return camera_far_; }
-	float CameraFovDeg() const { return camera_fov_deg_; }
-
 	void UpdateDetailedMeshes(RenderWorker::float3 const& eye_pos, bool back_face_depth_pass);
 
 private:
@@ -55,19 +47,5 @@ private:
 	RenderWorker::LightSourcePtr light_;
 	SceneNodePtr light_node_;
 
-	bool has_camera_ { false };
-	RenderWorker::float3 camera_eye_ { -0.4f, 1.0f, 3.9f };
-	RenderWorker::float3 camera_look_at_ { 0.0f, 1.0f, 0.0f };
-	RenderWorker::float3 camera_up_ { 0.0f, 1.0f, 0.0f };
-	float camera_near_ { 0.1f };
-	float camera_far_ { 200.0f };
-	float camera_fov_deg_ { 0.0f };
-
-	bool has_camera_controller_ { false };
-	std::string camera_controller_type_;
-	uint32_t controller_rotate_button_ { RenderWorker::MB_Left };
-	uint32_t controller_zoom_button_ { RenderWorker::MB_Right };
-	uint32_t controller_move_button_ { RenderWorker::MB_Middle };
-	float controller_distance_ { 0.0f };
-	RenderWorker::ControllerPtr camera_controller_;
+	RenderWorker::FirstPersonController camera_controller_;
 };

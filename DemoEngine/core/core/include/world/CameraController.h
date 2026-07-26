@@ -32,7 +32,7 @@ using ControllerPtr = std::shared_ptr<CameraController>;
 class ZENGINE_CORE_API FirstPersonController: public CameraController
 {
 public:
-    FirstPersonController();
+    FirstPersonController( bool use_input_engine = true );
     ~FirstPersonController() noexcept;
 
     virtual void AttachCamera(Camera& camera) override;
@@ -47,6 +47,25 @@ private:
     float2		rot_z_;
 
     quater      inv_rot_;
+
+    bool left_button_down_;
+
+    enum
+    {
+        TurnLeftRight,
+        TurnUpDown,
+        Turn,
+        RollLeft,
+        RollRight,
+
+        Forward,
+        Backward,
+        MoveLeft,
+        MoveRight
+    };
+
+private:
+    void InputHandler(InputEngine const & sender, InputAction const & action);
 };
 
 
@@ -63,13 +82,11 @@ public:
     void Move(float offset_x, float offset_y);
     void Rotate(float offset_x, float offset_y);
     void Zoom(float offset_x, float offset_y);
-    void Distance(float distance);
 
 private:
     bool reverse_target_;
     float3 target_;
     float3 right_;
-    float distance_ { 0.0f };
     uint32_t move_button_;
     uint32_t rotate_button_;
     uint32_t zoom_button_;

@@ -48,8 +48,41 @@ void CameraController::DetachCamera()
     
 
 
-FirstPersonController::FirstPersonController()
+FirstPersonController::FirstPersonController( bool use_input_engine )
+    : left_button_down_(false)
 {
+    if (use_input_engine)
+    {
+        InputActionDefine actions[] =
+        {
+            InputActionDefine(TurnLeftRight, MS_X),
+            InputActionDefine(TurnUpDown, MS_Y),
+            InputActionDefine(RollLeft, KS_Q),
+            InputActionDefine(RollRight, KS_E),
+            InputActionDefine(Forward, KS_W),
+            InputActionDefine(Backward, KS_S),
+            InputActionDefine(MoveLeft, KS_A),
+            InputActionDefine(MoveRight, KS_D),
+            InputActionDefine(Forward, KS_UpArrow),
+            InputActionDefine(Backward, KS_DownArrow),
+            InputActionDefine(MoveLeft, KS_LeftArrow),
+            InputActionDefine(MoveRight, KS_RightArrow),
+            InputActionDefine(Turn, TS_Pan),
+            InputActionDefine(Turn, SS_OrientationQuat)
+        };
+
+        InputEngine& inputEngine(Context::Instance().InputFactoryInstance().InputEngineInstance());
+        InputActionMap actionMap;
+        actionMap.AddActions(actions, actions + std::size(actions));
+
+        action_handler_t input_handler = MakeSharedPtr<input_signal>();
+        input_handler->Connect(
+            [this](InputEngine const & ie, InputAction const & action)
+            {
+                this->InputHandler(ie, action);
+            });
+        inputEngine.ActionMap(actionMap, input_handler);
+    }
 }
 
 FirstPersonController::~FirstPersonController() noexcept  = default;
@@ -144,7 +177,83 @@ void FirstPersonController::RotateAbs(const quater& quat)
     }
 }
 
+void FirstPersonController::InputHandler(InputEngine const & ie, InputAction const & action)
+{
+    float elapsed_time = ie.ElapsedTime();
+    if (camera_)
+    {
+        float const scaler = elapsed_time * 10;
 
+        switch (action.first)
+        {
+        case TurnLeftRight:
+            {
+                InputMouseActionParamPtr param = checked_pointer_cast<InputMouseActionParam>(action.second);
+                if (!left_button_down_ || (param->buttons_state & MB_Left))
+                {
+                    this->RotateRel(param->move_vec.x() * scaler, 0, 0);
+                }
+            }
+            break;
+
+        case TurnUpDown:
+            {
+                InputMouseActionParamPtr param = checked_pointer_cast<InputMouseActionParam>(action.second);
+                if (!left_button_down_ || (param->buttons_state & MB_Left))
+                {
+                    this->RotateRel(0, param->move_vec.y() * scaler, 0);
+                }
+            }
+            break;
+
+        case Turn:
+            switch (action.second->type)
+            {
+            case InputEngine::IDT_Touch:
+                {
+                    InputTouchActionParamPtr param = checked_pointer_cast<InputTouchActionParam>(action.second);
+                    this->RotateRel(param->move_vec.x() * scaler, param->move_vec.y() * scaler, 0);
+                }
+                break;
+
+            case InputEngine::IDT_Sensor:
+                {
+                    InputSensorActionParamPtr param = checked_pointer_cast<InputSensorActionParam>(action.second);
+                    this->RotateAbs(param->orientation_quat);
+                }
+                break;
+
+            default:
+                ZENGINE_UNREACHABLE("Invalid input type");
+            }
+            break;
+
+        case RollLeft:
+            this->RotateRel(0, 0, -scaler);
+            break;
+
+        case RollRight:
+            this->RotateRel(0, 0, scaler);
+            break;
+
+        case Forward:
+            this->Move(0, 0, scaler);
+            break;
+
+        case Backward:
+            this->Move(0, 0, -scaler);
+            break;
+
+        case MoveLeft:
+            this->Move(-scaler, 0, 0);
+            break;
+
+        case MoveRight:
+            this->Move(scaler, 0, 0);
+            break;
+        }
+    }
+}
 
 
 
@@ -257,10 +366,6 @@ void TrackballCameraController::AttachCamera(Camera& camera)
     reverse_target_ = false;
     target_ = camera_->LookAt();
     right_ = camera_->RightVec();
-    if (distance_ > 0.0f)
-    {
-        Distance(distance_);
-    }
 }
 
 void TrackballCameraController::Move(float offset_x, float offset_y)
@@ -314,25 +419,23 @@ void TrackballCameraController::Rotate(float offset_x, float offset_y)
 
 void TrackballCameraController::Zoom(float offset_x, float offset_y)
 {
-    Distance(camera_->LookAtDist() - (offset_x + offset_y) * moveScaler_ * 2);
-}
+    float3 offset = camera_->ForwardVec() * ((offset_x + offset_y) * moveScaler_ * 2);
+    float3 pos = camera_->EyePos() + offset;
 
-void TrackballCameraController::Distance(float distance)
-{
-    if (!camera_)
+    if (MathWorker::dot(target_ - pos, camera_->ForwardVec()) <= 0)
     {
-        distance_ = distance;
-        return;
+        reverse_target_ = true;
+    }
+    else
+    {
+        reverse_target_ = false;
     }
 
-    distance_ = std::max(distance, MinTrackballDistance);
-    float3 const pos = target_ - camera_->ForwardVec() * distance_;
-
-    reverse_target_ = false;
-    camera_->LookAtDist(distance_);
     auto& camera_node = *camera_->BoundSceneNode();
-    camera_node.TransformToWorld(MathWorker::inverse(MathWorker::look_at_lh(pos, target_, camera_->UpVec())));
+    camera_node.TransformToWorld(
+        MathWorker::inverse(MathWorker::look_at_lh(pos, pos + camera_->ForwardVec() * camera_->LookAtDist(), camera_->UpVec())));
 
     camera_->Dirty();
 }
+
 }
