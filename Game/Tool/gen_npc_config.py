@@ -28,12 +28,12 @@ def optional_string(item: dict, key: str, index: int, json_path: Path) -> str:
 	return value
 
 
-def load_textures(item: dict, index: int, json_path: Path) -> dict[str, str]:
-	textures = item.get("textures")
+def load_textures(container: dict, context: str, json_path: Path) -> dict[str, str]:
+	textures = container.get("textures")
 	if textures is None:
 		return {"albedo": "", "metalness_glossiness": "", "normal": ""}
 	if not isinstance(textures, dict):
-		raise ValueError(f"{json_path}: entry[{index}].textures must be an object")
+		raise ValueError(f"{json_path}: {context}.textures must be an object")
 
 	def pick(*keys: str) -> str:
 		for key in keys:
@@ -41,7 +41,7 @@ def load_textures(item: dict, index: int, json_path: Path) -> dict[str, str]:
 			if value is None:
 				continue
 			if not isinstance(value, str):
-				raise ValueError(f"{json_path}: entry[{index}].textures.{key} must be a string")
+				raise ValueError(f"{json_path}: {context}.textures.{key} must be a string")
 			return value
 		return ""
 
@@ -51,6 +51,31 @@ def load_textures(item: dict, index: int, json_path: Path) -> dict[str, str]:
 		"metalness_glossiness": pick("metalness_glossiness", "dcse", "DCSE"),
 		"normal": pick("normal", "nr", "NR"),
 	}
+
+
+def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
+	parts = item.get("parts")
+	if parts is None:
+		return []
+	if not isinstance(parts, dict):
+		raise ValueError(f"{json_path}: entry[{index}].parts must be an object")
+
+	resolved: list[dict] = []
+	for part_name, part_value in parts.items():
+		if not isinstance(part_name, str) or not part_name:
+			raise ValueError(f"{json_path}: entry[{index}].parts keys must be non-empty strings")
+		if not isinstance(part_value, dict):
+			raise ValueError(f"{json_path}: entry[{index}].parts.{part_name} must be an object")
+		resolved.append(
+			{
+				"name": part_name,
+				"textures": load_textures(part_value, f"entry[{index}].parts.{part_name}", json_path),
+			}
+		)
+
+	# Longer keys first so "shoulder" wins over a hypothetical shorter substring.
+	resolved.sort(key=lambda part: len(part["name"]), reverse=True)
+	return resolved
 
 
 def load_entries(json_path: Path) -> list[dict]:
@@ -96,7 +121,8 @@ def load_entries(json_path: Path) -> list[dict]:
 				"name": name,
 				"models": resolved,
 				"material": optional_string(item, "material", index, json_path),
-				"textures": load_textures(item, index, json_path),
+				"textures": load_textures(item, f"entry[{index}]", json_path),
+				"parts": load_parts(item, index, json_path),
 			}
 		)
 
@@ -124,6 +150,12 @@ struct NpcConfigTextures
 	char const* normal;
 };
 
+struct NpcConfigPart
+{
+	char const* name;
+	NpcConfigTextures textures;
+};
+
 struct NpcConfigEntry
 {
 	int32_t id;
@@ -132,6 +164,8 @@ struct NpcConfigEntry
 	std::size_t model_count;
 	char const* material;
 	NpcConfigTextures textures;
+	NpcConfigPart const* parts;
+	std::size_t part_count;
 };
 
 class GAME_API NpcConfig
@@ -145,6 +179,14 @@ public:
 """,
 		encoding="utf-8",
 		newline="\n",
+	)
+
+
+def format_textures(tex: dict[str, str]) -> str:
+	return (
+		f'{{ "{cpp_escape(tex["albedo"])}", '
+		f'"{cpp_escape(tex["metalness_glossiness"])}", '
+		f'"{cpp_escape(tex["normal"])}" }}'
 	)
 
 
@@ -176,19 +218,36 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 			lines.append("\t};")
 			lines.append("")
 
+			parts = entry["parts"]
+			if parts:
+				parts_name = f"kNpc_{entry['id']}_Parts"
+				lines.append(f"\tNpcConfigPart const {parts_name}[] =")
+				lines.append("\t{")
+				for part in parts:
+					lines.append(
+						f'\t\t{{ "{cpp_escape(part["name"])}", {format_textures(part["textures"])} }},'
+					)
+				lines.append("\t};")
+				lines.append("")
+
 		lines.append("\tNpcConfigEntry const kNpcEntries[] =")
 		lines.append("\t{")
 		for entry in entries:
 			array_name = f"kNpc_{entry['id']}_Models"
 			count = len(entry["models"])
 			tex = entry["textures"]
+			parts = entry["parts"]
+			if parts:
+				parts_ptr = f"kNpc_{entry['id']}_Parts"
+				part_count = len(parts)
+			else:
+				parts_ptr = "nullptr"
+				part_count = 0
 			lines.append(
 				"\t\t{ "
 				f'{entry["id"]}, "{cpp_escape(entry["name"])}", {array_name}, {count}, '
-				f'"{cpp_escape(entry["material"])}", '
-				f'{{ "{cpp_escape(tex["albedo"])}", '
-				f'"{cpp_escape(tex["metalness_glossiness"])}", '
-				f'"{cpp_escape(tex["normal"])}" }} }},'
+				f'"{cpp_escape(entry["material"])}", {format_textures(tex)}, '
+				f"{parts_ptr}, {part_count} }},"
 			)
 		lines.append("\t};")
 	else:
@@ -198,7 +257,7 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 				"",
 				"\tNpcConfigEntry const kNpcEntries[] =",
 				"\t{",
-				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", { "", "", "" } },',
+				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", { "", "", "" }, nullptr, 0 },',
 				"\t};",
 			]
 		)

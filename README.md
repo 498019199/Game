@@ -52,4 +52,4 @@ Direct3D 11.4
 
 gm
 /createnpc 100002 1
-/createnpc 100001 1
+/createnpc 100004 1

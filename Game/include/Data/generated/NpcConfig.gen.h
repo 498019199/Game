@@ -16,6 +16,12 @@ struct NpcConfigTextures
 	char const* normal;
 };
 
+struct NpcConfigPart
+{
+	char const* name;
+	NpcConfigTextures textures;
+};
+
 struct NpcConfigEntry
 {
 	int32_t id;
@@ -24,6 +30,8 @@ struct NpcConfigEntry
 	std::size_t model_count;
 	char const* material;
 	NpcConfigTextures textures;
+	NpcConfigPart const* parts;
+	std::size_t part_count;
 };
 
 class GAME_API NpcConfig

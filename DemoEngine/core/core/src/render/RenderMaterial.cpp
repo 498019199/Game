@@ -1,6 +1,7 @@
 #include <base/ZEngine.h>
 #include <render/RenderFactory.h>
 #include <render/RenderMaterial.h>
+#include <render/Texture.h>
 
 #include <mutex>
 #include <filesystem>
@@ -957,11 +958,14 @@ void RenderMaterial::LoadTextureSlots()
             auto const& tex_name = textures_[slot].first;
             if (!tex_name.empty())
             {
-                if (!res_loader.Locate(tex_name).empty()
-                    || !res_loader.Locate(tex_name + ".dds").empty())
+                if (res_loader.Locate(tex_name).empty()
+                    && res_loader.Locate(tex_name + ".dds").empty())
                 {
-                    this->Texture(slot, rf.MakeTextureSrv(ASyncLoadTexture(tex_name, EAH_GPU_Read | EAH_Immutable)));
+                    continue;
                 }
+
+                // Load by source name; TextureLoadingDesc selects sibling .dds when present.
+                this->Texture(slot, rf.MakeTextureSrv(SyncLoadTexture(tex_name, EAH_GPU_Read | EAH_Immutable)));
             }
         }
     }
@@ -969,15 +973,15 @@ void RenderMaterial::LoadTextureSlots()
 
 void RenderMaterial::Active(RenderEffect& effect)
 {
-	if (&cbuffer_->OwnerEffect() != &effect)
-	{
-		albedo_tex_param_ = effect.ParameterByName("albedo_tex");
-		metalness_glossiness_tex_param_ = effect.ParameterByName("metalness_glossiness_tex");
-		emissive_tex_param_ = effect.ParameterByName("emissive_tex");
-		normal_tex_param_ = effect.ParameterByName("normal_tex");
-		height_tex_param_ = effect.ParameterByName("height_tex");
-		occlusion_tex_param_ = effect.ParameterByName("occlusion_tex");
-	}
+	// Always resolve against the effect used for this draw. Materials are often
+	// shared across meshes that each own a cloned RenderEffect; caching params
+	// from a previous effect would write SRVs into the wrong parameter slots.
+	albedo_tex_param_ = effect.ParameterByName("albedo_tex");
+	metalness_glossiness_tex_param_ = effect.ParameterByName("metalness_glossiness_tex");
+	emissive_tex_param_ = effect.ParameterByName("emissive_tex");
+	normal_tex_param_ = effect.ParameterByName("normal_tex");
+	height_tex_param_ = effect.ParameterByName("height_tex");
+	occlusion_tex_param_ = effect.ParameterByName("occlusion_tex");
 
 	uint32_t const index = effect.FindCBuffer("klayge_material");
 	if (index != static_cast<uint32_t>(-1) && (effect.CBufferByIndex(index)->Size() > 0))
@@ -1013,6 +1017,22 @@ void RenderMaterial::Active(RenderEffect& effect)
 	if (occlusion_tex_param_)
 	{
 		*occlusion_tex_param_ = this->Texture(RenderMaterial::TS_Occlusion);
+	}
+
+	// Re-assert map flags on the bound material CB. Texture() may have written
+	// them with PredefinedCBuffers offsets before this cbuffer was cloned onto
+	// the mesh effect; keep flags in sync with actual SRVs every draw.
+	if (!is_sw_mode_ && cbuffer_ && (&cbuffer_->OwnerEffect() == &effect))
+	{
+		auto const& pmcb = PredefinedMaterialCBufferInstance();
+		pmcb.AlbedoMapEnabled(*cbuffer_) = this->Texture(RenderMaterial::TS_Albedo) ? 1 : 0;
+		pmcb.NormalMapEnabled(*cbuffer_) = this->Texture(RenderMaterial::TS_Normal) ? 1 : 0;
+		float3 const rgb = float3(this->Albedo().x(), this->Albedo().y(), this->Albedo().z());
+		if (this->Texture(RenderMaterial::TS_Albedo) && (MathWorker::dot(rgb, rgb) < 1e-6f))
+		{
+			pmcb.AlbedoClr(*cbuffer_) = float4(1, 1, 1, this->Albedo().w());
+		}
+		cbuffer_->Dirty(true);
 	}
 }
 

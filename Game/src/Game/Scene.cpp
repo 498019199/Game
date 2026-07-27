@@ -245,7 +245,7 @@ void AScene::LoadCameraConfig(JsonValue const& root)
 
 void AScene::SetupCameraController(Camera& camera)
 {
-	camera_controller_.Scalers(0.05f, 0.5f);
+	camera_controller_.Scalers(0.05f, 1.5f);
 	camera_controller_.AttachCamera(camera);
 }
 
@@ -511,18 +511,11 @@ void AScene::UpdateDetailedMeshes(float3 const& eye_pos, bool back_face_depth_pa
 		node.ForEachComponentOfType<RenderableComponent>([&](RenderableComponent& comp) {
 			if (auto* detailed_mesh = dynamic_cast<DetailedMesh*>(&comp.BoundRenderable()))
 			{
-				if (back_face_depth_pass)
-				{
-					detailed_mesh->BackFaceDepthPass(true);
-				}
-				else
-				{
-					detailed_mesh->EyePos(eye_pos);
-					detailed_mesh->LightPos(light_pos);
-					detailed_mesh->LightColor(light_color);
-					detailed_mesh->LightFalloff(light_falloff);
-					detailed_mesh->BackFaceDepthPass(false);
-				}
+				detailed_mesh->EyePos(eye_pos);
+				detailed_mesh->LightPos(light_pos);
+				detailed_mesh->LightColor(light_color);
+				detailed_mesh->LightFalloff(light_falloff);
+				detailed_mesh->BackFaceDepthPass(back_face_depth_pass);
 			}
 		});
 		return true;

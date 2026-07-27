@@ -10,8 +10,8 @@ using namespace CommonWorker;
 DetailedMesh::DetailedMesh(std::wstring_view name)
 	: StaticMesh(name)
 {
-	effect_ = SyncLoadRenderEffect("SubSurface.shader");
-	technique_ = effect_->TechniqueByName("BackFaceDepthTech");
+	effect_ = SyncLoadRenderEffect("SimpleAlbedoNormal.shader");
+	technique_ = effect_->TechniqueByName("SimpleAlbedoNormalTech");
 }
 
 void DetailedMesh::DoBuildMeshInfo(RenderModel const& model)
@@ -29,7 +29,6 @@ void DetailedMesh::DoBuildMeshInfo(RenderModel const& model)
 		extinction_coefficient.y() = MathWorker::srgb_to_linear(extinction_coefficient.y());
 		extinction_coefficient.z() = MathWorker::srgb_to_linear(extinction_coefficient.z());
 	}
-	*(effect_->ParameterByName("extinction_coefficient")) = extinction_coefficient;
 }
 
 void DetailedMesh::OnRenderBegin()
@@ -37,77 +36,86 @@ void DetailedMesh::OnRenderBegin()
 	StaticMesh::OnRenderBegin();
 
 	auto& app = Context::Instance().AppInstance();
-	*(effect_->ParameterByName("worldviewproj")) = model_mat_ * app.ActiveCamera().ViewProjMatrix();
+	if (auto* mvp = effect_->ParameterByName("worldviewproj"))
+	{
+		*mvp = model_mat_ * app.ActiveCamera().ViewProjMatrix();
+	}
+	// Force raw albedo once to verify sampling; set to 0 after textures look correct.
+	if (auto* dbg = effect_->ParameterByName("debug_albedo_only"))
+	{
+		*dbg = 1.0f;
+	}
 }
 
 void DetailedMesh::EyePos(float3 const& eye_pos)
 {
-	*(effect_->ParameterByName("eye_pos")) = eye_pos;
+	if (auto* p = effect_->ParameterByName("eye_pos"))
+	{
+		*p = MathWorker::transform_coord(eye_pos, inv_model_mat_);
+	}
 }
 
 void DetailedMesh::LightPos(float3 const& light_pos)
 {
-	*(effect_->ParameterByName("light_pos")) = light_pos;
+	if (auto* p = effect_->ParameterByName("light_pos"))
+	{
+		*p = MathWorker::transform_coord(light_pos, inv_model_mat_);
+	}
 }
 
 void DetailedMesh::LightColor(float3 const& light_color)
 {
-	*(effect_->ParameterByName("light_color")) = light_color;
+	if (auto* p = effect_->ParameterByName("light_color"))
+	{
+		*p = light_color;
+	}
 }
 
 void DetailedMesh::LightFalloff(float3 const& light_falloff)
 {
-	*(effect_->ParameterByName("light_falloff")) = light_falloff;
+	if (auto* p = effect_->ParameterByName("light_falloff"))
+	{
+		*p = light_falloff;
+	}
 }
 
 void DetailedMesh::BackFaceDepthPass(bool dfdp)
 {
-	if (dfdp)
-	{
-		if (depth_texture_support_)
-		{
-			technique_ = effect_->TechniqueByName("BackFaceDepthTech");
-		}
-		else
-		{
-			technique_ = effect_->TechniqueByName("BackFaceDepthTechWODepthTexture");
-		}
-	}
-	else
-	{
-		if (depth_texture_support_)
-		{
-			technique_ = effect_->TechniqueByName("SubSurfaceTech");
-		}
-		else
-		{
-			technique_ = effect_->TechniqueByName("SubSurfaceTechWODepthTexture");
-		}
-	}
+
 }
 
 void DetailedMesh::BackFaceDepthTex(TexturePtr const& tex)
 {
-	*(effect_->ParameterByName("back_face_depth_tex")) = tex;
-
 	auto& app = Context::Instance().AppInstance();
 	Camera const& camera = app.ActiveCamera();
 	if (depth_texture_support_)
 	{
 		float q = camera.FarPlane() / (camera.FarPlane() - camera.NearPlane());
-		*(effect_->ParameterByName("near_q")) = float2(camera.NearPlane() * q, q);
+		if (auto* p = effect_->ParameterByName("near_q"))
+		{
+			*p = float2(camera.NearPlane() * q, q);
+		}
 	}
-	*(effect_->ParameterByName("far_plane")) = float2(camera.FarPlane(), 1.0f / camera.FarPlane());
+	if (auto* p = effect_->ParameterByName("far_plane"))
+	{
+		*p = float2(camera.FarPlane(), 1.0f / camera.FarPlane());
+	}
 }
 
 void DetailedMesh::SigmaT(float sigma_t)
 {
-	*(effect_->ParameterByName("sigma_t")) = -sigma_t;
+	if (auto* p = effect_->ParameterByName("sigma_t"))
+	{
+		*p = -sigma_t;
+	}
 }
 
 void DetailedMesh::MtlThickness(float thickness)
 {
-	*(effect_->ParameterByName("material_thickness")) = -thickness;
+	if (auto* p = effect_->ParameterByName("material_thickness"))
+	{
+		*p = -thickness;
+	}
 }
 
 AModel::AModel(const SceneNodePtr& root_node)

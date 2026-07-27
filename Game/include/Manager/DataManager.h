@@ -17,6 +17,13 @@ struct NpcTextures
 	std::string normal;
 };
 
+struct NpcPart
+{
+	// Match key against mesh name (substring, case-insensitive), e.g. "base" / "shoulder".
+	std::string name;
+	NpcTextures textures;
+};
+
 struct NpcData
 {
 	int32_t id {0};
@@ -26,6 +33,8 @@ struct NpcData
 	// Shared material ball applied to all mesh parts (UE MIC path or engine name).
 	std::string material;
 	NpcTextures textures;
+	// Optional per-mesh-name texture overrides; longer names are matched first.
+	std::vector<NpcPart> parts;
 };
 
 class GAME_API DataManager

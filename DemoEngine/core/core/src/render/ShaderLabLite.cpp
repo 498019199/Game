@@ -1271,6 +1271,53 @@ bool ParseTopLevelTypedParam(std::string_view s, size_t& i, std::vector<PropDesc
 	{
 		return false;
 	}
+	// Top-level defaults: Float3 light_color = { 1.5, 1.5, 1.5 }  or  = 1.0
+	SkipWs(s, i);
+	if (i < s.size() && s[i] == '=')
+	{
+		++i;
+		SkipWs(s, i);
+		size_t val_begin = i;
+		if (i < s.size() && s[i] == '{')
+		{
+			size_t close = 0;
+			if (!FindMatchingBrace(s, i, close, err))
+			{
+				return false;
+			}
+			p.default_value = std::string(Slice(s, val_begin, close + 1));
+			i = close + 1;
+		}
+		else
+		{
+			while (i < s.size() && s[i] != '\n' && s[i] != '{' && s[i] != '}')
+			{
+				++i;
+			}
+			p.default_value = std::string(Slice(s, val_begin, i));
+			while (!p.default_value.empty() && std::isspace(static_cast<unsigned char>(p.default_value.back())))
+			{
+				p.default_value.pop_back();
+			}
+		}
+		std::vector<float> nums;
+		if (ParseFloatList(p.default_value, nums) && !nums.empty())
+		{
+			if (nums.size() >= 2)
+			{
+				p.has_xyzw = true;
+				p.xyzw[0] = nums[0];
+				p.xyzw[1] = nums.size() > 1 ? nums[1] : 0.f;
+				p.xyzw[2] = nums.size() > 2 ? nums[2] : 0.f;
+				p.xyzw[3] = nums.size() > 3 ? nums[3] : 0.f;
+			}
+			else
+			{
+				p.has_value = true;
+				p.value_f = nums[0];
+			}
+		}
+	}
 	if (is_samp)
 	{
 		SkipWs(s, i);

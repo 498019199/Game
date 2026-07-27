@@ -32,5 +32,61 @@
         "id": 100003,
         "name": "Spring",
         "model": "Models/Spring.obj"
+    },
+    {
+        "id": 100004,
+        "name": "chaos_knight",
+        "models": [
+            "Models/chaos_knight/chaos_knight_econ.fbx"
+        ],
+        "parts": {
+            "base": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/base/__chaos_knight_base_color.tga",
+                    "normal": "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga"
+                }
+            },
+            "head": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/chaos_knight_head_color.tga",
+                    "normal": "Models/chaos_knight/materials/chaos_knight_head_normal.tga"
+                }
+            },
+            "weapon": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/chaos_knight_weapon_color.tga",
+                    "normal": "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga"
+                }
+            },
+            "shoulder": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/chaos_knight_shoulder_color.tga",
+                    "normal": "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga"
+                }
+            },
+            "mount": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/chaos_knight_mount_color.tga",
+                    "normal": "Models/chaos_knight/materials/chaos_knight_mount_normal.tga"
+                }
+            },
+            "offhand": {
+                "textures": {
+                    "albedo": "Models/chaos_knight/materials/chaos_knight_offhand_color.tga",
+                    "normal": "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga"
+                }
+            }
+        }
+    },
+    {
+        "id": 100005,
+        "name": "juggernaut",
+        "models": [
+            "Models/juggernaut/juggernaut/juggernaut_econ.fbx"
+        ],
+        "textures": {
+            "albedo": "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_color.tga",
+            "normal": "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_normal.tga"
+        }
     }
 ]

@@ -71,6 +71,18 @@ bool DataManager::LoadNpcConfig()
 		npc.textures.metalness_glossiness =
 			entry.textures.metalness_glossiness ? entry.textures.metalness_glossiness : "";
 		npc.textures.normal = entry.textures.normal ? entry.textures.normal : "";
+		npc.parts.reserve(entry.part_count);
+		for (std::size_t i = 0; i < entry.part_count; ++i)
+		{
+			NpcConfigPart const& src = entry.parts[i];
+			NpcPart part;
+			part.name = src.name ? src.name : "";
+			part.textures.albedo = src.textures.albedo ? src.textures.albedo : "";
+			part.textures.metalness_glossiness =
+				src.textures.metalness_glossiness ? src.textures.metalness_glossiness : "";
+			part.textures.normal = src.textures.normal ? src.textures.normal : "";
+			npc.parts.push_back(std::move(part));
+		}
 		npcs_.push_back(std::move(npc));
 	}
 

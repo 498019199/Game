@@ -25,12 +25,34 @@ namespace
 		"Models/Spring.obj",
 	};
 
+	char const* const kNpc_100004_Models[] =
+	{
+		"Models/chaos_knight/chaos_knight_econ.fbx",
+	};
+
+	NpcConfigPart const kNpc_100004_Parts[] =
+	{
+		{ "shoulder", { "Models/chaos_knight/materials/chaos_knight_shoulder_color.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga" } },
+		{ "offhand", { "Models/chaos_knight/materials/chaos_knight_offhand_color.tga", "", "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga" } },
+		{ "weapon", { "Models/chaos_knight/materials/chaos_knight_weapon_color.tga", "", "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga" } },
+		{ "mount", { "Models/chaos_knight/materials/chaos_knight_mount_color.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_normal.tga" } },
+		{ "base", { "Models/chaos_knight/materials/base/__chaos_knight_base_color.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga" } },
+		{ "head", { "Models/chaos_knight/materials/chaos_knight_head_color.tga", "", "Models/chaos_knight/materials/chaos_knight_head_normal.tga" } },
+	};
+
+	char const* const kNpc_100005_Models[] =
+	{
+		"Models/juggernaut/juggernaut/juggernaut_econ.fbx",
+	};
+
 	NpcConfigEntry const kNpcEntries[] =
 	{
-		{ 100000, "Bp_F_C23", kNpc_100000_Models, 1, "Private/Bp_F_C23/Bp_F_C23_C_Mat", { "Private/Bp_F_C23/Da_M_C23_C_DA.TGA", "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA", "Private/Bp_F_C23/Da_M_C23_C_NR.TGA" } },
-		{ 100001, "ancient_apparition", kNpc_100001_Models, 1, "", { "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga", "", "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga" } },
-		{ 100002, "Rabbit", kNpc_100002_Models, 1, "", { "", "", "" } },
-		{ 100003, "Spring", kNpc_100003_Models, 1, "", { "", "", "" } },
+		{ 100000, "Bp_F_C23", kNpc_100000_Models, 1, "Private/Bp_F_C23/Bp_F_C23_C_Mat", { "Private/Bp_F_C23/Da_M_C23_C_DA.TGA", "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA", "Private/Bp_F_C23/Da_M_C23_C_NR.TGA" }, nullptr, 0 },
+		{ 100001, "ancient_apparition", kNpc_100001_Models, 1, "", { "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga", "", "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga" }, nullptr, 0 },
+		{ 100002, "Rabbit", kNpc_100002_Models, 1, "", { "", "", "" }, nullptr, 0 },
+		{ 100003, "Spring", kNpc_100003_Models, 1, "", { "", "", "" }, nullptr, 0 },
+		{ 100004, "chaos_knight", kNpc_100004_Models, 1, "", { "", "", "" }, kNpc_100004_Parts, 6 },
+		{ 100005, "juggernaut", kNpc_100005_Models, 1, "", { "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_color.tga", "", "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_normal.tga" }, nullptr, 0 },
 	};
 } // namespace
 
@@ -41,7 +63,7 @@ std::span<NpcConfigEntry const> NpcConfig::All() noexcept
 
 std::size_t NpcConfig::Count() noexcept
 {
-	return 4;
+	return 6;
 }
 
 NpcConfigEntry const* NpcConfig::FindById(int32_t id) noexcept
