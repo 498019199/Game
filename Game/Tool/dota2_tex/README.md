@@ -9,7 +9,7 @@ Packs unpacked hero maps into the Workshop-style **4 textures**:
 | `*_mask1.tga` | R detailMask, G diffuse/fresnel mask, B metalness, A selfIllum |
 | `*_mask2.tga` | R specular, G rim, B tintByBase, A specularExponent |
 
-**Not packed** (kept as optional extras): `detail`, `detail2`, `cubeMap`.
+**Not packed** (kept as optional extras): `detail`, `detail2`, `cubeMap`, `diffuseWarp`, `fresnelWarpColor`, `fresnelWarpRim`, `fresnelWarpSpec`.
 
 ## Layout
 
@@ -18,6 +18,7 @@ dota2_tex/
   pack_dota2_masks.py
   resources/Models/chaos_knight/...
   resources/Models/ogre_magi/...
+  resources/Models/ancient_apparition/...
 ```
 
 Channel sources absorbed into masks are moved to `_source_masks/` beside each materials folder.

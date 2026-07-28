@@ -1,6 +1,7 @@
 #include <dev_helps/TexConverter.h>
 #include <render/TexCompression.h>
 #include <render/Texture.h>
+#include <common/Profiler.h>
 
 #include <FreeImage.h>
 #include <filesystem>
@@ -38,6 +39,7 @@ private:
 
 TexturePtr TexLoader::Load(TexMetadata const& metadata)
 {
+    ZENGINE_ZONE("TexLoader.Load");
     TexturePtr ret;
     metadata_ = metadata;
 
@@ -175,6 +177,7 @@ bool TexLoader::IsSupported(std::string_view input_name)
 
 bool TexLoader::Load()
 {
+    ZENGINE_ZONE("TexLoader.LoadPipeline");
     array_size_ = metadata_.ArraySize();
 
     planes_.resize(array_size_);
@@ -383,6 +386,7 @@ bool TexLoader::Load()
 
 TexturePtr TexLoader::StoreToTexture()
 {
+    ZENGINE_ZONE("TexLoader.StoreToTexture");
     Texture::TextureType output_type = Texture::TT_2D;
     uint32_t output_width = width_;
     uint32_t output_height = height_;

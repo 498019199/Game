@@ -4,6 +4,7 @@
 #include <base/ZEngine.h>
 #include <common/CpuInfo.h>
 #include <common/Log.h>
+#include <common/Profiler.h>
 #include <common/Thread.h>
 #include <render/RenderEngine.h>
 #include <render/RenderFactory.h>
@@ -502,6 +503,7 @@ private:
 		RenderWorker::RenderDeviceCaps const& caps, std::string const& input, std::atomic<uint32_t>& converted,
 		std::atomic<uint32_t>& skipped)
 	{
+		ZENGINE_ZONE("texture_convert.ConvertOne");
 		ResolvedInput const resolved = ResolveInput(res_loader, input);
 		if (resolved.res_name.empty())
 		{
@@ -537,6 +539,7 @@ private:
 		CommonWorker::LogInfo() << "Converting " << resolved.source_path << " -> " << runtime_name
 								<< " (slot=" << static_cast<int>(slot) << ")" << std::endl;
 
+		ZoneNamedN(tracyConvertTexture, "texture_convert.ConvertTexture", true);
 		auto texture = helper.ConvertTexture(resolved.res_name, metadata_name, runtime_name, &caps);
 		if (!texture)
 		{

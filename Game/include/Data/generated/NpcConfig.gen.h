@@ -22,6 +22,10 @@ struct NpcConfigTextures
 	char const* translucency;
 	char const* mask1;
 	char const* mask2;
+	char const* diffuse_warp;
+	char const* fresnel_warp_color;
+	char const* fresnel_warp_rim;
+	char const* fresnel_warp_spec;
 };
 
 struct NpcConfigPart

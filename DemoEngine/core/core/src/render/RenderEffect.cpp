@@ -3389,7 +3389,8 @@ void RenderShaderGraphNode::StreamIn(ResIdentifier& res)
 
 	uint8_t len;
 	res.read(&len, sizeof(len));
-	params_.resize(len);
+	params_.clear();
+	params_.reserve(len);
 	for (uint32_t i = 0; i < len; ++ i)
 	{
 		params_.emplace_back(ReadShortString(res), ReadShortString(res));

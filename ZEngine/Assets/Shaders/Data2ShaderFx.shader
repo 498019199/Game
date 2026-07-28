@@ -15,6 +15,7 @@ Shader "Data2ShaderFx"
     Float3 eye_pos_os x=0 y=0 z=0
     Float normal_blend value=0.0
     Float debug_albedo_only value=0.0
+    Int debug_mask1_ra value=0
 
     Float detail_scale value=4.0
     Float detail_strength value=1.0
@@ -140,6 +141,11 @@ Shader "Data2ShaderFx"
                 {
                     return float4(albedo, 1.0f);
                 }
+                if (debug_mask1_ra == 1)
+                {
+                    // Visualize mask1.R (detail mask)
+                    return float4(dmask.xxx, 1.0f);
+                }
 
                 float3 N = float3(0, 0, 1);
                 if (normal_map_enabled)
@@ -181,10 +187,15 @@ Shader "Data2ShaderFx"
                 // selfIllum: packed mask1.A, else emissive_tex
                 if (selfillum_map_enabled)
                 {
-                    float3 self_mask = mask1_map_enabled
-                        ? mask1.aaa
-                        : emissive_tex.Sample(linear_sampler, uv).rgb;
+                    float self_mask = mask1_map_enabled
+                        ? mask1.a
+                        : emissive_tex.Sample(linear_sampler, uv).r;
                     lit += self_mask * albedo * selfillum_strength;
+                    if (debug_mask1_ra == 2)
+                    {
+                        // Visualize mask1.A / emissive fallback
+                        return float4(self_mask.xxx, 1.0f);
+                    }
                 }
 
                 // translucency: packed color.A, else optional translucency map

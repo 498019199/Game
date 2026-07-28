@@ -51,5 +51,5 @@ Direct3D 11.4
 文档（可选）：同一页的 tracy.pdf。
 
 gm
-/createnpc 100002 1
-/createnpc 100004 1
+/createnpc 100000 1
+/createnpc 300001 1

@@ -1,6 +1,20 @@
 [
     {
         "id": 100000,
+        "name": "Rabbit",
+        "model": "Models/Rabbit.obj",
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech"
+    },
+    {
+        "id": 100001,
+        "name": "Spring",
+        "model": "Models/Spring.obj",
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech"
+    },
+    {
+        "id": 200000,
         "name": "Bp_F_C23",
         "models": [
             "Private/Bp_F_C23/Bp_F_C23_C.FBX"
@@ -15,34 +29,60 @@
         }
     },
     {
-        "id": 100001,
+        "id": 300000,
         "name": "ancient_apparition",
         "models": [
             "Models/ancient_apparition/ancient_apparition_econ.fbx"
         ],
-        "render_effect": "SimpleAlbedoNormal.shader",
-        "render_technique": "SimpleAlbedoNormalTech",
-        "textures": {
-            "albedo": "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga",
-            "normal": "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga"
+        "render_effect": "Data2ShaderFx.shader",
+        "render_technique": "Data2ShaderFxTech",
+        "parts": {
+            "base": {
+                "textures": {
+                    "albedo": "Models/ancient_apparition/materials/base/__ancient_apparition_base_color.tga",
+                    "normal": "Models/ancient_apparition/materials/base/__ancient_apparition_base_normal.tga",
+                    "cubeMap": "Models/ancient_apparition/materials/base/__ancient_apparition_base_cubeMap.tga",
+                    "detail": "Models/ancient_apparition/materials/base/__ancient_apparition_base_detail.tga",
+                    "detail2": "Models/ancient_apparition/materials/base/__ancient_apparition_base_detail2.tga",
+                    "mask1": "Models/ancient_apparition/materials/base/__ancient_apparition_base_mask1.tga",
+                    "mask2": "Models/ancient_apparition/materials/base/__ancient_apparition_base_mask2.tga",
+                    "fresnelWarpColor": "Models/ancient_apparition/materials/base/__ancient_apparition_base_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ancient_apparition/materials/base/__ancient_apparition_base_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ancient_apparition/materials/base/__ancient_apparition_base_fresnelWarpSpec.tga"
+                }
+            },
+            "shoulder": {
+                "textures": {
+                    "albedo": "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga",
+                    "normal": "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga",
+                    "cubeMap": "Models/ancient_apparition/materials/ancient_apparition_shoulder_cubeMap.tga",
+                    "detail": "Models/ancient_apparition/materials/ancient_apparition_shoulder_detail.tga",
+                    "detail2": "Models/ancient_apparition/materials/ancient_apparition_shoulder_detail2.tga",
+                    "mask1": "Models/ancient_apparition/materials/ancient_apparition_shoulder_mask1.tga",
+                    "mask2": "Models/ancient_apparition/materials/ancient_apparition_shoulder_mask2.tga",
+                    "fresnelWarpColor": "Models/ancient_apparition/materials/ancient_apparition_shoulder_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ancient_apparition/materials/ancient_apparition_shoulder_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ancient_apparition/materials/ancient_apparition_shoulder_fresnelWarpSpec.tga"
+                }
+            },
+            "tail": {
+                "textures": {
+                    "albedo": "Models/ancient_apparition/materials/ancient_apparition_tail_color.tga",
+                    "normal": "Models/ancient_apparition/materials/ancient_apparition_tail_normal.tga",
+                    "cubeMap": "Models/ancient_apparition/materials/ancient_apparition_tail_cubeMap.tga",
+                    "detail": "Models/ancient_apparition/materials/ancient_apparition_tail_detail.tga",
+                    "detail2": "Models/ancient_apparition/materials/ancient_apparition_tail_detail2.tga",
+                    "mask1": "Models/ancient_apparition/materials/ancient_apparition_tail_mask1.tga",
+                    "mask2": "Models/ancient_apparition/materials/ancient_apparition_tail_mask2.tga",
+                    "fresnelWarpColor": "Models/ancient_apparition/materials/ancient_apparition_tail_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ancient_apparition/materials/ancient_apparition_tail_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ancient_apparition/materials/ancient_apparition_tail_fresnelWarpSpec.tga"
+                }
+            }
         }
     },
     {
-        "id": 100002,
-        "name": "Rabbit",
-        "model": "Models/Rabbit.obj",
-        "render_effect": "SimpleAlbedoNormal.shader",
-        "render_technique": "SimpleAlbedoNormalTech"
-    },
-    {
-        "id": 100003,
-        "name": "Spring",
-        "model": "Models/Spring.obj",
-        "render_effect": "SimpleAlbedoNormal.shader",
-        "render_technique": "SimpleAlbedoNormalTech"
-    },
-    {
-        "id": 100004,
+        "id": 300001,
         "name": "chaos_knight",
         "models": [
             "Models/chaos_knight/chaos_knight_econ.fbx"
@@ -58,7 +98,10 @@
                     "detail": "Models/chaos_knight/materials/base/__chaos_knight_base_detail.tga",
                     "detail2": "Models/chaos_knight/materials/base/__chaos_knight_base_detail2.tga",
                     "mask1": "Models/chaos_knight/materials/base/__chaos_knight_base_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/base/__chaos_knight_base_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/base/__chaos_knight_base_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/base/__chaos_knight_base_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/base/__chaos_knight_base_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/base/__chaos_knight_base_fresnelWarpSpec.tga"
                 }
             },
             "head": {
@@ -68,7 +111,10 @@
                     "cubeMap": "Models/chaos_knight/materials/chaos_knight_head_cubeMap.tga",
                     "detail": "Models/chaos_knight/materials/chaos_knight_head_detail.tga",
                     "mask1": "Models/chaos_knight/materials/chaos_knight_head_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/chaos_knight_head_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_head_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/chaos_knight_head_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/chaos_knight_head_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/chaos_knight_head_fresnelWarpSpec.tga"
                 }
             },
             "weapon": {
@@ -77,7 +123,10 @@
                     "normal": "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga",
                     "cubeMap": "Models/chaos_knight/materials/chaos_knight_weapon_cubeMap.tga",
                     "mask1": "Models/chaos_knight/materials/chaos_knight_weapon_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/chaos_knight_weapon_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_weapon_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/chaos_knight_weapon_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/chaos_knight_weapon_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/chaos_knight_weapon_fresnelWarpSpec.tga"
                 }
             },
             "shoulder": {
@@ -88,7 +137,10 @@
                     "detail": "Models/chaos_knight/materials/chaos_knight_shoulder_detail.tga",
                     "detail2": "Models/chaos_knight/materials/chaos_knight_shoulder_detail2.tga",
                     "mask1": "Models/chaos_knight/materials/chaos_knight_shoulder_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/chaos_knight_shoulder_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_shoulder_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/chaos_knight_shoulder_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/chaos_knight_shoulder_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/chaos_knight_shoulder_fresnelWarpSpec.tga"
                 }
             },
             "mount": {
@@ -99,7 +151,10 @@
                     "detail": "Models/chaos_knight/materials/chaos_knight_mount_detail.tga",
                     "detail2": "Models/chaos_knight/materials/chaos_knight_mount_detail2.tga",
                     "mask1": "Models/chaos_knight/materials/chaos_knight_mount_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/chaos_knight_mount_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_mount_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/chaos_knight_mount_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/chaos_knight_mount_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/chaos_knight_mount_fresnelWarpSpec.tga"
                 }
             },
             "offhand": {
@@ -109,13 +164,16 @@
                     "cubeMap": "Models/chaos_knight/materials/chaos_knight_offhand_cubeMap.tga",
                     "detail2": "Models/chaos_knight/materials/chaos_knight_offhand_detail2.tga",
                     "mask1": "Models/chaos_knight/materials/chaos_knight_offhand_mask1.tga",
-                    "mask2": "Models/chaos_knight/materials/chaos_knight_offhand_mask2.tga"
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_offhand_mask2.tga",
+                    "fresnelWarpColor": "Models/chaos_knight/materials/chaos_knight_offhand_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/chaos_knight/materials/chaos_knight_offhand_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/chaos_knight/materials/chaos_knight_offhand_fresnelWarpSpec.tga"
                 }
             }
         }
     },
     {
-        "id": 100005,
+        "id": 300002,
         "name": "ogre_magi",
         "models": [
             "Models/ogre_magi/ogre_magi_econ.fbx"
@@ -129,7 +187,11 @@
                     "normal": "Models/ogre_magi/materials/base/__ogre_magi_base_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/base/__ogre_magi_base_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/base/__ogre_magi_base_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/base/__ogre_magi_base_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/base/__ogre_magi_base_mask2.tga",
+                    "diffuseWarp": "Models/ogre_magi/materials/base/__ogre_magi_base_diffuseWarp.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/base/__ogre_magi_base_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/base/__ogre_magi_base_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/base/__ogre_magi_base_fresnelWarpSpec.tga"
                 }
             },
             "Head": {
@@ -138,7 +200,10 @@
                     "normal": "Models/ogre_magi/materials/ogre_magi_head_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/ogre_magi_head_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/ogre_magi_head_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/ogre_magi_head_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_head_mask2.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/ogre_magi_head_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/ogre_magi_head_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/ogre_magi_head_fresnelWarpSpec.tga"
                 }
             },
             "Arms": {
@@ -147,7 +212,10 @@
                     "normal": "Models/ogre_magi/materials/ogre_magi_arms_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/ogre_magi_arms_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/ogre_magi_arms_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/ogre_magi_arms_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_arms_mask2.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/ogre_magi_arms_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/ogre_magi_arms_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/ogre_magi_arms_fresnelWarpSpec.tga"
                 }
             },
             "Back": {
@@ -156,7 +224,10 @@
                     "normal": "Models/ogre_magi/materials/ogre_magi_back_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/ogre_magi_back_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/ogre_magi_back_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/ogre_magi_back_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_back_mask2.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/ogre_magi_back_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/ogre_magi_back_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/ogre_magi_back_fresnelWarpSpec.tga"
                 }
             },
             "Weapon": {
@@ -165,7 +236,10 @@
                     "normal": "Models/ogre_magi/materials/ogre_magi_weapon_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/ogre_magi_weapon_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/ogre_magi_weapon_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/ogre_magi_weapon_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_weapon_mask2.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/ogre_magi_weapon_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/ogre_magi_weapon_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/ogre_magi_weapon_fresnelWarpSpec.tga"
                 }
             },
             "Belt": {
@@ -174,7 +248,10 @@
                     "normal": "Models/ogre_magi/materials/ogre_magi_belt_normal.tga",
                     "cubeMap": "Models/ogre_magi/materials/ogre_magi_belt_cubeMap.tga",
                     "mask1": "Models/ogre_magi/materials/ogre_magi_belt_mask1.tga",
-                    "mask2": "Models/ogre_magi/materials/ogre_magi_belt_mask2.tga"
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_belt_mask2.tga",
+                    "fresnelWarpColor": "Models/ogre_magi/materials/ogre_magi_belt_fresnelWarpColor.tga",
+                    "fresnelWarpRim": "Models/ogre_magi/materials/ogre_magi_belt_fresnelWarpRim.tga",
+                    "fresnelWarpSpec": "Models/ogre_magi/materials/ogre_magi_belt_fresnelWarpSpec.tga"
                 }
             }
         }

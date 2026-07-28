@@ -24,6 +24,10 @@
 		std::string translucency;
 		std::string mask1;
 		std::string mask2;
+		std::string diffuse_warp;
+		std::string fresnel_warp_color;
+		std::string fresnel_warp_rim;
+		std::string fresnel_warp_spec;
 	};
 
 struct NpcPart

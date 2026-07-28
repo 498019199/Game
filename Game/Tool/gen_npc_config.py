@@ -41,6 +41,10 @@ def empty_textures() -> dict[str, str]:
 		"translucency": "",
 		"mask1": "",
 		"mask2": "",
+		"diffuse_warp": "",
+		"fresnel_warp_color": "",
+		"fresnel_warp_rim": "",
+		"fresnel_warp_spec": "",
 	}
 
 
@@ -76,6 +80,10 @@ def load_textures(container: dict, context: str, json_path: Path) -> dict[str, s
 		"translucency": pick("translucency"),
 		"mask1": pick("mask1"),
 		"mask2": pick("mask2"),
+		"diffuse_warp": pick("diffuse_warp", "diffuseWarp"),
+		"fresnel_warp_color": pick("fresnel_warp_color", "fresnelWarpColor"),
+		"fresnel_warp_rim": pick("fresnel_warp_rim", "fresnelWarpRim"),
+		"fresnel_warp_spec": pick("fresnel_warp_spec", "fresnelWarpSpec"),
 	}
 
 
@@ -118,6 +126,10 @@ def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
 				"translucency",
 				"mask1",
 				"mask2",
+				"diffuseWarp",
+				"fresnelWarpColor",
+				"fresnelWarpRim",
+				"fresnelWarpSpec",
 			)
 		):
 			tex_container = {"textures": part_value}
@@ -216,6 +228,10 @@ struct NpcConfigTextures
 	char const* translucency;
 	char const* mask1;
 	char const* mask2;
+	char const* diffuse_warp;
+	char const* fresnel_warp_color;
+	char const* fresnel_warp_rim;
+	char const* fresnel_warp_spec;
 };
 
 struct NpcConfigPart
@@ -264,7 +280,11 @@ def format_textures(tex: dict[str, str]) -> str:
 		f'"{cpp_escape(tex["cubemap"])}", '
 		f'"{cpp_escape(tex["translucency"])}", '
 		f'"{cpp_escape(tex["mask1"])}", '
-		f'"{cpp_escape(tex["mask2"])}" }}'
+		f'"{cpp_escape(tex["mask2"])}", '
+		f'"{cpp_escape(tex["diffuse_warp"])}", '
+		f'"{cpp_escape(tex["fresnel_warp_color"])}", '
+		f'"{cpp_escape(tex["fresnel_warp_rim"])}", '
+		f'"{cpp_escape(tex["fresnel_warp_spec"])}" }}'
 	)
 
 
@@ -338,7 +358,7 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 				"",
 				"\tNpcConfigEntry const kNpcEntries[] =",
 				"\t{",
-				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", "", "", { "", "", "", "", "", "", "", "", "" }, nullptr, 0 },',
+				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", "", "", { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }, nullptr, 0 },',
 				"\t};",
 			]
 		)

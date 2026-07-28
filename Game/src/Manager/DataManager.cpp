@@ -81,6 +81,11 @@ bool DataManager::LoadNpcConfig()
 			npc.textures.translucency = entry.textures.translucency ? entry.textures.translucency : "";
 			npc.textures.mask1 = entry.textures.mask1 ? entry.textures.mask1 : "";
 			npc.textures.mask2 = entry.textures.mask2 ? entry.textures.mask2 : "";
+			npc.textures.diffuse_warp = entry.textures.diffuse_warp ? entry.textures.diffuse_warp : "";
+			npc.textures.fresnel_warp_color =
+				entry.textures.fresnel_warp_color ? entry.textures.fresnel_warp_color : "";
+			npc.textures.fresnel_warp_rim = entry.textures.fresnel_warp_rim ? entry.textures.fresnel_warp_rim : "";
+			npc.textures.fresnel_warp_spec = entry.textures.fresnel_warp_spec ? entry.textures.fresnel_warp_spec : "";
 			npc.parts.reserve(entry.part_count);
 			for (std::size_t i = 0; i < entry.part_count; ++i)
 			{
@@ -99,6 +104,11 @@ bool DataManager::LoadNpcConfig()
 				part.textures.translucency = src.textures.translucency ? src.textures.translucency : "";
 				part.textures.mask1 = src.textures.mask1 ? src.textures.mask1 : "";
 				part.textures.mask2 = src.textures.mask2 ? src.textures.mask2 : "";
+				part.textures.diffuse_warp = src.textures.diffuse_warp ? src.textures.diffuse_warp : "";
+				part.textures.fresnel_warp_color =
+					src.textures.fresnel_warp_color ? src.textures.fresnel_warp_color : "";
+				part.textures.fresnel_warp_rim = src.textures.fresnel_warp_rim ? src.textures.fresnel_warp_rim : "";
+				part.textures.fresnel_warp_spec = src.textures.fresnel_warp_spec ? src.textures.fresnel_warp_spec : "";
 				npc.parts.push_back(std::move(part));
 			}
 		npcs_.push_back(std::move(npc));

@@ -32,7 +32,9 @@ constexpr char const* kDocId = "GmDebugWindow";
 		return !textures.albedo.empty() || !textures.metalness_glossiness.empty() || !textures.normal.empty()
 			|| !textures.emissive.empty() || !textures.detail.empty() || !textures.detail2.empty()
 			|| !textures.detail_mask.empty() || !textures.cubemap.empty() || !textures.translucency.empty()
-			|| !textures.mask1.empty() || !textures.mask2.empty();
+			|| !textures.mask1.empty() || !textures.mask2.empty() || !textures.diffuse_warp.empty()
+			|| !textures.fresnel_warp_color.empty() || !textures.fresnel_warp_rim.empty()
+			|| !textures.fresnel_warp_spec.empty();
 	}
 
 std::string ToLowerAscii(std::string value)
@@ -97,6 +99,10 @@ std::string ResolveExistingTexturePath(std::string const& configured, std::strin
 		out.detail = ResolveExistingTexturePath(src.detail, src.albedo, "detail");
 		out.detail2 = ResolveExistingTexturePath(src.detail2, src.albedo, "detail2");
 		out.cubemap = ResolveExistingTexturePath(src.cubemap, src.albedo, "cubeMap");
+		out.diffuse_warp = ResolveExistingTexturePath(src.diffuse_warp, src.albedo, "diffuseWarp");
+		out.fresnel_warp_color = ResolveExistingTexturePath(src.fresnel_warp_color, src.albedo, "fresnelWarpColor");
+		out.fresnel_warp_rim = ResolveExistingTexturePath(src.fresnel_warp_rim, src.albedo, "fresnelWarpRim");
+		out.fresnel_warp_spec = ResolveExistingTexturePath(src.fresnel_warp_spec, src.albedo, "fresnelWarpSpec");
 		if (out.normal.empty())
 		{
 			out.normal = ResolveExistingTexturePath({}, src.albedo, "normal");
@@ -253,9 +259,18 @@ void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_na
 		}
 		SetEffectTextureParam(effect, "cubemap_tex", textures.cubemap, "cubemap_map_enabled");
 		SetEffectTextureParam(effect, "translucency_tex", textures.translucency, "translucency_map_enabled");
+		SetEffectTextureParam(effect, "diffuse_warp_tex", textures.diffuse_warp, "diffuse_warp_enabled");
+		SetEffectTextureParam(effect, "fresnel_warp_color_tex", textures.fresnel_warp_color, "fresnel_warp_color_enabled");
+		SetEffectTextureParam(effect, "fresnel_warp_rim_tex", textures.fresnel_warp_rim, "fresnel_warp_rim_enabled");
+		SetEffectTextureParam(effect, "fresnel_warp_spec_tex", textures.fresnel_warp_spec, "fresnel_warp_spec_enabled");
 		if (auto* selfillum = effect.ParameterByName("selfillum_map_enabled"))
 		{
 			*selfillum = (!textures.mask1.empty() || !textures.emissive.empty()) ? 1 : 0;
+		}
+
+		if (auto* p = effect.ParameterByName("debug_mask1_raw"))
+		{
+			*p = 2.0f;
 		}
 	}
 

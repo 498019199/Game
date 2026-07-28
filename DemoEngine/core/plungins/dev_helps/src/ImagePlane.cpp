@@ -3,6 +3,7 @@
 
 #include <base/ZEngine.h>
 #include <common/CpuInfo.h>
+#include <common/Profiler.h>
 #include <common/Thread.h>
 #include <math/math.h>
 #include <render/RenderEngine.h>
@@ -97,6 +98,7 @@ using namespace MathWorker;
 
 bool ImagePlane::Load(std::string_view name, TexMetadata const & metadata)
 {
+	ZENGINE_ZONE("ImagePlane.Load");
     const std::string name_str = Context::Instance().ResLoaderInstance().Locate(name);
     if (name_str.empty())
     {
@@ -726,6 +728,7 @@ void ImagePlane::PrepareNormalCompression(ElementFormat normal_compression_forma
 
 void ImagePlane::FormatConversion(ElementFormat format)
 {
+	ZENGINE_ZONE("ImagePlane.FormatConversion");
 	uint32_t const tex_width = uncompressed_tex_->Width(0);
     uint32_t const tex_height = uncompressed_tex_->Height(0);
 
@@ -741,6 +744,7 @@ void ImagePlane::FormatConversion(ElementFormat format)
     auto encode_region = [block_height, tex_width, tex_height, format, row_pitch, &new_tex_data, this](
                              uint32_t region_index, uint32_t region_height)
     {
+		ZoneNamedN(tracyEncodeRegion, "ImagePlane.FormatConversion.EncodeRegion", true);
         uint32_t const this_tex_region_height = MathWorker::clamp(
             static_cast<int>(tex_height - region_index * region_height), 0, static_cast<int>(region_height));
         if (this_tex_region_height == 0)
@@ -787,10 +791,12 @@ void ImagePlane::FormatConversion(ElementFormat format)
         }
         for (uint32_t i = 0; i < num_threads; ++i)
         {
+			ZoneNamedN(tracyWaitWorkers, "ImagePlane.FormatConversion.WaitWorkers", true);
             joiners[i].wait();
         }
     }
 
+	ZoneNamedN(tracyCreateOutput, "ImagePlane.FormatConversion.CreateOutputTexture", true);
     TexturePtr new_tex = MakeSharedPtr<VirtualTexture>(Texture::TT_2D, uncompressed_tex_->Width(0), uncompressed_tex_->Height(0),
         1, 1, 1, format, false);
     ElementInitData init_data;

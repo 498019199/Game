@@ -36,7 +36,6 @@ CHANNEL_SUFFIXES = [
 	("tintByBaseMask", "tint_by_base"),
 	("rimMask", "rim"),
 	("translucency", "translucency"),
-	("diffuseWarp", "diffuse_fresnel"),  # fallback for mask1.G if present as spatial map
 	("normal", "normal"),
 	("color", "color"),
 	("cubeMap", "cubemap"),
@@ -44,7 +43,15 @@ CHANNEL_SUFFIXES = [
 	("detail", "detail"),
 ]
 
-KEEP_EXTRA = {"detail", "detail2", "cubemap"}
+# Warp LUTs stay as separate extras (mask1.G is only the spatial warp mask).
+WARP_SUFFIXES = [
+	"diffuseWarp",
+	"fresnelWarpColor",
+	"fresnelWarpRim",
+	"fresnelWarpSpec",
+]
+
+KEEP_EXTRA = {"detail", "detail2", "cubemap", *{s.lower() for s in WARP_SUFFIXES}}
 ARCHIVE_ROLES = {
 	"detail_mask",
 	"metalness",
@@ -54,8 +61,36 @@ ARCHIVE_ROLES = {
 	"tint_by_base",
 	"rim",
 	"translucency",
-	"diffuse_fresnel",
 }
+
+
+def publish_warp_maps(hero_root: Path, dry_run: bool) -> int:
+	"""Copy warp LUTs from materials/ or _source_masks/ into live materials folders."""
+	count = 0
+	materials_roots = [hero_root / "materials"]
+	if materials_roots[0].is_dir():
+		materials_roots.extend(p for p in materials_roots[0].rglob("*") if p.is_dir())
+	for directory in materials_roots:
+		if directory.name in {"_source_masks", "__pycache__"}:
+			continue
+		search_dirs = [directory]
+		archive = directory / "_source_masks"
+		if archive.is_dir():
+			search_dirs.append(archive)
+		for search_dir in search_dirs:
+			for path in sorted(search_dir.iterdir()):
+				if not path.is_file() or path.suffix.lower() != ".tga":
+					continue
+				if not any(path.stem.endswith(f"_{suffix}") for suffix in WARP_SUFFIXES):
+					continue
+				dest = directory / path.name
+				if dest.resolve() == path.resolve():
+					continue
+				print(f"  warp {path.name} -> {dest.parent.name}/")
+				count += 1
+				if not dry_run:
+					shutil.copy2(path, dest)
+	return count
 
 
 def load_gray(path: Path | None, size: tuple[int, int], default: int) -> Image.Image:
@@ -150,7 +185,7 @@ def pack_group(prefix: str, maps: dict[str, Path], archive_dir: Path, dry_run: b
 		"RGBA",
 		(
 			load_gray(maps.get("detail_mask"), size, 0),
-			load_gray(maps.get("diffuse_fresnel"), size, 0),
+			Image.new("L", size, 0),  # spatial diffuse/fresnel warp mask (often absent in exports)
 			load_gray(maps.get("metalness"), size, 0),
 			ensure_nonzero_alpha(load_gray(maps.get("self_illum"), size, 0)),
 		),
@@ -210,14 +245,18 @@ def pack_tree(root: Path, dry_run: bool) -> int:
 	return count
 
 
-def sync_to_assets(src_models: Path, dst_models: Path) -> None:
+def sync_to_assets(src_models: Path, dst_models: Path, dry_run: bool = False) -> None:
 	"""Copy packed model trees into ZEngine Assets/Models."""
 	dst_models.mkdir(parents=True, exist_ok=True)
-	for hero in ("chaos_knight", "ogre_magi"):
+	for hero in ("chaos_knight", "ogre_magi", "ancient_apparition"):
 		src = src_models / hero
 		dst = dst_models / hero
 		if not src.is_dir():
 			print(f"skip sync, missing {src}")
+			continue
+		print(f"[{hero}] publish warp LUTs")
+		publish_warp_maps(src, dry_run)
+		if dry_run:
 			continue
 		if dst.exists():
 			shutil.rmtree(dst)
@@ -265,6 +304,10 @@ def main(argv: list[str] | None = None) -> int:
 				sync_parent = args.sync.resolve()
 				hero_name = root.name
 				dst = sync_parent / hero_name
+				print(f"[{hero_name}] publish warp LUTs")
+				publish_warp_maps(root, args.dry_run)
+				if args.dry_run:
+					return 0
 				if dst.exists():
 					shutil.rmtree(dst)
 				shutil.copytree(
@@ -276,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
 			else:
 				sync_to_assets(models_root, args.sync.resolve())
 		else:
-			sync_to_assets(models_root, args.sync.resolve())
+			sync_to_assets(models_root, args.sync.resolve(), args.dry_run)
 
 	return 0
 
