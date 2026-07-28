@@ -9,13 +9,22 @@
 #include <unordered_map>
 #include <vector>
 
-struct NpcTextures
-{
-	// Mapped from UE-style packs: DA -> albedo, DCSE -> metalness_glossiness, NR -> normal.
-	std::string albedo;
-	std::string metalness_glossiness;
-	std::string normal;
-};
+	struct NpcTextures
+	{
+		// Workshop 4-map path: color->albedo, normal, mask1, mask2.
+		// Unpacked fallbacks: metalnessMask/selfIllumMask/detailMask/translucency.
+		std::string albedo;
+		std::string metalness_glossiness;
+		std::string normal;
+		std::string emissive;
+		std::string detail;
+		std::string detail2;
+		std::string detail_mask;
+		std::string cubemap;
+		std::string translucency;
+		std::string mask1;
+		std::string mask2;
+	};
 
 struct NpcPart
 {
@@ -32,6 +41,9 @@ struct NpcData
 	std::vector<std::string> models;
 	// Shared material ball applied to all mesh parts (UE MIC path or engine name).
 	std::string material;
+	// Optional RenderEffect / Technique override (e.g. SimpleAlbedoNormal.shader / SimpleAlbedoNormalTech).
+	std::string render_effect;
+	std::string render_technique;
 	NpcTextures textures;
 	// Optional per-mesh-name texture overrides; longer names are matched first.
 	std::vector<NpcPart> parts;

@@ -39,6 +39,7 @@
 !/ZEngine/Assets/Private/README.md
 /Config
 /Game/Tool/tracy
+/Game/Tool/dota2_tex/resources
 
 *.png.dds
 *.jpg.dds

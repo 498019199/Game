@@ -66,23 +66,41 @@ bool DataManager::LoadNpcConfig()
 			char const* path = entry.models[i];
 			npc.models.emplace_back(path ? path : "");
 		}
-		npc.material = entry.material ? entry.material : "";
-		npc.textures.albedo = entry.textures.albedo ? entry.textures.albedo : "";
-		npc.textures.metalness_glossiness =
-			entry.textures.metalness_glossiness ? entry.textures.metalness_glossiness : "";
-		npc.textures.normal = entry.textures.normal ? entry.textures.normal : "";
-		npc.parts.reserve(entry.part_count);
-		for (std::size_t i = 0; i < entry.part_count; ++i)
-		{
-			NpcConfigPart const& src = entry.parts[i];
-			NpcPart part;
-			part.name = src.name ? src.name : "";
-			part.textures.albedo = src.textures.albedo ? src.textures.albedo : "";
-			part.textures.metalness_glossiness =
-				src.textures.metalness_glossiness ? src.textures.metalness_glossiness : "";
-			part.textures.normal = src.textures.normal ? src.textures.normal : "";
-			npc.parts.push_back(std::move(part));
-		}
+			npc.material = entry.material ? entry.material : "";
+			npc.render_effect = entry.render_effect ? entry.render_effect : "";
+			npc.render_technique = entry.render_technique ? entry.render_technique : "";
+			npc.textures.albedo = entry.textures.albedo ? entry.textures.albedo : "";
+			npc.textures.metalness_glossiness =
+				entry.textures.metalness_glossiness ? entry.textures.metalness_glossiness : "";
+			npc.textures.normal = entry.textures.normal ? entry.textures.normal : "";
+			npc.textures.emissive = entry.textures.emissive ? entry.textures.emissive : "";
+			npc.textures.detail = entry.textures.detail ? entry.textures.detail : "";
+			npc.textures.detail2 = entry.textures.detail2 ? entry.textures.detail2 : "";
+			npc.textures.detail_mask = entry.textures.detail_mask ? entry.textures.detail_mask : "";
+			npc.textures.cubemap = entry.textures.cubemap ? entry.textures.cubemap : "";
+			npc.textures.translucency = entry.textures.translucency ? entry.textures.translucency : "";
+			npc.textures.mask1 = entry.textures.mask1 ? entry.textures.mask1 : "";
+			npc.textures.mask2 = entry.textures.mask2 ? entry.textures.mask2 : "";
+			npc.parts.reserve(entry.part_count);
+			for (std::size_t i = 0; i < entry.part_count; ++i)
+			{
+				NpcConfigPart const& src = entry.parts[i];
+				NpcPart part;
+				part.name = src.name ? src.name : "";
+				part.textures.albedo = src.textures.albedo ? src.textures.albedo : "";
+				part.textures.metalness_glossiness =
+					src.textures.metalness_glossiness ? src.textures.metalness_glossiness : "";
+				part.textures.normal = src.textures.normal ? src.textures.normal : "";
+				part.textures.emissive = src.textures.emissive ? src.textures.emissive : "";
+				part.textures.detail = src.textures.detail ? src.textures.detail : "";
+				part.textures.detail2 = src.textures.detail2 ? src.textures.detail2 : "";
+				part.textures.detail_mask = src.textures.detail_mask ? src.textures.detail_mask : "";
+				part.textures.cubemap = src.textures.cubemap ? src.textures.cubemap : "";
+				part.textures.translucency = src.textures.translucency ? src.textures.translucency : "";
+				part.textures.mask1 = src.textures.mask1 ? src.textures.mask1 : "";
+				part.textures.mask2 = src.textures.mask2 ? src.textures.mask2 : "";
+				npc.parts.push_back(std::move(part));
+			}
 		npcs_.push_back(std::move(npc));
 	}
 

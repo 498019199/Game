@@ -6,6 +6,8 @@
             "Private/Bp_F_C23/Bp_F_C23_C.FBX"
         ],
         "material": "Private/Bp_F_C23/Bp_F_C23_C_Mat",
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech",
         "textures": {
             "albedo": "Private/Bp_F_C23/Da_M_C23_C_DA.TGA",
             "metalness_glossiness": "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA",
@@ -18,6 +20,8 @@
         "models": [
             "Models/ancient_apparition/ancient_apparition_econ.fbx"
         ],
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech",
         "textures": {
             "albedo": "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga",
             "normal": "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga"
@@ -26,12 +30,16 @@
     {
         "id": 100002,
         "name": "Rabbit",
-        "model": "Models/Rabbit.obj"
+        "model": "Models/Rabbit.obj",
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech"
     },
     {
         "id": 100003,
         "name": "Spring",
-        "model": "Models/Spring.obj"
+        "model": "Models/Spring.obj",
+        "render_effect": "SimpleAlbedoNormal.shader",
+        "render_technique": "SimpleAlbedoNormalTech"
     },
     {
         "id": 100004,
@@ -39,54 +47,136 @@
         "models": [
             "Models/chaos_knight/chaos_knight_econ.fbx"
         ],
+        "render_effect": "Data2ShaderFx.shader",
+        "render_technique": "Data2ShaderFxTech",
         "parts": {
             "base": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/base/__chaos_knight_base_color.tga",
-                    "normal": "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga"
+                    "normal": "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/base/__chaos_knight_base_cubeMap.tga",
+                    "detail": "Models/chaos_knight/materials/base/__chaos_knight_base_detail.tga",
+                    "detail2": "Models/chaos_knight/materials/base/__chaos_knight_base_detail2.tga",
+                    "mask1": "Models/chaos_knight/materials/base/__chaos_knight_base_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/base/__chaos_knight_base_mask2.tga"
                 }
             },
             "head": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/chaos_knight_head_color.tga",
-                    "normal": "Models/chaos_knight/materials/chaos_knight_head_normal.tga"
+                    "normal": "Models/chaos_knight/materials/chaos_knight_head_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/chaos_knight_head_cubeMap.tga",
+                    "detail": "Models/chaos_knight/materials/chaos_knight_head_detail.tga",
+                    "mask1": "Models/chaos_knight/materials/chaos_knight_head_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_head_mask2.tga"
                 }
             },
             "weapon": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/chaos_knight_weapon_color.tga",
-                    "normal": "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga"
+                    "normal": "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/chaos_knight_weapon_cubeMap.tga",
+                    "mask1": "Models/chaos_knight/materials/chaos_knight_weapon_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_weapon_mask2.tga"
                 }
             },
             "shoulder": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/chaos_knight_shoulder_color.tga",
-                    "normal": "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga"
+                    "normal": "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/chaos_knight_shoulder_cubeMap.tga",
+                    "detail": "Models/chaos_knight/materials/chaos_knight_shoulder_detail.tga",
+                    "detail2": "Models/chaos_knight/materials/chaos_knight_shoulder_detail2.tga",
+                    "mask1": "Models/chaos_knight/materials/chaos_knight_shoulder_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_shoulder_mask2.tga"
                 }
             },
             "mount": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/chaos_knight_mount_color.tga",
-                    "normal": "Models/chaos_knight/materials/chaos_knight_mount_normal.tga"
+                    "normal": "Models/chaos_knight/materials/chaos_knight_mount_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/chaos_knight_mount_cubeMap.tga",
+                    "detail": "Models/chaos_knight/materials/chaos_knight_mount_detail.tga",
+                    "detail2": "Models/chaos_knight/materials/chaos_knight_mount_detail2.tga",
+                    "mask1": "Models/chaos_knight/materials/chaos_knight_mount_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_mount_mask2.tga"
                 }
             },
             "offhand": {
                 "textures": {
                     "albedo": "Models/chaos_knight/materials/chaos_knight_offhand_color.tga",
-                    "normal": "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga"
+                    "normal": "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga",
+                    "cubeMap": "Models/chaos_knight/materials/chaos_knight_offhand_cubeMap.tga",
+                    "detail2": "Models/chaos_knight/materials/chaos_knight_offhand_detail2.tga",
+                    "mask1": "Models/chaos_knight/materials/chaos_knight_offhand_mask1.tga",
+                    "mask2": "Models/chaos_knight/materials/chaos_knight_offhand_mask2.tga"
                 }
             }
         }
     },
     {
         "id": 100005,
-        "name": "juggernaut",
+        "name": "ogre_magi",
         "models": [
-            "Models/juggernaut/juggernaut/juggernaut_econ.fbx"
+            "Models/ogre_magi/ogre_magi_econ.fbx"
         ],
-        "textures": {
-            "albedo": "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_color.tga",
-            "normal": "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_normal.tga"
+        "render_effect": "Data2ShaderFx.shader",
+        "render_technique": "Data2ShaderFxTech",
+        "parts": {
+            "Base": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/base/__ogre_magi_base_color.tga",
+                    "normal": "Models/ogre_magi/materials/base/__ogre_magi_base_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/base/__ogre_magi_base_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/base/__ogre_magi_base_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/base/__ogre_magi_base_mask2.tga"
+                }
+            },
+            "Head": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/ogre_magi_head_color.tga",
+                    "normal": "Models/ogre_magi/materials/ogre_magi_head_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/ogre_magi_head_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/ogre_magi_head_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_head_mask2.tga"
+                }
+            },
+            "Arms": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/ogre_magi_arms_color.tga",
+                    "normal": "Models/ogre_magi/materials/ogre_magi_arms_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/ogre_magi_arms_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/ogre_magi_arms_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_arms_mask2.tga"
+                }
+            },
+            "Back": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/ogre_magi_back_color.tga",
+                    "normal": "Models/ogre_magi/materials/ogre_magi_back_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/ogre_magi_back_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/ogre_magi_back_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_back_mask2.tga"
+                }
+            },
+            "Weapon": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/ogre_magi_weapon_color.tga",
+                    "normal": "Models/ogre_magi/materials/ogre_magi_weapon_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/ogre_magi_weapon_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/ogre_magi_weapon_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_weapon_mask2.tga"
+                }
+            },
+            "Belt": {
+                "textures": {
+                    "albedo": "Models/ogre_magi/materials/ogre_magi_belt_color.tga",
+                    "normal": "Models/ogre_magi/materials/ogre_magi_belt_normal.tga",
+                    "cubeMap": "Models/ogre_magi/materials/ogre_magi_belt_cubeMap.tga",
+                    "mask1": "Models/ogre_magi/materials/ogre_magi_belt_mask1.tga",
+                    "mask2": "Models/ogre_magi/materials/ogre_magi_belt_mask2.tga"
+                }
+            }
         }
     }
 ]

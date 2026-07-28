@@ -28,10 +28,26 @@ def optional_string(item: dict, key: str, index: int, json_path: Path) -> str:
 	return value
 
 
+def empty_textures() -> dict[str, str]:
+	return {
+		"albedo": "",
+		"metalness_glossiness": "",
+		"normal": "",
+		"emissive": "",
+		"detail": "",
+		"detail2": "",
+		"detail_mask": "",
+		"cubemap": "",
+		"translucency": "",
+		"mask1": "",
+		"mask2": "",
+	}
+
+
 def load_textures(container: dict, context: str, json_path: Path) -> dict[str, str]:
 	textures = container.get("textures")
 	if textures is None:
-		return {"albedo": "", "metalness_glossiness": "", "normal": ""}
+		return empty_textures()
 	if not isinstance(textures, dict):
 		raise ValueError(f"{json_path}: {context}.textures must be an object")
 
@@ -45,11 +61,21 @@ def load_textures(container: dict, context: str, json_path: Path) -> dict[str, s
 			return value
 		return ""
 
-	# Engine slot names preferred; UE-style DA/DCSE/NR aliases accepted.
+	# Engine slot names preferred; Dota2 / UE-style aliases accepted.
 	return {
-		"albedo": pick("albedo", "da", "DA"),
-		"metalness_glossiness": pick("metalness_glossiness", "dcse", "DCSE"),
+		"albedo": pick("albedo", "color", "da", "DA"),
+		"metalness_glossiness": pick(
+			"metalness_glossiness", "metalnessMask", "metalness_mask", "dcse", "DCSE"
+		),
 		"normal": pick("normal", "nr", "NR"),
+		"emissive": pick("emissive", "selfIllumMask", "selfillum_mask", "SelfillumMask"),
+		"detail": pick("detail"),
+		"detail2": pick("detail2"),
+		"detail_mask": pick("detail_mask", "detailMask"),
+		"cubemap": pick("cubemap", "cubeMap", "cube_map"),
+		"translucency": pick("translucency"),
+		"mask1": pick("mask1"),
+		"mask2": pick("mask2"),
 	}
 
 
@@ -66,10 +92,39 @@ def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
 			raise ValueError(f"{json_path}: entry[{index}].parts keys must be non-empty strings")
 		if not isinstance(part_value, dict):
 			raise ValueError(f"{json_path}: entry[{index}].parts.{part_name} must be an object")
+		# Accept either {"textures": {...}} or textures fields directly on the part.
+		tex_container = part_value
+		if "textures" not in part_value and any(
+			key in part_value
+			for key in (
+				"albedo",
+				"color",
+				"da",
+				"DA",
+				"normal",
+				"nr",
+				"NR",
+				"metalness_glossiness",
+				"metalnessMask",
+				"dcse",
+				"DCSE",
+				"emissive",
+				"selfIllumMask",
+				"detail",
+				"detail2",
+				"detailMask",
+				"cubemap",
+				"cubeMap",
+				"translucency",
+				"mask1",
+				"mask2",
+			)
+		):
+			tex_container = {"textures": part_value}
 		resolved.append(
 			{
 				"name": part_name,
-				"textures": load_textures(part_value, f"entry[{index}].parts.{part_name}", json_path),
+				"textures": load_textures(tex_container, f"entry[{index}].parts.{part_name}", json_path),
 			}
 		)
 
@@ -121,6 +176,11 @@ def load_entries(json_path: Path) -> list[dict]:
 				"name": name,
 				"models": resolved,
 				"material": optional_string(item, "material", index, json_path),
+				# Prefer snake_case; accept PascalCase aliases used in engine naming.
+				"render_effect": optional_string(item, "render_effect", index, json_path)
+				or optional_string(item, "RenderEffect", index, json_path),
+				"render_technique": optional_string(item, "render_technique", index, json_path)
+				or optional_string(item, "RenderTechnique", index, json_path),
 				"textures": load_textures(item, f"entry[{index}]", json_path),
 				"parts": load_parts(item, index, json_path),
 			}
@@ -148,6 +208,14 @@ struct NpcConfigTextures
 	char const* albedo;
 	char const* metalness_glossiness;
 	char const* normal;
+	char const* emissive;
+	char const* detail;
+	char const* detail2;
+	char const* detail_mask;
+	char const* cubemap;
+	char const* translucency;
+	char const* mask1;
+	char const* mask2;
 };
 
 struct NpcConfigPart
@@ -163,6 +231,8 @@ struct NpcConfigEntry
 	char const* const* models;
 	std::size_t model_count;
 	char const* material;
+	char const* render_effect;
+	char const* render_technique;
 	NpcConfigTextures textures;
 	NpcConfigPart const* parts;
 	std::size_t part_count;
@@ -186,7 +256,15 @@ def format_textures(tex: dict[str, str]) -> str:
 	return (
 		f'{{ "{cpp_escape(tex["albedo"])}", '
 		f'"{cpp_escape(tex["metalness_glossiness"])}", '
-		f'"{cpp_escape(tex["normal"])}" }}'
+		f'"{cpp_escape(tex["normal"])}", '
+		f'"{cpp_escape(tex["emissive"])}", '
+		f'"{cpp_escape(tex["detail"])}", '
+		f'"{cpp_escape(tex["detail2"])}", '
+		f'"{cpp_escape(tex["detail_mask"])}", '
+		f'"{cpp_escape(tex["cubemap"])}", '
+		f'"{cpp_escape(tex["translucency"])}", '
+		f'"{cpp_escape(tex["mask1"])}", '
+		f'"{cpp_escape(tex["mask2"])}" }}'
 	)
 
 
@@ -246,7 +324,10 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 			lines.append(
 				"\t\t{ "
 				f'{entry["id"]}, "{cpp_escape(entry["name"])}", {array_name}, {count}, '
-				f'"{cpp_escape(entry["material"])}", {format_textures(tex)}, '
+				f'"{cpp_escape(entry["material"])}", '
+				f'"{cpp_escape(entry["render_effect"])}", '
+				f'"{cpp_escape(entry["render_technique"])}", '
+				f"{format_textures(tex)}, "
 				f"{parts_ptr}, {part_count} }},"
 			)
 		lines.append("\t};")
@@ -257,7 +338,7 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 				"",
 				"\tNpcConfigEntry const kNpcEntries[] =",
 				"\t{",
-				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", { "", "", "" }, nullptr, 0 },',
+				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", "", "", { "", "", "", "", "", "", "", "", "" }, nullptr, 0 },',
 				"\t};",
 			]
 		)

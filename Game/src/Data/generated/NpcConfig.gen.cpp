@@ -32,27 +32,37 @@ namespace
 
 	NpcConfigPart const kNpc_100004_Parts[] =
 	{
-		{ "shoulder", { "Models/chaos_knight/materials/chaos_knight_shoulder_color.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga" } },
-		{ "offhand", { "Models/chaos_knight/materials/chaos_knight_offhand_color.tga", "", "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga" } },
-		{ "weapon", { "Models/chaos_knight/materials/chaos_knight_weapon_color.tga", "", "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga" } },
-		{ "mount", { "Models/chaos_knight/materials/chaos_knight_mount_color.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_normal.tga" } },
-		{ "base", { "Models/chaos_knight/materials/base/__chaos_knight_base_color.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga" } },
-		{ "head", { "Models/chaos_knight/materials/chaos_knight_head_color.tga", "", "Models/chaos_knight/materials/chaos_knight_head_normal.tga" } },
+		{ "shoulder", { "Models/chaos_knight/materials/chaos_knight_shoulder_color.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_normal.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_detail.tga", "Models/chaos_knight/materials/chaos_knight_shoulder_detail2.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_cubeMap.tga", "", "Models/chaos_knight/materials/chaos_knight_shoulder_mask1.tga", "Models/chaos_knight/materials/chaos_knight_shoulder_mask2.tga" } },
+		{ "offhand", { "Models/chaos_knight/materials/chaos_knight_offhand_color.tga", "", "Models/chaos_knight/materials/chaos_knight_offhand_normal.tga", "", "", "Models/chaos_knight/materials/chaos_knight_offhand_detail2.tga", "", "Models/chaos_knight/materials/chaos_knight_offhand_cubeMap.tga", "", "Models/chaos_knight/materials/chaos_knight_offhand_mask1.tga", "Models/chaos_knight/materials/chaos_knight_offhand_mask2.tga" } },
+		{ "weapon", { "Models/chaos_knight/materials/chaos_knight_weapon_color.tga", "", "Models/chaos_knight/materials/chaos_knight_weapon_normal.tga", "", "", "", "", "Models/chaos_knight/materials/chaos_knight_weapon_cubeMap.tga", "", "Models/chaos_knight/materials/chaos_knight_weapon_mask1.tga", "Models/chaos_knight/materials/chaos_knight_weapon_mask2.tga" } },
+		{ "mount", { "Models/chaos_knight/materials/chaos_knight_mount_color.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_normal.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_detail.tga", "Models/chaos_knight/materials/chaos_knight_mount_detail2.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_cubeMap.tga", "", "Models/chaos_knight/materials/chaos_knight_mount_mask1.tga", "Models/chaos_knight/materials/chaos_knight_mount_mask2.tga" } },
+		{ "base", { "Models/chaos_knight/materials/base/__chaos_knight_base_color.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_normal.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_detail.tga", "Models/chaos_knight/materials/base/__chaos_knight_base_detail2.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_cubeMap.tga", "", "Models/chaos_knight/materials/base/__chaos_knight_base_mask1.tga", "Models/chaos_knight/materials/base/__chaos_knight_base_mask2.tga" } },
+		{ "head", { "Models/chaos_knight/materials/chaos_knight_head_color.tga", "", "Models/chaos_knight/materials/chaos_knight_head_normal.tga", "", "Models/chaos_knight/materials/chaos_knight_head_detail.tga", "", "", "Models/chaos_knight/materials/chaos_knight_head_cubeMap.tga", "", "Models/chaos_knight/materials/chaos_knight_head_mask1.tga", "Models/chaos_knight/materials/chaos_knight_head_mask2.tga" } },
 	};
 
 	char const* const kNpc_100005_Models[] =
 	{
-		"Models/juggernaut/juggernaut/juggernaut_econ.fbx",
+		"Models/ogre_magi/ogre_magi_econ.fbx",
+	};
+
+	NpcConfigPart const kNpc_100005_Parts[] =
+	{
+		{ "Weapon", { "Models/ogre_magi/materials/ogre_magi_weapon_color.tga", "", "Models/ogre_magi/materials/ogre_magi_weapon_normal.tga", "", "", "", "", "Models/ogre_magi/materials/ogre_magi_weapon_cubeMap.tga", "", "Models/ogre_magi/materials/ogre_magi_weapon_mask1.tga", "Models/ogre_magi/materials/ogre_magi_weapon_mask2.tga" } },
+		{ "Base", { "Models/ogre_magi/materials/base/__ogre_magi_base_color.tga", "", "Models/ogre_magi/materials/base/__ogre_magi_base_normal.tga", "", "", "", "", "Models/ogre_magi/materials/base/__ogre_magi_base_cubeMap.tga", "", "Models/ogre_magi/materials/base/__ogre_magi_base_mask1.tga", "Models/ogre_magi/materials/base/__ogre_magi_base_mask2.tga" } },
+		{ "Head", { "Models/ogre_magi/materials/ogre_magi_head_color.tga", "", "Models/ogre_magi/materials/ogre_magi_head_normal.tga", "", "", "", "", "Models/ogre_magi/materials/ogre_magi_head_cubeMap.tga", "", "Models/ogre_magi/materials/ogre_magi_head_mask1.tga", "Models/ogre_magi/materials/ogre_magi_head_mask2.tga" } },
+		{ "Arms", { "Models/ogre_magi/materials/ogre_magi_arms_color.tga", "", "Models/ogre_magi/materials/ogre_magi_arms_normal.tga", "", "", "", "", "Models/ogre_magi/materials/ogre_magi_arms_cubeMap.tga", "", "Models/ogre_magi/materials/ogre_magi_arms_mask1.tga", "Models/ogre_magi/materials/ogre_magi_arms_mask2.tga" } },
+		{ "Back", { "Models/ogre_magi/materials/ogre_magi_back_color.tga", "", "Models/ogre_magi/materials/ogre_magi_back_normal.tga", "", "", "", "", "Models/ogre_magi/materials/ogre_magi_back_cubeMap.tga", "", "Models/ogre_magi/materials/ogre_magi_back_mask1.tga", "Models/ogre_magi/materials/ogre_magi_back_mask2.tga" } },
+		{ "Belt", { "Models/ogre_magi/materials/ogre_magi_belt_color.tga", "", "Models/ogre_magi/materials/ogre_magi_belt_normal.tga", "", "", "", "", "Models/ogre_magi/materials/ogre_magi_belt_cubeMap.tga", "", "Models/ogre_magi/materials/ogre_magi_belt_mask1.tga", "Models/ogre_magi/materials/ogre_magi_belt_mask2.tga" } },
 	};
 
 	NpcConfigEntry const kNpcEntries[] =
 	{
-		{ 100000, "Bp_F_C23", kNpc_100000_Models, 1, "Private/Bp_F_C23/Bp_F_C23_C_Mat", { "Private/Bp_F_C23/Da_M_C23_C_DA.TGA", "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA", "Private/Bp_F_C23/Da_M_C23_C_NR.TGA" }, nullptr, 0 },
-		{ 100001, "ancient_apparition", kNpc_100001_Models, 1, "", { "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga", "", "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga" }, nullptr, 0 },
-		{ 100002, "Rabbit", kNpc_100002_Models, 1, "", { "", "", "" }, nullptr, 0 },
-		{ 100003, "Spring", kNpc_100003_Models, 1, "", { "", "", "" }, nullptr, 0 },
-		{ 100004, "chaos_knight", kNpc_100004_Models, 1, "", { "", "", "" }, kNpc_100004_Parts, 6 },
-		{ 100005, "juggernaut", kNpc_100005_Models, 1, "", { "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_color.tga", "", "Models/juggernaut/juggernaut/materials/base/__juggernaut_base_normal.tga" }, nullptr, 0 },
+		{ 100000, "Bp_F_C23", kNpc_100000_Models, 1, "Private/Bp_F_C23/Bp_F_C23_C_Mat", "SimpleAlbedoNormal.shader", "SimpleAlbedoNormalTech", { "Private/Bp_F_C23/Da_M_C23_C_DA.TGA", "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA", "Private/Bp_F_C23/Da_M_C23_C_NR.TGA", "", "", "", "", "", "", "", "" }, nullptr, 0 },
+		{ 100001, "ancient_apparition", kNpc_100001_Models, 1, "", "SimpleAlbedoNormal.shader", "SimpleAlbedoNormalTech", { "Models/ancient_apparition/materials/ancient_apparition_shoulder_color.tga", "", "Models/ancient_apparition/materials/ancient_apparition_shoulder_normal.tga", "", "", "", "", "", "", "", "" }, nullptr, 0 },
+		{ 100002, "Rabbit", kNpc_100002_Models, 1, "", "SimpleAlbedoNormal.shader", "SimpleAlbedoNormalTech", { "", "", "", "", "", "", "", "", "", "", "" }, nullptr, 0 },
+		{ 100003, "Spring", kNpc_100003_Models, 1, "", "SimpleAlbedoNormal.shader", "SimpleAlbedoNormalTech", { "", "", "", "", "", "", "", "", "", "", "" }, nullptr, 0 },
+		{ 100004, "chaos_knight", kNpc_100004_Models, 1, "", "Data2ShaderFx.shader", "Data2ShaderFxTech", { "", "", "", "", "", "", "", "", "", "", "" }, kNpc_100004_Parts, 6 },
+		{ 100005, "ogre_magi", kNpc_100005_Models, 1, "", "Data2ShaderFx.shader", "Data2ShaderFxTech", { "", "", "", "", "", "", "", "", "", "", "" }, kNpc_100005_Parts, 6 },
 	};
 } // namespace
 

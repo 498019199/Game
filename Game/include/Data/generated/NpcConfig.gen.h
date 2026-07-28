@@ -14,6 +14,14 @@ struct NpcConfigTextures
 	char const* albedo;
 	char const* metalness_glossiness;
 	char const* normal;
+	char const* emissive;
+	char const* detail;
+	char const* detail2;
+	char const* detail_mask;
+	char const* cubemap;
+	char const* translucency;
+	char const* mask1;
+	char const* mask2;
 };
 
 struct NpcConfigPart
@@ -29,6 +37,8 @@ struct NpcConfigEntry
 	char const* const* models;
 	std::size_t model_count;
 	char const* material;
+	char const* render_effect;
+	char const* render_technique;
 	NpcConfigTextures textures;
 	NpcConfigPart const* parts;
 	std::size_t part_count;

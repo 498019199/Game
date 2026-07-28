@@ -40,10 +40,14 @@ void DetailedMesh::OnRenderBegin()
 	{
 		*mvp = model_mat_ * app.ActiveCamera().ViewProjMatrix();
 	}
+	if (auto* eye_os = effect_->ParameterByName("eye_pos_os"))
+	{
+		*eye_os = MathWorker::transform_coord(app.ActiveCamera().EyePos(), inv_model_mat_);
+	}
 	// Force raw albedo once to verify sampling; set to 0 after textures look correct.
 	if (auto* dbg = effect_->ParameterByName("debug_albedo_only"))
 	{
-		*dbg = 1.0f;
+		*dbg = 0.0f;
 	}
 }
 

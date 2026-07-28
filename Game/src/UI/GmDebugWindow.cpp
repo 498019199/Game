@@ -14,6 +14,7 @@
 #include <game/Model.h>
 #include <game/gas/CombatService.h>
 #include <render/Mesh.h>
+#include <render/RenderEffect.h>
 #include <render/RenderMaterial.h>
 #include <render/Texture.h>
 #include <render/RenderFactory.h>
@@ -26,10 +27,13 @@ namespace
 constexpr char const* kDocPath = "rmlui/gm_debug.rml";
 constexpr char const* kDocId = "GmDebugWindow";
 
-bool HasAnyTexture(NpcTextures const& textures)
-{
-	return !textures.albedo.empty() || !textures.metalness_glossiness.empty() || !textures.normal.empty();
-}
+	bool HasAnyTexture(NpcTextures const& textures)
+	{
+		return !textures.albedo.empty() || !textures.metalness_glossiness.empty() || !textures.normal.empty()
+			|| !textures.emissive.empty() || !textures.detail.empty() || !textures.detail2.empty()
+			|| !textures.detail_mask.empty() || !textures.cubemap.empty() || !textures.translucency.empty()
+			|| !textures.mask1.empty() || !textures.mask2.empty();
+	}
 
 std::string ToLowerAscii(std::string value)
 {
@@ -37,6 +41,118 @@ std::string ToLowerAscii(std::string value)
 		return static_cast<char>(std::tolower(ch));
 	});
 	return value;
+}
+
+// color.tga / _color.TGA -> sibling map name (metalnessMask, selfIllumMask, ...).
+std::string DeriveColorSibling(std::string const& albedo_path, std::string_view suffix)
+{
+	if (albedo_path.empty() || suffix.empty())
+	{
+		return {};
+	}
+
+	std::string const lower = ToLowerAscii(albedo_path);
+	std::string_view const tokens[] = {"_color.", "-color.", "color."};
+	for (std::string_view token : tokens)
+	{
+		auto const pos = lower.rfind(token);
+		if (pos == std::string::npos)
+		{
+			continue;
+		}
+		std::string out = albedo_path;
+		std::string replace(suffix);
+		replace.append(token.substr(token.size() - 1)); // keep '.'
+		out.replace(pos, token.size(), replace);
+		return out;
+	}
+	return {};
+}
+
+std::string ResolveExistingTexturePath(std::string const& configured, std::string const& albedo, std::string_view sibling_suffix)
+{
+	auto& res_loader = Context::Instance().ResLoaderInstance();
+	auto exists = [&](std::string const& path) {
+		return !path.empty()
+			&& (!res_loader.Locate(path).empty() || !res_loader.Locate(path + ".dds").empty());
+	};
+
+	if (exists(configured))
+	{
+		return configured;
+	}
+	std::string const derived = DeriveColorSibling(albedo, sibling_suffix);
+	if (exists(derived))
+	{
+		return derived;
+	}
+	return configured.empty() ? derived : configured;
+}
+
+	NpcTextures ResolveNpcTextures(NpcTextures const& src)
+	{
+		NpcTextures out = src;
+		out.mask1 = ResolveExistingTexturePath(src.mask1, src.albedo, "mask1");
+		out.mask2 = ResolveExistingTexturePath(src.mask2, src.albedo, "mask2");
+		out.detail = ResolveExistingTexturePath(src.detail, src.albedo, "detail");
+		out.detail2 = ResolveExistingTexturePath(src.detail2, src.albedo, "detail2");
+		out.cubemap = ResolveExistingTexturePath(src.cubemap, src.albedo, "cubeMap");
+		if (out.normal.empty())
+		{
+			out.normal = ResolveExistingTexturePath({}, src.albedo, "normal");
+		}
+		// Packed workshop maps absorb metalness/selfIllum/detailMask/translucency.
+		if (out.mask1.empty())
+		{
+			out.metalness_glossiness =
+				ResolveExistingTexturePath(src.metalness_glossiness, src.albedo, "metalnessMask");
+			out.emissive = ResolveExistingTexturePath(src.emissive, src.albedo, "selfIllumMask");
+			out.detail_mask = ResolveExistingTexturePath(src.detail_mask, src.albedo, "detailMask");
+			out.translucency = ResolveExistingTexturePath(src.translucency, src.albedo, "translucency");
+		}
+		else
+		{
+			out.metalness_glossiness.clear();
+			out.emissive.clear();
+			out.detail_mask.clear();
+			out.translucency.clear();
+		}
+		return out;
+	}
+
+ShaderResourceViewPtr LoadNpcTextureSrv(std::string const& tex_path)
+{
+	if (tex_path.empty())
+	{
+		return {};
+	}
+
+	auto& context = Context::Instance();
+	if (!context.RenderFactoryValid())
+	{
+		return {};
+	}
+
+	auto& res_loader = context.ResLoaderInstance();
+	if (res_loader.Locate(tex_path).empty() && res_loader.Locate(tex_path + ".dds").empty())
+	{
+		LogError() << "ApplyNpcMaterial: texture not found: " << tex_path << std::endl;
+		return {};
+	}
+
+	auto& rf = context.RenderFactoryInstance();
+	auto tex = SyncLoadTexture(tex_path, EAH_GPU_Read | EAH_Immutable);
+	if (!tex)
+	{
+		LogError() << "ApplyNpcMaterial: SyncLoadTexture failed: " << tex_path << std::endl;
+		return {};
+	}
+	auto srv = rf.MakeTextureSrv(tex);
+	if (!srv)
+	{
+		LogError() << "ApplyNpcMaterial: MakeTextureSrv failed: " << tex_path << std::endl;
+	}
+	return srv;
 }
 
 void BindNpcTextureSlot(RenderMaterial& mtl, RenderMaterial::TextureSlot slot, std::string const& tex_path)
@@ -47,40 +163,38 @@ void BindNpcTextureSlot(RenderMaterial& mtl, RenderMaterial::TextureSlot slot, s
 	}
 
 	mtl.TextureName(slot, tex_path);
+	if (auto srv = LoadNpcTextureSrv(tex_path))
+	{
+		mtl.Texture(slot, std::move(srv));
+	}
+}
 
-	auto& context = Context::Instance();
-	if (!context.RenderFactoryValid())
+void SetEffectTextureParam(RenderEffect& effect, char const* name, std::string const& tex_path, char const* enabled_name)
+{
+	auto* param = effect.ParameterByName(name);
+	auto* enabled = enabled_name ? effect.ParameterByName(enabled_name) : nullptr;
+	if (!param)
 	{
 		return;
 	}
 
-		auto& res_loader = context.ResLoaderInstance();
-		if (res_loader.Locate(tex_path).empty() && res_loader.Locate(tex_path + ".dds").empty())
+	if (auto srv = LoadNpcTextureSrv(tex_path))
+	{
+		*param = srv;
+		if (enabled)
 		{
-			LogError() << "ApplyNpcMaterial: texture not found: " << tex_path << std::endl;
-			return;
+			*enabled = 1;
 		}
-
-		// Load by source name (e.g. foo.tga). TextureLoadingDesc maps to foo.tga.dds + foo.tga.kmeta.
-		// Passing foo.tga.dds as the resource name breaks metadata lookup (looks for foo.tga.dds.kmeta).
-		auto& rf = context.RenderFactoryInstance();
-		auto tex = SyncLoadTexture(tex_path, EAH_GPU_Read | EAH_Immutable);
-		if (!tex)
-		{
-			LogError() << "ApplyNpcMaterial: SyncLoadTexture failed: " << tex_path << std::endl;
-			return;
-		}
-		auto srv = rf.MakeTextureSrv(tex);
-		if (!srv)
-		{
-			LogError() << "ApplyNpcMaterial: MakeTextureSrv failed: " << tex_path << std::endl;
-			return;
-		}
-		mtl.Texture(slot, std::move(srv));
 	}
+	else if (enabled)
+	{
+		*enabled = 0;
+	}
+}
 
-void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_name, NpcTextures const& textures)
+void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_name, NpcTextures const& textures_in)
 {
+	NpcTextures const textures = ResolveNpcTextures(textures_in);
 	bool const has_textures = HasAnyTexture(textures);
 	if (material_name.empty() && !has_textures)
 	{
@@ -92,7 +206,7 @@ void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_na
 		mtl.Name(material_name);
 	}
 
-	// FBX/MIC often leave diffuse/base color at 0; SubSurface does albedo *= map, so black tint kills all color.
+	// FBX/MIC often leave diffuse/base color at 0; albedo *= map, so black tint kills all color.
 	if (has_textures)
 	{
 		mtl.Albedo(float4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -102,10 +216,48 @@ void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_na
 		}
 	}
 
-	BindNpcTextureSlot(mtl, RenderMaterial::TS_Albedo, textures.albedo);
-	BindNpcTextureSlot(mtl, RenderMaterial::TS_MetalnessGlossiness, textures.metalness_glossiness);
-	BindNpcTextureSlot(mtl, RenderMaterial::TS_Normal, textures.normal);
-}
+		BindNpcTextureSlot(mtl, RenderMaterial::TS_Albedo, textures.albedo);
+		BindNpcTextureSlot(mtl, RenderMaterial::TS_MetalnessGlossiness, textures.metalness_glossiness);
+		if ((!textures.metalness_glossiness.empty() || !textures.mask1.empty()) && mtl.Metalness() <= 0.0f)
+		{
+			// metalness scales factor.x; keep base at 1 so the mask is visible.
+			mtl.Metalness(1.0f);
+		}
+		BindNpcTextureSlot(mtl, RenderMaterial::TS_Normal, textures.normal);
+		BindNpcTextureSlot(mtl, RenderMaterial::TS_Emissive, textures.emissive);
+	}
+
+	void ApplyData2ExtraTextures(RenderEffect& effect, NpcTextures const& textures_in)
+	{
+		NpcTextures const textures = ResolveNpcTextures(textures_in);
+		SetEffectTextureParam(effect, "mask1_tex", textures.mask1, "mask1_map_enabled");
+		SetEffectTextureParam(effect, "mask2_tex", textures.mask2, "mask2_map_enabled");
+		SetEffectTextureParam(effect, "detail_tex", textures.detail, "detail_map_enabled");
+		SetEffectTextureParam(effect, "detail2_tex", textures.detail2, "detail2_map_enabled");
+		SetEffectTextureParam(effect, "detail_mask_tex", textures.detail_mask, "detail_mask_enabled");
+		bool const has_detail_mask = !textures.mask1.empty() || !textures.detail_mask.empty();
+		// detail1 requires mask; detail2 can run without mask (dmask=1).
+		if (textures.detail.empty() || !has_detail_mask)
+		{
+			if (auto* enabled = effect.ParameterByName("detail_map_enabled"))
+			{
+				*enabled = 0;
+			}
+		}
+		if (textures.detail2.empty())
+		{
+			if (auto* enabled = effect.ParameterByName("detail2_map_enabled"))
+			{
+				*enabled = 0;
+			}
+		}
+		SetEffectTextureParam(effect, "cubemap_tex", textures.cubemap, "cubemap_map_enabled");
+		SetEffectTextureParam(effect, "translucency_tex", textures.translucency, "translucency_map_enabled");
+		if (auto* selfillum = effect.ParameterByName("selfillum_map_enabled"))
+		{
+			*selfillum = (!textures.mask1.empty() || !textures.emissive.empty()) ? 1 : 0;
+		}
+	}
 
 NpcPart const* FindPartForMeshName(std::string const& mesh_name_lower, std::vector<NpcPart> const& parts)
 {
@@ -214,6 +366,58 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 			ApplyTexturesToMaterial(*mtl, fallback_mtl_name, *fallback_tex);
 		}
 }
+
+void ApplyNpcRenderEffect(RenderModel& model, NpcData const& npc)
+{
+	if (npc.render_effect.empty())
+	{
+		return;
+	}
+
+	RenderEffectPtr effect_template = SyncLoadRenderEffect(npc.render_effect);
+	if (!effect_template)
+	{
+		LogError() << "ApplyNpcRenderEffect: failed to load effect '" << npc.render_effect << "' for npc "
+				   << npc.name << std::endl;
+		return;
+	}
+
+	if (npc.render_technique.empty())
+	{
+		LogError() << "ApplyNpcRenderEffect: render_technique is empty for npc " << npc.name << std::endl;
+		return;
+	}
+
+	if (!effect_template->TechniqueByName(npc.render_technique))
+	{
+		LogError() << "ApplyNpcRenderEffect: technique '" << npc.render_technique << "' not found in '"
+				   << npc.render_effect << "' for npc " << npc.name << std::endl;
+		return;
+	}
+
+	NpcTextures const* fallback_tex = HasAnyTexture(npc.textures) ? &npc.textures
+		: (!npc.parts.empty() ? &npc.parts.front().textures : nullptr);
+
+	model.ForEachMesh([&](Renderable& mesh) {
+		auto& static_mesh = CommonWorker::checked_cast<StaticMesh&>(mesh);
+		RenderEffectPtr mesh_effect = effect_template->Clone();
+		RenderTechnique* tech = mesh_effect->TechniqueByName(npc.render_technique);
+		static_mesh.Technique(mesh_effect, tech);
+
+		NpcTextures const* tex = fallback_tex;
+		std::string mesh_name;
+		CommonWorker::Convert(mesh_name, static_mesh.Name());
+		if (NpcPart const* part = FindPartForMeshName(ToLowerAscii(mesh_name), npc.parts))
+		{
+			tex = &part->textures;
+		}
+		if (tex)
+		{
+			ApplyData2ExtraTextures(*mesh_effect, *tex);
+		}
+	});
+}
+
 }
 
 GmDebugWindow::GmDebugWindow() = default;
@@ -412,6 +616,7 @@ void GmDebugWindow::CreateNpc(std::string_view id_text)
 			[pNpcData](RenderModel& loaded_model)
 			{
 				ApplyNpcMaterial(loaded_model, *pNpcData);
+				ApplyNpcRenderEffect(loaded_model, *pNpcData);
 				loaded_model.RootNode()->TransformToParent(MathWorker::translation(0.0f, 0.0f, 0.0f));
 				AddToSceneRootHelper(loaded_model);
 			},

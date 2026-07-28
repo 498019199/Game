@@ -3808,7 +3808,7 @@ namespace RenderWorker
 			for (uint32_t z = 0; z < src_depth; ++z)
 			{
 				codec->EncodeMem(src_width, src_height, dst, dst_row_pitch, dst_slice_pitch, src, src_row_pitch, src_slice_pitch,
-					TCM_Quality);
+					TCM_Speed);
 
 				src += src_slice_pitch;
 				dst += dst_slice_pitch;
