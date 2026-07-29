@@ -1,0 +1,83 @@
+{
+	"name": "ogre_magi",
+	"models": [
+		"Models/ogre_magi/ogre_magi_econ.fbx"
+	],
+	"render_effect": "Data2ShaderFx.shader",
+	"render_technique": "Data2ShaderFxTech",
+	"parts": {
+		"Base": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/base/__ogre_magi_base_color.tga",
+				"normal": "Textures/Model/ogre_magi/base/__ogre_magi_base_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/base/__ogre_magi_base_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/base/__ogre_magi_base_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/base/__ogre_magi_base_mask2.tga",
+				"diffuseWarp": "Textures/Model/ogre_magi/base/__ogre_magi_base_diffuseWarp.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/base/__ogre_magi_base_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/base/__ogre_magi_base_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/base/__ogre_magi_base_fresnelWarpSpec.tga"
+			}
+		},
+		"Head": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/ogre_magi_head_color.tga",
+				"normal": "Textures/Model/ogre_magi/ogre_magi_head_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/ogre_magi_head_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/ogre_magi_head_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/ogre_magi_head_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/ogre_magi_head_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/ogre_magi_head_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/ogre_magi_head_fresnelWarpSpec.tga"
+			}
+		},
+		"Arms": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/ogre_magi_arms_color.tga",
+				"normal": "Textures/Model/ogre_magi/ogre_magi_arms_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/ogre_magi_arms_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/ogre_magi_arms_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/ogre_magi_arms_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/ogre_magi_arms_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/ogre_magi_arms_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/ogre_magi_arms_fresnelWarpSpec.tga"
+			}
+		},
+		"Back": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/ogre_magi_back_color.tga",
+				"normal": "Textures/Model/ogre_magi/ogre_magi_back_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/ogre_magi_back_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/ogre_magi_back_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/ogre_magi_back_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/ogre_magi_back_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/ogre_magi_back_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/ogre_magi_back_fresnelWarpSpec.tga"
+			}
+		},
+		"Weapon": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/ogre_magi_weapon_color.tga",
+				"normal": "Textures/Model/ogre_magi/ogre_magi_weapon_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/ogre_magi_weapon_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/ogre_magi_weapon_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/ogre_magi_weapon_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/ogre_magi_weapon_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/ogre_magi_weapon_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/ogre_magi_weapon_fresnelWarpSpec.tga"
+			}
+		},
+		"Belt": {
+			"textures": {
+				"albedo": "Textures/Model/ogre_magi/ogre_magi_belt_color.tga",
+				"normal": "Textures/Model/ogre_magi/ogre_magi_belt_normal.tga",
+				"cubeMap": "Textures/Model/ogre_magi/ogre_magi_belt_cubeMap.tga",
+				"mask1": "Textures/Model/ogre_magi/ogre_magi_belt_mask1.tga",
+				"mask2": "Textures/Model/ogre_magi/ogre_magi_belt_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ogre_magi/ogre_magi_belt_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ogre_magi/ogre_magi_belt_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ogre_magi/ogre_magi_belt_fresnelWarpSpec.tga"
+			}
+		}
+	}
+}

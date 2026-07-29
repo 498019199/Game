@@ -9,6 +9,46 @@ import sys
 from pathlib import Path
 
 
+def load_json(path: Path):
+	try:
+		with path.open("r", encoding="utf-8") as fp:
+			return json.load(fp)
+	except json.JSONDecodeError as exc:
+		raise ValueError(
+			f"{path}:{exc.lineno}:{exc.colno}: invalid JSON: {exc.msg}"
+		) from exc
+
+
+def load_prefab(item: dict, index: int, json_path: Path) -> tuple[dict, Path]:
+	prefab = item.get("prefab")
+	if prefab is None:
+		return item, json_path
+	if not isinstance(prefab, str) or not prefab:
+		raise ValueError(f"{json_path}: entry[{index}].prefab must be a non-empty string")
+
+	prefab_relative = Path(prefab)
+	if prefab_relative.is_absolute():
+		raise ValueError(f"{json_path}: entry[{index}].prefab must be relative to the Assets directory")
+
+	assets_path = json_path.parent.parent.resolve()
+	prefab_path = (assets_path / prefab_relative).resolve()
+	try:
+		prefab_path.relative_to(assets_path)
+	except ValueError as exc:
+		raise ValueError(f"{json_path}: entry[{index}].prefab escapes the Assets directory") from exc
+	if not prefab_path.is_file():
+		raise ValueError(f"{json_path}: entry[{index}].prefab not found: {prefab_path}")
+
+	prefab_data = load_json(prefab_path)
+	if not isinstance(prefab_data, dict):
+		raise ValueError(f"{prefab_path}: root must be a JSON object")
+
+	# The table owns identity and may override prefab defaults when needed.
+	resolved = dict(prefab_data)
+	resolved.update({key: value for key, value in item.items() if key != "prefab"})
+	return resolved, prefab_path
+
+
 def cpp_escape(value: str) -> str:
 	return (
 		value.replace("\\", "\\\\")
@@ -146,8 +186,7 @@ def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
 
 
 def load_entries(json_path: Path) -> list[dict]:
-	with json_path.open("r", encoding="utf-8") as fp:
-		data = json.load(fp)
+	data = load_json(json_path)
 
 	if not isinstance(data, list):
 		raise ValueError(f"{json_path}: root must be a JSON array")
@@ -157,6 +196,7 @@ def load_entries(json_path: Path) -> list[dict]:
 		if not isinstance(item, dict):
 			raise ValueError(f"{json_path}: entry[{index}] must be an object")
 
+		item, item_path = load_prefab(item, index, json_path)
 		npc_id = item.get("id", 0)
 		name = item.get("name", "")
 		model = item.get("model")
@@ -165,36 +205,36 @@ def load_entries(json_path: Path) -> list[dict]:
 		if not isinstance(npc_id, int):
 			raise ValueError(f"{json_path}: entry[{index}].id must be an int")
 		if not isinstance(name, str):
-			raise ValueError(f"{json_path}: entry[{index}].name must be a string")
+			raise ValueError(f"{item_path}: entry[{index}].name must be a string")
 
 		resolved: list[str] = []
 		if models is not None:
 			if not isinstance(models, list) or not all(isinstance(path, str) for path in models):
-				raise ValueError(f"{json_path}: entry[{index}].models must be an array of strings")
+				raise ValueError(f"{item_path}: entry[{index}].models must be an array of strings")
 			resolved.extend(models)
 		if model is not None:
 			if not isinstance(model, str):
-				raise ValueError(f"{json_path}: entry[{index}].model must be a string")
+				raise ValueError(f"{item_path}: entry[{index}].model must be a string")
 			if model and model not in resolved:
 				# Single-model field remains supported; prepend if models also present.
 				resolved.insert(0, model) if models is not None else resolved.append(model)
 
 		if not resolved:
-			raise ValueError(f"{json_path}: entry[{index}] needs model or models")
+			raise ValueError(f"{item_path}: entry[{index}] needs model or models")
 
 		entries.append(
 			{
 				"id": npc_id,
 				"name": name,
 				"models": resolved,
-				"material": optional_string(item, "material", index, json_path),
+				"material": optional_string(item, "material", index, item_path),
 				# Prefer snake_case; accept PascalCase aliases used in engine naming.
-				"render_effect": optional_string(item, "render_effect", index, json_path)
-				or optional_string(item, "RenderEffect", index, json_path),
-				"render_technique": optional_string(item, "render_technique", index, json_path)
-				or optional_string(item, "RenderTechnique", index, json_path),
-				"textures": load_textures(item, f"entry[{index}]", json_path),
-				"parts": load_parts(item, index, json_path),
+				"render_effect": optional_string(item, "render_effect", index, item_path)
+				or optional_string(item, "RenderEffect", index, item_path),
+				"render_technique": optional_string(item, "render_technique", index, item_path)
+				or optional_string(item, "RenderTechnique", index, item_path),
+				"textures": load_textures(item, f"entry[{index}]", item_path),
+				"parts": load_parts(item, index, item_path),
 			}
 		)
 

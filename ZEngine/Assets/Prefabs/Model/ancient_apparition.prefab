@@ -1,0 +1,52 @@
+{
+	"name": "ancient_apparition",
+	"models": [
+		"Models/ancient_apparition/ancient_apparition_econ.fbx"
+	],
+	"render_effect": "Data2ShaderFx.shader",
+	"render_technique": "Data2ShaderFxTech",
+	"parts": {
+		"base": {
+			"textures": {
+				"albedo": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_color.tga",
+				"normal": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_normal.tga",
+				"cubeMap": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_cubeMap.tga",
+				"detail": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_detail.tga",
+				"detail2": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_detail2.tga",
+				"mask1": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_mask1.tga",
+				"mask2": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ancient_apparition/base/__ancient_apparition_base_fresnelWarpSpec.tga"
+			}
+		},
+		"shoulder": {
+			"textures": {
+				"albedo": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_color.tga",
+				"normal": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_normal.tga",
+				"cubeMap": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_cubeMap.tga",
+				"detail": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_detail.tga",
+				"detail2": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_detail2.tga",
+				"mask1": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_mask1.tga",
+				"mask2": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ancient_apparition/ancient_apparition_shoulder_fresnelWarpSpec.tga"
+			}
+		},
+		"tail": {
+			"textures": {
+				"albedo": "Textures/Model/ancient_apparition/ancient_apparition_tail_color.tga",
+				"normal": "Textures/Model/ancient_apparition/ancient_apparition_tail_normal.tga",
+				"cubeMap": "Textures/Model/ancient_apparition/ancient_apparition_tail_cubeMap.tga",
+				"detail": "Textures/Model/ancient_apparition/ancient_apparition_tail_detail.tga",
+				"detail2": "Textures/Model/ancient_apparition/ancient_apparition_tail_detail2.tga",
+				"mask1": "Textures/Model/ancient_apparition/ancient_apparition_tail_mask1.tga",
+				"mask2": "Textures/Model/ancient_apparition/ancient_apparition_tail_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/ancient_apparition/ancient_apparition_tail_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/ancient_apparition/ancient_apparition_tail_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/ancient_apparition/ancient_apparition_tail_fresnelWarpSpec.tga"
+			}
+		}
+	}
+}

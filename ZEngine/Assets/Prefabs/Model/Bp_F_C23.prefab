@@ -1,0 +1,14 @@
+{
+	"name": "Bp_F_C23",
+	"models": [
+		"Private/Bp_F_C23/Bp_F_C23_C.FBX"
+	],
+	"material": "Private/Bp_F_C23/Bp_F_C23_C_Mat",
+	"render_effect": "SimpleAlbedoNormal.shader",
+	"render_technique": "SimpleAlbedoNormalTech",
+	"textures": {
+		"albedo": "Private/Bp_F_C23/Da_M_C23_C_DA.TGA",
+		"metalness_glossiness": "Private/Bp_F_C23/Da_M_C23_C_DCSE.TGA",
+		"normal": "Private/Bp_F_C23/Da_M_C23_C_NR.TGA"
+	}
+}

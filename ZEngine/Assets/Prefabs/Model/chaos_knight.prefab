@@ -1,0 +1,90 @@
+{
+	"name": "chaos_knight",
+	"models": [
+		"Models/chaos_knight/chaos_knight_econ.fbx"
+	],
+	"render_effect": "Data2ShaderFx.shader",
+	"render_technique": "Data2ShaderFxTech",
+	"parts": {
+		"base": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/base/__chaos_knight_base_color.tga",
+				"normal": "Textures/Model/chaos_knight/base/__chaos_knight_base_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/base/__chaos_knight_base_cubeMap.tga",
+				"detail": "Textures/Model/chaos_knight/base/__chaos_knight_base_detail.tga",
+				"detail2": "Textures/Model/chaos_knight/base/__chaos_knight_base_detail2.tga",
+				"mask1": "Textures/Model/chaos_knight/base/__chaos_knight_base_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/base/__chaos_knight_base_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/base/__chaos_knight_base_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/base/__chaos_knight_base_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/base/__chaos_knight_base_fresnelWarpSpec.tga"
+			}
+		},
+		"head": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/chaos_knight_head_color.tga",
+				"normal": "Textures/Model/chaos_knight/chaos_knight_head_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/chaos_knight_head_cubeMap.tga",
+				"detail": "Textures/Model/chaos_knight/chaos_knight_head_detail.tga",
+				"mask1": "Textures/Model/chaos_knight/chaos_knight_head_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/chaos_knight_head_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/chaos_knight_head_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/chaos_knight_head_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/chaos_knight_head_fresnelWarpSpec.tga"
+			}
+		},
+		"weapon": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/chaos_knight_weapon_color.tga",
+				"normal": "Textures/Model/chaos_knight/chaos_knight_weapon_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/chaos_knight_weapon_cubeMap.tga",
+				"mask1": "Textures/Model/chaos_knight/chaos_knight_weapon_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/chaos_knight_weapon_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/chaos_knight_weapon_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/chaos_knight_weapon_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/chaos_knight_weapon_fresnelWarpSpec.tga"
+			}
+		},
+		"shoulder": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/chaos_knight_shoulder_color.tga",
+				"normal": "Textures/Model/chaos_knight/chaos_knight_shoulder_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/chaos_knight_shoulder_cubeMap.tga",
+				"detail": "Textures/Model/chaos_knight/chaos_knight_shoulder_detail.tga",
+				"detail2": "Textures/Model/chaos_knight/chaos_knight_shoulder_detail2.tga",
+				"mask1": "Textures/Model/chaos_knight/chaos_knight_shoulder_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/chaos_knight_shoulder_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/chaos_knight_shoulder_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/chaos_knight_shoulder_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/chaos_knight_shoulder_fresnelWarpSpec.tga"
+			}
+		},
+		"mount": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/chaos_knight_mount_color.tga",
+				"normal": "Textures/Model/chaos_knight/chaos_knight_mount_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/chaos_knight_mount_cubeMap.tga",
+				"detail": "Textures/Model/chaos_knight/chaos_knight_mount_detail.tga",
+				"detail2": "Textures/Model/chaos_knight/chaos_knight_mount_detail2.tga",
+				"mask1": "Textures/Model/chaos_knight/chaos_knight_mount_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/chaos_knight_mount_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/chaos_knight_mount_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/chaos_knight_mount_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/chaos_knight_mount_fresnelWarpSpec.tga"
+			}
+		},
+		"offhand": {
+			"textures": {
+				"albedo": "Textures/Model/chaos_knight/chaos_knight_offhand_color.tga",
+				"normal": "Textures/Model/chaos_knight/chaos_knight_offhand_normal.tga",
+				"cubeMap": "Textures/Model/chaos_knight/chaos_knight_offhand_cubeMap.tga",
+				"detail2": "Textures/Model/chaos_knight/chaos_knight_offhand_detail2.tga",
+				"mask1": "Textures/Model/chaos_knight/chaos_knight_offhand_mask1.tga",
+				"mask2": "Textures/Model/chaos_knight/chaos_knight_offhand_mask2.tga",
+				"fresnelWarpColor": "Textures/Model/chaos_knight/chaos_knight_offhand_fresnelWarpColor.tga",
+				"fresnelWarpRim": "Textures/Model/chaos_knight/chaos_knight_offhand_fresnelWarpRim.tga",
+				"fresnelWarpSpec": "Textures/Model/chaos_knight/chaos_knight_offhand_fresnelWarpSpec.tga"
+			}
+		}
+	}
+}

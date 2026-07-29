@@ -2,6 +2,9 @@ set(GAME_NPC_JSON "${CMAKE_SOURCE_DIR}/ZEngine/Assets/Config/npc.json")
 set(GAME_NPC_GEN_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/Data/generated/NpcConfig.gen.h")
 set(GAME_NPC_GEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/Data/generated/NpcConfig.gen.cpp")
 set(GAME_NPC_GEN_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/Tool/gen_npc_config.py")
+file(GLOB_RECURSE GAME_NPC_PREFABS CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/ZEngine/Assets/Prefabs/Model/*.prefab"
+)
 
 find_package(Python3 COMPONENTS Interpreter)
 
@@ -18,6 +21,7 @@ if(Python3_Interpreter_FOUND)
             --source ${GAME_NPC_GEN_SOURCE}
         DEPENDS
             ${GAME_NPC_JSON}
+            ${GAME_NPC_PREFABS}
             ${GAME_NPC_GEN_SCRIPT}
         COMMENT "Generating NpcConfig from npc.json"
         VERBATIM
