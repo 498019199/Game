@@ -1,8 +1,87 @@
 #include <Manager/DataManager.h>
-#include <Data/generated/NpcConfig.gen.h>
 
 #include <base/ZEngine.h>
+#include <common/JsonDom.h>
 #include <common/Log.h>
+
+#include <cstdlib>
+#include <filesystem>
+#include <string>
+
+namespace
+{
+	std::string NormalizeAssetPath(std::string path)
+	{
+		for (char& ch : path)
+		{
+			if (ch == '\\')
+			{
+				ch = '/';
+			}
+		}
+		while (!path.empty() && path.front() == '/')
+		{
+			path.erase(path.begin());
+		}
+		return path;
+	}
+
+	int32_t JsonToInt32(CommonWorker::JsonValue const& value, int32_t default_value)
+	{
+		switch (value.Type())
+		{
+		case CommonWorker::JsonValueType::Int:
+			return static_cast<int32_t>(value.ValueInt());
+		case CommonWorker::JsonValueType::UInt:
+			return static_cast<int32_t>(value.ValueUInt());
+		case CommonWorker::JsonValueType::Float:
+			return static_cast<int32_t>(value.ValueFloat());
+		case CommonWorker::JsonValueType::String:
+		{
+			std::string const text(value.ValueString());
+			char* end = nullptr;
+			long const parsed = std::strtol(text.c_str(), &end, 10);
+			if (end && end != text.c_str())
+			{
+				return static_cast<int32_t>(parsed);
+			}
+			return default_value;
+		}
+		default:
+			return default_value;
+		}
+	}
+
+	PrefabData const* FindPrefabByPathOrName(
+		std::vector<PrefabData> const& prefabs,
+		std::string_view prefab_path)
+	{
+		std::string const normalized = NormalizeAssetPath(std::string(prefab_path));
+		if (normalized.empty())
+		{
+			return nullptr;
+		}
+
+		for (PrefabData const& prefab : prefabs)
+		{
+			if (!prefab.path.empty() && NormalizeAssetPath(prefab.path) == normalized)
+			{
+				return &prefab;
+			}
+		}
+
+		std::filesystem::path const as_path(normalized);
+		std::string const stem = as_path.stem().string();
+		for (PrefabData const& prefab : prefabs)
+		{
+			if (prefab.name == stem)
+			{
+				return &prefab;
+			}
+		}
+		return nullptr;
+	}
+} // namespace
 
 bool DataManager::LoadConfig(std::string_view path)
 {
@@ -47,91 +126,113 @@ void DataManager::UnloadConfig(std::string_view path)
 void DataManager::Clear()
 {
 	configs_.clear();
-	npcs_.clear();
+	prefabs_data_.clear();
+	npc_entries_.clear();
+	npc_id_to_prefab_.clear();
 }
 
-bool DataManager::LoadNpcConfig()
+bool DataManager::LoadNpcConfig(std::string_view path)
 {
-	npcs_.clear();
-	npcs_.reserve(NpcConfig::Count());
+	npc_entries_.clear();
+	npc_id_to_prefab_.clear();
 
-	for (NpcConfigEntry const& entry : NpcConfig::All())
+	if (path.empty())
 	{
-		NpcData npc;
-		npc.id = entry.id;
-		npc.name = entry.name ? entry.name : "";
-		npc.models.reserve(entry.model_count);
-		for (std::size_t i = 0; i < entry.model_count; ++i)
+		return false;
+	}
+
+	auto& res_loader = Context::Instance().ResLoaderInstance();
+	ResIdentifierPtr config_file = res_loader.Open(path);
+	if (!config_file)
+	{
+		LogError() << "LoadNpcConfig: could NOT open " << path << std::endl;
+		return false;
+	}
+
+	CommonWorker::JsonValue const root = LoadJson(*config_file);
+	if (root.Type() != CommonWorker::JsonValueType::Array)
+	{
+		LogError() << "LoadNpcConfig: root must be an array: " << path << std::endl;
+		return false;
+	}
+
+	for (CommonWorker::JsonValue const& item : root.ValueArray())
+	{
+		if (item.Type() != CommonWorker::JsonValueType::Object)
 		{
-			char const* path = entry.models[i];
-			npc.models.emplace_back(path ? path : "");
+			LogError() << "LoadNpcConfig: entry must be an object in " << path << std::endl;
+			continue;
 		}
-			npc.material = entry.material ? entry.material : "";
-			npc.render_effect = entry.render_effect ? entry.render_effect : "";
-			npc.render_technique = entry.render_technique ? entry.render_technique : "";
-			npc.textures.albedo = entry.textures.albedo ? entry.textures.albedo : "";
-			npc.textures.metalness_glossiness =
-				entry.textures.metalness_glossiness ? entry.textures.metalness_glossiness : "";
-			npc.textures.normal = entry.textures.normal ? entry.textures.normal : "";
-			npc.textures.emissive = entry.textures.emissive ? entry.textures.emissive : "";
-			npc.textures.detail = entry.textures.detail ? entry.textures.detail : "";
-			npc.textures.detail2 = entry.textures.detail2 ? entry.textures.detail2 : "";
-			npc.textures.detail_mask = entry.textures.detail_mask ? entry.textures.detail_mask : "";
-			npc.textures.cubemap = entry.textures.cubemap ? entry.textures.cubemap : "";
-			npc.textures.translucency = entry.textures.translucency ? entry.textures.translucency : "";
-			npc.textures.mask1 = entry.textures.mask1 ? entry.textures.mask1 : "";
-			npc.textures.mask2 = entry.textures.mask2 ? entry.textures.mask2 : "";
-			npc.textures.diffuse_warp = entry.textures.diffuse_warp ? entry.textures.diffuse_warp : "";
-			npc.textures.fresnel_warp_color =
-				entry.textures.fresnel_warp_color ? entry.textures.fresnel_warp_color : "";
-			npc.textures.fresnel_warp_rim = entry.textures.fresnel_warp_rim ? entry.textures.fresnel_warp_rim : "";
-			npc.textures.fresnel_warp_spec = entry.textures.fresnel_warp_spec ? entry.textures.fresnel_warp_spec : "";
-			npc.parts.reserve(entry.part_count);
-			for (std::size_t i = 0; i < entry.part_count; ++i)
-			{
-				NpcConfigPart const& src = entry.parts[i];
-				NpcPart part;
-				part.name = src.name ? src.name : "";
-				part.textures.albedo = src.textures.albedo ? src.textures.albedo : "";
-				part.textures.metalness_glossiness =
-					src.textures.metalness_glossiness ? src.textures.metalness_glossiness : "";
-				part.textures.normal = src.textures.normal ? src.textures.normal : "";
-				part.textures.emissive = src.textures.emissive ? src.textures.emissive : "";
-				part.textures.detail = src.textures.detail ? src.textures.detail : "";
-				part.textures.detail2 = src.textures.detail2 ? src.textures.detail2 : "";
-				part.textures.detail_mask = src.textures.detail_mask ? src.textures.detail_mask : "";
-				part.textures.cubemap = src.textures.cubemap ? src.textures.cubemap : "";
-				part.textures.translucency = src.textures.translucency ? src.textures.translucency : "";
-				part.textures.mask1 = src.textures.mask1 ? src.textures.mask1 : "";
-				part.textures.mask2 = src.textures.mask2 ? src.textures.mask2 : "";
-				part.textures.diffuse_warp = src.textures.diffuse_warp ? src.textures.diffuse_warp : "";
-				part.textures.fresnel_warp_color =
-					src.textures.fresnel_warp_color ? src.textures.fresnel_warp_color : "";
-				part.textures.fresnel_warp_rim = src.textures.fresnel_warp_rim ? src.textures.fresnel_warp_rim : "";
-				part.textures.fresnel_warp_spec = src.textures.fresnel_warp_spec ? src.textures.fresnel_warp_spec : "";
-				npc.parts.push_back(std::move(part));
-			}
-		npcs_.push_back(std::move(npc));
+
+		CommonWorker::JsonValue const* id_val = item.Member("id");
+		CommonWorker::JsonValue const* prefab_val = item.Member("prefab");
+		if (!id_val || !prefab_val || prefab_val->Type() != CommonWorker::JsonValueType::String)
+		{
+			LogError() << "LoadNpcConfig: entry needs id and prefab string in " << path << std::endl;
+			continue;
+		}
+
+		NpcConfigEntry entry;
+		entry.id = JsonToInt32(*id_val, 0);
+		entry.prefab = NormalizeAssetPath(std::string(prefab_val->ValueString()));
+		if (entry.id == 0 || entry.prefab.empty())
+		{
+			LogError() << "LoadNpcConfig: invalid id/prefab in " << path << std::endl;
+			continue;
+		}
+
+		PrefabData const* prefab = FindPrefabByPathOrName(prefabs_data_, entry.prefab);
+		if (!prefab)
+		{
+			LogError() << "LoadNpcConfig: prefab not loaded for id " << entry.id << ": " << entry.prefab
+					   << std::endl;
+			continue;
+		}
+
+		std::size_t const prefab_index = static_cast<std::size_t>(prefab - prefabs_data_.data());
+		if (npc_id_to_prefab_.contains(entry.id))
+		{
+			LogError() << "LoadNpcConfig: duplicate npc id " << entry.id << " in " << path << std::endl;
+			continue;
+		}
+
+		npc_id_to_prefab_.emplace(entry.id, prefab_index);
+		npc_entries_.push_back(std::move(entry));
 	}
 
 	return true;
 }
 
-NpcData const* DataManager::FindNpc(int32_t id) const
+bool DataManager::LoadGameConfig()
 {
-	for (NpcData const& npc : npcs_)
+	prefabs_data_.clear();
+	npc_entries_.clear();
+	npc_id_to_prefab_.clear();
+
+	if (!LoadPrefabs("../../Assets/Prefabs"))
 	{
-		if (npc.id == id)
-		{
-			return &npc;
-		}
+		return false;
 	}
-	return nullptr;
+	return LoadNpcConfig("Config/npc.json");
 }
 
-NpcData const* DataManager::FindNpcByName(std::string_view name) const
+PrefabData const* DataManager::FindNpc(int32_t id) const
 {
-	for (NpcData const& npc : npcs_)
+	auto const iter = npc_id_to_prefab_.find(id);
+	if (iter == npc_id_to_prefab_.end())
+	{
+		return nullptr;
+	}
+	if (iter->second >= prefabs_data_.size())
+	{
+		return nullptr;
+	}
+	return &prefabs_data_[iter->second];
+}
+
+PrefabData const* DataManager::FindNpcByName(std::string_view name) const
+{
+	for (PrefabData const& npc : prefabs_data_)
 	{
 		if (npc.name == name)
 		{

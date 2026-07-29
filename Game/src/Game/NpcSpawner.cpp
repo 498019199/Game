@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <base/ZEngine.h>
@@ -25,7 +28,7 @@ using namespace CommonWorker;
 
 namespace
 {
-	bool HasAnyTexture(NpcTextures const& textures)
+	bool HasAnyTexture(MeshTextures const& textures)
 	{
 		return !textures.albedo.empty() || !textures.metalness_glossiness.empty() || !textures.normal.empty()
 			|| !textures.emissive.empty() || !textures.detail.empty() || !textures.detail2.empty()
@@ -89,9 +92,9 @@ std::string ResolveExistingTexturePath(std::string const& configured, std::strin
 	return configured.empty() ? derived : configured;
 }
 
-	NpcTextures ResolveNpcTextures(NpcTextures const& src)
+	MeshTextures ResolveMeshTextures(MeshTextures const& src)
 	{
-		NpcTextures out = src;
+		MeshTextures out = src;
 		out.mask1 = ResolveExistingTexturePath(src.mask1, src.albedo, "mask1");
 		out.mask2 = ResolveExistingTexturePath(src.mask2, src.albedo, "mask2");
 		out.detail = ResolveExistingTexturePath(src.detail, src.albedo, "detail");
@@ -196,9 +199,9 @@ void SetEffectTextureParam(RenderEffect& effect, char const* name, std::string c
 	}
 }
 
-void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_name, NpcTextures const& textures_in)
+void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_name, MeshTextures const& textures_in)
 {
-	NpcTextures const textures = ResolveNpcTextures(textures_in);
+	MeshTextures const textures = ResolveMeshTextures(textures_in);
 	bool const has_textures = HasAnyTexture(textures);
 	if (material_name.empty() && !has_textures)
 	{
@@ -231,9 +234,9 @@ void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_na
 		BindNpcTextureSlot(mtl, RenderMaterial::TS_Emissive, textures.emissive);
 	}
 
-	void ApplyData2ExtraTextures(RenderEffect& effect, NpcTextures const& textures_in)
+	void ApplyData2ExtraTextures(RenderEffect& effect, MeshTextures const& textures_in)
 	{
-		NpcTextures const textures = ResolveNpcTextures(textures_in);
+		MeshTextures const textures = ResolveMeshTextures(textures_in);
 		SetEffectTextureParam(effect, "mask1_tex", textures.mask1, "mask1_map_enabled");
 		SetEffectTextureParam(effect, "mask2_tex", textures.mask2, "mask2_map_enabled");
 		SetEffectTextureParam(effect, "detail_tex", textures.detail, "detail_map_enabled");
@@ -267,9 +270,9 @@ void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_na
 		}
 	}
 
-NpcPart const* FindPartForMeshName(std::string const& mesh_name_lower, std::vector<NpcPart> const& parts)
+MeshPart const* FindPartForMeshName(std::string const& mesh_name_lower, std::vector<MeshPart> const& parts)
 {
-	for (NpcPart const& part : parts)
+	for (MeshPart const& part : parts)
 	{
 		if (part.name.empty())
 		{
@@ -284,10 +287,10 @@ NpcPart const* FindPartForMeshName(std::string const& mesh_name_lower, std::vect
 	return nullptr;
 }
 
-void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
+void ApplyNpcMaterial(RenderModel& model, MeshData const& data, std::string_view npc_name)
 {
-	bool const has_parts = !npc.parts.empty();
-	bool const has_fallback = !npc.material.empty() || HasAnyTexture(npc.textures);
+	bool const has_parts = !data.parts.empty();
+	bool const has_fallback = !data.material.empty() || HasAnyTexture(data.textures);
 	if (!has_parts && !has_fallback)
 	{
 		return;
@@ -303,7 +306,7 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 			{
 				continue;
 			}
-			ApplyTexturesToMaterial(*mtl, npc.material, npc.textures);
+			ApplyTexturesToMaterial(*mtl, data.material, data.textures);
 		}
 		return;
 	}
@@ -316,10 +319,10 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 			CommonWorker::Convert(mesh_name, mesh.Name());
 			std::string const mesh_name_lower = ToLowerAscii(mesh_name);
 
-			NpcPart const* part = FindPartForMeshName(mesh_name_lower, npc.parts);
+			MeshPart const* part = FindPartForMeshName(mesh_name_lower, data.parts);
 			if (!part)
 			{
-				LogInfo() << "ApplyNpcMaterial: unmatched mesh '" << mesh_name << "' for npc " << npc.name
+				LogInfo() << "ApplyNpcMaterial: unmatched mesh '" << mesh_name << "' for npc " << npc_name
 						  << std::endl;
 				continue;
 			}
@@ -343,16 +346,16 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 		}
 
 		// Uncovered materials: top-level textures, else first part (parts-only NPCs like chaos_knight).
-		NpcTextures const* fallback_tex = nullptr;
+		MeshTextures const* fallback_tex = nullptr;
 		std::string fallback_mtl_name;
 		if (has_fallback)
 		{
-			fallback_tex = &npc.textures;
-			fallback_mtl_name = npc.material;
+			fallback_tex = &data.textures;
+			fallback_mtl_name = data.material;
 		}
-		else if (!npc.parts.empty())
+		else if (!data.parts.empty())
 		{
-			fallback_tex = &npc.parts.front().textures;
+			fallback_tex = &data.parts.front().textures;
 		}
 		if (!fallback_tex)
 		{
@@ -375,47 +378,47 @@ void ApplyNpcMaterial(RenderModel& model, NpcData const& npc)
 		}
 }
 
-void ApplyNpcRenderEffect(RenderModel& model, NpcData const& npc)
+void ApplyNpcRenderEffect(RenderModel& model, MeshData const& data, std::string_view npc_name)
 {
-	if (npc.render_effect.empty())
+	if (data.render_effect.empty())
 	{
 		return;
 	}
 
-	RenderEffectPtr effect_template = SyncLoadRenderEffect(npc.render_effect);
+	RenderEffectPtr effect_template = SyncLoadRenderEffect(data.render_effect);
 	if (!effect_template)
 	{
-		LogError() << "ApplyNpcRenderEffect: failed to load effect '" << npc.render_effect << "' for npc "
-				   << npc.name << std::endl;
+		LogError() << "ApplyNpcRenderEffect: failed to load effect '" << data.render_effect << "' for npc "
+				   << npc_name << std::endl;
 		return;
 	}
 
-	if (npc.render_technique.empty())
+	if (data.render_technique.empty())
 	{
-		LogError() << "ApplyNpcRenderEffect: render_technique is empty for npc " << npc.name << std::endl;
+		LogError() << "ApplyNpcRenderEffect: render_technique is empty for npc " << npc_name << std::endl;
 		return;
 	}
 
-	if (!effect_template->TechniqueByName(npc.render_technique))
+	if (!effect_template->TechniqueByName(data.render_technique))
 	{
-		LogError() << "ApplyNpcRenderEffect: technique '" << npc.render_technique << "' not found in '"
-				   << npc.render_effect << "' for npc " << npc.name << std::endl;
+		LogError() << "ApplyNpcRenderEffect: technique '" << data.render_technique << "' not found in '"
+				   << data.render_effect << "' for npc " << npc_name << std::endl;
 		return;
 	}
 
-	NpcTextures const* fallback_tex = HasAnyTexture(npc.textures) ? &npc.textures
-		: (!npc.parts.empty() ? &npc.parts.front().textures : nullptr);
+	MeshTextures const* fallback_tex = HasAnyTexture(data.textures) ? &data.textures
+		: (!data.parts.empty() ? &data.parts.front().textures : nullptr);
 
 	model.ForEachMesh([&](Renderable& mesh) {
 		auto& static_mesh = CommonWorker::checked_cast<StaticMesh&>(mesh);
 		RenderEffectPtr mesh_effect = effect_template->Clone();
-		RenderTechnique* tech = mesh_effect->TechniqueByName(npc.render_technique);
+		RenderTechnique* tech = mesh_effect->TechniqueByName(data.render_technique);
 		static_mesh.Technique(mesh_effect, tech);
 
-		NpcTextures const* tex = fallback_tex;
+		MeshTextures const* tex = fallback_tex;
 		std::string mesh_name;
 		CommonWorker::Convert(mesh_name, static_mesh.Name());
-		if (NpcPart const* part = FindPartForMeshName(ToLowerAscii(mesh_name), npc.parts))
+		if (MeshPart const* part = FindPartForMeshName(ToLowerAscii(mesh_name), data.parts))
 		{
 			tex = &part->textures;
 		}
@@ -438,10 +441,82 @@ RenderWorker::float4x4 BuildNpcTransform(
 		Deg2Rad(rotation_deg.z()));
 	return translation(position) * rot * scaling(scale);
 }
+
+constexpr std::string_view kModelComponentType = "model";
+
+// The class behind "type": "model"; CreateGameModel builds AModel, CreateDetailedMesh its meshes.
+void SpawnModelComponent(ModelData const& component, NpcSpawner::SpawnContext const& ctx)
+{
+	if (!component.model)
+	{
+		LogError() << "NpcSpawner: component '" << component.type << "' carries no model data" << std::endl;
+		return;
+	}
+	if (!ctx.models)
+	{
+		LogError() << "NpcSpawner: model component has nowhere to put its models" << std::endl;
+		return;
+	}
+
+	MeshData const* data = &*component.model;
+	if (data->model_path.empty())
+	{
+		LogError() << "NpcSpawner: model component has no model path" << std::endl;
+		return;
+	}
+
+	std::string const npc_name = ctx.npc ? ctx.npc->name : std::string();
+	float4x4 const transform = ctx.transform;
+	RenderModelPtr model = SyncLoadModel(
+		data->model_path,
+		EAH_GPU_Read | EAH_Immutable,
+		SceneNode::SOA_Cullable,
+		[data, npc_name, transform](RenderModel& loaded_model)
+		{
+			ApplyNpcMaterial(loaded_model, *data, npc_name);
+			ApplyNpcRenderEffect(loaded_model, *data, npc_name);
+			if (!npc_name.empty())
+			{
+				std::wstring node_name;
+				CommonWorker::Convert(node_name, npc_name);
+				loaded_model.RootNode()->Name(node_name);
+			}
+			loaded_model.RootNode()->TransformToParent(transform);
+		},
+		CreateGameModel,
+		CreateDetailedMesh);
+	if (!model)
+	{
+		LogError() << "NpcSpawner: failed to load model: " << data->model_path << std::endl;
+		return;
+	}
+	ctx.models->push_back(std::move(model));
+}
+
+using SpawnerMap = std::unordered_map<std::string, NpcSpawner::ComponentSpawner>;
+
+SpawnerMap& ComponentSpawners()
+{
+	// "model" ships with the engine; other types register their own class on top.
+	static SpawnerMap spawners{
+		{std::string(kModelComponentType), NpcSpawner::ComponentSpawner(&SpawnModelComponent)},
+	};
+	return spawners;
+}
 } // namespace
 
 namespace NpcSpawner
 {
+void RegisterComponentSpawner(std::string_view type, ComponentSpawner spawner)
+{
+	if (type.empty() || !spawner)
+	{
+		LogError() << "NpcSpawner: RegisterComponentSpawner needs a type and a spawner" << std::endl;
+		return;
+	}
+	ComponentSpawners()[ToLowerAscii(std::string(type))] = std::move(spawner);
+}
+
 std::vector<RenderModelPtr> SpawnNpc(
 	int32_t npc_id,
 	float3 const& position,
@@ -449,45 +524,34 @@ std::vector<RenderModelPtr> SpawnNpc(
 	float3 const& scale)
 {
 	std::vector<RenderModelPtr> models;
-	NpcData const* npc = GameContext::Instance().DataManagerInstance().FindNpc(npc_id);
+	PrefabData const* npc = GameContext::Instance().DataManagerInstance().FindNpc(npc_id);
 	if (!npc)
 	{
 		LogError() << "NpcSpawner: npc id " << npc_id << " not found" << std::endl;
 		return models;
 	}
-	if (npc->models.empty())
+	if (npc->components.empty())
 	{
-		LogError() << "NpcSpawner: npc " << npc->name << " has no models" << std::endl;
+		LogError() << "NpcSpawner: npc " << npc->name << " has no components" << std::endl;
 		return models;
 	}
 
-	float4x4 const transform = BuildNpcTransform(position, rotation_deg, scale);
-	for (std::string const& model_path : npc->models)
+	SpawnContext ctx;
+	ctx.npc = npc;
+	ctx.transform = BuildNpcTransform(position, rotation_deg, scale);
+	ctx.models = &models;
+
+	SpawnerMap const& spawners = ComponentSpawners();
+	for (ModelData const& component : npc->components)
 	{
-		RenderModelPtr model = SyncLoadModel(
-			model_path,
-			EAH_GPU_Read | EAH_Immutable,
-			SceneNode::SOA_Cullable,
-			[npc, transform](RenderModel& loaded_model)
-			{
-				ApplyNpcMaterial(loaded_model, *npc);
-				ApplyNpcRenderEffect(loaded_model, *npc);
-				if (!npc->name.empty())
-				{
-					std::wstring node_name;
-					CommonWorker::Convert(node_name, npc->name);
-					loaded_model.RootNode()->Name(node_name);
-				}
-				loaded_model.RootNode()->TransformToParent(transform);
-			},
-			CreateGameModel,
-			CreateDetailedMesh);
-		if (!model)
+		auto const iter = spawners.find(ToLowerAscii(component.type));
+		if (iter == spawners.end())
 		{
-			LogError() << "NpcSpawner: failed to load model: " << model_path << std::endl;
+			LogError() << "NpcSpawner: no spawner registered for component type '" << component.type
+					   << "' on npc " << npc->name << std::endl;
 			continue;
 		}
-		models.push_back(std::move(model));
+		iter->second(component, ctx);
 	}
 	return models;
 }

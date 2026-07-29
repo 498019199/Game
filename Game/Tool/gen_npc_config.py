@@ -8,10 +8,16 @@ import json
 import sys
 from pathlib import Path
 
+# Single-path spellings come first so single-model prefabs keep their original mesh order.
+MODEL_PATH_KEYS = ("model", "path", "models", "paths")
+
+MODEL_COMPONENT_TYPE = "model"
+
 
 def load_json(path: Path):
 	try:
-		with path.open("r", encoding="utf-8") as fp:
+		# utf-8-sig also reads plain utf-8, and tolerates the BOM some editors add.
+		with path.open("r", encoding="utf-8-sig") as fp:
 			return json.load(fp)
 	except json.JSONDecodeError as exc:
 		raise ValueError(
@@ -49,6 +55,32 @@ def load_prefab(item: dict, index: int, json_path: Path) -> tuple[dict, Path]:
 	return resolved, prefab_path
 
 
+def string_list(value, context: str, json_path: Path) -> list[str]:
+	if value is None:
+		return []
+	if isinstance(value, str):
+		return [value] if value else []
+	if isinstance(value, list) and all(isinstance(path, str) for path in value):
+		return [path for path in value if path]
+	raise ValueError(f"{json_path}: {context} must be a string or an array of strings")
+
+
+def model_paths(container: dict, context: str, json_path: Path) -> list[str]:
+	paths: list[str] = []
+	for key in MODEL_PATH_KEYS:
+		for path in string_list(container.get(key), f"{context}.{key}", json_path):
+			if path not in paths:
+				paths.append(path)
+	return paths
+
+
+def component_type(component: dict, context: str, json_path: Path) -> str:
+	value = component.get("type", component.get("Type"))
+	if not isinstance(value, str) or not value:
+		raise ValueError(f"{json_path}: {context}.type must be a non-empty string")
+	return value
+
+
 def cpp_escape(value: str) -> str:
 	return (
 		value.replace("\\", "\\\\")
@@ -59,12 +91,12 @@ def cpp_escape(value: str) -> str:
 	)
 
 
-def optional_string(item: dict, key: str, index: int, json_path: Path) -> str:
-	value = item.get(key)
+def optional_string(container: dict, key: str, context: str, json_path: Path) -> str:
+	value = container.get(key)
 	if value is None:
 		return ""
 	if not isinstance(value, str):
-		raise ValueError(f"{json_path}: entry[{index}].{key} must be a string")
+		raise ValueError(f"{json_path}: {context}.{key} must be a string")
 	return value
 
 
@@ -127,19 +159,19 @@ def load_textures(container: dict, context: str, json_path: Path) -> dict[str, s
 	}
 
 
-def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
-	parts = item.get("parts")
+def load_parts(container: dict, context: str, json_path: Path) -> list[dict]:
+	parts = container.get("parts")
 	if parts is None:
 		return []
 	if not isinstance(parts, dict):
-		raise ValueError(f"{json_path}: entry[{index}].parts must be an object")
+		raise ValueError(f"{json_path}: {context}.parts must be an object")
 
 	resolved: list[dict] = []
 	for part_name, part_value in parts.items():
 		if not isinstance(part_name, str) or not part_name:
-			raise ValueError(f"{json_path}: entry[{index}].parts keys must be non-empty strings")
+			raise ValueError(f"{json_path}: {context}.parts keys must be non-empty strings")
 		if not isinstance(part_value, dict):
-			raise ValueError(f"{json_path}: entry[{index}].parts.{part_name} must be an object")
+			raise ValueError(f"{json_path}: {context}.parts.{part_name} must be an object")
 		# Accept either {"textures": {...}} or textures fields directly on the part.
 		tex_container = part_value
 		if "textures" not in part_value and any(
@@ -176,13 +208,68 @@ def load_parts(item: dict, index: int, json_path: Path) -> list[dict]:
 		resolved.append(
 			{
 				"name": part_name,
-				"textures": load_textures(tex_container, f"entry[{index}].parts.{part_name}", json_path),
+				"textures": load_textures(tex_container, f"{context}.parts.{part_name}", json_path),
 			}
 		)
 
 	# Longer keys first so "shoulder" wins over a hypothetical shorter substring.
 	resolved.sort(key=lambda part: len(part["name"]), reverse=True)
 	return resolved
+
+
+def load_model_component(container: dict, context: str, json_path: Path) -> dict:
+	models = model_paths(container, context, json_path)
+	if not models:
+		raise ValueError(f"{json_path}: {context} needs model or models")
+
+	return {
+		"models": models,
+		"material": optional_string(container, "material", context, json_path),
+		# Prefer snake_case; accept PascalCase aliases used in engine naming.
+		"render_effect": optional_string(container, "render_effect", context, json_path)
+		or optional_string(container, "RenderEffect", context, json_path),
+		"render_technique": optional_string(container, "render_technique", context, json_path)
+		or optional_string(container, "RenderTechnique", context, json_path),
+		"textures": load_textures(container, context, json_path),
+		"parts": load_parts(container, context, json_path),
+	}
+
+
+def load_components(data: dict, context: str, json_path: Path) -> list[dict]:
+	"""Each component names the class the spawner builds; "model" carries AModel data.
+
+	A new type needs a payload loader here, a payload struct in the generated header,
+	and a matching spawner registered in NpcSpawner.
+	"""
+	raw = data.get("components", data.get("Components"))
+	if raw is None:
+		# Prefabs without components describe a single model inline.
+		return [{"type": MODEL_COMPONENT_TYPE, "model": load_model_component(data, context, json_path)}]
+	if not isinstance(raw, list):
+		raise ValueError(f"{json_path}: {context}.components must be an array")
+
+	components: list[dict] = []
+	for comp_index, component in enumerate(raw):
+		comp_context = f"{context}.components[{comp_index}]"
+		if not isinstance(component, dict):
+			raise ValueError(f"{json_path}: {comp_context} must be an object")
+
+		kind = component_type(component, comp_context, json_path)
+		model = None
+		if kind.lower() == MODEL_COMPONENT_TYPE:
+			model = load_model_component(component, comp_context, json_path)
+		else:
+			print(
+				f"warning: {json_path}: {comp_context} type '{kind}' has no payload loader; "
+				"only the type name is emitted",
+				file=sys.stderr,
+			)
+		components.append({"type": kind, "model": model})
+
+	if not any(component["model"] for component in components):
+		raise ValueError(f"{json_path}: {context} needs a '{MODEL_COMPONENT_TYPE}' component")
+
+	return components
 
 
 def load_entries(json_path: Path) -> list[dict]:
@@ -199,42 +286,18 @@ def load_entries(json_path: Path) -> list[dict]:
 		item, item_path = load_prefab(item, index, json_path)
 		npc_id = item.get("id", 0)
 		name = item.get("name", "")
-		model = item.get("model")
-		models = item.get("models")
+		context = f"entry[{index}]"
 
 		if not isinstance(npc_id, int):
-			raise ValueError(f"{json_path}: entry[{index}].id must be an int")
+			raise ValueError(f"{json_path}: {context}.id must be an int")
 		if not isinstance(name, str):
-			raise ValueError(f"{item_path}: entry[{index}].name must be a string")
-
-		resolved: list[str] = []
-		if models is not None:
-			if not isinstance(models, list) or not all(isinstance(path, str) for path in models):
-				raise ValueError(f"{item_path}: entry[{index}].models must be an array of strings")
-			resolved.extend(models)
-		if model is not None:
-			if not isinstance(model, str):
-				raise ValueError(f"{item_path}: entry[{index}].model must be a string")
-			if model and model not in resolved:
-				# Single-model field remains supported; prepend if models also present.
-				resolved.insert(0, model) if models is not None else resolved.append(model)
-
-		if not resolved:
-			raise ValueError(f"{item_path}: entry[{index}] needs model or models")
+			raise ValueError(f"{item_path}: {context}.name must be a string")
 
 		entries.append(
 			{
 				"id": npc_id,
 				"name": name,
-				"models": resolved,
-				"material": optional_string(item, "material", index, item_path),
-				# Prefer snake_case; accept PascalCase aliases used in engine naming.
-				"render_effect": optional_string(item, "render_effect", index, item_path)
-				or optional_string(item, "RenderEffect", index, item_path),
-				"render_technique": optional_string(item, "render_technique", index, item_path)
-				or optional_string(item, "RenderTechnique", index, item_path),
-				"textures": load_textures(item, f"entry[{index}]", item_path),
-				"parts": load_parts(item, index, item_path),
+				"components": load_components(item, context, item_path),
 			}
 		)
 
@@ -280,10 +343,9 @@ struct NpcConfigPart
 	NpcConfigTextures textures;
 };
 
-struct NpcConfigEntry
+// Payload of a "model" component: the meshes and materials of one AModel.
+struct NpcConfigModel
 {
-	int32_t id;
-	char const* name;
 	char const* const* models;
 	std::size_t model_count;
 	char const* material;
@@ -292,6 +354,22 @@ struct NpcConfigEntry
 	NpcConfigTextures textures;
 	NpcConfigPart const* parts;
 	std::size_t part_count;
+};
+
+// `type` selects the class the spawner builds; "model" builds an AModel.
+// A new type adds its payload pointer here and a spawner in NpcSpawner.
+struct NpcConfigComponent
+{
+	char const* type;
+	NpcConfigModel const* model;
+};
+
+struct NpcConfigEntry
+{
+	int32_t id;
+	char const* name;
+	NpcConfigComponent const* components;
+	std::size_t component_count;
 };
 
 class GAME_API NpcConfig
@@ -348,57 +426,66 @@ def write_source(path: Path, entries: list[dict], json_path: Path) -> None:
 
 	if entries:
 		for entry in entries:
-			array_name = f"kNpc_{entry['id']}_Models"
-			lines.append(f"\tchar const* const {array_name}[] =")
-			lines.append("\t{")
-			for model_path in entry["models"]:
-				lines.append(f'\t\t"{cpp_escape(model_path)}",')
-			lines.append("\t};")
-			lines.append("")
+			for comp_index, component in enumerate(entry["components"]):
+				model = component["model"]
+				if model is None:
+					continue
 
-			parts = entry["parts"]
-			if parts:
-				parts_name = f"kNpc_{entry['id']}_Parts"
-				lines.append(f"\tNpcConfigPart const {parts_name}[] =")
+				prefix = f"kNpc_{entry['id']}_C{comp_index}"
+				lines.append(f"\tchar const* const {prefix}_Models[] =")
 				lines.append("\t{")
-				for part in parts:
-					lines.append(
-						f'\t\t{{ "{cpp_escape(part["name"])}", {format_textures(part["textures"])} }},'
-					)
+				for model_path in model["models"]:
+					lines.append(f'\t\t"{cpp_escape(model_path)}",')
 				lines.append("\t};")
 				lines.append("")
+
+				parts = model["parts"]
+				if parts:
+					lines.append(f"\tNpcConfigPart const {prefix}_Parts[] =")
+					lines.append("\t{")
+					for part in parts:
+						lines.append(
+							f'\t\t{{ "{cpp_escape(part["name"])}", {format_textures(part["textures"])} }},'
+						)
+					lines.append("\t};")
+					lines.append("")
+
+				lines.append(f"\tNpcConfigModel const {prefix}_Model =")
+				lines.append("\t{")
+				lines.append(f'\t\t{prefix}_Models, {len(model["models"])},')
+				lines.append(f'\t\t"{cpp_escape(model["material"])}",')
+				lines.append(f'\t\t"{cpp_escape(model["render_effect"])}",')
+				lines.append(f'\t\t"{cpp_escape(model["render_technique"])}",')
+				lines.append(f'\t\t{format_textures(model["textures"])},')
+				lines.append(f'\t\t{f"{prefix}_Parts" if parts else "nullptr"}, {len(parts)},')
+				lines.append("\t};")
+				lines.append("")
+
+			lines.append(f"\tNpcConfigComponent const kNpc_{entry['id']}_Components[] =")
+			lines.append("\t{")
+			for comp_index, component in enumerate(entry["components"]):
+				payload = f"&kNpc_{entry['id']}_C{comp_index}_Model" if component["model"] else "nullptr"
+				lines.append(f'\t\t{{ "{cpp_escape(component["type"])}", {payload} }},')
+			lines.append("\t};")
+			lines.append("")
 
 		lines.append("\tNpcConfigEntry const kNpcEntries[] =")
 		lines.append("\t{")
 		for entry in entries:
-			array_name = f"kNpc_{entry['id']}_Models"
-			count = len(entry["models"])
-			tex = entry["textures"]
-			parts = entry["parts"]
-			if parts:
-				parts_ptr = f"kNpc_{entry['id']}_Parts"
-				part_count = len(parts)
-			else:
-				parts_ptr = "nullptr"
-				part_count = 0
 			lines.append(
 				"\t\t{ "
-				f'{entry["id"]}, "{cpp_escape(entry["name"])}", {array_name}, {count}, '
-				f'"{cpp_escape(entry["material"])}", '
-				f'"{cpp_escape(entry["render_effect"])}", '
-				f'"{cpp_escape(entry["render_technique"])}", '
-				f"{format_textures(tex)}, "
-				f"{parts_ptr}, {part_count} }},"
+				f'{entry["id"]}, "{cpp_escape(entry["name"])}", '
+				f'kNpc_{entry["id"]}_Components, {len(entry["components"])} }},'
 			)
 		lines.append("\t};")
 	else:
 		lines.extend(
 			[
-				"\tchar const* const kNpc_Empty_Models[] = { nullptr };",
+				'\tNpcConfigComponent const kNpc_Empty_Components[] = { { "", nullptr } };',
 				"",
 				"\tNpcConfigEntry const kNpcEntries[] =",
 				"\t{",
-				'\t\t{ 0, "", kNpc_Empty_Models, 0, "", "", "", { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }, nullptr, 0 },',
+				'\t\t{ 0, "", kNpc_Empty_Components, 0 },',
 				"\t};",
 			]
 		)

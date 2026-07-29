@@ -19,7 +19,7 @@ void GameContext::Startup()
 		return;
 	}
 
-	if (!data_manager_.LoadNpcConfig())
+	if (!data_manager_.LoadGameConfig())
 	{
 		CommonWorker::LogError() << "GameContext: failed to load NPC config." << std::endl;
 	}

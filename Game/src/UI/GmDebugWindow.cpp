@@ -175,7 +175,7 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
 	}
 }
 
-//createnpc 100000 1
+//createnpc 100000
 void GmDebugWindow::CreateNpc(std::string_view id_text)
 {
 	if (id_text.empty())
@@ -192,7 +192,7 @@ void GmDebugWindow::CreateNpc(std::string_view id_text)
 		return;
 	}
 
-	NpcData const* pNpcData = GameContext::Instance().DataManagerInstance().FindNpc(npcId);
+	PrefabData const* pNpcData = GameContext::Instance().DataManagerInstance().FindNpc(npcId);
 	if (pNpcData == nullptr)
 	{
 		LogInfo() << "[GM] npc id " << id_text << " find failed!" << std::endl;
@@ -212,9 +212,18 @@ void GmDebugWindow::CreateNpc(std::string_view id_text)
 		AddToSceneRootHelper(*model);
 	}
 
+	std::size_t expected_models = 0;
+	for (ModelData const& component : pNpcData->components)
+	{
+		if (component.model && !component.model->model_path.empty())
+		{
+			++expected_models;
+		}
+	}
+
 	AppendLog(
 		std::string("spawned npc: ") + pNpcData->name + " (" + std::to_string(models.size()) + "/"
-		+ std::to_string(pNpcData->models.size()) + " parts)");
+		+ std::to_string(expected_models) + " parts)");
 }
 
 void GmDebugWindow::AppendLog(std::string_view text)

@@ -34,6 +34,7 @@
 
 /ZEngine/bin
 /ZEngine/Assets/Models
+/ZEngine/Assets/Textures
 # Private company assets — do not commit or push
 /ZEngine/Assets/Private/**
 !/ZEngine/Assets/Private/README.md

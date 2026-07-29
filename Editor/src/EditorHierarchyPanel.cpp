@@ -25,7 +25,7 @@ namespace
         return value;
     }
 
-    NpcPart const* FindNpcPart(std::string const& mesh_name, NpcData const* npc)
+    MeshPart const* FindMeshPart(std::string const& mesh_name, PrefabData const* npc)
     {
         if (!npc)
         {
@@ -33,11 +33,19 @@ namespace
         }
 
         std::string const mesh_name_lower = ToLowerAscii(mesh_name);
-        for (NpcPart const& part : npc->parts)
+        for (ModelData const& component : npc->components)
         {
-            if (!part.name.empty() && mesh_name_lower.find(ToLowerAscii(part.name)) != std::string::npos)
+            if (!component.model)
             {
-                return &part;
+                continue;
+            }
+
+            for (MeshPart const& part : component.model->parts)
+            {
+                if (!part.name.empty() && mesh_name_lower.find(ToLowerAscii(part.name)) != std::string::npos)
+                {
+                    return &part;
+                }
             }
         }
         return nullptr;
@@ -61,7 +69,7 @@ namespace
         }
     }
 
-    void RenderModelMeshes(RenderWorker::SceneNode const& node, NpcData const* npc)
+    void RenderModelMeshes(RenderWorker::SceneNode const& node, PrefabData const* npc)
     {
         std::vector<RenderWorker::Renderable const*> meshes;
         CollectStaticMeshes(node, meshes);
@@ -74,7 +82,7 @@ namespace
         {
             std::string mesh_name;
             CommonWorker::Convert(mesh_name, meshes[mesh_index]->Name());
-            if (NpcPart const* part = FindNpcPart(mesh_name, npc))
+            if (MeshPart const* part = FindMeshPart(mesh_name, npc))
             {
                 mesh_name = part->name;
             }
@@ -118,7 +126,7 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
             ImGui::PushID(i);
             std::string node_name;
             CommonWorker::Convert(node_name, node->Name());
-            NpcData const* npc = GameContext::Instance().DataManagerInstance().FindNpcByName(node_name);
+            PrefabData const* npc = GameContext::Instance().DataManagerInstance().FindNpcByName(node_name);
 
             if (ImGui::TreeNode("", node_name.c_str(), i))
             {

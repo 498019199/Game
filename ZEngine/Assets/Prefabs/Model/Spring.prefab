@@ -1,6 +1,11 @@
 {
 	"name": "Spring",
-	"model": "Models/Spring.obj",
-	"render_effect": "SimpleAlbedoNormal.shader",
-	"render_technique": "SimpleAlbedoNormalTech"
+	"components":[
+		{
+			"type" : "model",
+			"path": "Models/Spring.obj",
+			"render_effect": "SimpleAlbedoNormal.shader",
+			"render_technique": "SimpleAlbedoNormalTech"
+		}
+	]
 }
