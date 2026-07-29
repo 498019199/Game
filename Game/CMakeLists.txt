@@ -36,6 +36,7 @@ set(GAME_SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/GameContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Scene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/NpcSpawner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/GameplayTag.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/AttributeSet.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/gas/EffectContainer.cpp

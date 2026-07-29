@@ -272,7 +272,10 @@ void D3D11Texture2D::CopyToSubTextureCube(Texture& target, uint32_t dst_array_in
 
         D3D11_BOX* src_box_ptr;
         D3D11_BOX src_box;
-        if ((sample_count_ != 1) || IsDepthFormat(format_))
+        // Full-subresource copy: omit box (safer for BC formats).
+        bool const full_face = (src_x_offset == 0) && (src_y_offset == 0)
+            && (src_width == this->Width(src_level)) && (src_height == this->Height(src_level));
+        if (full_face || (sample_count_ != 1) || IsDepthFormat(format_))
         {
             COMMON_ASSERT(other.SampleCount() == sample_count_);
             COMMON_ASSERT(dst_x_offset == 0);

@@ -9,7 +9,7 @@ namespace RenderWorker
 {
 D3D11TextureCube::D3D11TextureCube(uint32_t size, uint32_t MipMapsNum, uint32_t array_size, ElementFormat format,
         uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
-    :D3D11Texture(TT_1D, sample_count, sample_quality, access_hint)
+    :D3D11Texture(TT_Cube, sample_count, sample_quality, access_hint)
 {
     if (0 == MipMapsNum)
     {

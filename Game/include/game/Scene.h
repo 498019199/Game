@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <array>
 
 class GAME_API AScene
 {
@@ -29,9 +30,12 @@ public:
 
 private:
 	void LoadPrefab(std::string_view prefab_path);
+	void LoadGameObject(CommonWorker::JsonValue const& entry);
 	void LoadSkyBox(std::string_view y_cube_path, std::string_view c_cube_path);
+	void LoadSkyBoxFromFaces(std::array<std::string, 6> const& face_paths);
 	void LoadTerrain(std::string_view height_map_path, std::string_view normal_map_path);
 	void LoadCameraConfig(CommonWorker::JsonValue const& root);
+	void LoadAmbientLight(CommonWorker::JsonValue const& config);
 	void ClearSkyBox();
 	void ClearTerrain();
 	void ClearCamera();
