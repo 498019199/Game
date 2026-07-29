@@ -472,6 +472,12 @@ std::vector<RenderModelPtr> SpawnNpc(
 			{
 				ApplyNpcMaterial(loaded_model, *npc);
 				ApplyNpcRenderEffect(loaded_model, *npc);
+				if (!npc->name.empty())
+				{
+					std::wstring node_name;
+					CommonWorker::Convert(node_name, npc->name);
+					loaded_model.RootNode()->Name(node_name);
+				}
 				loaded_model.RootNode()->TransformToParent(transform);
 			},
 			CreateGameModel,

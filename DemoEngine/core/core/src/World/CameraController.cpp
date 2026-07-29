@@ -180,6 +180,12 @@ void FirstPersonController::RotateAbs(const quater& quat)
 void FirstPersonController::InputHandler(InputEngine const & ie, InputAction const & action)
 {
     float elapsed_time = ie.ElapsedTime();
+    // Mouse deltas arrive window-wide; the host decides where looking around is allowed.
+    if (!input_enabled_ && (action.second->type == InputEngine::IDT_Mouse))
+    {
+        return;
+    }
+
     if (camera_)
     {
         float const scaler = elapsed_time * 10;

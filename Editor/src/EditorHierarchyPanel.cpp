@@ -4,7 +4,11 @@
 #include <render/RenderableHelper.h>
 #include <render/Mesh.h>
 #include <common/Util.h>
+#include <game/GameContext.h>
+#include <Manager/DataManager.h>
 
+#include <algorithm>
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -12,6 +16,33 @@ namespace EditorWorker
 {
 namespace
 {
+    std::string ToLowerAscii(std::string value)
+    {
+        std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch)
+        {
+            return static_cast<char>(std::tolower(ch));
+        });
+        return value;
+    }
+
+    NpcPart const* FindNpcPart(std::string const& mesh_name, NpcData const* npc)
+    {
+        if (!npc)
+        {
+            return nullptr;
+        }
+
+        std::string const mesh_name_lower = ToLowerAscii(mesh_name);
+        for (NpcPart const& part : npc->parts)
+        {
+            if (!part.name.empty() && mesh_name_lower.find(ToLowerAscii(part.name)) != std::string::npos)
+            {
+                return &part;
+            }
+        }
+        return nullptr;
+    }
+
     void CollectStaticMeshes(RenderWorker::SceneNode const& node, std::vector<RenderWorker::Renderable const*>& meshes)
     {
         node.ForEachComponentOfType<RenderWorker::RenderableComponent>(
@@ -30,7 +61,7 @@ namespace
         }
     }
 
-    void RenderModelMeshes(RenderWorker::SceneNode const& node)
+    void RenderModelMeshes(RenderWorker::SceneNode const& node, NpcData const* npc)
     {
         std::vector<RenderWorker::Renderable const*> meshes;
         CollectStaticMeshes(node, meshes);
@@ -39,22 +70,22 @@ namespace
             return;
         }
 
-        if (ImGui::TreeNode("meshes_"))
+        for (size_t mesh_index = 0; mesh_index < meshes.size(); ++mesh_index)
         {
-            for (size_t mesh_index = 0; mesh_index < meshes.size(); ++mesh_index)
+            std::string mesh_name;
+            CommonWorker::Convert(mesh_name, meshes[mesh_index]->Name());
+            if (NpcPart const* part = FindNpcPart(mesh_name, npc))
             {
-                std::string mesh_name;
-                CommonWorker::Convert(mesh_name, meshes[mesh_index]->Name());
-                if (mesh_name.empty())
-                {
-                    mesh_name = "Mesh " + std::to_string(mesh_index);
-                }
-
-                ImGui::PushID(static_cast<int>(mesh_index));
-                ImGui::TreeNodeEx(mesh_name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-                ImGui::PopID();
+                mesh_name = part->name;
             }
-            ImGui::TreePop();
+            if (mesh_name.empty())
+            {
+                mesh_name = "Mesh " + std::to_string(mesh_index);
+            }
+
+            ImGui::PushID(static_cast<int>(mesh_index));
+            ImGui::TreeNodeEx(mesh_name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            ImGui::PopID();
         }
     }
 }
@@ -87,10 +118,11 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
             ImGui::PushID(i);
             std::string node_name;
             CommonWorker::Convert(node_name, node->Name());
+            NpcData const* npc = GameContext::Instance().DataManagerInstance().FindNpcByName(node_name);
 
             if (ImGui::TreeNode("", node_name.c_str(), i))
             {
-                RenderModelMeshes(*node);
+                RenderModelMeshes(*node, npc);
                 ImGui::TreePop();
             }
             ImGui::PopID();
