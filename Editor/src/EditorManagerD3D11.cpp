@@ -303,6 +303,11 @@ void EditorManagerD3D11::GameViewInputActive(bool active)
 	scene_.SetCameraControllerInputEnabled(active);
 }
 
+void EditorManagerD3D11::SetCameraMoveBoost(bool boost)
+{
+	scene_.SetCameraControllerMoveBoost(boost);
+}
+
 void EditorManagerD3D11::DoUpdateOverlay()
 {
 }

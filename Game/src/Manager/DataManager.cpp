@@ -209,6 +209,7 @@ bool DataManager::LoadGameConfig()
 	npc_entries_.clear();
 	npc_id_to_prefab_.clear();
 
+	LoadPrefabs("../../Assets/Private/Prefabs");
 	if (!LoadPrefabs("../../Assets/Prefabs"))
 	{
 		return false;

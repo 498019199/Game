@@ -8,6 +8,10 @@
         "prefab": "Prefabs/Model/Spring.prefab"
     },
     {
+        "id": 200000,
+        "prefab": "Prefabs/Bp_F_C23_C.prefab"
+    },
+    {
         "id": 300000,
         "prefab": "Prefabs/Model/ogre_magi.prefab"
     },

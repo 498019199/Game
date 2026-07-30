@@ -412,6 +412,7 @@ void AScene::LoadCameraConfig(JsonValue const& root)
 
 void AScene::SetupCameraController(Camera& camera)
 {
+	camera_move_boost_ = false;
 	camera_controller_.Scalers(0.05f, 1.5f);
 	camera_controller_.AttachCamera(camera);
 }
@@ -419,6 +420,17 @@ void AScene::SetupCameraController(Camera& camera)
 void AScene::SetCameraControllerInputEnabled(bool enabled)
 {
 	camera_controller_.InputEnabled(enabled);
+}
+
+void AScene::SetCameraControllerMoveBoost(bool boost)
+{
+	if (camera_move_boost_ == boost)
+	{
+		return;
+	}
+
+	camera_move_boost_ = boost;
+	camera_controller_.Scalers(0.05f, boost ? 1.5f * 5.f : 1.5f);
 }
 
 void AScene::LoadSkyBox(std::string_view y_cube_path, std::string_view c_cube_path)

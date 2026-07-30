@@ -47,6 +47,17 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 		EditorProfilerPanel::SetVisible(!EditorProfilerPanel::Visible());
 	}
 
+	if (!ImGui::GetIO().WantTextInput)
+	{
+		if (ImGui::IsKeyPressed(ImGuiKey_LeftCtrl, false) || ImGui::IsKeyPressed(ImGuiKey_RightCtrl, false))
+		{
+			mouse_look_suspended_ = !mouse_look_suspended_;
+		}
+	}
+
+	EditorManagerD3D11& editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+	editor.SetCameraMoveBoost(ImGui::GetIO().KeyShift);
+
 	if (ImGui::Begin("Game", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse))
 	{
 		ImGuiStyle const& style = ImGui::GetStyle();
@@ -98,7 +109,6 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 
 		if (view_tab == 0)
 		{
-			EditorManagerD3D11& editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
 			ImVec2 const avail = ImGui::GetContentRegionAvail();
 			void* const game_srv = editor.GameViewShaderResourceView();
 			ImVec2 overlay_anchor = ImGui::GetCursorScreenPos();
@@ -113,7 +123,7 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 			{
 				ImGui::Image((ImTextureID)(intptr_t)game_srv, avail);
 				image_hovered = ImGui::IsItemHovered();
-				game_view_input_active = image_hovered || ImGui::IsItemActive();
+				game_view_input_active = !mouse_look_suspended_ && (image_hovered || ImGui::IsItemActive());
 				image_min = ImGui::GetItemRectMin();
 				image_size = ImGui::GetItemRectSize();
 				overlay_anchor = image_min;
@@ -170,7 +180,7 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 
 	ImGui::End();
 
-	checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance()).GameViewInputActive(game_view_input_active);
+	editor.GameViewInputActive(game_view_input_active);
 }
 
 void EditorGameViewPanel::OnResize()

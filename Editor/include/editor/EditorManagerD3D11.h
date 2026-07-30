@@ -50,6 +50,7 @@ public:
     /// ID3D11ShaderResourceView* for ImGui::Image；场景先渲染到离屏 RT 再采样（勿在绑定为 RT 时采样）
     void* GameViewShaderResourceView() const;
     void GameViewInputActive(bool active);
+    void SetCameraMoveBoost(bool boost);
 
     void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 

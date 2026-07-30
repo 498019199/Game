@@ -92,13 +92,34 @@ std::string ResolveExistingTexturePath(std::string const& configured, std::strin
 	return configured.empty() ? derived : configured;
 }
 
+// Optional maps (detail / detail2): missing files are normal — return empty, never a phantom path.
+std::string ResolveOptionalTexturePath(std::string const& configured, std::string const& albedo, std::string_view sibling_suffix)
+{
+	auto& res_loader = Context::Instance().ResLoaderInstance();
+	auto exists = [&](std::string const& path) {
+		return !path.empty()
+			&& (!res_loader.Locate(path).empty() || !res_loader.Locate(path + ".dds").empty());
+	};
+
+	if (exists(configured))
+	{
+		return configured;
+	}
+	std::string const derived = DeriveColorSibling(albedo, sibling_suffix);
+	if (exists(derived))
+	{
+		return derived;
+	}
+	return {};
+}
+
 	MeshTextures ResolveMeshTextures(MeshTextures const& src)
 	{
 		MeshTextures out = src;
 		out.mask1 = ResolveExistingTexturePath(src.mask1, src.albedo, "mask1");
 		out.mask2 = ResolveExistingTexturePath(src.mask2, src.albedo, "mask2");
-		out.detail = ResolveExistingTexturePath(src.detail, src.albedo, "detail");
-		out.detail2 = ResolveExistingTexturePath(src.detail2, src.albedo, "detail2");
+		out.detail = ResolveOptionalTexturePath(src.detail, src.albedo, "detail");
+		out.detail2 = ResolveOptionalTexturePath(src.detail2, src.albedo, "detail2");
 		out.cubemap = ResolveExistingTexturePath(src.cubemap, src.albedo, "cubeMap");
 		out.diffuse_warp = ResolveExistingTexturePath(src.diffuse_warp, src.albedo, "diffuseWarp");
 		out.fresnel_warp_color = ResolveExistingTexturePath(src.fresnel_warp_color, src.albedo, "fresnelWarpColor");

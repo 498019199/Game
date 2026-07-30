@@ -25,6 +25,7 @@ public:
 	void LoadScene(std::string_view scene_path);
 	void SetupCameraController(RenderWorker::Camera& camera);
 	void SetCameraControllerInputEnabled(bool enabled);
+	void SetCameraControllerMoveBoost(bool boost);
 
 	void UpdateDetailedMeshes(RenderWorker::float3 const& eye_pos, bool back_face_depth_pass);
 
@@ -52,4 +53,5 @@ private:
 	SceneNodePtr light_node_;
 
 	RenderWorker::FirstPersonController camera_controller_;
+	bool camera_move_boost_ { false };
 };

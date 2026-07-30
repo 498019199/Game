@@ -14,6 +14,7 @@ public:
     virtual void OnResize() override;
 
 private:
+    bool mouse_look_suspended_ { false };
 };
 
 
