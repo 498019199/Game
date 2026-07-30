@@ -294,6 +294,25 @@ void AScene::RemoveModel(RenderModelPtr const& model)
 	models_.erase(iter);
 }
 
+RenderModelPtr AScene::FindModelForNode(SceneNode const& node) const
+{
+	SceneNode const* walk = &node;
+	SceneNode const& scene_root = Context::Instance().WorldInstance().SceneRootNode();
+	while (walk->Parent() && walk->Parent() != &scene_root)
+	{
+		walk = walk->Parent();
+	}
+
+	for (RenderModelPtr const& model : models_)
+	{
+		if (model && model->RootNode().get() == walk)
+		{
+			return model;
+		}
+	}
+	return nullptr;
+}
+
 void AScene::LoadScene(std::string_view scene_path)
 {
 	while (!models_.empty())

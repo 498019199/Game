@@ -1,6 +1,7 @@
 ﻿#include <game/NpcSpawner.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <string>
@@ -220,6 +221,200 @@ void SetEffectTextureParam(RenderEffect& effect, char const* name, std::string c
 	}
 }
 
+int ExpectedShaderParamComponents(RenderEffectDataType type)
+{
+	switch (type)
+	{
+	case REDT_float2:
+	case REDT_int2:
+	case REDT_uint2:
+		return 2;
+	case REDT_float3:
+	case REDT_int3:
+	case REDT_uint3:
+		return 3;
+	case REDT_float4:
+	case REDT_int4:
+	case REDT_uint4:
+		return 4;
+	default:
+		return 1;
+	}
+}
+
+bool FillShaderParamComponents(ShaderParamValue const& value, std::array<float, 4>& comps, int& count)
+{
+	count = 0;
+	switch (value.form)
+	{
+	case ShaderParamValue::Form::Bool:
+		comps[0] = value.boolean ? 1.0f : 0.0f;
+		count = 1;
+		return true;
+	case ShaderParamValue::Form::Number:
+		comps[0] = value.number;
+		count = 1;
+		return true;
+	case ShaderParamValue::Form::Vector:
+		count = value.count;
+		for (int i = 0; i < value.count && i < 4; ++i)
+		{
+			comps[static_cast<size_t>(i)] = value.comps[static_cast<size_t>(i)];
+		}
+		return count > 0;
+	case ShaderParamValue::Form::String:
+	default:
+		return false;
+	}
+}
+
+bool ApplyShaderParamToEffect(
+	RenderEffect& effect, std::string const& name, ShaderParamValue const& value, std::string_view context)
+{
+	RenderEffectParameter* param = effect.ParameterByName(name);
+	if (!param)
+	{
+		LogInfo() << "ApplyEffectParameterValues: unknown parameter '" << name << "' for " << context << std::endl;
+		return false;
+	}
+
+	auto scalar_float = [&]() -> float {
+		switch (value.form)
+		{
+		case ShaderParamValue::Form::Bool:
+			return value.boolean ? 1.0f : 0.0f;
+		case ShaderParamValue::Form::Number:
+			return value.number;
+		case ShaderParamValue::Form::Vector:
+			return value.count > 0 ? value.comps[0] : 0.0f;
+		default:
+			return 0.0f;
+		}
+	};
+
+	auto scalar_bool = [&]() -> bool {
+		switch (value.form)
+		{
+		case ShaderParamValue::Form::Bool:
+			return value.boolean;
+		case ShaderParamValue::Form::Number:
+			return value.number != 0.0f;
+		case ShaderParamValue::Form::Vector:
+			return value.count > 0 && value.comps[0] != 0.0f;
+		default:
+			return false;
+		}
+	};
+
+	RenderEffectDataType const type = param->Type();
+	int const expect = ExpectedShaderParamComponents(type);
+	if (expect > 1)
+	{
+		std::array<float, 4> comps{};
+		int count = 0;
+		if (!FillShaderParamComponents(value, comps, count))
+		{
+			LogError() << "ApplyEffectParameterValues: cannot convert parameter '" << name << "' to vector for "
+					   << context << std::endl;
+			return false;
+		}
+		if (count != expect)
+		{
+			LogInfo() << "ApplyEffectParameterValues: parameter '" << name << "' expected " << expect
+					  << " components, got " << count << " — padding/truncating" << std::endl;
+		}
+
+		switch (type)
+		{
+		case REDT_float2:
+			*param = float2(comps[0], comps[1]);
+			break;
+		case REDT_float3:
+			*param = float3(comps[0], comps[1], comps[2]);
+			break;
+		case REDT_float4:
+			*param = float4(comps[0], comps[1], comps[2], comps[3]);
+			break;
+		case REDT_int2:
+			*param = int2(static_cast<int32_t>(comps[0]), static_cast<int32_t>(comps[1]));
+			break;
+		case REDT_int3:
+			*param = int3(static_cast<int32_t>(comps[0]), static_cast<int32_t>(comps[1]), static_cast<int32_t>(comps[2]));
+			break;
+		case REDT_int4:
+			*param = int4(
+				static_cast<int32_t>(comps[0]), static_cast<int32_t>(comps[1]), static_cast<int32_t>(comps[2]),
+				static_cast<int32_t>(comps[3]));
+			break;
+		case REDT_uint2:
+			*param = uint2(static_cast<uint32_t>(comps[0]), static_cast<uint32_t>(comps[1]));
+			break;
+		case REDT_uint3:
+			*param = uint3(
+				static_cast<uint32_t>(comps[0]), static_cast<uint32_t>(comps[1]), static_cast<uint32_t>(comps[2]));
+			break;
+		case REDT_uint4:
+			*param = uint4(
+				static_cast<uint32_t>(comps[0]), static_cast<uint32_t>(comps[1]), static_cast<uint32_t>(comps[2]),
+				static_cast<uint32_t>(comps[3]));
+			break;
+		default:
+			return false;
+		}
+		return true;
+	}
+
+	switch (type)
+	{
+	case REDT_bool:
+		*param = scalar_bool();
+		return true;
+	case REDT_float:
+		*param = scalar_float();
+		return true;
+	case REDT_int:
+		*param = static_cast<int32_t>(scalar_float());
+		return true;
+	case REDT_uint:
+		*param = static_cast<uint32_t>(scalar_float());
+		return true;
+	case REDT_texture2D:
+		if (value.form == ShaderParamValue::Form::String && !value.text.empty())
+		{
+			if (auto srv = LoadNpcTextureSrv(value.text))
+			{
+				*param = srv;
+				return true;
+			}
+		}
+		LogError() << "ApplyEffectParameterValues: texture parameter '" << name << "' needs a string path for "
+				   << context << std::endl;
+		return false;
+	default:
+		LogError() << "ApplyEffectParameterValues: unsupported parameter type for '" << name << "' in " << context
+				   << std::endl;
+		return false;
+	}
+}
+
+void ApplyEffectParameterValues(RenderEffect& effect, ShaderParamMap const& values, std::string_view context)
+{
+	for (auto const& [name, param_value] : values)
+	{
+		ApplyShaderParamToEffect(effect, name, param_value, context);
+	}
+}
+
+ShaderParamMap MergeParameterValues(ShaderParamMap const& base, ShaderParamMap const& overrides)
+{
+	ShaderParamMap merged = base;
+	for (auto const& [key, param_value] : overrides)
+	{
+		merged[key] = param_value;
+	}
+	return merged;
+}
+
 void ApplyTexturesToMaterial(RenderMaterial& mtl, std::string const& material_name, MeshTextures const& textures_in)
 {
 	MeshTextures const textures = ResolveMeshTextures(textures_in);
@@ -437,15 +632,21 @@ void ApplyNpcRenderEffect(RenderModel& model, MeshData const& data, std::string_
 		static_mesh.Technique(mesh_effect, tech);
 
 		MeshTextures const* tex = fallback_tex;
+		ShaderParamMap params = data.parameter_values;
 		std::string mesh_name;
 		CommonWorker::Convert(mesh_name, static_mesh.Name());
 		if (MeshPart const* part = FindPartForMeshName(ToLowerAscii(mesh_name), data.parts))
 		{
 			tex = &part->textures;
+			params = MergeParameterValues(params, part->parameter_values);
 		}
 		if (tex)
 		{
 			ApplyData2ExtraTextures(*mesh_effect, *tex);
+		}
+		if (!params.empty())
+		{
+			ApplyEffectParameterValues(*mesh_effect, params, npc_name);
 		}
 	});
 }

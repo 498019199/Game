@@ -21,6 +21,7 @@ public:
 
 	void AddModel(const RenderModelPtr& model);
 	void RemoveModel(const RenderModelPtr& model);
+	RenderModelPtr FindModelForNode(RenderWorker::SceneNode const& node) const;
 
 	void LoadScene(std::string_view scene_path);
 	void SetupCameraController(RenderWorker::Camera& camera);

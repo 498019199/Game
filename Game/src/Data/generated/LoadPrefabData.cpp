@@ -10,6 +10,7 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -129,6 +130,132 @@ namespace
 		return textures;
 	}
 
+	bool ParseCommaSeparatedFloats(std::string_view text, std::array<float, 4>& comps, int& count)
+	{
+		count = 0;
+		std::string buffer(text);
+		std::replace(buffer.begin(), buffer.end(), ',', ' ');
+		std::istringstream stream(buffer);
+		float value = 0.0f;
+		while (count < 4 && (stream >> value))
+		{
+			comps[static_cast<size_t>(count)] = value;
+			++count;
+		}
+		return count > 0;
+	}
+
+	bool ParseUeVectorString(std::string_view text, std::array<float, 4>& comps, int& count)
+	{
+		count = 0;
+		std::string buffer(text);
+		for (char& ch : buffer)
+		{
+			if (ch == '(' || ch == ')' || ch == 'R' || ch == 'G' || ch == 'B' || ch == 'A' || ch == '=')
+			{
+				ch = ' ';
+			}
+		}
+		return ParseCommaSeparatedFloats(buffer, comps, count);
+	}
+
+	bool ParseStringAsVector(std::string_view text, std::array<float, 4>& comps, int& count)
+	{
+		if (text.find('(') != std::string_view::npos || text.find('=') != std::string_view::npos)
+		{
+			return ParseUeVectorString(text, comps, count);
+		}
+		return ParseCommaSeparatedFloats(text, comps, count);
+	}
+
+	float JsonNumber(JsonValue const& value)
+	{
+		switch (value.Type())
+		{
+		case JsonValueType::Bool:
+			return value.ValueBool() ? 1.0f : 0.0f;
+		case JsonValueType::Int:
+			return static_cast<float>(value.ValueInt());
+		case JsonValueType::UInt:
+			return static_cast<float>(value.ValueUInt());
+		case JsonValueType::Float:
+			return value.ValueFloat();
+		default:
+			return 0.0f;
+		}
+	}
+
+	ShaderParamValue LoadShaderParamValue(JsonValue const& value)
+	{
+		ShaderParamValue out;
+		switch (value.Type())
+		{
+		case JsonValueType::Bool:
+			out.form = ShaderParamValue::Form::Bool;
+			out.boolean = value.ValueBool();
+			out.number = out.boolean ? 1.0f : 0.0f;
+			break;
+		case JsonValueType::Int:
+		case JsonValueType::UInt:
+		case JsonValueType::Float:
+			out.form = ShaderParamValue::Form::Number;
+			out.number = JsonNumber(value);
+			break;
+		case JsonValueType::String:
+		{
+			std::string const text = JsonAsString(value);
+			if (ParseStringAsVector(text, out.comps, out.count))
+			{
+				out.form = ShaderParamValue::Form::Vector;
+			}
+			else
+			{
+				out.form = ShaderParamValue::Form::String;
+				out.text = text;
+			}
+			break;
+		}
+		case JsonValueType::Array:
+		{
+			out.form = ShaderParamValue::Form::Vector;
+			for (JsonValue const& item : value.ValueArray())
+			{
+				if (out.count >= 4)
+				{
+					break;
+				}
+				out.comps[static_cast<size_t>(out.count)] = JsonNumber(item);
+				++out.count;
+			}
+			break;
+		}
+		default:
+			out.form = ShaderParamValue::Form::String;
+			break;
+		}
+		return out;
+	}
+
+	ShaderParamMap LoadParameterValues(JsonValue const& container)
+	{
+		ShaderParamMap values;
+		JsonValue const* node = container.Member("parameter_values");
+		if (!node || node->Type() != JsonValueType::Object)
+		{
+			return values;
+		}
+
+		for (auto const& [name, param_value] : node->ValueObject())
+		{
+			if (name.empty())
+			{
+				continue;
+			}
+			values.emplace(name, LoadShaderParamValue(param_value));
+		}
+		return values;
+	}
+
 	std::vector<MeshPart> LoadParts(JsonValue const& component)
 	{
 		JsonValue const* parts_node = component.Member("parts");
@@ -149,6 +276,7 @@ namespace
 			MeshPart part;
 			part.name = part_name;
 			part.textures = LoadTextures(part_value);
+			part.parameter_values = LoadParameterValues(part_value);
 			parts.push_back(std::move(part));
 		}
 
@@ -167,6 +295,7 @@ namespace
 		model.render_effect = MemberString(component, {"render_effect", "RenderEffect"});
 		model.render_technique = MemberString(component, {"render_technique", "RenderTechnique"});
 		model.textures = LoadTextures(component);
+		model.parameter_values = LoadParameterValues(component);
 		model.parts = LoadParts(component);
 		return model;
 	}

@@ -1,6 +1,8 @@
 #include <editor/EditorHierarchyPanel.h>
+#include <editor/EditorManagerD3D11.h>
 #include <base/Context.h>
 #include <world/World.h>
+#include <render/Renderable.h>
 #include <render/RenderableHelper.h>
 #include <render/Mesh.h>
 #include <common/Util.h>
@@ -69,7 +71,8 @@ namespace
         }
     }
 
-    void RenderModelMeshes(RenderWorker::SceneNode const& node, PrefabData const* npc)
+    void RenderModelMeshes(
+        RenderWorker::SceneNode const& node, PrefabData const* npc, EditorManagerD3D11& editor)
     {
         std::vector<RenderWorker::Renderable const*> meshes;
         CollectStaticMeshes(node, meshes);
@@ -91,8 +94,18 @@ namespace
                 mesh_name = "Mesh " + std::to_string(mesh_index);
             }
 
+            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+            if (editor.IsHierarchyItemSelected(&node, mesh_name))
+            {
+                flags |= ImGuiTreeNodeFlags_Selected;
+            }
+
             ImGui::PushID(static_cast<int>(mesh_index));
-            ImGui::TreeNodeEx(mesh_name.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+            ImGui::TreeNodeEx(mesh_name.c_str(), flags);
+            if (ImGui::IsItemClicked())
+            {
+                editor.SetSelectedSceneNode(&node, mesh_name);
+            }
             ImGui::PopID();
         }
     }
@@ -114,6 +127,8 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
     ImGui::SetNextWindowPos(ImVec2(0, (float)setting.mainBarHeight));
     ImGui::SetNextWindowSize(ImVec2((float)setting.hierarchyWidth, (float)setting.hierarchyHeight));
 
+    auto& editor = CommonWorker::checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+
     // 设置面板具体内容
     if (ImGui::Begin("Hierarchy", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
@@ -128,9 +143,21 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
             CommonWorker::Convert(node_name, node->Name());
             PrefabData const* npc = GameContext::Instance().DataManagerInstance().FindNpcByName(node_name);
 
-            if (ImGui::TreeNode("", node_name.c_str(), i))
+            ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+            if (editor.IsHierarchyItemSelected(node.get(), {}))
             {
-                RenderModelMeshes(*node, npc);
+                node_flags |= ImGuiTreeNodeFlags_Selected;
+            }
+
+            bool const open = ImGui::TreeNodeEx(node_name.c_str(), node_flags);
+            if (ImGui::IsItemClicked())
+            {
+                editor.SetSelectedSceneNode(node.get(), {});
+            }
+
+            if (open)
+            {
+                RenderModelMeshes(*node, npc, editor);
                 ImGui::TreePop();
             }
             ImGui::PopID();

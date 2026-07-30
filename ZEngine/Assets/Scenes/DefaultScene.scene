@@ -11,10 +11,12 @@
     "GameObjects":
     [
         {
-            "NpcId": 300001,
+            "NpcId": 200000,
             "Position": [0, 0, 0],
-            "Rotation": [0, 0, 0],
+            "Rotation": [90, 0, 0],
             "Scale": [1, 1, 1]
         }
     ]
 }
+
+

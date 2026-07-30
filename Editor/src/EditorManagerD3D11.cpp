@@ -447,7 +447,10 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
 
     selected_asset_info_.reset();
     selected_asset_info_ = nullptr;
+    selected_scene_node_ = nullptr;
+    selected_mesh_name_.clear();
     selected_asset_ptr_ = pAssert.get();
+    selected_asset_type_ = pAssert->type;
     switch(pAssert->type)
     {
     case AssetType::Script:
@@ -523,13 +526,55 @@ void EditorManagerD3D11::SetSelectedAssert(const EditorAssetNodePtr pAssert)
     }
 }
 
+void EditorManagerD3D11::SetSelectedSceneNode(SceneNode const* node, std::string_view mesh_name)
+{
+    if (selected_scene_node_ == node && selected_mesh_name_ == mesh_name)
+    {
+        return;
+    }
+
+    selected_asset_ptr_ = nullptr;
+    selected_scene_node_ = node;
+    selected_mesh_name_ = mesh_name;
+    selected_asset_info_.reset();
+
+    if (!node)
+    {
+        selected_asset_type_ = AssetType::Other;
+        return;
+    }
+
+    RenderModelPtr model = scene_.FindModelForNode(*node);
+    if (!model)
+    {
+        selected_asset_type_ = AssetType::Other;
+        return;
+    }
+
+    auto ptr = CommonWorker::MakeSharedPtr<AssetModelInfo>();
+    CommonWorker::Convert(ptr->name, model->RootNode()->Name());
+    if (!mesh_name.empty())
+    {
+        ptr->name += " / ";
+        ptr->name.append(mesh_name.data(), mesh_name.size());
+    }
+    ptr->model = model;
+    selected_asset_info_ = ptr;
+    selected_asset_type_ = AssetType::Model;
+}
+
+bool EditorManagerD3D11::IsHierarchyItemSelected(SceneNode const* node, std::string_view mesh_name) const
+{
+    if (!node || selected_scene_node_ != node)
+    {
+        return false;
+    }
+    return selected_mesh_name_ == mesh_name;
+}
+
 AssetType EditorManagerD3D11::GetAssertType() const
 {
-    if (selected_asset_ptr_) 
-    {
-        return selected_asset_ptr_->type;
-    }
-    return AssetType::Other;
+    return selected_asset_type_;
 }
 
 std::string EditorManagerD3D11::LoadTextFile(const std::string_view& path)

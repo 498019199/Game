@@ -38,6 +38,8 @@ public:
     static void SetWindowSize(int hWidth, int pHeight, int iWidth);
 
     void SetSelectedAssert(const EditorAssetNodePtr node);
+    void SetSelectedSceneNode(RenderWorker::SceneNode const* node, std::string_view mesh_name = {});
+    bool IsHierarchyItemSelected(RenderWorker::SceneNode const* node, std::string_view mesh_name = {}) const;
     const AssertBaseInfoPtr& GetSelectedAssert() const {  return selected_asset_info_; };
     AssetType GetAssertType() const;
 
@@ -67,6 +69,9 @@ private :
 
     EditorAssetNode* selected_asset_ptr_ { nullptr};
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
+    AssetType selected_asset_type_ { AssetType::Other };
+    RenderWorker::SceneNode const* selected_scene_node_ { nullptr };
+    std::string selected_mesh_name_;
 
     std::string scene_path_;
     AScene scene_;

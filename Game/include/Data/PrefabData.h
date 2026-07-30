@@ -4,10 +4,33 @@
 
 #include <game/GameApi.h>
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+// Generic shader uniform value from prefab parameter_values (type resolved at apply time).
+struct ShaderParamValue
+{
+	enum class Form
+	{
+		Bool,
+		Number,
+		Vector,
+		String,
+	};
+
+	Form form = Form::Number;
+	bool boolean = false;
+	float number = 0.0f;
+	std::array<float, 4> comps{};
+	int count = 0;
+	std::string text;
+};
+
+using ShaderParamMap = std::unordered_map<std::string, ShaderParamValue>;
 
 struct MeshTextures
 {
@@ -35,6 +58,7 @@ struct MeshPart
 	// Match key against mesh name (substring, case-insensitive), e.g. "base" / "shoulder".
 	std::string name;
 	MeshTextures textures;
+	ShaderParamMap parameter_values;
 };
 
 // Payload of a "model" component: the meshes and materials of one AModel.
@@ -47,6 +71,7 @@ struct MeshData
 	std::string render_effect;
 	std::string render_technique;
 	MeshTextures textures;
+	ShaderParamMap parameter_values;
 	// Optional per-mesh-name texture overrides; longer names are matched first.
 	std::vector<MeshPart> parts;
 };

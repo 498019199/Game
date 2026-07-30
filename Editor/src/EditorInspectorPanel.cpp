@@ -194,97 +194,96 @@ void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
 
 void EditorInspectorPanel::DrawModel(AssertBaseInfo& info)
 {
-    // auto& model_info = checked_cast<AssetModelInfo&>(info);
+    auto& model_info = checked_cast<AssetModelInfo&>(info);
+    if (!model_info.model)
+    {
+        ImGui::TextUnformatted("Model is not loaded.");
+        return;
+    }
 
-    // ImGui::Text("Name:");
-    // ImGui::SameLine(120);
-    // ImGui::Text("%s", model_info.name.c_str());
+    ImGui::Text("Name:");
+    ImGui::SameLine(120);
+    ImGui::Text("%s", model_info.name.c_str());
 
-    // if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-    // {
-    //     static RenderWorker::RenderModel* editing_model = nullptr;
-    //     static float pos[3] = { 0.0f, 0.0f, 0.0f };
-    //     static float rot[3] = { 0.0f, 0.0f, 0.0f };
-    //     static float scl[3] = { 1.0f, 1.0f, 1.0f };
+    ImGui::Text("Meshes:");
+    ImGui::SameLine(120);
+    ImGui::Text("%u", model_info.model->NumMeshes());
 
-    //     auto node = model_info.model->RootNode();
-    //     if (editing_model != model_info.model.get())
-    //     {
-    //         editing_model = model_info.model.get();
+    if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        static RenderWorker::RenderModel* editing_model = nullptr;
+        static float pos[3] = { 0.0f, 0.0f, 0.0f };
+        static float rot[3] = { 0.0f, 0.0f, 0.0f };
+        static float scl[3] = { 1.0f, 1.0f, 1.0f };
 
-    //         RenderWorker::float3 scale;
-    //         RenderWorker::quater rotation;
-    //         RenderWorker::float3 translation;
-    //         MathWorker::decompose(scale, rotation, translation, node->TransformToParent());
+        auto node = model_info.model->RootNode();
+        if (editing_model != model_info.model.get())
+        {
+            editing_model = model_info.model.get();
 
-    //         pos[0] = translation.x();
-    //         pos[1] = translation.y();
-    //         pos[2] = translation.z();
-    //         rot[0] = rot[1] = rot[2] = 0.0f;
-    //         scl[0] = scale.x();
-    //         scl[1] = scale.y();
-    //         scl[2] = scale.z();
-    //     }
+            RenderWorker::float3 scale;
+            RenderWorker::quater rotation;
+            RenderWorker::float3 translation;
+            MathWorker::decompose(scale, rotation, translation, node->TransformToParent());
 
-    //     bool changed = false;
-    //     changed |= ImGui::DragFloat3("Position##pos", pos, 0.1f);
-    //     changed |= ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
-    //     changed |= ImGui::DragFloat3("Scale##scl", scl, 0.1f);
+            pos[0] = translation.x();
+            pos[1] = translation.y();
+            pos[2] = translation.z();
+            rot[0] = rot[1] = rot[2] = 0.0f;
+            scl[0] = scale.x();
+            scl[1] = scale.y();
+            scl[2] = scale.z();
+        }
 
-    //     if (changed)
-    //     {
-    //         RenderWorker::float4x4 transform =
-    //             MathWorker::translation(pos[0], pos[1], pos[2]) *
-    //             MathWorker::rotation_matrix_yaw_pitch_roll(
-    //                 MathWorker::Deg2Rad(rot[1]),
-    //                 MathWorker::Deg2Rad(rot[0]),
-    //                 MathWorker::Deg2Rad(rot[2])) *
-    //             MathWorker::scaling(scl[0], scl[1], scl[2]);
+        bool changed = false;
+        changed |= ImGui::DragFloat3("Position##pos", pos, 0.1f);
+        changed |= ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
+        changed |= ImGui::DragFloat3("Scale##scl", scl, 0.1f);
 
-    //         node->TransformToParent(transform);
-    //         node->UpdateTransforms();
-    //     }
+        if (changed)
+        {
+            RenderWorker::float4x4 transform =
+                MathWorker::translation(pos[0], pos[1], pos[2]) *
+                MathWorker::rotation_matrix_yaw_pitch_roll(
+                    MathWorker::Deg2Rad(rot[1]),
+                    MathWorker::Deg2Rad(rot[0]),
+                    MathWorker::Deg2Rad(rot[2])) *
+                MathWorker::scaling(scl[0], scl[1], scl[2]);
 
-    //     ImGui::TreePop();
-    // }
-    // ImGui::Spacing();
+            node->TransformToParent(transform);
+            node->UpdateTransforms();
+        }
 
-    // if (ImGui::TreeNodeEx("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen))
-    // {
-    //     ImGui::TreePop();
-    // }
-    // ImGui::Spacing();
+        ImGui::TreePop();
+    }
+    ImGui::Spacing();
 
-    // if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
-    // {
-    //     if (ImGui::TreeNode("Materials"))
-    //     {
-    //         ImGui::TreePop();
-    //     }
+    if (ImGui::TreeNodeEx("Mesh Filter", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::TreePop();
+    }
+    ImGui::Spacing();
 
-    //     if (ImGui::TreeNode("Lighting"))
-    //     {
-    //         ImGui::TreePop();
-    //     }
-
-    //     if (ImGui::TreeNode("Lightmaping"))
-    //     {
-    //         ImGui::TreePop();
-    //     }
-
-    //     if (ImGui::TreeNode("Probes"))
-    //     {
-    //         ImGui::TreePop();
-    //     }
-
-    //    if (ImGui::TreeNode("Additional Settings"))
-    //     {
-    //         ImGui::TreePop();
-    //     }
-    // }
-    // ImGui::Spacing();
-
-
+    if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::TreeNode("Materials"))
+        {
+            for (size_t i = 0; i < model_info.model->NumMaterials(); ++i)
+            {
+                RenderMaterialPtr const& mtl = model_info.model->GetMaterial(static_cast<int32_t>(i));
+                std::string label = "Material " + std::to_string(i);
+                if (mtl && !mtl->Name().empty())
+                {
+                    label += " (";
+                    label += mtl->Name();
+                    label += ")";
+                }
+                ImGui::BulletText("%s", label.c_str());
+            }
+            ImGui::TreePop();
+        }
+    }
+    ImGui::Spacing();
 }
 
 void EditorInspectorPanel::DrawMaterial(AssertBaseInfo& info)
