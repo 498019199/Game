@@ -1,4 +1,6 @@
 
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
 set(TableGenOutput "${ZENGINE_ROOT_DIR}/core/core/src/TableGen/Tables.h" "${ZENGINE_ROOT_DIR}/core/core/src/TableGen/Tables.cpp")
 add_custom_command(OUTPUT ${TableGenOutput}
 	COMMAND "${Python3_EXECUTABLE}" "TableGen.py"

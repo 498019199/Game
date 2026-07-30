@@ -25,7 +25,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${ZENGINE_BIN_DIR})
 
 add_subdirectory(${DEMOENGINE_DIR})
 add_subdirectory(Game)
-
-if(WIN32)
-    add_subdirectory(Editor)
-endif()
+add_subdirectory(Editor)

@@ -15,9 +15,6 @@
 #ifdef CALL_D3DCOMPILER_DIRECTLY
 #include <d3dx11.h>
 #include <d3dcompiler.h>
-#endif
-#endif
-
 
 namespace
 {
@@ -29,9 +26,7 @@ class D3DCompilerLoader
 public:
     ~D3DCompilerLoader()
     {
-#ifdef CALL_D3DCOMPILER_DIRECTLY
         mod_d3dcompiler_.Free();
-#endif
     }
 
     static D3DCompilerLoader& Instance()
@@ -45,7 +40,6 @@ public:
         char const * target, uint32_t flags1, uint32_t flags2,
         std::vector<uint8_t>& code, std::string& error_msgs) const
     {
-#ifdef CALL_D3DCOMPILER_DIRECTLY
         com_ptr<ID3DBlob> code_blob;
         com_ptr<ID3DBlob> error_msgs_blob;
         HRESULT hr = DynamicD3DCompile_(src_data.c_str(), static_cast<UINT>(src_data.size()),
@@ -70,13 +64,10 @@ public:
             error_msgs.clear();
         }
         return hr;
-#else
-#endif
     }
 
     HRESULT D3DStripShader(std::vector<uint8_t> const & shader_code, uint32_t strip_flags, std::vector<uint8_t>& stripped_code)
     {
-#ifdef CALL_D3DCOMPILER_DIRECTLY
         if (shader_code.empty())
         {
             stripped_code.clear();
@@ -90,18 +81,10 @@ public:
         stripped_code.assign(p, p + stripped_blob->GetBufferSize());
 
         return hr;
-#else
-        // TODO
-        KFL_UNUSED(shader_code);
-        KFL_UNUSED(strip_flags);
-        KFL_UNUSED(stripped_code);
-        return S_OK;
-#endif
     }
 
     HRESULT D3DReflect(std::vector<uint8_t> const & shader_code, void** reflector)
     {
-#ifdef CALL_D3DCOMPILER_DIRECTLY
         if (shader_code.empty())
         {
             if (reflector)
@@ -114,32 +97,23 @@ public:
         static GUID const IID_ID3D11ShaderReflection_47
             = { 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } };
 
-        return DynamicD3DReflect_(&shader_code[0],  // [In]编译好的着色器二进制信息
-            static_cast<UINT>(shader_code.size()),  // [In]编译好的着色器二进制信息字节数
-            IID_ID3D11ShaderReflection_47,          // [In]COM组件的GUID
-            reflector);                             // [Out]输出的着色器反射借口
-#else
-        // TODO
-        KFL_UNUSED(shader_code);
-        KFL_UNUSED(reflector);
-        return S_OK;
-#endif
+        return DynamicD3DReflect_(&shader_code[0],
+            static_cast<UINT>(shader_code.size()),
+            IID_ID3D11ShaderReflection_47,
+            reflector);
     }
 
 private:
     D3DCompilerLoader()
     {
-    #ifdef CALL_D3DCOMPILER_DIRECTLY
         mod_d3dcompiler_.Load("d3dcompiler_47.dll");
 
         DynamicD3DCompile_ = reinterpret_cast<D3DCompileFunc>(mod_d3dcompiler_.GetProcAddress("D3DCompile"));
         DynamicD3DReflect_ = reinterpret_cast<D3DReflectFunc>(mod_d3dcompiler_.GetProcAddress("D3DReflect"));
         DynamicD3DStripShader_ = reinterpret_cast<D3DStripShaderFunc>(mod_d3dcompiler_.GetProcAddress("D3DStripShader"));
-    #endif
-}
+    }
 
 private:
-#ifdef CALL_D3DCOMPILER_DIRECTLY
     typedef HRESULT (WINAPI *D3DCompileFunc)(LPCVOID pSrcData, SIZE_T SrcDataSize, LPCSTR pSourceName,
         D3D_SHADER_MACRO const * pDefines, ID3DInclude* pInclude, LPCSTR pEntrypoint,
         LPCSTR pTarget, UINT Flags1, UINT Flags2, ID3DBlob** ppCode, ID3DBlob** ppErrorMsgs);
@@ -151,9 +125,11 @@ private:
     D3DCompileFunc DynamicD3DCompile_;
     D3DReflectFunc DynamicD3DReflect_;
     D3DStripShaderFunc DynamicD3DStripShader_;
-#endif
 };
 }
+#endif // CALL_D3DCOMPILER_DIRECTLY
+#endif // ZENGINE_IS_DEV_PLATFORM
+
 
 namespace RenderWorker
 {
@@ -244,6 +220,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 }
 
 #if ZENGINE_IS_DEV_PLATFORM
+#ifdef CALL_D3DCOMPILER_DIRECTLY
 	std::vector<uint8_t> ShaderStageObject::CompileToDXBC(ShaderStage stage, RenderEffect const& effect, RenderTechnique const& tech,
 		RenderPass const& pass, std::vector<std::pair<char const*, char const*>> const& api_special_macros, char const* func_name,
 		char const* shader_profile, uint32_t flags, void** reflector, bool strip)
@@ -506,5 +483,26 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 
 		return code;
     }
-#endif
+#else
+	std::vector<uint8_t> ShaderStageObject::CompileToDXBC(ShaderStage stage, RenderEffect const& effect, RenderTechnique const& tech,
+		RenderPass const& pass, std::vector<std::pair<char const*, char const*>> const& api_special_macros, char const* func_name,
+		char const* shader_profile, uint32_t flags, void** reflector, bool strip)
+	{
+		KFL_UNUSED(stage);
+		KFL_UNUSED(effect);
+		KFL_UNUSED(tech);
+		KFL_UNUSED(pass);
+		KFL_UNUSED(api_special_macros);
+		KFL_UNUSED(func_name);
+		KFL_UNUSED(shader_profile);
+		KFL_UNUSED(flags);
+		KFL_UNUSED(strip);
+		if (reflector)
+		{
+			*reflector = nullptr;
+		}
+		return {};
+	}
+#endif // CALL_D3DCOMPILER_DIRECTLY
+#endif // ZENGINE_IS_DEV_PLATFORM
 }

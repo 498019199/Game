@@ -15,7 +15,9 @@
 #include <common/Profiler.h>
 #include <common/Util.h>
 
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 #include <windows.h>
+#endif
 
 namespace
 {
@@ -26,6 +28,7 @@ namespace
 		GmSubmit,
 	};
 
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	RenderWorker::InputActionDefine actions[] =
 	{
 		RenderWorker::InputActionDefine(Exit, RenderWorker::KS_Escape),
@@ -41,6 +44,7 @@ namespace
 		}
 		return -1;
 	}
+#endif
 }
 
 namespace EditorWorker
@@ -49,7 +53,11 @@ using namespace RenderWorker;
 using namespace CommonWorker;
 
 GameApp::GameApp(std::string_view scene_path)
+#if defined(ZENGINE_PLATFORM_WINDOWS)
 	: App3D("Game App <DirectX 11>")
+#else
+	: App3D("Game App <SDL3>")
+#endif
 	, scene_path_(scene_path)
 {
 }
@@ -69,6 +77,7 @@ void GameApp::OnCreate()
 	RenderFactory& rf = context.RenderFactoryInstance();
 	RenderEngine& re = rf.RenderEngineInstance();
 
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	InputEngine& input_engine = context.InputFactoryInstance().InputEngineInstance();
 	InputActionMap action_map;
 	action_map.AddActions(actions, actions + std::size(actions));
@@ -78,6 +87,7 @@ void GameApp::OnCreate()
 			this->InputHandler(sender, action);
 		});
 	input_engine.ActionMap(action_map, input_handler);
+#endif
 
 	depth_texture_support_ = re.DeviceCaps().depth_texture_support;
 
@@ -94,10 +104,12 @@ void GameApp::OnCreate()
 		LogError() << "GameApp: GM debug window failed to initialize." << std::endl;
 	}
 
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	if (MainWnd())
 	{
 		MainWnd()->BindMsgProc(GmWndProc);
 	}
+#endif
 }
 
 void GameApp::ApplySceneCamera()

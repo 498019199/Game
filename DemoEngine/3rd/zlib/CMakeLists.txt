@@ -1,6 +1,6 @@
 UpdateExternalLib("zlib" "https://github.com/madler/zlib.git" "09155eaa2f9270dc4ed1fa13e2b4b2613e6e4851" "" "" need_patch)
 if(need_patch)
-	foreach(patch "0001-Fix-.rc-compiling-issues-in-clang-cl")
+	foreach(patch "0001-Fix-.rc-compiling-issues-in-clang-cl" "0002-Fix-fdopen-macro-on-modern-macOS")
 		ApplyPatch("zlib" "${CMAKE_CURRENT_SOURCE_DIR}/Patches/${patch}.patch")
 	endforeach()
 endif()

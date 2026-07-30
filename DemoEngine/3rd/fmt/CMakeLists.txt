@@ -9,6 +9,11 @@ set(FMT_DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX} CACHE STRING "" FORCE)
 
 add_subdirectory(fmt)
 
+# Apple Clang (incl. 21.x) still breaks fmt 10.x consteval format-string checks.
+if(ZENGINE_PLATFORM_DARWIN OR ZENGINE_PLATFORM_IOS)
+	target_compile_definitions(fmt PUBLIC FMT_CONSTEVAL=)
+endif()
+
 set_target_properties(fmt PROPERTIES
 	FOLDER "3rd/fmt"
 )

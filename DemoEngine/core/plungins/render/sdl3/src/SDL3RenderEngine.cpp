@@ -96,6 +96,12 @@ void SDL3RenderEngine::EndFrame()
 	RenderEngine::EndFrame();
 }
 
+void SDL3RenderEngine::ScissorRect([[maybe_unused]] uint32_t x, [[maybe_unused]] uint32_t y,
+	[[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height)
+{
+	// SDL_GPU scissor is applied per render pass; wire up when draw path is complete.
+}
+
 void SDL3RenderEngine::DoCreateRenderWindow(std::string const& name, RenderSettings const& settings)
 {
 	if (!SDL_WasInit(SDL_INIT_VIDEO))

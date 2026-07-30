@@ -15,7 +15,7 @@ class GAME_API DetailedMesh : public RenderWorker::StaticMesh
 public:
 	explicit DetailedMesh(std::wstring_view name);
 
-	void OnRenderBegin();
+	void OnRenderBegin() override;
 
 	void EyePos(RenderWorker::float3 const& eye_pos);
 	void LightPos(RenderWorker::float3 const& light_pos);

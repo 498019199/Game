@@ -1,5 +1,6 @@
 #include <base/Window.h>
 #include <base/ZEngine.h>
+#include <base/App3D.h>
 #include <SDL3/SDL.h>
 
 namespace RenderWorker

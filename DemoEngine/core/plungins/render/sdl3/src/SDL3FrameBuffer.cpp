@@ -1,6 +1,7 @@
 #include "SDL3FrameBuffer.h"
 #include "SDL3RenderEngine.h"
 #include <base/ZEngine.h>
+#include <render/RenderFactory.h>
 #include <math/color.h>
 
 namespace RenderWorker

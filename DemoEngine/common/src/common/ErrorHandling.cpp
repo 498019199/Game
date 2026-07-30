@@ -5,14 +5,13 @@
 #include <string_view>
 #include <system_error>
 
-#include <format>
 #include <common/Log.h>
 
 namespace CommonWorker
 {
 	std::string CombineFileLine(std::string_view file, uint32_t line)
 	{
-		return std::format("{}: {}", std::move(file), line);
+		return std::string(file) + ": " + std::to_string(line);
 	}
 
 	void Verify(bool x)
@@ -25,6 +24,9 @@ namespace CommonWorker
 
 	void UnreachableInternal(std::string_view msg, std::string_view file, uint32_t line)
 	{
+		(void)msg;
+		(void)file;
+		(void)line;
 		if (!msg.empty())
 		{
 		// 	LogError() << msg << std::endl;

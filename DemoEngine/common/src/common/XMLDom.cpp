@@ -35,6 +35,8 @@
 #include <iterator>
 #include <string>
 #include <charconv>
+#include <cerrno>
+#include <cstdlib>
 
 #if defined(ZENGINE_COMPILER_MSVC)
 #pragma warning(push)
@@ -213,9 +215,16 @@ namespace
 
 	bool TryConvertStringToValue(std::string const& value_str, float& val)
 	{
-		char const* str = value_str.data();
-		std::from_chars_result result = std::from_chars(str, str + value_str.size(), val);
-		return (result.ec == std::errc());
+		// libc++ marks floating-point std::from_chars unavailable before macOS 26.
+		char* end = nullptr;
+		errno = 0;
+		float const parsed = std::strtof(value_str.c_str(), &end);
+		if ((end == value_str.c_str()) || (errno == ERANGE))
+		{
+			return false;
+		}
+		val = parsed;
+		return true;
 	}
 
 	bool TryConvertStringToValue(std::string const& value_str, bool& val)

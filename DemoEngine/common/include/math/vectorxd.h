@@ -58,7 +58,7 @@ public:
 	    :vec_(std::move(rhs.vec_))
 	{}
 
-	template<typename U, int M>
+	template<typename U, size_t M>
 	constexpr Vector_T(const Vector_T<U, M>& rhs) noexcept
 	{
 		static_assert(M >= N, "Could not convert to a smaller vector.");

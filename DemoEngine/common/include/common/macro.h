@@ -66,7 +66,9 @@
 #endif
 
 #if defined(__clang__)
+	// Compiler identity is defined in Compiler.h (included by Util.h / consumers).
 #elif defined(__GNUC__)
+	// Compiler identity is defined in Compiler.h.
 #elif defined(_MSC_VER)
 	#define ZENGINE_COMPILER_MSVC
 	#define ZENGINE_COMPILER_NAME vc
@@ -98,7 +100,7 @@
 #endif
 #endif
 
-#if defined(ZENGINE_COMPILER_MSVC) || defined(ZENGINE_COMPILER_GCC) || defined(ZENGINE_COMPILER_CLANG) || defined(ZENGINE_COMPILER_CLANGCL)
+#if defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__)
 	#define ZENGINE_HAS_STRUCT_PACK
 #endif
 

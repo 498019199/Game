@@ -1,5 +1,6 @@
 #pragma once
 #include <common/macro.h>
+#include <common/Compiler.h>
 
 #include <cassert>
 #include <cstdint>
@@ -9,6 +10,8 @@
 #include <string_view>
 #include <bit>
 #include <utility>
+#include <chrono>
+#include <thread>
 
 #ifdef ZENGINE_DEBUG
 	#define COMMON_ASSERT(expr) assert(expr)
@@ -67,7 +70,7 @@ T& operator=(T const& rhs) = delete;
 T(T&& rhs) = delete; \
 T& operator=(T&& rhs) = delete;
 
-#if defined(ZENGINE_DEBUG)
+#if defined(ZENGINE_DEBUG) && defined(ZENGINE_PLATFORM_WINDOWS)
     #define _CRTDBG_MAP_ALLOC
     #include <crtdbg.h>
     #define ZENGINE_DBG_SUFFIX "_d"
@@ -91,7 +94,7 @@ namespace CommonWorker
 	/////////////////////////////////////////////////////////////////////////////////
 	inline void Sleep(uint32_t ms)
 	{
-#if defined KLAYGE_PLATFORM_WINDOWS
+#if defined(ZENGINE_PLATFORM_WINDOWS)
 		::Sleep(ms);
 #else
 		std::this_thread::sleep_for(std::chrono::milliseconds(ms));

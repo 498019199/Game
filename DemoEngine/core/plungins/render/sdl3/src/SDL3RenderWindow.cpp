@@ -2,7 +2,9 @@
 #include "SDL3RenderEngine.h"
 #include "SDL3RenderView.h"
 #include <base/ZEngine.h>
+#include <base/App3D.h>
 #include <base/Window.h>
+#include <render/RenderFactory.h>
 
 namespace RenderWorker
 {

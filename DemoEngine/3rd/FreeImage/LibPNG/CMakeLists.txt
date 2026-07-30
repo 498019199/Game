@@ -40,6 +40,14 @@ if(ZENGINE_PLATFORM_WINDOWS)
 	)
 endif()
 
+# FreeImage's bundled LibPNG does not compile the ARM NEON filter sources.
+if(ZENGINE_ARCH_NAME MATCHES "arm")
+	target_compile_definitions(${LIB_NAME}
+		PRIVATE
+			PNG_ARM_NEON_OPT=0
+	)
+endif()
+
 target_include_directories(${LIB_NAME}
 	PRIVATE
 		${ZLIB_INCLUDE_DIRS}

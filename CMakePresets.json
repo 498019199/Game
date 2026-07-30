@@ -32,7 +32,8 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "/usr/bin/clang",
                 "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "13.0",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "13.3",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
                 "ZENGINE_ENABLE_TRACY": "ON",
                 "ZENGINE_TRACY_ON_DEMAND": "ON"
             },

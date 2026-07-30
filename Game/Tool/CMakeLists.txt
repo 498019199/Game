@@ -21,13 +21,21 @@ target_include_directories(ZENGINE_model_convert
 
 add_dependencies(ZENGINE_model_convert ZENGINE_DevHelps)
 
+if(ZENGINE_PLATFORM_WINDOWS)
+	set(ZENGINE_MODEL_CONVERT_RENDER_LIBS
+		ZENGINE_Render_D3D11
+		d3dcompiler)
+else()
+	set(ZENGINE_MODEL_CONVERT_RENDER_LIBS
+		ZENGINE_Render_SDL3)
+endif()
+
 target_link_libraries(ZENGINE_model_convert
     PRIVATE
         ZENGINE_common
         ZENGINE_core
-        ZENGINE_Render_D3D11
         ZENGINE_DevHelps
-        d3dcompiler)
+        ${ZENGINE_MODEL_CONVERT_RENDER_LIBS})
 
 set_target_properties(ZENGINE_model_convert PROPERTIES
 	FOLDER "Tool"

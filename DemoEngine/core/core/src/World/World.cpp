@@ -17,8 +17,8 @@ namespace RenderWorker
 {
 
 World::World()
-    :scene_root_(L"SceenRoot", SceneNode::SOA_Cullable),
-    overlay_root_(L"OverlayRoot", SceneNode::SOA_Cullable | SceneNode::SOA_Overlay)
+    : overlay_root_(L"OverlayRoot", SceneNode::SOA_Cullable | SceneNode::SOA_Overlay),
+      scene_root_(L"SceenRoot", SceneNode::SOA_Cullable)
 {
 }
 
