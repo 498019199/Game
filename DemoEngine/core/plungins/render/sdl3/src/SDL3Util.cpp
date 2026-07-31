@@ -10,8 +10,11 @@ SDL_GPUTextureFormat SDL3Mapping::MappingFormat(ElementFormat format)
 	{
 	case EF_R8:				return SDL_GPU_TEXTUREFORMAT_R8_UNORM;
 	case EF_GR8:			return SDL_GPU_TEXTUREFORMAT_R8G8_UNORM;
+	case EF_BGR8:			return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM; // padded/converted at upload
 	case EF_ABGR8:			return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
 	case EF_ARGB8:			return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
+	case EF_ABGR8_SRGB:		return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB;
+	case EF_ARGB8_SRGB:		return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB;
 	case EF_A2BGR10:		return SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM;
 	case EF_R16F:			return SDL_GPU_TEXTUREFORMAT_R16_FLOAT;
 	case EF_GR16F:			return SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT;
@@ -20,8 +23,11 @@ SDL_GPUTextureFormat SDL3Mapping::MappingFormat(ElementFormat format)
 	case EF_GR32F:			return SDL_GPU_TEXTUREFORMAT_R32G32_FLOAT;
 	case EF_ABGR32F:		return SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
 	case EF_BC1:			return SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM;
+	case EF_BC1_SRGB:		return SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM_SRGB;
 	case EF_BC2:			return SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM;
+	case EF_BC2_SRGB:		return SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM_SRGB;
 	case EF_BC3:			return SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM;
+	case EF_BC3_SRGB:		return SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM_SRGB;
 	case EF_BC4:			return SDL_GPU_TEXTUREFORMAT_BC4_R_UNORM;
 	case EF_BC5:			return SDL_GPU_TEXTUREFORMAT_BC5_RG_UNORM;
 	case EF_D16:			return SDL_GPU_TEXTUREFORMAT_D16_UNORM;
@@ -136,6 +142,35 @@ SDL_GPUBlendOp SDL3Mapping::Mapping(BlendOperation op)
 	case BOP_Min:		return SDL_GPU_BLENDOP_MIN;
 	case BOP_Max:		return SDL_GPU_BLENDOP_MAX;
 	default:			return SDL_GPU_BLENDOP_ADD;
+	}
+}
+
+SDL_GPUFilter SDL3Mapping::MappingMinMagFilter(TexFilterOp filter, bool mag)
+{
+	uint32_t const bits = static_cast<uint32_t>(filter);
+	bool const linear = mag ? ((bits & TFOE_Mag_Linear) != 0) : ((bits & TFOE_Min_Linear) != 0);
+	if ((bits & TFOE_Anisotropic) != 0)
+	{
+		return SDL_GPU_FILTER_LINEAR;
+	}
+	return linear ? SDL_GPU_FILTER_LINEAR : SDL_GPU_FILTER_NEAREST;
+}
+
+SDL_GPUSamplerMipmapMode SDL3Mapping::MappingMipMode(TexFilterOp filter)
+{
+	uint32_t const bits = static_cast<uint32_t>(filter);
+	return ((bits & TFOE_Mip_Linear) != 0) ? SDL_GPU_SAMPLERMIPMAPMODE_LINEAR : SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
+}
+
+SDL_GPUSamplerAddressMode SDL3Mapping::Mapping(TexAddressingMode mode)
+{
+	switch (mode)
+	{
+	case TAM_Wrap:		return SDL_GPU_SAMPLERADDRESSMODE_REPEAT;
+	case TAM_Mirror:	return SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT;
+	case TAM_Clamp:		return SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	case TAM_Border:	return SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE; // no border color in SDL_GPU
+	default:			return SDL_GPU_SAMPLERADDRESSMODE_REPEAT;
 	}
 }
 

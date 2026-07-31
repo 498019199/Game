@@ -45,7 +45,9 @@ Shader "Demo/SkyBox"
             Name "SkyBoxTech"
             Cull Off
             ZWrite Off
-            ZTest Equal
+            // Far-plane quad (z/w = 1). LEqual: only fill pixels still at clear depth
+            // so meshes drawn earlier are not overwritten (Always covered the scene).
+            ZTest LEqual
 
             HLSLPROGRAM
             #pragma vertex SkyBoxVS

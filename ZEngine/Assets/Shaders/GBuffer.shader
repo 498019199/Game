@@ -66,7 +66,7 @@ void GBufferVS(
 			out float4 oTexCoord_2xy : TEXCOORD0,
 			out float4 oTsToView0_2z : TEXCOORD1,
 			out float4 oTsToView1_Depth : TEXCOORD2,
-			out SS_TEXCOORD_TYPE oScreenTc : TEXCOORD3,
+			out SS_TEXCOORD_DECL oScreenTc : TEXCOORD3,
 			out float4 oCurrPosSS : TEXCOORD4,
 			out float4 oPrevPosSS : TEXCOORD5,
 #if MULTI_VIEW_MODE
@@ -186,7 +186,7 @@ float2 GenerateVelocity(float4 curr_pos_ss, float4 prev_pos_ss, float half_expos
 }
 
 void GBufferPS(float4 texcoord_2xy : TEXCOORD0, float4 ts_to_view0_2z : TEXCOORD1, float4 ts_to_view1_depth : TEXCOORD2,
-					SS_TEXCOORD_TYPE ss_tc : TEXCOORD3,
+					SS_TEXCOORD_DECL ss_tc : TEXCOORD3,
 					float4 curr_pos_ss : TEXCOORD4, float4 prev_pos_ss : TEXCOORD5,
 					bool is_front_face : SV_IsFrontFace,
 					out float4 rt0 : SV_Target0, out float4 rt1 : SV_Target1
@@ -214,7 +214,7 @@ void GBufferPS(float4 texcoord_2xy : TEXCOORD0, float4 ts_to_view0_2z : TEXCOORD
 }
 
 void GBufferAlphaBlendPS(float4 texcoord_2xy : TEXCOORD0, float4 ts_to_view0_2z : TEXCOORD1, float4 ts_to_view1_depth : TEXCOORD2,
-					SS_TEXCOORD_TYPE ss_tc : TEXCOORD3,
+					SS_TEXCOORD_DECL ss_tc : TEXCOORD3,
 					float4 curr_pos_ss : TEXCOORD4, float4 prev_pos_ss : TEXCOORD5,
 					out float4 rt0 : SV_Target0, out float4 rt1 : SV_Target1
 #if !SKIP_MOTION_VEC
@@ -464,7 +464,7 @@ struct GBufferPS_In
 	float4 texcoord_2xy : TEXCOORD0;
 	float4 ts_to_view0_2z : TEXCOORD1;
 	float3 ts_to_view1 : TEXCOORD2;
-	SS_TEXCOORD_TYPE ss_tc : TEXCOORD3;
+	SS_TEXCOORD_DECL ss_tc : TEXCOORD3;
 	float4 curr_pos_ss : TEXCOORD4;
 	float4 prev_pos_ss : TEXCOORD5;
 	uint rt_index : SV_RenderTargetArrayIndex;

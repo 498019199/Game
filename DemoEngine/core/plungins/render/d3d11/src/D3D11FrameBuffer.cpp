@@ -105,13 +105,17 @@ void D3D11FrameBuffer::OnBind()
             }
         }
 
-        d3d_viewport_.TopLeftX = static_cast<float>(viewport_->Left());
-        d3d_viewport_.TopLeftY = static_cast<float>(viewport_->Top());
-        d3d_viewport_.Width = static_cast<float>(viewport_->Width());
-        d3d_viewport_.Height = static_cast<float>(viewport_->Height());
-
         views_dirty_ = false;
     }
+
+    // Always refresh viewport from the logical Viewport — not only when RTVs change.
+    // Stale/zero d3d_viewport_ after FB switches explains clear-OK / draw-empty (Clear ignores VP).
+    d3d_viewport_.TopLeftX = static_cast<float>(viewport_->Left());
+    d3d_viewport_.TopLeftY = static_cast<float>(viewport_->Top());
+    d3d_viewport_.Width = static_cast<float>(viewport_->Width());
+    d3d_viewport_.Height = static_cast<float>(viewport_->Height());
+    d3d_viewport_.MinDepth = 0.0f;
+    d3d_viewport_.MaxDepth = 1.0f;
 
     auto& d3d11_re = checked_cast<D3D11RenderEngine&>(
         Context::Instance().RenderFactoryInstance().RenderEngineInstance());
@@ -119,6 +123,9 @@ void D3D11FrameBuffer::OnBind()
     {
         d3d11_re.DetachSRV(d3d_rt_src_[i], d3d_rt_first_subres_[i], d3d_rt_num_subres_[i]);
     }
+
+    // Force OM apply when rebinding after another FB (cache can skip a needed set).
+    d3d11_re.InvalidRTVCache();
 
     if (ua_views_.empty())
     {

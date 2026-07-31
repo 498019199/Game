@@ -31,7 +31,7 @@ void PostProcessVS(float4 pos : POSITION,
 
 void VolPostProcessVS(float4 pos : POSITION,
 					out float3 oTex : TEXCOORD0,
-					out SS_TEXCOORD_TYPE oScreenTc : TEXCOORD1,
+					out SS_TEXCOORD_DECL oScreenTc : TEXCOORD1,
 					out float4 oPos : SV_Position)
 {
 	oTex = VolTexCoordFromPos(pos);

@@ -6,9 +6,10 @@
 #include "SDL3RenderView.h"
 #include "SDL3Fence.h"
 #include "SDL3Query.h"
-#include <render/GraphicsBuffer.h>
+#include "SDL3GraphicsBuffer.h"
+#include "SDL3Texture.h"
+#include "SDL3RenderLayout.h"
 #include <render/Texture.h>
-#include <render/RenderLayout.h>
 
 namespace RenderWorker
 {
@@ -17,7 +18,7 @@ SDL3RenderFactory::SDL3RenderFactory() = default;
 
 RenderLayoutPtr SDL3RenderFactory::MakeRenderLayout()
 {
-	return MakeSharedPtr<RenderLayout>();
+	return MakeSharedPtr<SDL3RenderLayout>();
 }
 
 FrameBufferPtr SDL3RenderFactory::MakeFrameBuffer()
@@ -25,22 +26,25 @@ FrameBufferPtr SDL3RenderFactory::MakeFrameBuffer()
 	return MakeSharedPtr<SDL3FrameBuffer>();
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationVertexBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, [[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationVertexBuffer(BufferUsage usage, uint32_t access_hint,
+	uint32_t size_in_byte, uint32_t structure_byte_stride)
 {
-	return MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	return MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Vertex, size_in_byte,
+		structure_byte_stride);
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationIndexBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, [[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationIndexBuffer(BufferUsage usage, uint32_t access_hint,
+	uint32_t size_in_byte, uint32_t structure_byte_stride)
 {
-	return MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	return MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Index, size_in_byte,
+		structure_byte_stride);
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationConstantBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, [[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeDelayCreationConstantBuffer(BufferUsage usage, uint32_t access_hint,
+	uint32_t size_in_byte, uint32_t structure_byte_stride)
 {
-	return MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	return MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Constant, size_in_byte,
+		structure_byte_stride);
 }
 
 ShaderObjectPtr SDL3RenderFactory::MakeShaderObject()
@@ -50,6 +54,8 @@ ShaderObjectPtr SDL3RenderFactory::MakeShaderObject()
 
 ShaderStageObjectPtr SDL3RenderFactory::MakeShaderStageObject(ShaderStage stage)
 {
+	// Always return an object so RenderPass::CompileShaders/CreateHwShaders can call
+	// through safely. Non-VS/PS stages no-op inside SDL3ShaderStageObject (MVP).
 	return MakeSharedPtr<SDL3ShaderStageObject>(stage);
 }
 
@@ -67,10 +73,10 @@ TexturePtr SDL3RenderFactory::MakeDelayCreationTexture1D(uint32_t width, uint32_
 }
 
 TexturePtr SDL3RenderFactory::MakeDelayCreationTexture2D(uint32_t width, uint32_t height, uint32_t num_mip_maps,
-	uint32_t array_size, ElementFormat format, [[maybe_unused]] uint32_t sample_count,
-	[[maybe_unused]] uint32_t sample_quality, [[maybe_unused]] uint32_t access_hint)
+	uint32_t array_size, ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
 {
-	return MakeSharedPtr<VirtualTexture>(Texture::TT_2D, width, height, 1, num_mip_maps, array_size, format, false);
+	return MakeSharedPtr<SDL3Texture2D>(width, height, num_mip_maps, array_size, format, sample_count, sample_quality,
+		access_hint);
 }
 
 TexturePtr SDL3RenderFactory::MakeDelayCreationTexture3D(uint32_t width, uint32_t height, uint32_t depth,
@@ -224,29 +230,29 @@ UnorderedAccessViewPtr SDL3RenderFactory::MakeBufferUav(GraphicsBufferPtr const&
 	return MakeSharedPtr<SDL3UnorderedAccessView>(gbuffer, pf, first_elem, num_elems);
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeVertexBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, void const* init_data,
-	[[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeVertexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+	void const* init_data, uint32_t structure_byte_stride)
 {
-	auto ret = MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	auto ret = MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Vertex, size_in_byte,
+		structure_byte_stride);
 	ret->CreateHWResource(init_data);
 	return ret;
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeIndexBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, void const* init_data,
-	[[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeIndexBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+	void const* init_data, uint32_t structure_byte_stride)
 {
-	auto ret = MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	auto ret = MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Index, size_in_byte,
+		structure_byte_stride);
 	ret->CreateHWResource(init_data);
 	return ret;
 }
 
-GraphicsBufferPtr SDL3RenderFactory::MakeConstantBuffer([[maybe_unused]] BufferUsage usage,
-	[[maybe_unused]] uint32_t access_hint, uint32_t size_in_byte, void const* init_data,
-	[[maybe_unused]] uint32_t structure_byte_stride)
+GraphicsBufferPtr SDL3RenderFactory::MakeConstantBuffer(BufferUsage usage, uint32_t access_hint, uint32_t size_in_byte,
+	void const* init_data, uint32_t structure_byte_stride)
 {
-	auto ret = MakeSharedPtr<SoftwareGraphicsBuffer>(size_in_byte, false);
+	auto ret = MakeSharedPtr<SDL3GraphicsBuffer>(usage, access_hint, SDL3BufferBind::Constant, size_in_byte,
+		structure_byte_stride);
 	ret->CreateHWResource(init_data);
 	return ret;
 }

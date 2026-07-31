@@ -27,7 +27,9 @@ float SpotLighting(float3 light_pos, float3 light_dir, float2 cos_cone, float3 p
 float3 FresnelTerm(float3 light_vec, float3 halfway_vec, float3 c_spec)
 {
 	float e_n = saturate(dot(light_vec, halfway_vec));
-	return c_spec > 0 ? c_spec + (1 - c_spec) * exp2(-(5.55473f * e_n + 6.98316f) * e_n) : 0;
+	// Per-component mask (DXC rejects vector ternary conditions; FXC accepts this multiply form).
+	float3 fresnel = c_spec + (1 - c_spec) * exp2(-(5.55473f * e_n + 6.98316f) * e_n);
+	return fresnel * (c_spec > 0);
 }
 
 float SpecularNormalizeFactor(float shininess)

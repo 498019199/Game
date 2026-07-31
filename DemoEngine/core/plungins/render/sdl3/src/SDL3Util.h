@@ -23,6 +23,9 @@ public:
 	static SDL_GPUCompareOp Mapping(CompareFunction func);
 	static SDL_GPUBlendFactor Mapping(AlphaBlendFactor factor);
 	static SDL_GPUBlendOp Mapping(BlendOperation op);
+	static SDL_GPUFilter MappingMinMagFilter(TexFilterOp filter, bool mag);
+	static SDL_GPUSamplerMipmapMode MappingMipMode(TexFilterOp filter);
+	static SDL_GPUSamplerAddressMode Mapping(TexAddressingMode mode);
 };
 
 inline void SDL3Check(bool ok, char const* what)

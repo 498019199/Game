@@ -505,23 +505,13 @@ void D3D11RenderEngine::SetConstantBuffers(ShaderStage stage, std::span<ID3D11Bu
 
 void D3D11RenderEngine::RSSetViewports(UINT NumViewports, D3D11_VIEWPORT const * pViewports)
 {
-	if (NumViewports > 1)
+	// Always push to the device. Skipping when cache matches left a stale/zero VP after
+	// offscreen→swapchain FB switches (Clear still worked; draws produced zero coverage).
+	if (NumViewports == 1)
 	{
-		d3d_imm_ctx_1_->RSSetViewports(NumViewports, pViewports);
+		viewport_cache_ = *pViewports;
 	}
-	else
-	{
-		if (!(MathWorker::equal(pViewports->TopLeftX, viewport_cache_.TopLeftX)
-			&& MathWorker::equal(pViewports->TopLeftY, viewport_cache_.TopLeftY)
-			&& MathWorker::equal(pViewports->Width, viewport_cache_.Width)
-			&& MathWorker::equal(pViewports->Height, viewport_cache_.Height)
-			&& MathWorker::equal(pViewports->MinDepth, viewport_cache_.MinDepth)
-			&& MathWorker::equal(pViewports->MaxDepth, viewport_cache_.MaxDepth)))
-		{
-			viewport_cache_ = *pViewports;
-			d3d_imm_ctx_1_->RSSetViewports(NumViewports, pViewports);
-		}
-	}
+	d3d_imm_ctx_1_->RSSetViewports(NumViewports, pViewports);
 }
 
 void D3D11RenderEngine::DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint32_t rt_num_subres)
@@ -873,6 +863,7 @@ void D3D11RenderEngine::ResetRenderStates()
 void D3D11RenderEngine::InvalidRTVCache()
 {
 	rtv_ptr_cache_.clear();
+	dsv_ptr_cache_ = nullptr;
 }
 
 void D3D11RenderEngine::DoDestroy()

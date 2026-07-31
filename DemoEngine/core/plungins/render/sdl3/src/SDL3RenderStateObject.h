@@ -1,6 +1,7 @@
 #pragma once
 
 #include <render/RenderStateObject.h>
+#include "SDL3Util.h"
 
 namespace RenderWorker
 {
@@ -17,6 +18,15 @@ class SDL3SamplerStateObject final : public SamplerStateObject
 {
 public:
 	explicit SDL3SamplerStateObject(SamplerStateDesc const& desc);
+	~SDL3SamplerStateObject() override;
+
+	SDL_GPUSampler* GpuSampler() const noexcept
+	{
+		return sampler_;
+	}
+
+private:
+	SDL_GPUSampler* sampler_{nullptr};
 };
 
 } // namespace RenderWorker

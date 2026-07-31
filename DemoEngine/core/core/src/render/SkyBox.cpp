@@ -28,21 +28,24 @@ namespace RenderWorker
 				this->Technique(effect, effect->TechniqueByName("SkyBoxTech"));
 			}
 
-		float3 xyzs[] =
-		{
-			float3(1.0f, 1.0f, 1.0f),
-			float3(1.0f, -1.0f, 1.0f),
-			float3(-1.0f, 1.0f, 1.0f),
-			float3(-1.0f, -1.0f, 1.0f),
-		};
+			// Explicit w=1: FLOAT3→float4 IA fill is not reliable across D3D12 paths;
+			// w=0 would clip the entire fullscreen strip.
+			float4 xyzs[] =
+			{
+				float4(1.0f, 1.0f, 1.0f, 1.0f),
+				float4(1.0f, -1.0f, 1.0f, 1.0f),
+				float4(-1.0f, 1.0f, 1.0f, 1.0f),
+				float4(-1.0f, -1.0f, 1.0f, 1.0f),
+			};
 
-		rls_[0] = rf.MakeRenderLayout();
-		rls_[0]->TopologyType(RenderLayout::TT_TriangleStrip);
+			rls_[0] = rf.MakeRenderLayout();
+			rls_[0]->TopologyType(RenderLayout::TT_TriangleStrip);
 
-		GraphicsBufferPtr vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable, sizeof(xyzs), xyzs);
-		rls_[0]->BindVertexStream(vb, VertexElement(VEU_Position, 0, EF_BGR32F));
+			GraphicsBufferPtr vb = rf.MakeVertexBuffer(BU_Static, EAH_GPU_Read | EAH_Immutable, sizeof(xyzs), xyzs);
+			rls_[0]->BindVertexStream(vb, VertexElement(VEU_Position, 0, EF_ABGR32F));
 
-		pos_aabb_ = MathWorker::compute_aabbox(&xyzs[0], &xyzs[4]);
+			float3 xyz3[] = {float3(1, 1, 1), float3(1, -1, 1), float3(-1, 1, 1), float3(-1, -1, 1)};
+			pos_aabb_ = MathWorker::compute_aabbox(&xyz3[0], &xyz3[4]);
 		tc_aabb_ = AABBox(float3(0, 0, 0), float3(0, 0, 0));
     }
 

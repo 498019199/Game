@@ -11,14 +11,50 @@ namespace RenderWorker
 
 namespace
 {
-SDL_Window* CreateSDLWindow(std::string const& name, RenderSettings const& settings, uint32_t width, uint32_t height)
+SDL_Window* CreateSDLWindow(std::string const& name, RenderSettings const& settings, uint32_t width, uint32_t height,
+	bool& owns_window)
 {
-	// Prefer the App3D main window created by WindowSDL.
+	owns_window = true;
+
+#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
+	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
 	auto const& main_wnd = Context::Instance().AppInstance().MainWnd();
 	if (main_wnd && main_wnd->GetSDLWindow())
 	{
+		owns_window = false;
 		return main_wnd->GetSDLWindow();
 	}
+#endif
+
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
+	// Reuse the engine Win32 HWND so we do not get a second "Game App" window.
+	auto const& main_wnd = Context::Instance().AppInstance().MainWnd();
+	HWND hwnd = (main_wnd && main_wnd->GetHWND()) ? main_wnd->GetHWND() : nullptr;
+	if (hwnd)
+	{
+		SDL_PropertiesID props = SDL_CreateProperties();
+		SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, hwnd);
+		SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, name.c_str());
+		SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, static_cast<Sint64>(width));
+		SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, static_cast<Sint64>(height));
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
+		if (settings.hide_win)
+		{
+			SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true);
+		}
+		if (settings.full_screen)
+		{
+			SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, true);
+		}
+		SDL_Window* wnd = SDL_CreateWindowWithProperties(props);
+		SDL_DestroyProperties(props);
+		SDL3Check(wnd != nullptr, "SDL_CreateWindowWithProperties(win32 hwnd)");
+		// EXTERNAL HWND: SDL_DestroyWindow cleans SDL state only, not the Win32 window.
+		owns_window = true;
+		return wnd;
+	}
+#endif
 
 	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	if (settings.hide_win)
@@ -36,6 +72,7 @@ SDL_Window* CreateSDLWindow(std::string const& name, RenderSettings const& setti
 	{
 		SDL_SetWindowPosition(wnd, settings.left, settings.top);
 	}
+	owns_window = true;
 	return wnd;
 }
 } // namespace
@@ -58,20 +95,26 @@ SDL3RenderWindow::SDL3RenderWindow(std::string const& name, RenderSettings const
 	viewport_->Width(width_);
 	viewport_->Height(height_);
 
-	window_ = CreateSDLWindow(name, settings, width_, height_);
-	// Only destroy the window if we created it ourselves (not App3D's main window).
-	owns_window_ = !(main_wnd && main_wnd->GetSDLWindow() && window_ == main_wnd->GetSDLWindow());
+	window_ = CreateSDLWindow(name, settings, width_, height_, owns_window_);
 
-	SDL_GPUShaderFormat shader_formats =
-		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL;
 #ifdef ZENGINE_DEBUG
 	bool const debug_mode = true;
 #else
 	bool const debug_mode = settings.debug_context;
 #endif
 
-	SDL_GPUDevice* device = SDL_CreateGPUDevice(shader_formats, debug_mode, nullptr);
-	SDL3Check(device != nullptr, "SDL_CreateGPUDevice");
+	// Windows prefers D3D12 + DXIL; keep DXBC/SPIRV advertised for fallback drivers.
+	SDL_PropertiesID props = SDL_CreateProperties();
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, debug_mode);
+#ifdef ZENGINE_PLATFORM_WINDOWS
+	SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "direct3d12");
+#endif
+	SDL_GPUDevice* device = SDL_CreateGPUDeviceWithProperties(props);
+	SDL_DestroyProperties(props);
+	SDL3Check(device != nullptr, "SDL_CreateGPUDevice(direct3d12)");
 	SDL3Check(SDL_ClaimWindowForGPUDevice(device, window_), "SDL_ClaimWindowForGPUDevice");
 
 	SDL_GPUSwapchainComposition composition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;

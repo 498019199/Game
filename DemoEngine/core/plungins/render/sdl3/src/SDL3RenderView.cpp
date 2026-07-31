@@ -1,4 +1,6 @@
 #include "SDL3RenderView.h"
+#include "SDL3Texture.h"
+#include <base/ZEngine.h>
 
 namespace RenderWorker
 {
@@ -54,6 +56,16 @@ SDL3DepthStencilView::SDL3DepthStencilView(uint32_t width, uint32_t height, Elem
 	pf_ = pf;
 	sample_count_ = sample_count;
 	sample_quality_ = sample_quality;
+
+	auto tex = MakeSharedPtr<SDL3Texture2D>(width, height, 1, 1, pf, sample_count, sample_quality,
+		EAH_GPU_Read | EAH_GPU_Write);
+	// Match typical FrameBuffer::Clear depth=1 / stencil=0 (D3D12 OptimizedClearValue).
+	float4 const clear_hint(1.0f, 0.0f, 0.0f, 0.0f);
+	tex->CreateHWResource({}, &clear_hint);
+	tex_ = tex;
+	first_array_index_ = 0;
+	array_size_ = 1;
+	level_ = 0;
 }
 
 SDL3DepthStencilView::SDL3DepthStencilView(TexturePtr const& texture, ElementFormat pf, int first_array_index, int array_size,

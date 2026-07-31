@@ -135,9 +135,13 @@ float2 ReadTwoHalf(float4 v, float scale = 1, float bias = 0)
 #endif
 
 #ifdef NOPERSPECTIVE_SUPPORT
-	#define SS_TEXCOORD_TYPE noperspective float2
+	// Type only — do not embed "noperspective" here. DXC rejects
+	// "triangle noperspective float2" on geometry-shader inputs.
+	#define SS_TEXCOORD_TYPE float2
+	#define SS_TEXCOORD_DECL noperspective float2
 #else
 	#define SS_TEXCOORD_TYPE float3
+	#define SS_TEXCOORD_DECL float3
 #endif
 
 #ifdef NOPERSPECTIVE_SUPPORT

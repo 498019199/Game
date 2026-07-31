@@ -190,39 +190,40 @@ void GameApp::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps con
 	back_face_depth_fb_->Attach(back_face_ds_view);
 }
 
-uint32_t GameApp::DoUpdate(uint32_t pass)
-{
-	auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+	uint32_t GameApp::DoUpdate(uint32_t pass)
+	{
+		auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 
-	switch (pass)
-	{
-	case 0:
-	{
-		ZENGINE_ZONE("GameApp::Pass0_BackFaceDepth");
-		re.BindFrameBuffer(back_face_depth_fb_);
-		re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 0.0f, 0);
-		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
-		return URV_NeedFlush;
-	}
-
-	case 1:
-	{
-		ZENGINE_ZONE("GameApp::Pass1_Main");
-		re.BindFrameBuffer(FrameBufferPtr());
+		switch (pass)
 		{
-			Color clear_clr(0.2f, 0.4f, 0.6f, 1.0f);
-			if (Context::Instance().Config().graphics_cfg.gamma)
-			{
-				clear_clr.r() = 0.029f;
-				clear_clr.g() = 0.133f;
-				clear_clr.b() = 0.325f;
-			}
-			re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
+		case 0:
+		{
+			ZENGINE_ZONE("GameApp::Pass0_BackFaceDepth");
+			re.BindFrameBuffer(back_face_depth_fb_);
+			// Clear depth to 1.0 (far). A 0.0 clear makes LESS depth tests fail for every mesh.
+			re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, Color(0, 0, 0, 0), 1.0f, 0);
+			scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), true);
+			return URV_NeedFlush;
 		}
-		scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
-		// Flush scene first; UI is drawn in pass 2 so it is not overwritten by 3D.
-		return URV_NeedFlush;
-	}
+
+		case 1:
+		{
+			ZENGINE_ZONE("GameApp::Pass1_Main");
+			re.BindFrameBuffer(FrameBufferPtr());
+			{
+				Color clear_clr(0.2f, 0.4f, 0.6f, 1.0f);
+				if (Context::Instance().Config().graphics_cfg.gamma)
+				{
+					clear_clr.r() = 0.029f;
+					clear_clr.g() = 0.133f;
+					clear_clr.b() = 0.325f;
+				}
+				re.CurFrameBuffer()->Clear(FrameBuffer::CBM_Color | FrameBuffer::CBM_Depth, clear_clr, 1.0f, 0);
+			}
+			scene_.UpdateDetailedMeshes(ActiveCamera().EyePos(), false);
+			// Flush scene first; UI is drawn in pass 2 so it is not overwritten by 3D.
+			return URV_NeedFlush;
+		}
 
 	case 2:
 	{
