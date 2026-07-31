@@ -414,8 +414,10 @@ public:
     {
 #if defined(ZENGINE_PLATFORM_WINDOWS)
         static char const* available_rfs_array[] = {"D3D11"};
+        static char const* available_ifs_array[] = {"MsgInput"};
 #else
         static char const* available_rfs_array[] = {"SDL3"};
+        static char const* available_ifs_array[] = {"SDL3"};
 #endif
 
 
@@ -445,6 +447,12 @@ public:
         bool location_sensor = false;
 
 		std::string rf_name;
+        std::string if_name;
+
+        // The config may be missing or may name a factory this platform can't provide,
+        // so start from what is known to be available here.
+        cfg_.render_factory_name = available_rfs_array[0];
+        cfg_.input_factory_name = available_ifs_array[0];
 
         auto& res_loader = ResLoaderInstance();
         ResIdentifierPtr file = res_loader.Open(file_name);
@@ -464,6 +472,14 @@ public:
         if (XMLNode const* location_sensor_node = context_node->FirstNode("location_sensor"))
         {
             location_sensor = location_sensor_node->Attrib("enabled")->ValueInt() ? true : false;
+        }
+
+        if (XMLNode const* input_factory_node = context_node->FirstNode("input_factory"))
+        {
+            if (XMLAttribute const* attr = input_factory_node->Attrib("name"))
+            {
+                if_name = std::string(attr->ValueString());
+            }
         }
 
         // 屏幕宽高
@@ -548,6 +564,13 @@ public:
             rf_name = available_rfs[0];
         }
         cfg_.render_factory_name = std::move(rf_name);
+
+        std::span<char const*> const available_ifs = available_ifs_array;
+        if (std::find(available_ifs.begin(), available_ifs.end(), if_name) == available_ifs.end())
+        {
+            if_name = available_ifs[0];
+        }
+        cfg_.input_factory_name = std::move(if_name);
 
         cfg_.graphics_cfg.left = cfg_.graphics_cfg.top = 0;
         cfg_.graphics_cfg.width = width;

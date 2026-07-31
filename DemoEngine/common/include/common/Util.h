@@ -70,9 +70,12 @@ T& operator=(T const& rhs) = delete;
 T(T&& rhs) = delete; \
 T& operator=(T&& rhs) = delete;
 
-#if defined(ZENGINE_DEBUG) && defined(ZENGINE_PLATFORM_WINDOWS)
-    #define _CRTDBG_MAP_ALLOC
-    #include <crtdbg.h>
+#if defined(ZENGINE_DEBUG)
+    #if defined(ZENGINE_PLATFORM_WINDOWS)
+        #define _CRTDBG_MAP_ALLOC
+        #include <crtdbg.h>
+    #endif
+    // Must stay in sync with CMAKE_DEBUG_POSTFIX, which every platform applies.
     #define ZENGINE_DBG_SUFFIX "_d"
 #else
     #define ZENGINE_DBG_SUFFIX ""

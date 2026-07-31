@@ -11,4 +11,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_M
 
 if(ZENGINE_PLATFORM_WINDOWS)
     add_subdirectory(MsgInput)
+else()
+    add_subdirectory(SDL3Input)
 endif()

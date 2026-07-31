@@ -28,7 +28,6 @@ namespace
 		GmSubmit,
 	};
 
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	RenderWorker::InputActionDefine actions[] =
 	{
 		RenderWorker::InputActionDefine(Exit, RenderWorker::KS_Escape),
@@ -36,6 +35,7 @@ namespace
 		RenderWorker::InputActionDefine(GmSubmit, RenderWorker::KS_Enter),
 	};
 
+#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	LRESULT CALLBACK GmWndProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (GameContext::Instance().GmDebugWindowInstance().Visible())
@@ -77,7 +77,6 @@ void GameApp::OnCreate()
 	RenderFactory& rf = context.RenderFactoryInstance();
 	RenderEngine& re = rf.RenderEngineInstance();
 
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
 	InputEngine& input_engine = context.InputFactoryInstance().InputEngineInstance();
 	InputActionMap action_map;
 	action_map.AddActions(actions, actions + std::size(actions));
@@ -87,7 +86,6 @@ void GameApp::OnCreate()
 			this->InputHandler(sender, action);
 		});
 	input_engine.ActionMap(action_map, input_handler);
-#endif
 
 	depth_texture_support_ = re.DeviceCaps().depth_texture_support;
 

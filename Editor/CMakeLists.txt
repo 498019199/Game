@@ -83,5 +83,6 @@ else()
     target_link_libraries(ZENGINE_game_app
         PUBLIC
             ZENGINE_Render_SDL3
+            ZENGINE_InputEngine_InputSDL3
             ZENGINE_AudioDataSource_OggVorbis)
 endif()
