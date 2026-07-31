@@ -8,8 +8,7 @@ set(GAME_APP_SRC_LIST
 
 if(WIN32)
     include_directories(
-        ${DEMOENGINE_DIR}/3rd/dxsdk/dxsdk/Include
-        ${DEMOENGINE_DIR}/3rd/imgui)
+        ${DEMOENGINE_DIR}/3rd/dxsdk/dxsdk/Include)
 
     set(SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorConsolePanel.cpp
@@ -22,17 +21,8 @@ if(WIN32)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProfilerPanel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp)
 
-    set(IMGUI_SRC_LIST
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_demo.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_draw.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_impl_dx11.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_impl_win32.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_widgets.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui_tables.cpp
-        ${DEMOENGINE_DIR}/3rd/imgui/imgui/imgui.cpp)
-
     add_executable(ZENGINE_editor
-        ${SRC_LIST} ${IMGUI_SRC_LIST}
+        ${SRC_LIST}
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 
     set_target_properties(ZENGINE_editor PROPERTIES
@@ -55,6 +45,7 @@ if(WIN32)
             ZENGINE_AudioEngine_XAudio
             ZENGINE_AudioDataSource_OggVorbis
             ZENGINE_InputEngine_Input
+            imgui
         PRIVATE
             d3dcompiler)
 endif()

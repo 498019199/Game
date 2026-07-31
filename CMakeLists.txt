@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
-project(Game C CXX)
+cmake_minimum_required(VERSION 3.14)
+if(APPLE)
+    project(Game LANGUAGES C CXX OBJCXX)
+else()
+    project(Game LANGUAGES C CXX)
+endif()
 
 set(DEMOENGINE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DemoEngine)
 set(ZENGINE_ROOT_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/ZEngine/include)

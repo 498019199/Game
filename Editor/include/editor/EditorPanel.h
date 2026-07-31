@@ -4,8 +4,8 @@
 #include <render/RenderMaterial.h>
 #include <base/Audio.h>
 #include <render/Mesh.h>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_dx11.h>
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
 
 //#define EDITOR_DEBUG_MODE 1
 
