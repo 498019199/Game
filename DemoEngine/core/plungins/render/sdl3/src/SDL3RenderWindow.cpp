@@ -103,18 +103,20 @@ SDL3RenderWindow::SDL3RenderWindow(std::string const& name, RenderSettings const
 	bool const debug_mode = settings.debug_context;
 #endif
 
-	// Windows prefers D3D12 + DXIL; keep DXBC/SPIRV advertised for fallback drivers.
+	// Windows prefers D3D12 + DXIL; macOS/iOS need MSL for the MVP triangle and later shaders.
 	SDL_PropertiesID props = SDL_CreateProperties();
 	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, debug_mode);
 #ifdef ZENGINE_PLATFORM_WINDOWS
 	SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "direct3d12");
 #endif
 	SDL_GPUDevice* device = SDL_CreateGPUDeviceWithProperties(props);
 	SDL_DestroyProperties(props);
-	SDL3Check(device != nullptr, "SDL_CreateGPUDevice(direct3d12)");
+	SDL3Check(device != nullptr, "SDL_CreateGPUDevice");
 	SDL3Check(SDL_ClaimWindowForGPUDevice(device, window_), "SDL_ClaimWindowForGPUDevice");
 
 	SDL_GPUSwapchainComposition composition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;

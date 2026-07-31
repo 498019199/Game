@@ -3672,13 +3672,49 @@ private:
 	std::mutex main_thread_stage_mutex_;
 };
 
-RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_name)
-{
-	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(
-		MakeSharedPtr<EffectLoadingDesc>(MakeSpan<1>(std::string(effect_name))));
-}
+	RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_name)
+	{
+		return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(
+			MakeSharedPtr<EffectLoadingDesc>(MakeSpan<1>(std::string(effect_name))));
+	}
 
-RenderEffectPtr SyncLoadRenderEffects(std::span<std::string const> effect_names)
+		uint32_t EnsureParameterCBufferOffset(RenderEffect& effect, std::string_view param_name,
+			std::string_view cb_name, uint32_t fallback_offset, uint32_t stride)
+		{
+			RenderEffectParameter* param = effect.ParameterByName(param_name);
+			if (!param)
+			{
+				LogError() << "EnsureParameterCBufferOffset: missing parameter '" << param_name << "'" << std::endl;
+				return fallback_offset;
+			}
+			if (param->InCBuffer())
+			{
+				return param->CBufferOffset();
+			}
+
+			uint32_t const cb_index = effect.FindCBuffer(cb_name);
+			if (cb_index == static_cast<uint32_t>(-1))
+			{
+				LogError() << "EnsureParameterCBufferOffset: missing cbuffer '" << cb_name << "'" << std::endl;
+				return fallback_offset;
+			}
+
+			// Without DXBC reflection (Metal/SDL3), cbuffers often stay size 0.
+			// BindToCBuffer writes the current value into the buffer — grow first.
+			if (RenderEffectConstantBuffer* cb = effect.CBufferByIndex(cb_index))
+			{
+				uint32_t const need = fallback_offset + 64;
+				if (cb->Size() < need)
+				{
+					cb->Resize(need);
+				}
+			}
+
+			param->BindToCBuffer(effect, cb_index, fallback_offset, stride);
+			return fallback_offset;
+		}
+
+	RenderEffectPtr SyncLoadRenderEffects(std::span<std::string const> effect_names)
 {
 	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(MakeSharedPtr<EffectLoadingDesc>(effect_names));
 }

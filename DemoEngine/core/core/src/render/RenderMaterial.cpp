@@ -1222,24 +1222,35 @@ void SaveRenderMaterial(RenderMaterialPtr const & mtl, std::string const & mtlml
 
 PredefinedMaterialCBuffer::PredefinedMaterialCBuffer()
 {
-	effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
-	predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+		predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
+		if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 112)
+		{
+			predefined_cbuffer_->Resize(112);
+		}
 
-	albedo_clr_offset_ = effect_->ParameterByName("albedo_clr")->CBufferOffset();
-	metalness_glossiness_factor_offset_ = effect_->ParameterByName("metalness_glossiness_factor")->CBufferOffset();
-	emissive_clr_offset_ = effect_->ParameterByName("emissive_clr")->CBufferOffset();
-	albedo_map_enabled_offset_ = effect_->ParameterByName("albedo_map_enabled")->CBufferOffset();
-	normal_map_enabled_offset_ = effect_->ParameterByName("normal_map_enabled")->CBufferOffset();
-	height_map_parallax_enabled_offset_ = effect_->ParameterByName("height_map_parallax_enabled")->CBufferOffset();
-	height_map_tess_enabled_offset_ = effect_->ParameterByName("height_map_tess_enabled")->CBufferOffset();
-	occlusion_map_enabled_offset_ = effect_->ParameterByName("occlusion_map_enabled")->CBufferOffset();
-	alpha_test_threshold_offset_ = effect_->ParameterByName("alpha_test_threshold")->CBufferOffset();
-	normal_scale_offset_ = effect_->ParameterByName("normal_scale")->CBufferOffset();
-	occlusion_strength_offset_ = effect_->ParameterByName("occlusion_strength")->CBufferOffset();
-	height_offset_scale_offset_ = effect_->ParameterByName("height_offset_scale")->CBufferOffset();
-	tess_factors_offset_ = effect_->ParameterByName("tess_factors")->CBufferOffset();
+		// HLSL packing for klayge_material (see Material.shader).
+		albedo_clr_offset_ = EnsureParameterCBufferOffset(*effect_, "albedo_clr", "klayge_material", 0, 4);
+	metalness_glossiness_factor_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "metalness_glossiness_factor", "klayge_material", 16, 4);
+	emissive_clr_offset_ = EnsureParameterCBufferOffset(*effect_, "emissive_clr", "klayge_material", 32, 4);
+	albedo_map_enabled_offset_ = EnsureParameterCBufferOffset(*effect_, "albedo_map_enabled", "klayge_material", 48, 4);
+	normal_map_enabled_offset_ = EnsureParameterCBufferOffset(*effect_, "normal_map_enabled", "klayge_material", 52, 4);
+	height_map_parallax_enabled_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "height_map_parallax_enabled", "klayge_material", 56, 4);
+	height_map_tess_enabled_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "height_map_tess_enabled", "klayge_material", 60, 4);
+	occlusion_map_enabled_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "occlusion_map_enabled", "klayge_material", 64, 4);
+	alpha_test_threshold_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "alpha_test_threshold", "klayge_material", 68, 4);
+	normal_scale_offset_ = EnsureParameterCBufferOffset(*effect_, "normal_scale", "klayge_material", 72, 4);
+	occlusion_strength_offset_ = EnsureParameterCBufferOffset(*effect_, "occlusion_strength", "klayge_material", 76, 4);
+	height_offset_scale_offset_ =
+		EnsureParameterCBufferOffset(*effect_, "height_offset_scale", "klayge_material", 80, 4);
+		tess_factors_offset_ = EnsureParameterCBufferOffset(*effect_, "tess_factors", "klayge_material", 96, 4);
 
-	this->AlbedoClr(*predefined_cbuffer_) = float4(0, 0, 0, 1);
+		this->AlbedoClr(*predefined_cbuffer_) = float4(0, 0, 0, 1);
 	this->MetalnessGlossinessFactor(*predefined_cbuffer_) = float3(0, 0, 0);
 	this->EmissiveClr(*predefined_cbuffer_) = float4(0, 0, 0, 0);
 	this->AlbedoMapEnabled(*predefined_cbuffer_) = 0;

@@ -2455,13 +2455,18 @@ struct NodeInfo
 
 	PredefinedMeshCBuffer::PredefinedMeshCBuffer()
 	{
-		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
-		predefined_cbuffer_ = effect_->CBufferByName("klayge_mesh");
+			effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+			predefined_cbuffer_ = effect_->CBufferByName("klayge_mesh");
+			if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 48)
+			{
+				predefined_cbuffer_->Resize(48);
+			}
 
-		pos_center_offset_ = effect_->ParameterByName("pos_center")->CBufferOffset();
-		pos_extent_offset_ = effect_->ParameterByName("pos_extent")->CBufferOffset();
-		tc_center_offset_ = effect_->ParameterByName("tc_center")->CBufferOffset();
-		tc_extent_offset_ = effect_->ParameterByName("tc_extent")->CBufferOffset();
+			// HLSL packing for klayge_mesh (Float3/Float2).
+			pos_center_offset_ = EnsureParameterCBufferOffset(*effect_, "pos_center", "klayge_mesh", 0, 4);
+			pos_extent_offset_ = EnsureParameterCBufferOffset(*effect_, "pos_extent", "klayge_mesh", 16, 4);
+			tc_center_offset_ = EnsureParameterCBufferOffset(*effect_, "tc_center", "klayge_mesh", 32, 4);
+			tc_extent_offset_ = EnsureParameterCBufferOffset(*effect_, "tc_extent", "klayge_mesh", 40, 4);
 
 		this->PosCenter(*predefined_cbuffer_) = float3(0, 0, 0);
 		this->PosExtent(*predefined_cbuffer_) = float3(1, 1, 1);
@@ -2492,11 +2497,15 @@ struct NodeInfo
 
 	PredefinedModelCBuffer::PredefinedModelCBuffer()
 	{
-		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
-		predefined_cbuffer_ = effect_->CBufferByName("klayge_model");
+			effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+			predefined_cbuffer_ = effect_->CBufferByName("klayge_model");
+			if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 128)
+			{
+				predefined_cbuffer_->Resize(128);
+			}
 
-		model_offset_ = effect_->ParameterByName("model")->CBufferOffset();
-		inv_model_offset_ = effect_->ParameterByName("inv_model")->CBufferOffset();
+			model_offset_ = EnsureParameterCBufferOffset(*effect_, "model", "klayge_model", 0, 16);
+			inv_model_offset_ = EnsureParameterCBufferOffset(*effect_, "inv_model", "klayge_model", 64, 16);
 
 		this->Model(*predefined_cbuffer_) = float4x4::Identity();
 		this->InvModel(*predefined_cbuffer_) = float4x4::Identity();

@@ -18,13 +18,21 @@ namespace RenderWorker
 
 World::World()
     : overlay_root_(L"OverlayRoot", SceneNode::SOA_Cullable | SceneNode::SOA_Overlay),
-      scene_root_(L"SceenRoot", SceneNode::SOA_Cullable)
+      scene_root_(L"SceenRoot", SceneNode::SOA_Cullable),
+      update_elapse_(1.0f / 60.0f),
+      urt_(0),
+      quit_(false)
 {
 }
 
 World::~World()
 {
-
+	quit_ = true;
+	if (update_thread_)
+	{
+		update_thread_->wait();
+		update_thread_.reset();
+	}
 }
 
 void World::AddRenderable(Renderable* obj)

@@ -86,12 +86,12 @@ TexturePtr SDL3RenderFactory::MakeDelayCreationTexture3D(uint32_t width, uint32_
 	return MakeSharedPtr<VirtualTexture>(Texture::TT_3D, width, height, depth, num_mip_maps, array_size, format, false);
 }
 
-TexturePtr SDL3RenderFactory::MakeDelayCreationTextureCube(uint32_t size, uint32_t num_mip_maps, uint32_t array_size,
-	ElementFormat format, [[maybe_unused]] uint32_t sample_count, [[maybe_unused]] uint32_t sample_quality,
-	[[maybe_unused]] uint32_t access_hint)
-{
-	return MakeSharedPtr<VirtualTexture>(Texture::TT_Cube, size, size, 1, num_mip_maps, array_size, format, false);
-}
+	TexturePtr SDL3RenderFactory::MakeDelayCreationTextureCube(uint32_t size, uint32_t num_mip_maps, uint32_t array_size,
+		ElementFormat format, uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint)
+	{
+		return MakeSharedPtr<SDL3TextureCube>(size, num_mip_maps, array_size, format, sample_count, sample_quality,
+			access_hint);
+	}
 
 SamplerStateObjectPtr SDL3RenderFactory::MakeSamplerStateObject(const SamplerStateDesc& desc)
 {

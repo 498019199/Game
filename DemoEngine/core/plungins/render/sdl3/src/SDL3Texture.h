@@ -17,6 +17,11 @@ public:
 		return texture_;
 	}
 
+	SDL_GPUTextureFormat GpuFormat() const noexcept
+	{
+		return gpu_format_;
+	}
+
 	void DeleteHWResource() override;
 	bool HWResourceReady() const override;
 
@@ -73,6 +78,7 @@ protected:
 
 protected:
 	SDL_GPUTexture* texture_{nullptr};
+	SDL_GPUTextureFormat gpu_format_{SDL_GPU_TEXTUREFORMAT_INVALID};
 };
 
 class SDL3Texture2D final : public SDL3Texture
@@ -95,9 +101,31 @@ public:
 	void UpdateSubresource2D(uint32_t array_index, uint32_t level, uint32_t x_offset, uint32_t y_offset, uint32_t width,
 		uint32_t height, void const* data, uint32_t row_pitch) override;
 
+	void CopyToSubTextureCube(Texture& target, uint32_t dst_array_index, CubeFaces dst_face, uint32_t dst_level,
+		uint32_t dst_x_offset, uint32_t dst_y_offset, uint32_t dst_width, uint32_t dst_height,
+		uint32_t src_array_index, CubeFaces src_face, uint32_t src_level, uint32_t src_x_offset, uint32_t src_y_offset,
+		uint32_t src_width, uint32_t src_height, TextureFilter filter) override;
+
 private:
 	uint32_t width_{0};
 	uint32_t height_{0};
+};
+
+class SDL3TextureCube final : public SDL3Texture
+{
+public:
+	SDL3TextureCube(uint32_t size, uint32_t num_mip_maps, uint32_t array_size, ElementFormat format,
+		uint32_t sample_count, uint32_t sample_quality, uint32_t access_hint);
+
+	uint32_t Width(uint32_t level) const noexcept override;
+	uint32_t Height(uint32_t level) const noexcept override;
+
+	void CreateHWResource(std::span<ElementInitData const> init_data, float4 const* clear_value_hint) override;
+	void UpdateSubresourceCube(uint32_t array_index, CubeFaces face, uint32_t level, uint32_t x_offset,
+		uint32_t y_offset, uint32_t width, uint32_t height, void const* data, uint32_t row_pitch) override;
+
+private:
+	uint32_t size_{0};
 };
 
 } // namespace RenderWorker

@@ -191,11 +191,19 @@ PredefinedCameraCBuffer::PredefinedCameraCBuffer()
 {
     effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
     predefined_cbuffer_ = effect_->CBufferByName("klayge_camera");
+    {
+        uint32_t const min_size = 48 + 304 * 8 + 64 * 8;
+        if (predefined_cbuffer_ && predefined_cbuffer_->Size() < min_size)
+        {
+            predefined_cbuffer_->Resize(min_size);
+        }
+    }
 
-    num_cameras_offset_ = effect_->ParameterByName("num_cameras")->CBufferOffset();
-    camera_indices_offset_ = effect_->ParameterByName("camera_indices")->CBufferOffset();
-    cameras_offset_ = effect_->ParameterByName("cameras")->CBufferOffset();
-    prev_mvps_offset_ = effect_->ParameterByName("prev_mvps")->CBufferOffset();
+    // HLSL packing: uint + pad, uint4[2], CameraInfo[8] (304), float4x4[8].
+    num_cameras_offset_ = EnsureParameterCBufferOffset(*effect_, "num_cameras", "klayge_camera", 0, 4);
+    camera_indices_offset_ = EnsureParameterCBufferOffset(*effect_, "camera_indices", "klayge_camera", 16, 16);
+    cameras_offset_ = EnsureParameterCBufferOffset(*effect_, "cameras", "klayge_camera", 48, 1);
+    prev_mvps_offset_ = EnsureParameterCBufferOffset(*effect_, "prev_mvps", "klayge_camera", 48 + 304 * 8, 16);
 
     this->NumCameras(*predefined_cbuffer_) = 1;
 

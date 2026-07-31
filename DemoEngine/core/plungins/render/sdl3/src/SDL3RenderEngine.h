@@ -2,8 +2,12 @@
 
 #include <render/RenderEngine.h>
 #include "SDL3Util.h"
+#include "SDL3MvpTriangle.h"
+#include "SDL3SkyBoxPresent.h"
+#include "SDL3MeshPresent.h"
 #include <math/color.h>
 #include <array>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -160,6 +164,9 @@ private:
 		}
 	};
 	std::unordered_map<PipelineKey, SDL_GPUGraphicsPipeline*, PipelineKeyHash> pipelines_;
+	std::unique_ptr<SDL3MvpTriangle> mvp_triangle_;
+	std::unique_ptr<SDL3SkyBoxPresent> skybox_present_;
+	std::unique_ptr<SDL3MeshPresent> mesh_present_;
 };
 
 } // namespace RenderWorker

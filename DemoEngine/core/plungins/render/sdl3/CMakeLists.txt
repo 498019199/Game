@@ -5,6 +5,12 @@ add_library(ZENGINE_Render_SDL3 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/SDL3FrameBuffer.h
 	src/SDL3GraphicsBuffer.cpp
 	src/SDL3GraphicsBuffer.h
+	src/SDL3MvpTriangle.cpp
+	src/SDL3MvpTriangle.h
+	src/SDL3SkyBoxPresent.cpp
+	src/SDL3SkyBoxPresent.h
+	src/SDL3MeshPresent.cpp
+	src/SDL3MeshPresent.h
 	src/SDL3Query.cpp
 	src/SDL3Query.h
 	src/SDL3RenderEngine.cpp

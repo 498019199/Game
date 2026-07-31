@@ -5,21 +5,45 @@
 #include "SDL3RenderStateObject.h"
 #include "SDL3GraphicsBuffer.h"
 #include "SDL3Texture.h"
+#include "SDL3MvpTriangle.h"
+#include "SDL3SkyBoxPresent.h"
+#include "SDL3MeshPresent.h"
 #include <base/ZEngine.h>
+#include <base/App3D.h>
+#include <world/World.h>
+#include <world/SceneNode.h>
+#include <render/Renderable.h>
 #include <render/RenderEffect.h>
 #include <render/RenderDeviceCaps.h>
 #include <render/ElementFormat.h>
 #include <render/FrameBuffer.h>
 #include <render/RenderView.h>
+#include <render/Camera.h>
 #include <common/Log.h>
 #include <math/color.h>
+#include <math/math.h>
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 #if defined(ZENGINE_PLATFORM_WINDOWS)
 #include <d3dcommon.h>
+#else
+// Mirror D3D_SHADER_INPUT_TYPE values used when tagging SDL3ShaderDesc::BoundResourceDesc.
+enum
+{
+	D3D_SIT_CBUFFER = 0,
+	D3D_SIT_TBUFFER = 1,
+	D3D_SIT_TEXTURE = 2,
+	D3D_SIT_SAMPLER = 3,
+	D3D_SIT_UAV_RWTYPED = 4,
+	D3D_SIT_STRUCTURED = 5,
+	D3D_SIT_UAV_RWSTRUCTURED = 6,
+	D3D_SIT_BYTEADDRESS = 7,
+};
 #endif
 
 namespace RenderWorker
@@ -109,6 +133,7 @@ void SDL3RenderEngine::FillRenderDeviceCaps()
 		EF_D24S8,
 		EF_D32F,
 	};
+	// Include packed mesh formats used by model_bin / OBJ convert (Rabbit: pos SNORM16, uv SNORM16).
 	std::vector<ElementFormat> vertex_formats = {
 		EF_R32F,
 		EF_GR32F,
@@ -117,8 +142,14 @@ void SDL3RenderEngine::FillRenderDeviceCaps()
 		EF_ABGR16F,
 		EF_ABGR8,
 		EF_ARGB8,
+		EF_SIGNED_ABGR8,
 		EF_R16F,
 		EF_GR16F,
+		EF_GR16,
+		EF_SIGNED_GR16,
+		EF_ABGR16,
+		EF_SIGNED_ABGR16,
+		EF_ABGR16UI,
 	};
 	std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
 	auto const sample1 = RenderDeviceCaps::EncodeSampleCountQuality(1, 1);
@@ -142,6 +173,22 @@ void SDL3RenderEngine::BeginFrame()
 		return;
 	}
 
+	// If a previous frame aborted before EndFrame submit, the Metal drawable stays
+	// checked out and the next WaitAndAcquire hangs forever in nextDrawable.
+	if (cmd_)
+	{
+		if (swapchain_tex_)
+		{
+			SDL_SubmitGPUCommandBuffer(cmd_);
+		}
+		else
+		{
+			SDL_CancelGPUCommandBuffer(cmd_);
+		}
+		cmd_ = nullptr;
+		swapchain_tex_ = nullptr;
+	}
+
 	cmd_ = SDL_AcquireGPUCommandBuffer(device_);
 	if (!cmd_)
 	{
@@ -155,15 +202,114 @@ void SDL3RenderEngine::BeginFrame()
 	{
 		LogError() << "[SDL3] WaitAndAcquireGPUSwapchainTexture failed: " << SDL_GetError() << std::endl;
 		swapchain_tex_ = nullptr;
+		SDL_CancelGPUCommandBuffer(cmd_);
+		cmd_ = nullptr;
 	}
 }
 
 void SDL3RenderEngine::EndFrame()
 {
 	EndRenderPass();
+
+	// Prefer skybox present on Metal (HLSL SkyBox.shader has no Mac compile path yet).
+	// Fall back to MVP blue+red triangle only when no cube is available.
+	if (cmd_ && swapchain_tex_ && device_ && window_)
+	{
+		// Snapshot scene under the update mutex, then release before any GPU work so we
+		// never hold a swapchain drawable while blocked on UpdateThreadFunc.
+		SDL_GPUTexture* cube_gpu = nullptr;
+		float4x4 inv_mvp = float4x4::Identity();
+		float4x4 view_proj = float4x4::Identity();
+		bool have_camera = false;
+		{
+			std::lock_guard<std::mutex> scene_lock(Context::Instance().WorldInstance().MutexForUpdate());
+			TexturePtr sky_tex;
+			Context::Instance().WorldInstance().SceneRootNode().Traverse([&](SceneNode& node) {
+				if (node.Name() != L"SkyBox")
+				{
+					return true;
+				}
+				node.ForEachComponentOfType<RenderableComponent>([&](RenderableComponent& comp) {
+					auto& effect = comp.BoundRenderable().GetRenderEffect();
+					if (!effect)
+					{
+						return;
+					}
+					if (auto* param = effect->ParameterByName("skybox_tex"))
+					{
+						param->Value(sky_tex);
+					}
+				});
+				return false;
+			});
+			if (sky_tex)
+			{
+				if (auto* cube = dynamic_cast<SDL3Texture*>(sky_tex.get()))
+				{
+					cube_gpu = cube->GpuTexture();
+				}
+			}
+			if (Context::Instance().AppValid())
+			{
+				auto const& camera = Context::Instance().AppInstance().ActiveCamera();
+				float4x4 rot_view = camera.ViewMatrix();
+				rot_view(3, 0) = 0;
+				rot_view(3, 1) = 0;
+				rot_view(3, 2) = 0;
+				inv_mvp = MathWorker::inverse(rot_view * camera.ProjMatrix());
+				view_proj = camera.ViewProjMatrix();
+				have_camera = true;
+			}
+		}
+
+		if (cube_gpu)
+		{
+			if (!skybox_present_)
+			{
+				skybox_present_ = std::make_unique<SDL3SkyBoxPresent>();
+			}
+			if (skybox_present_->EnsureResources(device_, window_))
+			{
+				skybox_present_->Draw(cmd_, swapchain_tex_, cube_gpu, inv_mvp);
+			}
+
+			ResolvePassTargets();
+			if (pass_has_depth_ && pass_depth_ && have_camera)
+			{
+				if (!mesh_present_)
+				{
+					mesh_present_ = std::make_unique<SDL3MeshPresent>();
+				}
+				if (mesh_present_->EnsureResources(device_, window_, pass_depth_format_))
+				{
+					mesh_present_->DrawSceneMeshes(cmd_, swapchain_tex_, pass_depth_, view_proj);
+				}
+			}
+		}
+		else
+		{
+			if (!mvp_triangle_)
+			{
+				mvp_triangle_ = std::make_unique<SDL3MvpTriangle>();
+			}
+			if (mvp_triangle_->EnsureResources(device_, window_))
+			{
+				SDL_GPUTextureFormat const fmt = SDL_GetGPUSwapchainTextureFormat(device_, window_);
+				mvp_triangle_->Draw(cmd_, swapchain_tex_, fmt);
+			}
+		}
+	}
+
 	if (cmd_)
 	{
-		SDL_SubmitGPUCommandBuffer(cmd_);
+		if (swapchain_tex_)
+		{
+			SDL_SubmitGPUCommandBuffer(cmd_);
+		}
+		else
+		{
+			SDL_CancelGPUCommandBuffer(cmd_);
+		}
 		cmd_ = nullptr;
 		swapchain_tex_ = nullptr;
 	}
@@ -235,15 +381,20 @@ void SDL3RenderEngine::ResolvePassTargets()
 
 	if (auto const& dsv = fb->AttachedDsv())
 	{
-		if (auto const& tex = dsv->TextureResource())
-		{
-			pass_depth_ = checked_cast<SDL3Texture&>(*tex).GpuTexture();
-			if (pass_depth_)
+			if (auto const& tex = dsv->TextureResource())
 			{
-				pass_depth_format_ = SDL3Mapping::MappingFormat(dsv->Format());
-				pass_has_depth_ = true;
+				auto& sdl_tex = checked_cast<SDL3Texture&>(*tex);
+				pass_depth_ = sdl_tex.GpuTexture();
+				if (pass_depth_)
+				{
+					pass_depth_format_ = sdl_tex.GpuFormat();
+					if (pass_depth_format_ == SDL_GPU_TEXTUREFORMAT_INVALID)
+					{
+						pass_depth_format_ = SDL3Mapping::MappingFormat(dsv->Format());
+					}
+					pass_has_depth_ = true;
+				}
 			}
-		}
 	}
 }
 
@@ -888,8 +1039,23 @@ void SDL3RenderEngine::DoDestroy()
 	}
 	pipelines_.clear();
 
-	if (device_)
-	{
+		if (mvp_triangle_)
+		{
+			mvp_triangle_->Release(device_);
+			mvp_triangle_.reset();
+		}
+		if (skybox_present_)
+		{
+			skybox_present_->Release(device_);
+			skybox_present_.reset();
+		}
+		if (mesh_present_)
+		{
+			mesh_present_->Release(device_);
+			mesh_present_.reset();
+		}
+		if (device_)
+		{
 		if (default_sampler_)
 		{
 			SDL_ReleaseGPUSampler(device_, default_sampler_);
