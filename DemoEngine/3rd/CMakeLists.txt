@@ -25,9 +25,9 @@ add_subdirectory(vorbis)
 add_subdirectory(tracy)
 
 # SDL3 is the cross-platform backend; Windows uses Direct3D 11 instead.
-if(NOT ZENGINE_PLATFORM_WINDOWS)
+#if(NOT ZENGINE_PLATFORM_WINDOWS)
 	add_subdirectory(SDL3)
-endif()
+#endif()
 
 if(ZENGINE_IS_DEV_PLATFORM)
 	add_subdirectory(imgui)

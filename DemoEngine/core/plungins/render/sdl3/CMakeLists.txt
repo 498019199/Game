@@ -1,7 +1,3 @@
-if(ZENGINE_PLATFORM_WINDOWS)
-	return()
-endif()
-
 add_library(ZENGINE_Render_SDL3 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/SDL3Fence.cpp
 	src/SDL3Fence.h
