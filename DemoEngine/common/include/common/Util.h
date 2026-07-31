@@ -95,14 +95,7 @@ namespace CommonWorker
 
     // 暂停几毫秒
 	/////////////////////////////////////////////////////////////////////////////////
-	inline void Sleep(uint32_t ms)
-	{
-#if defined(ZENGINE_PLATFORM_WINDOWS)
-		::Sleep(ms);
-#else
-		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-#endif
-	}
+	void Sleep(uint32_t ms);
 
     // 产生FourCC常量
     template <unsigned char ch0, unsigned char ch1, unsigned char ch2, unsigned char ch3>

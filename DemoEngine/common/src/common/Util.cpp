@@ -156,4 +156,14 @@ std::wstring& Convert(std::wstring& dest, std::string_view src)
 
     return dest;
 }
+
+void Sleep(uint32_t ms)
+{
+#if defined(ZENGINE_PLATFORM_WINDOWS)
+    ::Sleep(ms);
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+#endif
+}
+
 }

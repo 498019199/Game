@@ -413,7 +413,7 @@ public:
     void LoadConfig(const char* file_name)
     {
 #if defined(ZENGINE_PLATFORM_WINDOWS)
-        static char const* available_rfs_array[] = {"D3D11"};
+        static char const* available_rfs_array[] = {"D3D11" , "SDL3"};
         static char const* available_ifs_array[] = {"MsgInput"};
 #else
         static char const* available_rfs_array[] = {"SDL3"};
@@ -449,129 +449,125 @@ public:
 		std::string rf_name;
         std::string if_name;
 
-        // The config may be missing or may name a factory this platform can't provide,
-        // so start from what is known to be available here.
-        cfg_.render_factory_name = available_rfs_array[0];
-        cfg_.input_factory_name = available_ifs_array[0];
-
         auto& res_loader = ResLoaderInstance();
         ResIdentifierPtr file = res_loader.Open(file_name);
-        if(!file)
+        if(file)
         {
-            return;
-        }
+            XMLNode cfg_root = LoadXml(*file);
+            XMLNode const* context_node = cfg_root.FirstNode("context");
+            XMLNode const* graphics_node = cfg_root.FirstNode("graphics");
 
-        XMLNode cfg_root = LoadXml(*file);
-        XMLNode const* context_node = cfg_root.FirstNode("context");
-        XMLNode const* graphics_node = cfg_root.FirstNode("graphics");
-
-        if (XMLNode const* perf_profiler_node = context_node->FirstNode("perf_profiler"))
-        {
-            perf_profiler = perf_profiler_node->Attrib("enabled")->ValueInt() ? true : false;
-        }
-        if (XMLNode const* location_sensor_node = context_node->FirstNode("location_sensor"))
-        {
-            location_sensor = location_sensor_node->Attrib("enabled")->ValueInt() ? true : false;
-        }
-
-        if (XMLNode const* input_factory_node = context_node->FirstNode("input_factory"))
-        {
-            if (XMLAttribute const* attr = input_factory_node->Attrib("name"))
+            if (XMLNode const* rf_node = context_node->FirstNode("render_factory"))
             {
-                if_name = std::string(attr->ValueString());
+                rf_name = std::string(rf_node->Attrib("name")->ValueString());
             }
-        }
+            if (XMLNode const* if_node = context_node->FirstNode("input_factory"))
+            {
+                if_name = std::string(if_node->Attrib("name")->ValueString());
+            }
+            if (XMLNode const* perf_profiler_node = context_node->FirstNode("perf_profiler"))
+            {
+                perf_profiler = perf_profiler_node->Attrib("enabled")->ValueInt() ? true : false;
+            }
+            if (XMLNode const* location_sensor_node = context_node->FirstNode("location_sensor"))
+            {
+                location_sensor = location_sensor_node->Attrib("enabled")->ValueInt() ? true : false;
+            }
 
-        // 屏幕宽高
-        XMLNode const* frame_node = graphics_node->FirstNode("frame");
-        if (XMLAttribute const* attr = frame_node->Attrib("width"))
-        {
-            width = attr->ValueUInt();
-        }
-        if (XMLAttribute const* attr = frame_node->Attrib("height"))
-        {
-            height = attr->ValueUInt();
-        }
-        std::string color_fmt_str = "ARGB8";
-        if (XMLAttribute const* attr = frame_node->Attrib("color_fmt"))
-        {
-            color_fmt_str = std::string(attr->ValueString());
-        }
-        std::string depth_stencil_fmt_str = "D16";
-        if (XMLAttribute const* attr = frame_node->Attrib("depth_stencil_fmt"))
-        {
-            depth_stencil_fmt_str = std::string(attr->ValueString());
-        }
-        if (XMLAttribute const* attr = frame_node->Attrib("fullscreen"))
-        {
-            full_screen = attr->ValueBool();
-        }
-        if (XMLAttribute const* attr = frame_node->Attrib("keep_screen_on"))
-        {
-            keep_screen_on = attr->ValueBool();
-        }
+            // 屏幕宽高
+            XMLNode const* frame_node = graphics_node->FirstNode("frame");
+            if (XMLAttribute const* attr = frame_node->Attrib("width"))
+            {
+                width = attr->ValueUInt();
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("height"))
+            {
+                height = attr->ValueUInt();
+            }
+            std::string color_fmt_str = "ARGB8";
+            if (XMLAttribute const* attr = frame_node->Attrib("color_fmt"))
+            {
+                color_fmt_str = std::string(attr->ValueString());
+            }
+            std::string depth_stencil_fmt_str = "D16";
+            if (XMLAttribute const* attr = frame_node->Attrib("depth_stencil_fmt"))
+            {
+                depth_stencil_fmt_str = std::string(attr->ValueString());
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("fullscreen"))
+            {
+                full_screen = attr->ValueBool();
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("keep_screen_on"))
+            {
+                keep_screen_on = attr->ValueBool();
+            }
 
-        size_t const color_fmt_str_hash = RtHash(color_fmt_str.c_str());
-        if (CtHash("ARGB8") == color_fmt_str_hash)
-        {
-            color_fmt = EF_ARGB8;
-        }
-        else if (CtHash("ABGR8") == color_fmt_str_hash)
-        {
-            color_fmt = EF_ABGR8;
-        }
-        else if (CtHash("A2BGR10") == color_fmt_str_hash)
-        {
-            color_fmt = EF_A2BGR10;
-        }
-        else if (CtHash("ABGR16F") == color_fmt_str_hash)
-        {
-            color_fmt = EF_ABGR16F;
-        }
+            size_t const color_fmt_str_hash = RtHash(color_fmt_str.c_str());
+            if (CtHash("ARGB8") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ARGB8;
+            }
+            else if (CtHash("ABGR8") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ABGR8;
+            }
+            else if (CtHash("A2BGR10") == color_fmt_str_hash)
+            {
+                color_fmt = EF_A2BGR10;
+            }
+            else if (CtHash("ABGR16F") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ABGR16F;
+            }
 
-        size_t const depth_stencil_fmt_str_hash = RtHash(depth_stencil_fmt_str.c_str());
-        if (CtHash("D16") == depth_stencil_fmt_str_hash)
-        {
-            depth_stencil_fmt = EF_D16;
-        }
-        else if (CtHash("D24S8") == depth_stencil_fmt_str_hash)
-        {
-            depth_stencil_fmt = EF_D24S8;
-        }
-        else if (CtHash("D32F") == depth_stencil_fmt_str_hash)
-        {
-            depth_stencil_fmt = EF_D32F;
+            size_t const depth_stencil_fmt_str_hash = RtHash(depth_stencil_fmt_str.c_str());
+            if (CtHash("D16") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D16;
+            }
+            else if (CtHash("D24S8") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D24S8;
+            }
+            else if (CtHash("D32F") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D32F;
+            }
+            else
+            {
+                depth_stencil_fmt = EF_Unknown;
+            }
+
+            // 多重采样
+            XMLNode const* sample_node = frame_node->FirstNode("sample");
+            if (XMLAttribute const* attr = sample_node->Attrib("count"))
+            {
+                sample_count = attr->ValueUInt();
+            }
+            if (XMLAttribute const* attr = sample_node->Attrib("quality"))
+            {
+                sample_quality = attr->ValueUInt();
+            }
         }
         else
         {
-            depth_stencil_fmt = EF_Unknown;
+            std::span<char const*> const available_rfs = available_rfs_array;
+            if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
+            {
+                rf_name = available_rfs[0];
+            }
+            
+            std::span<char const*> const available_ifs = available_ifs_array;
+            if (std::find(available_ifs.begin(), available_ifs.end(), if_name) == available_ifs.end())
+            {
+                if_name = available_ifs[0];
+            }
+            
         }
 
-        // 多重采样
-        XMLNode const* sample_node = frame_node->FirstNode("sample");
-        if (XMLAttribute const* attr = sample_node->Attrib("count"))
-        {
-            sample_count = attr->ValueUInt();
-        }
-        if (XMLAttribute const* attr = sample_node->Attrib("quality"))
-        {
-            sample_quality = attr->ValueUInt();
-        }
-
-        std::span<char const*> const available_rfs = available_rfs_array;
-        if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
-        {
-            rf_name = available_rfs[0];
-        }
         cfg_.render_factory_name = std::move(rf_name);
-
-        std::span<char const*> const available_ifs = available_ifs_array;
-        if (std::find(available_ifs.begin(), available_ifs.end(), if_name) == available_ifs.end())
-        {
-            if_name = available_ifs[0];
-        }
         cfg_.input_factory_name = std::move(if_name);
-
         cfg_.graphics_cfg.left = cfg_.graphics_cfg.top = 0;
         cfg_.graphics_cfg.width = width;
         cfg_.graphics_cfg.height = height;

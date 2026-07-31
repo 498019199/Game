@@ -62,3 +62,4 @@ set_target_properties(imgui_demo PROPERTIES
     OUTPUT_NAME imgui_demo${ZENGINE_OUTPUT_SUFFIX}
     FOLDER "test"
 )
+set_target_properties(imgui PROPERTIES FOLDER "3rd/imgui")
