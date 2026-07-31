@@ -7,8 +7,9 @@
 namespace RenderWorker
 {
 
-// Metal (MSL) present-path untextured mesh draw for macOS where HLSL mesh shaders
-// cannot compile. Decompresses SNORM positions via pos_center/pos_extent.
+// Metal (MSL) present-path mesh draw for macOS where HLSL mesh shaders
+// cannot compile. Decompresses SNORM positions via pos_center/pos_extent;
+// optional albedo texture sampling when material + UV stream are present.
 class SDL3MeshPresent final
 {
 public:
@@ -24,11 +25,15 @@ public:
 	void Release(SDL_GPUDevice* device);
 
 private:
-	bool CreatePipeline(SDL_GPUDevice* device, SDL_GPUTextureFormat swapchain_fmt, SDL_GPUTextureFormat depth_fmt);
+	bool CreatePipelines(SDL_GPUDevice* device, SDL_GPUTextureFormat swapchain_fmt, SDL_GPUTextureFormat depth_fmt);
 
 	SDL_GPUShader* vs_{nullptr};
 	SDL_GPUShader* ps_{nullptr};
 	SDL_GPUGraphicsPipeline* pipeline_{nullptr};
+	SDL_GPUShader* vs_tex_{nullptr};
+	SDL_GPUShader* ps_tex_{nullptr};
+	SDL_GPUGraphicsPipeline* pipeline_tex_{nullptr};
+	SDL_GPUSampler* sampler_{nullptr};
 	SDL_GPUTextureFormat pipeline_color_fmt_{SDL_GPU_TEXTUREFORMAT_INVALID};
 	SDL_GPUTextureFormat pipeline_depth_fmt_{SDL_GPU_TEXTUREFORMAT_INVALID};
 	bool ready_{false};

@@ -150,6 +150,7 @@ void SDL3RenderEngine::FillRenderDeviceCaps()
 		EF_ABGR16,
 		EF_SIGNED_ABGR16,
 		EF_ABGR16UI,
+		EF_ABGR8UI, // skinned models (ogre_magi blend indices)
 	};
 	std::map<ElementFormat, std::vector<uint32_t>> render_target_formats;
 	auto const sample1 = RenderDeviceCaps::EncodeSampleCountQuality(1, 1);
