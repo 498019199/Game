@@ -30,6 +30,44 @@ namespace
 	using namespace RenderWorker;
 
 	uint32_t const KFX_VERSION = 0x0151;
+
+	// Platform-specific kfx: Foo.d3d_11_0.kfx / Foo.d3d_12.kfx / Foo.metal_spirv.kfx
+	// Legacy Foo.kfx kept as fallback for load only.
+	std::string PlatformKfxFileName(std::string const& connected_name, std::string_view platform_name)
+	{
+		return connected_name + "." + std::string(platform_name) + ".kfx";
+	}
+
+	std::string ResolveKfxPathForLoad(ResLoader& res_loader, std::filesystem::path const& first_directory,
+		std::string const& connected_name, std::string_view platform_name)
+	{
+		std::string const platform_file = PlatformKfxFileName(connected_name, platform_name);
+		std::string located = res_loader.Locate(platform_file);
+		if (!located.empty())
+		{
+			return located;
+		}
+
+		std::filesystem::path const platform_path = first_directory / platform_file;
+		std::error_code ec;
+		if (std::filesystem::exists(platform_path, ec))
+		{
+			return platform_path.string();
+		}
+
+		located = res_loader.Locate(connected_name + ".kfx");
+		if (!located.empty())
+		{
+			return located;
+		}
+		return (first_directory / (connected_name + ".kfx")).string();
+	}
+
+	std::string ResolveKfxPathForWrite(std::filesystem::path const& first_directory, std::string const& connected_name,
+		std::string_view platform_name)
+	{
+		return (first_directory / PlatformKfxFileName(connected_name, platform_name)).string();
+	}
 }
 
 namespace RenderWorker
@@ -212,11 +250,16 @@ using namespace detail;
 				}
 			}
 
-			std::string kfx_name = res_loader.Locate(connected_name + ".kfx");
-			if (kfx_name.empty())
+			std::string_view platform_name =
+				Context::Instance().RenderFactoryInstance().RenderEngineInstance().NativeShaderPlatformName();
+			if (platform_name.empty())
 			{
-				kfx_name = (first_directory / (connected_name + ".kfx")).string();
+				platform_name = "unknown";
 			}
+			std::string const kfx_name =
+				ResolveKfxPathForLoad(res_loader, first_directory, connected_name, platform_name);
+			std::string const kfx_write_name =
+				ResolveKfxPathForWrite(first_directory, connected_name, platform_name);
 
 			immutable_->res_name = (first_directory / (connected_name + (is_shader_lab ? ".shader" : ".fxml"))).string();
 			immutable_->res_name_hash = HashValue(immutable_->res_name);
@@ -311,11 +354,19 @@ using namespace detail;
 						this->Load(root);
 					}
 
-					immutable_->kfx_name = kfx_name;
+					immutable_->kfx_name = kfx_write_name;
 					immutable_->need_compile = true;
 				}
 #endif
 			}
+#if ZENGINE_IS_DEV_PLATFORM
+			else
+			{
+				// Keep write path platform-specific even when an existing kfx loaded
+				// (recompile after source change should not overwrite a mismatched name).
+				immutable_->kfx_name = kfx_write_name;
+			}
+#endif
 		}
 
 #if ZENGINE_IS_DEV_PLATFORM
@@ -354,6 +405,7 @@ using namespace detail;
 
 			std::ofstream ofs(immutable_->kfx_name.c_str(), std::ios_base::binary | std::ios_base::out);
 			this->StreamOut(ofs);
+			LogInfo() << "Wrote kfx " << immutable_->kfx_name << std::endl;
 		}
 	}
 #endif

@@ -49,7 +49,18 @@ enum
 namespace RenderWorker
 {
 
-SDL3RenderEngine::SDL3RenderEngine() = default;
+SDL3RenderEngine::SDL3RenderEngine()
+{
+#if defined(ZENGINE_PLATFORM_WINDOWS)
+	native_shader_platform_name_ = "d3d_12";
+#else
+	// Distinct from Win SDL3 so Windows-baked DXIL/DXBC kfx cannot load on Mac.
+	native_shader_platform_name_ = "metal_spirv";
+#endif
+	// SPIR-V / DXIL fourcc filled when device is created; DXBC used as interim on Win.
+	native_shader_fourcc_ = MakeFourCC<'D', 'X', 'B', 'C'>::value;
+	native_shader_version_ = 6;
+}
 
 SDL3RenderEngine::~SDL3RenderEngine()
 {
@@ -543,7 +554,11 @@ void SDL3RenderEngine::DoCreateRenderWindow(std::string const& name, RenderSetti
 	}
 
 	auto win = MakeSharedPtr<SDL3RenderWindow>(name, settings);
+#if defined(ZENGINE_PLATFORM_WINDOWS)
 	native_shader_platform_name_ = "d3d_12";
+#else
+	native_shader_platform_name_ = "metal_spirv";
+#endif
 	this->BindFrameBuffer(win);
 }
 

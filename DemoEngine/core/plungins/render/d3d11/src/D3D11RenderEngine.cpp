@@ -53,6 +53,7 @@ D3D11RenderEngine::D3D11RenderEngine()
 {
 	native_shader_fourcc_ = MakeFourCC<'D', 'X', 'B', 'C'>::value;
 	native_shader_version_ = 6;
+	native_shader_platform_name_ = "d3d_11_0";
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 	// Dynamic loading because these dlls can't be loaded on WinXP
