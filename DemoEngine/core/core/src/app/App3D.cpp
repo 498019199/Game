@@ -122,7 +122,13 @@ void App3D::Quit()
     ::PostQuitMessage(0);
 #endif
 #else
-    exit(0);
+	// Match the non-Windows Run() loop (while (!main_wnd_->Closed())).
+	// Do not call exit(): that tears down ThreadPool while detached workers
+	// still lock mutexes and crashes (mutex lock after destroy).
+	if (main_wnd_)
+	{
+		main_wnd_->Closed(true);
+	}
 #endif
 }
 

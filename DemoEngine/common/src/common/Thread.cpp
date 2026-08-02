@@ -32,6 +32,7 @@
 #include <common/CpuInfo.h>
 #include <common/common.h>
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <vector>
@@ -88,16 +89,21 @@ namespace CommonWorker
 		}
 		~Impl()
 		{
-			std::lock_guard<std::mutex> lock(mutex_);
-
-			// Notify cleanup command to not queued threads
-			general_cleanup_ = true;
-
-			for (auto& th_info : threads_)
 			{
-				th_info->Kill();
+				std::lock_guard<std::mutex> lock(mutex_);
+
+				// Notify cleanup command to not queued threads
+				general_cleanup_ = true;
+
+				for (auto& th_info : all_threads_)
+				{
+					th_info->Kill();
+				}
+				threads_.clear();
 			}
-			threads_.clear();
+
+			std::unique_lock<std::mutex> lock(shutdown_mutex_);
+			shutdown_cv_.wait(lock, [this] { return active_workers_ == 0; });
 		}
 
 		// Creates and adds more threads to the pool.
@@ -165,6 +171,8 @@ namespace CommonWorker
 			{
 				auto& th_info = threads_[i];
 				th_info = MakeSharedPtr<ThreadInfo>(*this);
+				all_threads_.push_back(th_info);
+				++active_workers_;
 				std::thread thread(
 					[th_info]()
 					{
@@ -174,8 +182,28 @@ namespace CommonWorker
 			}
 		}
 
+		struct ActiveWorkerGuard final
+		{
+			explicit ActiveWorkerGuard(Impl* impl) noexcept : impl_(impl)
+			{
+			}
+
+			~ActiveWorkerGuard()
+			{
+				if (impl_)
+				{
+					std::lock_guard<std::mutex> lock(impl_->shutdown_mutex_);
+					--impl_->active_workers_;
+					impl_->shutdown_cv_.notify_all();
+				}
+			}
+
+			Impl* impl_;
+		};
+
 		static void WaitFunction(std::shared_ptr<ThreadInfo> const& info)
 		{
+			ActiveWorkerGuard worker_guard(info->data_);
 			for (;;)
 			{
 				auto* data = info->data_;
@@ -242,6 +270,10 @@ namespace CommonWorker
 		std::mutex mutex_;
 		bool general_cleanup_ = false;
 		std::vector<std::shared_ptr<ThreadInfo>> threads_;
+		std::vector<std::shared_ptr<ThreadInfo>> all_threads_;
+		std::atomic<uint32_t> active_workers_{0};
+		std::mutex shutdown_mutex_;
+		std::condition_variable shutdown_cv_;
 	};
 
 	ThreadPool::ThreadPool()
