@@ -6,10 +6,7 @@
 #include "SDL3GraphicsBuffer.h"
 #include "SDL3Texture.h"
 #include "SDL3MvpTriangle.h"
-#include "SDL3SkyBoxPresent.h"
-#include "SDL3MeshPresent.h"
 #include <base/ZEngine.h>
-#include <base/App3D.h>
 #include <world/World.h>
 #include <world/SceneNode.h>
 #include <render/Renderable.h>
@@ -18,7 +15,6 @@
 #include <render/ElementFormat.h>
 #include <render/FrameBuffer.h>
 #include <render/RenderView.h>
-#include <render/Camera.h>
 #include <common/Log.h>
 #include <math/color.h>
 #include <math/math.h>
@@ -223,16 +219,11 @@ void SDL3RenderEngine::EndFrame()
 {
 	EndRenderPass();
 
-	// Prefer skybox present on Metal (HLSL SkyBox.shader has no Mac compile path yet).
-	// Fall back to MVP blue+red triangle only when no cube is available.
+	// SkyBox and scene meshes are rendered through their Renderable classes and
+	// shaders during the normal scene pass. Keep only the no-skybox debug fallback.
 	if (cmd_ && swapchain_tex_ && device_ && window_)
 	{
-		// Snapshot scene under the update mutex, then release before any GPU work so we
-		// never hold a swapchain drawable while blocked on UpdateThreadFunc.
 		SDL_GPUTexture* cube_gpu = nullptr;
-		float4x4 inv_mvp = float4x4::Identity();
-		float4x4 view_proj = float4x4::Identity();
-		bool have_camera = false;
 		{
 			std::lock_guard<std::mutex> scene_lock(Context::Instance().WorldInstance().MutexForUpdate());
 			TexturePtr sky_tex;
@@ -261,44 +252,9 @@ void SDL3RenderEngine::EndFrame()
 					cube_gpu = cube->GpuTexture();
 				}
 			}
-			if (Context::Instance().AppValid())
-			{
-				auto const& camera = Context::Instance().AppInstance().ActiveCamera();
-				float4x4 rot_view = camera.ViewMatrix();
-				rot_view(3, 0) = 0;
-				rot_view(3, 1) = 0;
-				rot_view(3, 2) = 0;
-				inv_mvp = MathWorker::inverse(rot_view * camera.ProjMatrix());
-				view_proj = camera.ViewProjMatrix();
-				have_camera = true;
-			}
 		}
 
-		if (cube_gpu)
-		{
-			if (!skybox_present_)
-			{
-				skybox_present_ = std::make_unique<SDL3SkyBoxPresent>();
-			}
-			if (skybox_present_->EnsureResources(device_, window_))
-			{
-				skybox_present_->Draw(cmd_, swapchain_tex_, cube_gpu, inv_mvp);
-			}
-
-			ResolvePassTargets();
-			if (pass_has_depth_ && pass_depth_ && have_camera)
-			{
-				if (!mesh_present_)
-				{
-					mesh_present_ = std::make_unique<SDL3MeshPresent>();
-				}
-				if (mesh_present_->EnsureResources(device_, window_, pass_depth_format_))
-				{
-					mesh_present_->DrawSceneMeshes(cmd_, swapchain_tex_, pass_depth_, view_proj);
-				}
-			}
-		}
-		else
+		if (!cube_gpu)
 		{
 			if (!mvp_triangle_)
 			{
@@ -696,10 +652,10 @@ SDL_GPUGraphicsPipeline* SDL3RenderEngine::GetOrCreatePipeline(const RenderEffec
 
 void SDL3RenderEngine::DoRender(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
-	if (!cmd_)
-	{
-		return;
-	}
+		if (!cmd_)
+		{
+			return;
+		}
 
 		EnsureRenderPass(false, nullptr, false, 1.0f, false, 0);
 		if (!render_pass_)
@@ -1059,16 +1015,6 @@ void SDL3RenderEngine::DoDestroy()
 		{
 			mvp_triangle_->Release(device_);
 			mvp_triangle_.reset();
-		}
-		if (skybox_present_)
-		{
-			skybox_present_->Release(device_);
-			skybox_present_.reset();
-		}
-		if (mesh_present_)
-		{
-			mesh_present_->Release(device_);
-			mesh_present_.reset();
 		}
 		if (device_)
 		{
