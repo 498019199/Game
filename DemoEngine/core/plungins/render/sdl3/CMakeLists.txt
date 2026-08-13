@@ -29,6 +29,10 @@ add_library(ZENGINE_Render_SDL3 ${ZENGINE_PREFERRED_LIB_TYPE}
 	src/SDL3ShaderObject.h
 	src/SDL3Texture.cpp
 	src/SDL3Texture.h
+	src/SDL3Texture1D.cpp
+	src/SDL3Texture2D.cpp
+	src/SDL3Texture3D.cpp
+	src/SDL3TextureCube.cpp
 	src/SDL3Util.cpp
 	src/SDL3Util.h
 )

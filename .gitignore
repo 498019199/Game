@@ -3,6 +3,7 @@
 /.idea
 /.codegraph
 /.cursor
+/.codex
 /openspec
 .vscode/settings.json
 /.githooks
