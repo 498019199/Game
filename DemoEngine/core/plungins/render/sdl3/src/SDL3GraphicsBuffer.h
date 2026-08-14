@@ -7,6 +7,8 @@
 namespace RenderWorker
 {
 
+struct SDL3DeviceLifetime;
+
 enum class SDL3BufferBind : uint32_t
 {
 	Vertex = 1,
@@ -53,6 +55,8 @@ private:
 
 private:
 	SDL3BufferBind bind_;
+	std::shared_ptr<SDL3DeviceLifetime> device_lifetime_;
+	SDL_GPUDevice* device_{nullptr};
 	SDL_GPUBuffer* buffer_{nullptr};
 	std::vector<uint8_t> cpu_shadow_;
 	bool mapped_{false};

@@ -6,6 +6,8 @@
 namespace RenderWorker
 {
 
+struct SDL3DeviceLifetime;
+
 class SDL3RenderStateObject final : public RenderStateObject
 {
 public:
@@ -26,6 +28,8 @@ public:
 	}
 
 private:
+	std::shared_ptr<SDL3DeviceLifetime> device_lifetime_;
+	SDL_GPUDevice* device_{nullptr};
 	SDL_GPUSampler* sampler_{nullptr};
 };
 

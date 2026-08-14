@@ -14,6 +14,11 @@ namespace RenderWorker
 
 class SDL3ShaderStageObject;
 
+struct SDL3DeviceLifetime final
+{
+	SDL_GPUDevice* device{nullptr};
+};
+
 class SDL3RenderEngine : public RenderEngine
 {
 public:
@@ -33,6 +38,10 @@ public:
 	SDL_GPUDevice* Device() const noexcept
 	{
 		return device_;
+	}
+	std::shared_ptr<SDL3DeviceLifetime> const& DeviceLifetime() const noexcept
+	{
+		return device_lifetime_;
 	}
 	SDL_Window* Window() const noexcept
 	{
@@ -87,6 +96,7 @@ private:
 	void ApplyViewportAndScissor();
 
 private:
+	std::shared_ptr<SDL3DeviceLifetime> device_lifetime_{std::make_shared<SDL3DeviceLifetime>()};
 	SDL_GPUDevice* device_{nullptr};
 	SDL_Window* window_{nullptr};
 	SDL_GPUCommandBuffer* cmd_{nullptr};

@@ -125,21 +125,31 @@ void SDL3Texture2D::CreateHWResource(std::span<ElementInitData const> init_data,
 	SDL_PropertiesID props = 0;
 	if (IsDepthFormat(format_))
 	{
-		float const clear_depth = clear_value_hint ? (*clear_value_hint)[0] : 1.0f;
-		Uint8 const clear_stencil =
-			clear_value_hint ? static_cast<Uint8>((*clear_value_hint)[1]) : static_cast<Uint8>(0);
+		// ZEngine clears depth targets to 1 / stencil 0. Keep D3D12's optimized
+		// clear value identical for every SDL3 depth texture, including auxiliary
+		// full-size depth targets whose generic clear hint may be zero.
+		float const clear_depth = 1.0f;
+		Uint8 const clear_stencil = 0;
 		props = SDL_CreateProperties();
-		SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT, clear_depth);
-		SDL_SetNumberProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_NUMBER, clear_stencil);
+		SDL3Check(props != 0, "SDL_CreateProperties(depth texture)");
+		SDL3Check(SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT, clear_depth),
+			"SDL_SetFloatProperty(D3D12 clear depth)");
+		SDL3Check(SDL_SetNumberProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_NUMBER, clear_stencil),
+			"SDL_SetNumberProperty(D3D12 clear stencil)");
 		info.props = props;
 	}
 	else if (clear_value_hint && (usage & SDL_GPU_TEXTUREUSAGE_COLOR_TARGET))
 	{
 		props = SDL_CreateProperties();
-		SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT, (*clear_value_hint)[0]);
-		SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT, (*clear_value_hint)[1]);
-		SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT, (*clear_value_hint)[2]);
-		SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT, (*clear_value_hint)[3]);
+		SDL3Check(props != 0, "SDL_CreateProperties(color texture)");
+		SDL3Check(SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT, (*clear_value_hint)[0]),
+			"SDL_SetFloatProperty(D3D12 clear R)");
+		SDL3Check(SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT, (*clear_value_hint)[1]),
+			"SDL_SetFloatProperty(D3D12 clear G)");
+		SDL3Check(SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT, (*clear_value_hint)[2]),
+			"SDL_SetFloatProperty(D3D12 clear B)");
+		SDL3Check(SDL_SetFloatProperty(props, SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT, (*clear_value_hint)[3]),
+			"SDL_SetFloatProperty(D3D12 clear A)");
 		info.props = props;
 	}
 
@@ -149,6 +159,8 @@ void SDL3Texture2D::CreateHWResource(std::span<ElementInitData const> init_data,
 		SDL_DestroyProperties(props);
 	}
 	SDL3Check(texture_ != nullptr, "SDL_CreateGPUTexture");
+	device_ = texture_ ? device : nullptr;
+	device_lifetime_ = texture_ ? re.DeviceLifetime() : nullptr;
 	gpu_format_ = info.format;
 
 	if (!init_data.empty() && texture_)

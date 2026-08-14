@@ -2,6 +2,7 @@
 #include "SDL3RenderEngine.h"
 #include <base/ZEngine.h>
 #include <render/RenderFactory.h>
+#include <render/TexCompression.h>
 #include <cstring>
 #include <algorithm>
 
@@ -22,14 +23,15 @@ void SDL3Texture::DeleteHWResource()
 {
 	if (texture_)
 	{
-		auto& re = checked_cast<SDL3RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
-		if (re.Device())
+		if (device_lifetime_ && (device_lifetime_->device == device_))
 		{
-			SDL_ReleaseGPUTexture(re.Device(), texture_);
+			SDL_ReleaseGPUTexture(device_, texture_);
 		}
 		texture_ = nullptr;
 		gpu_format_ = SDL_GPU_TEXTUREFORMAT_INVALID;
 	}
+	device_lifetime_.reset();
+	device_ = nullptr;
 }
 
 bool SDL3Texture::HWResourceReady() const
@@ -140,8 +142,11 @@ void SDL3Texture::Upload2D(uint32_t array_index, uint32_t level, uint32_t x_offs
 		return;
 	}
 
-	uint32_t const bpp = NumFormatBytes(format_);
-	uint32_t const upload_size = row_pitch * height;
+	uint32_t const block_width = BlockWidth(format_);
+	uint32_t const block_height = BlockHeight(format_);
+	uint32_t const block_bytes = BlockBytes(format_);
+	uint32_t const block_rows = (height + block_height - 1) / block_height;
+	uint32_t const upload_size = row_pitch * block_rows;
 	SDL_GPUTransferBufferCreateInfo tb_info{};
 	tb_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
 	tb_info.size = upload_size;
@@ -172,7 +177,7 @@ void SDL3Texture::Upload2D(uint32_t array_index, uint32_t level, uint32_t x_offs
 	SDL_GPUTextureTransferInfo src{};
 	src.transfer_buffer = transfer;
 	src.offset = 0;
-	src.pixels_per_row = row_pitch / std::max(1u, bpp);
+	src.pixels_per_row = (row_pitch / block_bytes) * block_width;
 	src.rows_per_layer = height;
 
 	SDL_GPUTextureRegion dst{};

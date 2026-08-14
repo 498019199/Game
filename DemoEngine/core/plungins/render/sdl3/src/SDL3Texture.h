@@ -6,6 +6,8 @@
 namespace RenderWorker
 {
 
+struct SDL3DeviceLifetime;
+
 class SDL3Texture : public Texture
 {
 public:
@@ -77,6 +79,8 @@ protected:
 		uint32_t height, void const* data, uint32_t row_pitch);
 
 protected:
+	std::shared_ptr<SDL3DeviceLifetime> device_lifetime_;
+	SDL_GPUDevice* device_{nullptr};
 	SDL_GPUTexture* texture_{nullptr};
 	SDL_GPUTextureFormat gpu_format_{SDL_GPU_TEXTUREFORMAT_INVALID};
 };

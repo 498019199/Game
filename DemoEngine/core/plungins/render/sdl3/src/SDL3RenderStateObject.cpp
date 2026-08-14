@@ -69,19 +69,25 @@ SDL3SamplerStateObject::SDL3SamplerStateObject(SamplerStateDesc const& desc)
 	{
 		LogError() << "[SDL3] SDL_CreateGPUSampler failed: " << SDL_GetError() << std::endl;
 	}
+	else
+	{
+		device_ = device;
+		device_lifetime_ = re.DeviceLifetime();
+	}
 }
 
 SDL3SamplerStateObject::~SDL3SamplerStateObject()
 {
 	if (sampler_)
 	{
-		auto& re = checked_cast<SDL3RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
-		if (re.Device())
+		if (device_lifetime_ && (device_lifetime_->device == device_))
 		{
-			SDL_ReleaseGPUSampler(re.Device(), sampler_);
+			SDL_ReleaseGPUSampler(device_, sampler_);
 		}
 		sampler_ = nullptr;
 	}
+	device_lifetime_.reset();
+	device_ = nullptr;
 }
 
 } // namespace RenderWorker

@@ -8,6 +8,8 @@
 namespace RenderWorker
 {
 
+struct SDL3DeviceLifetime;
+
 struct SDL3ShaderDesc
 {
 	struct ConstantBufferDesc
@@ -93,6 +95,8 @@ private:
 private:
 	std::vector<uint8_t> shader_code_;
 	SDL_GPUShaderFormat shader_format_{SDL_GPU_SHADERFORMAT_DXIL};
+	std::shared_ptr<SDL3DeviceLifetime> device_lifetime_;
+	SDL_GPUDevice* gpu_device_{nullptr};
 	SDL_GPUShader* gpu_shader_{nullptr};
 	std::string entry_point_{"main"};
 	std::string shader_profile_;

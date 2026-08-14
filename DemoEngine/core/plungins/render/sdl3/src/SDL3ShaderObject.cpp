@@ -421,13 +421,14 @@ void SDL3ShaderStageObject::ReleaseGpuShader()
 {
 	if (gpu_shader_)
 	{
-		auto& re = checked_cast<SDL3RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
-		if (re.Device())
+		if (device_lifetime_ && (device_lifetime_->device == gpu_device_))
 		{
-			SDL_ReleaseGPUShader(re.Device(), gpu_shader_);
+			SDL_ReleaseGPUShader(gpu_device_, gpu_shader_);
 		}
 		gpu_shader_ = nullptr;
 	}
+	device_lifetime_.reset();
+	gpu_device_ = nullptr;
 }
 
 void SDL3ShaderStageObject::FillShaderDescFromReflection(void* d3d11_reflection)
@@ -779,6 +780,8 @@ void SDL3ShaderStageObject::CreateHwShader(const RenderEffect& effect,
 		LogError() << "[SDL3] SDL_CreateGPUShader failed: " << SDL_GetError() << std::endl;
 		return;
 	}
+	gpu_device_ = device;
+	device_lifetime_ = re.DeviceLifetime();
 	hw_res_ready_ = true;
 }
 

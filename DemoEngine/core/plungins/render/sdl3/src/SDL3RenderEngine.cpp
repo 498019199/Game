@@ -66,6 +66,7 @@ SDL3RenderEngine::~SDL3RenderEngine()
 void SDL3RenderEngine::Device(SDL_GPUDevice* device, SDL_Window* window)
 {
 	device_ = device;
+	device_lifetime_->device = device;
 	window_ = window;
 	this->FillRenderDeviceCaps();
 	EnsureDefaultSampleBinding();
@@ -427,14 +428,6 @@ void SDL3RenderEngine::ResolvePassTargets()
 		}
 		SDL_Rect r{sc_x, sc_y, sc_w, sc_h};
 		SDL_SetGPUScissor(render_pass_, &r);
-
-		static bool logged_vp = false;
-		if (!logged_vp)
-		{
-			logged_vp = true;
-			LogInfo() << "[SDL3] Viewport " << vp_w << "x" << vp_h << " @(" << vp_x << "," << vp_y
-					  << ") scissor " << sc_w << "x" << sc_h << std::endl;
-		}
 	}
 
 void SDL3RenderEngine::EnsureRenderPass(bool clear_color, Color const* clear_clr, bool clear_depth, float depth,
@@ -569,38 +562,21 @@ SDL_GPUGraphicsPipeline* SDL3RenderEngine::GetOrCreatePipeline(const RenderEffec
 	auto const& sdl_rl = checked_cast<SDL3RenderLayout const&>(rl);
 		sdl_rl.Active();
 
-		if (sdl_rl.VertexAttributes().empty() && (rl.VertexStreamNum() > 0))
-		{
-			LogError() << "[SDL3] Refusing pipeline create: layout has streams but no vertex attributes"
-					   << std::endl;
-			return nullptr;
-		}
+	if (sdl_rl.VertexAttributes().empty() && (rl.VertexStreamNum() > 0))
+	{
+		LogError() << "[SDL3] Refusing pipeline create: layout has streams but no vertex attributes"
+					<< std::endl;
+		return nullptr;
+	}
 
-		{
-			auto const& attrs = sdl_rl.VertexAttributes();
-			auto const& descs = sdl_rl.VertexBufferDescs();
-			LogInfo() << "[SDL3] CreatePSO streams=" << descs.size() << " attrs=" << attrs.size() << std::endl;
-			for (size_t ai = 0; ai < attrs.size(); ++ai)
-			{
-				LogInfo() << "[SDL3]  attr[" << ai << "] loc=" << attrs[ai].location
-						  << " slot=" << attrs[ai].buffer_slot << " fmt=" << static_cast<int>(attrs[ai].format)
-						  << " off=" << attrs[ai].offset << std::endl;
-			}
-			for (size_t di = 0; di < descs.size(); ++di)
-			{
-				LogInfo() << "[SDL3]  vb[" << di << "] slot=" << descs[di].slot
-						  << " pitch=" << descs[di].pitch << std::endl;
-			}
-		}
-
-		SDL_GPUGraphicsPipelineCreateInfo info{};
-		info.vertex_shader = vs;
-		info.fragment_shader = ps;
-		info.vertex_input_state.vertex_buffer_descriptions = sdl_rl.VertexBufferDescs().data();
-		info.vertex_input_state.num_vertex_buffers = static_cast<Uint32>(sdl_rl.VertexBufferDescs().size());
-		info.vertex_input_state.vertex_attributes = sdl_rl.VertexAttributes().data();
-		info.vertex_input_state.num_vertex_attributes = static_cast<Uint32>(sdl_rl.VertexAttributes().size());
-		info.primitive_type = SDL3Mapping::Mapping(rl.TopologyType());
+	SDL_GPUGraphicsPipelineCreateInfo info{};
+	info.vertex_shader = vs;
+	info.fragment_shader = ps;
+	info.vertex_input_state.vertex_buffer_descriptions = sdl_rl.VertexBufferDescs().data();
+	info.vertex_input_state.num_vertex_buffers = static_cast<Uint32>(sdl_rl.VertexBufferDescs().size());
+	info.vertex_input_state.vertex_attributes = sdl_rl.VertexAttributes().data();
+	info.vertex_input_state.num_vertex_attributes = static_cast<Uint32>(sdl_rl.VertexAttributes().size());
+	info.primitive_type = SDL3Mapping::Mapping(rl.TopologyType());
 
 	auto const& rs = state->GetRasterizerStateDesc();
 	info.rasterizer_state.fill_mode = SDL3Mapping::Mapping(rs.polygon_mode);
@@ -723,15 +699,6 @@ void SDL3RenderEngine::DoRender(const RenderEffect& effect, const RenderTechniqu
 							auto const* hw = checked_cast<SDL3GraphicsBuffer const*>(cb->HWBuff().get());
 							Uint32 const slot = sdesc.cb_desc[ci].bind_point;
 							Uint32 const bytes = cb->Size();
-							static int cb_log_left = 8;
-							if (cb_log_left > 0 && stage == ShaderStage::Vertex && bytes >= 16)
-							{
-								--cb_log_left;
-								auto const* f = reinterpret_cast<float const*>(hw->CpuData());
-								LogInfo() << "[SDL3] PushVSUB slot=" << slot << " bytes=" << bytes
-										  << " f0..3=[" << f[0] << "," << f[1] << "," << f[2] << "," << f[3] << "]"
-										  << " cb=" << sdesc.cb_desc[ci].name << std::endl;
-							}
 							if (stage == ShaderStage::Pixel)
 							{
 								SDL_PushGPUFragmentUniformData(cmd_, slot, hw->CpuData(), bytes);
@@ -1048,8 +1015,10 @@ void SDL3RenderEngine::DoDestroy()
 
 	if (device_)
 	{
-		SDL_DestroyGPUDevice(device_);
+		SDL_GPUDevice* device = device_;
+		device_lifetime_->device = nullptr;
 		device_ = nullptr;
+		SDL_DestroyGPUDevice(device);
 	}
 
 	if (owns_sdl_init_)

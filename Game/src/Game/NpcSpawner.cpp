@@ -4,6 +4,7 @@
 #include <array>
 #include <cctype>
 #include <cmath>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -73,6 +74,30 @@ std::string DeriveColorSibling(std::string const& albedo_path, std::string_view 
 	return {};
 }
 
+// Older prefab data used Textures/Model/<npc>/..., while imported model
+// textures live next to the model in Models/<npc>/materials/....
+std::string LegacyModelTexturePath(std::string const& path)
+{
+	constexpr std::string_view legacy_prefix = "textures/model/";
+	std::string const lower = ToLowerAscii(path);
+	if (lower.compare(0, legacy_prefix.size(), legacy_prefix) != 0)
+	{
+		return {};
+	}
+
+	auto const npc_end = path.find('/', legacy_prefix.size());
+	if (npc_end == std::string::npos)
+	{
+		return {};
+	}
+
+	std::string out = "Models/";
+	out.append(path, legacy_prefix.size(), npc_end - legacy_prefix.size());
+	out.append("/materials/");
+	out.append(path, npc_end + 1, std::string::npos);
+	return out;
+}
+
 std::string ResolveExistingTexturePath(std::string const& configured, std::string const& albedo, std::string_view sibling_suffix)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
@@ -85,12 +110,22 @@ std::string ResolveExistingTexturePath(std::string const& configured, std::strin
 	{
 		return configured;
 	}
+	std::string const relocated_configured = LegacyModelTexturePath(configured);
+	if (exists(relocated_configured))
+	{
+		return relocated_configured;
+	}
 	std::string const derived = DeriveColorSibling(albedo, sibling_suffix);
 	if (exists(derived))
 	{
 		return derived;
 	}
-	return configured.empty() ? derived : configured;
+	std::string const relocated_derived = LegacyModelTexturePath(derived);
+	if (exists(relocated_derived))
+	{
+		return relocated_derived;
+	}
+	return {};
 }
 
 // Optional maps (detail / detail2): missing files are normal — return empty, never a phantom path.
@@ -98,18 +133,50 @@ std::string ResolveOptionalTexturePath(std::string const& configured, std::strin
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 	auto exists = [&](std::string const& path) {
-		return !path.empty()
-			&& (!res_loader.Locate(path).empty() || !res_loader.Locate(path + ".dds").empty());
+		if (path.empty())
+		{
+			return false;
+		}
+
+		// Some imported optional maps are 21-byte TGA / 152-byte DDS stubs
+		// which decode to a 4x4 solid-white texture. Enabling additive detail
+		// for those placeholders turns the whole material white before lighting.
+		for (std::string const& candidate : {path, path + ".dds"})
+		{
+			std::string const located = res_loader.Locate(candidate);
+			if (located.empty())
+			{
+				continue;
+			}
+
+			std::error_code ec;
+			auto const size = std::filesystem::file_size(located, ec);
+			if (ec || size > 256)
+			{
+				return true;
+			}
+		}
+		return false;
 	};
 
 	if (exists(configured))
 	{
 		return configured;
 	}
+	std::string const relocated_configured = LegacyModelTexturePath(configured);
+	if (exists(relocated_configured))
+	{
+		return relocated_configured;
+	}
 	std::string const derived = DeriveColorSibling(albedo, sibling_suffix);
 	if (exists(derived))
 	{
 		return derived;
+	}
+	std::string const relocated_derived = LegacyModelTexturePath(derived);
+	if (exists(relocated_derived))
+	{
+		return relocated_derived;
 	}
 	return {};
 }
@@ -117,6 +184,8 @@ std::string ResolveOptionalTexturePath(std::string const& configured, std::strin
 	MeshTextures ResolveMeshTextures(MeshTextures const& src)
 	{
 		MeshTextures out = src;
+		out.albedo = ResolveExistingTexturePath(src.albedo, {}, {});
+		out.normal = ResolveExistingTexturePath(src.normal, src.albedo, "normal");
 		out.mask1 = ResolveExistingTexturePath(src.mask1, src.albedo, "mask1");
 		out.mask2 = ResolveExistingTexturePath(src.mask2, src.albedo, "mask2");
 		out.detail = ResolveOptionalTexturePath(src.detail, src.albedo, "detail");
@@ -126,10 +195,6 @@ std::string ResolveOptionalTexturePath(std::string const& configured, std::strin
 		out.fresnel_warp_color = ResolveExistingTexturePath(src.fresnel_warp_color, src.albedo, "fresnelWarpColor");
 		out.fresnel_warp_rim = ResolveExistingTexturePath(src.fresnel_warp_rim, src.albedo, "fresnelWarpRim");
 		out.fresnel_warp_spec = ResolveExistingTexturePath(src.fresnel_warp_spec, src.albedo, "fresnelWarpSpec");
-		if (out.normal.empty())
-		{
-			out.normal = ResolveExistingTexturePath({}, src.albedo, "normal");
-		}
 		// Packed workshop maps absorb metalness/selfIllum/detailMask/translucency.
 		if (out.mask1.empty())
 		{

@@ -65,6 +65,8 @@ void SDL3GraphicsBuffer::CreateHWResource(void const* init_data)
 	info.size = size_in_byte_;
 	buffer_ = SDL_CreateGPUBuffer(device, &info);
 	SDL3Check(buffer_ != nullptr, "SDL_CreateGPUBuffer");
+	device_ = buffer_ ? device : nullptr;
+	device_lifetime_ = buffer_ ? re.DeviceLifetime() : nullptr;
 	created_ = buffer_ != nullptr;
 
 	if (init_data && buffer_)
@@ -79,13 +81,14 @@ void SDL3GraphicsBuffer::DeleteHWResource()
 {
 	if (buffer_)
 	{
-		auto& re = checked_cast<SDL3RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
-		if (re.Device())
+		if (device_lifetime_ && (device_lifetime_->device == device_))
 		{
-			SDL_ReleaseGPUBuffer(re.Device(), buffer_);
+			SDL_ReleaseGPUBuffer(device_, buffer_);
 		}
 		buffer_ = nullptr;
 	}
+	device_lifetime_.reset();
+	device_ = nullptr;
 	created_ = false;
 }
 

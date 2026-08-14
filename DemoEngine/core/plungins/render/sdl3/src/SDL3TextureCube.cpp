@@ -57,6 +57,8 @@ void SDL3TextureCube::CreateHWResource(std::span<ElementInitData const> init_dat
 
 	texture_ = SDL_CreateGPUTexture(device, &info);
 	SDL3Check(texture_ != nullptr, "SDL_CreateGPUTexture(cube)");
+	device_ = texture_ ? device : nullptr;
+	device_lifetime_ = texture_ ? re.DeviceLifetime() : nullptr;
 	gpu_format_ = info.format;
 
 	if (!init_data.empty() && texture_)
