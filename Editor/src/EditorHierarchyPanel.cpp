@@ -1,5 +1,5 @@
 #include <editor/EditorHierarchyPanel.h>
-#include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManager.h>
 #include <base/Context.h>
 #include <world/World.h>
 #include <render/Renderable.h>
@@ -72,7 +72,7 @@ namespace
     }
 
     void RenderModelMeshes(
-        RenderWorker::SceneNode const& node, PrefabData const* npc, EditorManagerD3D11& editor)
+        RenderWorker::SceneNode const& node, PrefabData const* npc, EditorManager& editor)
     {
         std::vector<RenderWorker::Renderable const*> meshes;
         CollectStaticMeshes(node, meshes);
@@ -127,7 +127,7 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
     ImGui::SetNextWindowPos(ImVec2(0, (float)setting.mainBarHeight));
     ImGui::SetNextWindowSize(ImVec2((float)setting.hierarchyWidth, (float)setting.hierarchyHeight));
 
-    auto& editor = CommonWorker::checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+    auto& editor = CommonWorker::checked_cast<EditorManager&>(Context::Instance().AppInstance());
 
     // 设置面板具体内容
     if (ImGui::Begin("Hierarchy", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))

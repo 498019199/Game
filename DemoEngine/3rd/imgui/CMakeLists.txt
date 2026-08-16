@@ -18,7 +18,9 @@ set(IMGUI_CORE_SOURCES
 if(ZENGINE_PLATFORM_WINDOWS)
     set(IMGUI_PLATFORM_SOURCES
         ${dear_imgui_source_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
-        ${dear_imgui_source_SOURCE_DIR}/backends/imgui_impl_win32.cpp)
+        ${dear_imgui_source_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+        ${dear_imgui_source_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+        ${dear_imgui_source_SOURCE_DIR}/backends/imgui_impl_sdlgpu3.cpp)
     set(IMGUI_DEMO_SOURCE
         ${dear_imgui_source_SOURCE_DIR}/examples/example_win32_directx11/main.cpp)
 elseif(ZENGINE_PLATFORM_DARWIN)
@@ -41,7 +43,7 @@ target_include_directories(imgui
         ${dear_imgui_source_SOURCE_DIR}/backends)
 
 if(ZENGINE_PLATFORM_WINDOWS)
-    target_link_libraries(imgui PUBLIC d3d11)
+    target_link_libraries(imgui PUBLIC d3d11 SDL3::SDL3)
 elseif(ZENGINE_PLATFORM_DARWIN)
     set_target_properties(imgui PROPERTIES
         XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)

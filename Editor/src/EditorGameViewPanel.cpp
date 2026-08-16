@@ -1,5 +1,5 @@
 #include <editor/EditorGameViewPanel.h>
-#include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManager.h>
 #include <editor/EditorProfilerPanel.h>
 #include <base/ZEngine.h>
 #include <base/UIManager.h>
@@ -55,7 +55,7 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 		}
 	}
 
-	EditorManagerD3D11& editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+	EditorManager& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
 	editor.SetCameraMoveBoost(ImGui::GetIO().KeyShift);
 
 	if (ImGui::Begin("Game", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse))

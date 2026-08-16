@@ -44,6 +44,7 @@ public:
 
     virtual void BeginFrame();
     virtual void BeginPass();
+    virtual void BeginOverlayPass();
     void Render(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl);
     virtual void EndPass();
     virtual void EndFrame();

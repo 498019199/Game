@@ -1,6 +1,6 @@
 #include <editor/EditorMainBarPanel.h>
 #include <editor/EditorDialogBoxManager.h>
-#include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManager.h>
 #include <editor/EditorProfilerPanel.h>
 
 namespace EditorWorker
@@ -74,10 +74,10 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
             ImGui::EndMenuBar();
         }
         
-        auto& d3d_editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
+        auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
         bool isPop = false;
         // Translation
-        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Position)
+        if (editor.GetTransformType() == ETransformType::TransformType_Position)
         {
             isPop = true;
             ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
@@ -85,7 +85,7 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
         }
         if (ImGui::Button("T", buttonSize))
         {
-            d3d_editor.SetTransformType(ETransformType::TransformType_Position);
+            editor.SetTransformType(ETransformType::TransformType_Position);
         }
         if (isPop)
         {
@@ -95,7 +95,7 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
 
         // Rotation
         ImGui::SameLine();
-        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Rotation)
+        if (editor.GetTransformType() == ETransformType::TransformType_Rotation)
         {
             isPop = true;
             ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
@@ -103,7 +103,7 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
         }
         if (ImGui::Button("R", buttonSize))
         {
-            d3d_editor.SetTransformType(ETransformType::TransformType_Rotation);
+            editor.SetTransformType(ETransformType::TransformType_Rotation);
         }
         if (isPop)
         {
@@ -113,7 +113,7 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
 
         // Scale
         ImGui::SameLine();
-        if (d3d_editor.GetTransformType() == ETransformType::TransformType_Scale)
+        if (editor.GetTransformType() == ETransformType::TransformType_Scale)
         {
             isPop = true;
             ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
@@ -121,7 +121,7 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
         }
         if (ImGui::Button("S", buttonSize))
         {
-            d3d_editor.SetTransformType(ETransformType::TransformType_Scale);
+            editor.SetTransformType(ETransformType::TransformType_Scale);
         }
         if (isPop)
         {

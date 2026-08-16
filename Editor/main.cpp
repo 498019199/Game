@@ -1,4 +1,6 @@
+#include <editor/EditorManager.h>
 #include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManagerSDL3.h>
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
 #include <base/Window.h>
@@ -22,7 +24,13 @@ namespace
 			Context::Instance().UIManagerInstance().ProcessGmWin32Message(msg, wParam, lParam);
 		}
 #ifndef EDITOR_DEBUG_MODE
-		ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+		// SDL3 owns ImGui input when the SDL_GPU renderer is active. The legacy
+		// Win32 backend must not also consume the same native messages, otherwise
+		// keyboard and mouse events are submitted twice.
+		if (Context::Instance().RenderFactoryValid())
+		{
+			CommonWorker::checked_cast<EditorManager&>(Context::Instance().AppInstance()).ProcessWindowMessage(hWnd, msg, wParam, lParam);
+		}
 #endif
 		return -1;
 	}
@@ -125,29 +133,20 @@ int main()
     res_loader.AddPath("../../Assets");
     res_loader.AddPath("../../Assets/rmlui");
 
-    auto app = MakeUniquePtr<EditorManagerD3D11>();
+    std::unique_ptr<EditorManager> app;
+    if (config.render_factory_name == "SDL3")
+    {
+        app = MakeUniquePtr<EditorManagerSDL3>();
+    }
+    else
+    {
+        app = MakeUniquePtr<EditorManagerD3D11>();
+    }
     app->GetEditorSetting( setting );
     app->Create();
 #ifndef EDITOR_DEBUG_MODE
     app->MainWnd()->BindMsgProc(EditorWndProc);
 #endif //EDITOR_DEBUG_MODE
-
-    // // test model
-    // std::filesystem::path current_dir = std::filesystem::current_path().parent_path();
-    // EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
-    // child->parent = nullptr;
-    // child->path = "Models/Dragon/Dragon.glb";
-    // child->name = "Dragon";
-    // child->extension = ".glb";
-    // child->type = AssetType::Model;
-    // app->SetSelectedAssert( child );
-
-    // auto light_ = MakeSharedPtr<PointLightSource>();
-	// light_->Attrib(0);
-	// light_->Color(float3(1.5f, 1.5f, 1.5f));
-	// light_->Falloff(float3(1, 0.5f, 0.0f));
-	// auto light_proxy = LoadLightSourceProxyModel(light_);
-	// light_proxy->RootNode()->TransformToParent(MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
 
     app->Run();
     app.reset();

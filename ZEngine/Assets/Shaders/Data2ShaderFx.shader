@@ -103,11 +103,12 @@ Shader "Data2ShaderFx"
                         float3 pos_os : TEXCOORD4) : SV_Target
             {
                 float4 color_s = albedo_tex.Sample(linear_sampler, uv);
-                float3 albedo = color_s.rgb;
-                if (dot(albedo, albedo) < 1e-6f)
-                {
-                    albedo = max(albedo_clr.rgb, float3(0.6f, 0.6f, 0.6f));
-                }
+                // Black is a valid albedo value (and is common in the workshop
+                // textures). Detect a missing map from the material flag instead
+                // of replacing every black texel with the gray fallback.
+                float3 albedo = albedo_map_enabled
+                    ? color_s.rgb
+                    : max(albedo_clr.rgb, float3(0.6f, 0.6f, 0.6f));
 
                 float4 mask1 = float4(0, 0, 0, 0);
                 if (mask1_map_enabled)

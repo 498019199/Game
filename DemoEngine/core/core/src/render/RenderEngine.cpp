@@ -86,6 +86,10 @@ void RenderEngine::BeginPass()
     
 }
 
+void RenderEngine::BeginOverlayPass()
+{
+}
+
 void RenderEngine::Render(const RenderEffect& effect, const RenderTechnique& tech, const RenderLayout& rl)
 {
     if (tech.HWResourceReady(effect))

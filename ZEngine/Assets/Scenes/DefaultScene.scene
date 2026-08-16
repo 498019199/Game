@@ -11,7 +11,7 @@
     "GameObjects":
     [
         {
-            "NpcId": 100000,
+            "NpcId": 300001,
             "Position": [0, 0, 0],
             "Rotation": [90, 0, 0],
             "Scale": [1, 1, 1]

@@ -8,7 +8,8 @@ set(GAME_APP_SRC_LIST
 
 if(WIN32)
     include_directories(
-        ${DEMOENGINE_DIR}/3rd/dxsdk/dxsdk/Include)
+        ${DEMOENGINE_DIR}/3rd/dxsdk/dxsdk/Include
+        ${DEMOENGINE_DIR}/core/plungins/render/sdl3/src)
 
     set(SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorConsolePanel.cpp
@@ -17,7 +18,9 @@ if(WIN32)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorHierarchyPanel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorInspectorPanel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorMainBarPanel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerD3D11.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerSDL3.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProfilerPanel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp)
 
@@ -33,7 +36,7 @@ if(WIN32)
         target_compile_options(ZENGINE_editor PRIVATE /std:c++20)
     endif()
 
-    add_dependencies(ZENGINE_editor ZENGINE_game)
+    add_dependencies(ZENGINE_editor ZENGINE_game ZENGINE_Render_SDL3)
 
     target_link_libraries(ZENGINE_editor
         PUBLIC
@@ -41,6 +44,7 @@ if(WIN32)
             ZENGINE_common
             ZENGINE_core
             ZENGINE_Render_D3D11
+            ZENGINE_Render_SDL3
             ZENGINE_DevHelps
             ZENGINE_AudioEngine_XAudio
             ZENGINE_AudioDataSource_OggVorbis

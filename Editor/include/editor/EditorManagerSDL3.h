@@ -4,14 +4,14 @@
 
 namespace EditorWorker
 {
-class EditorManagerD3D11 final : public EditorManager
+class EditorManagerSDL3 final : public EditorManager
 {
 public:
-    EditorManagerD3D11();
-    ~EditorManagerD3D11() override;
+    EditorManagerSDL3();
+    ~EditorManagerSDL3() override;
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    void ProcessWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+    void ProcessWindowMessage(HWND, UINT, WPARAM, LPARAM) override {}
 #endif
 
 private:

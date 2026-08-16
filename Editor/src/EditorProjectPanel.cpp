@@ -1,5 +1,5 @@
 #include <editor/EditorProjectPanel.h>
-#include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManager.h>
 
 #include <render/Texture.h>
 #include <render/RenderFactory.h>
@@ -156,8 +156,17 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
             }
 
             ImGui::SetCursorPosX(groupX + (cellW - iconItemW) * 0.5f);
-            auto icon = fileIcons_[(int)node->type]->GetShaderResourceView();
-            bool const click = ImGui::ImageButton("##icon", (ImTextureID)(intptr_t)icon, iconSize);
+            auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+            auto icon = editor.ImGuiTextureHandle(fileIcons_[(int)node->type]);
+            bool click = false;
+            if (icon)
+            {
+                click = ImGui::ImageButton("##icon", (ImTextureID)(intptr_t)icon, iconSize);
+            }
+            else
+            {
+                click = ImGui::Button("##icon", iconSize);
+            }
             ImGui::PopStyleColor(1);
 
             if (click)
@@ -218,8 +227,8 @@ void EditorProjectPanel::SetCurNode(const EditorAssetNodePtr& node)
 {
     cur_ = node;
 
-    auto& d3d_editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
-    d3d_editor.SetSelectedAssert( node );
+    auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    editor.SetSelectedAssert( node );
 }
 
 void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)

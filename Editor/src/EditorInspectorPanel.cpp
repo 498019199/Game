@@ -1,5 +1,5 @@
 #include <editor/EditorInspectorPanel.h>
-#include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManager.h>
 #include <editor/EditorProjectPanel.h>
 
 #include <base/ZEngine.h>
@@ -30,11 +30,11 @@ void EditorInspectorPanel::OnRender(const EditorSetting& setting)
     // 设置面板具体内容
     if (ImGui::Begin("Inspector", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
-            auto& d3d_editor = checked_cast<EditorManagerD3D11&>(Context::Instance().AppInstance());
-            const auto& pAsset = d3d_editor.GetSelectedAssert();
+            auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+            const auto& pAsset = editor.GetSelectedAssert();
             if( pAsset )
             {
-                switch (d3d_editor.GetAssertType())
+                switch (editor.GetAssertType())
                 {
                     case AssetType::Script:
                     case AssetType::Text:
@@ -138,8 +138,12 @@ void EditorInspectorPanel::DrawTexture(AssertBaseInfo& info)
 
     auto& rf = Context::Instance().RenderFactoryInstance();
     auto srv_ptr = rf.MakeTextureSrv( tex_info.texture );
-    auto srv = srv_ptr->GetShaderResourceView();
-    ImGui::Image((ImTextureID)(intptr_t)srv, ImVec2((float)width, (float)height));
+    auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    auto srv = editor.ImGuiTextureHandle(srv_ptr);
+    if (srv)
+    {
+        ImGui::Image((ImTextureID)(intptr_t)srv, ImVec2((float)width, (float)height));
+    }
 }
 
 void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
