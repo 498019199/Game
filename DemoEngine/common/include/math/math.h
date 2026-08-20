@@ -17,6 +17,8 @@ namespace RenderWorker
 	class Color_T;
 	template <typename T>
 	class AABBox_T;
+	template <typename T>
+	class Frustum_T;
 
 	// 常量定义
 	/////////////////////////////////////////////////////////////////////////////////
@@ -507,3 +509,4 @@ namespace RenderWorker
 #include <math/color.h>
 #include <math/half.h>
 #include <math/AABBox.h>
+#include <math/Frustum.h>

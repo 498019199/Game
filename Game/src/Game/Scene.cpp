@@ -7,6 +7,8 @@
 #include <common/JsonDom.h>
 #include <common/Log.h>
 #include <common/Util.h>
+#include <base/App3D.h>
+#include <render/Camera.h>
 #include <render/Light.h>
 #include <render/RenderFactory.h>
 #include <render/RenderMaterial.h>
@@ -264,6 +266,7 @@ AScene::~AScene() noexcept
 	}
 	ClearSkyBox();
 	ClearTerrain();
+	ClearCamera();
 	ClearLights();
 }
 
@@ -321,6 +324,7 @@ void AScene::LoadScene(std::string_view scene_path)
 	}
 	ClearSkyBox();
 	ClearTerrain();
+	ClearCamera();
 	ClearLights();
 
 	auto& res_loader = Context::Instance().ResLoaderInstance();
@@ -425,8 +429,76 @@ void AScene::LoadScene(std::string_view scene_path)
 	}
 }
 
+void AScene::SetEditorMode(bool enabled)
+{
+	editor_mode_ = enabled;
+}
+
+bool AScene::IsEditorMode() const
+{
+	if (editor_mode_)
+	{
+		return true;
+	}
+	if (!Context::Instance().AppValid())
+	{
+		return false;
+	}
+	return Context::Instance().AppInstance().Name().find("Editor") != std::string::npos;
+}
+
 void AScene::LoadCameraConfig(JsonValue const& root)
 {
+	if (!IsEditorMode())
+	{
+		return;
+	}
+
+	float3 position(0.0f, 1.0f, 0.0f);
+	float3 look_at(0.0f, 1.0f, 1.0f);
+	float3 up(0.0f, 1.0f, 0.0f);
+
+	if (JsonValue const* camera_config = root.Member("Camera"))
+	{
+		if (camera_config->Type() == JsonValueType::Object)
+		{
+			if (JsonValue const* pos_val = camera_config->Member("Position"))
+			{
+				position = GetFloat3(*pos_val, position);
+			}
+			if (JsonValue const* look_val = camera_config->Member("LookAt"))
+			{
+				look_at = GetFloat3(*look_val, look_at);
+			}
+			if (JsonValue const* up_val = camera_config->Member("Up"))
+			{
+				up = GetFloat3(*up_val, up);
+			}
+		}
+	}
+
+	scene_camera_ = MakeSharedPtr<Camera>();
+	camera_node_ = MakeSharedPtr<SceneNode>(
+		L"Camera", SceneNode::SOA_Cullable | SceneNode::SOA_Moveable | SceneNode::SOA_NotCastShadow);
+	camera_node_->AddComponent(scene_camera_);
+	camera_node_->TransformToParent(MathWorker::inverse(MathWorker::look_at_lh(position, look_at, up)));
+
+	camera_proxy_ = LoadCameraProxyModel(scene_camera_);
+	if (camera_proxy_ && camera_proxy_->RootNode())
+	{
+		camera_proxy_->RootNode()->TransformToParent(
+			MathWorker::scaling(0.15f, 0.15f, 0.15f) * camera_proxy_->RootNode()->TransformToParent());
+		camera_node_->AddChild(camera_proxy_->RootNode());
+	}
+	else
+	{
+		LogError() << "Could NOT load editor camera proxy: CameraProxy.glb" << std::endl;
+	}
+
+	camera_frustum_ = MakeSharedPtr<RenderableCameraFrustum>(scene_camera_);
+	camera_node_->AddComponent(MakeSharedPtr<RenderableComponent>(camera_frustum_));
+
+	Context::Instance().WorldInstance().SceneRootNode().AddChild(camera_node_);
 }
 
 void AScene::SetupCameraController(Camera& camera)
@@ -838,14 +910,25 @@ void AScene::SetupDefaultLights()
 	light_->Color(float3(1.5f, 1.5f, 1.5f));
 	light_->Falloff(float3(1.0f, 0.5f, 0.0f));
 
-	auto light_proxy = LoadLightSourceProxyModel(light_);
-	light_proxy->RootNode()->TransformToParent(
-		MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy->RootNode()->TransformToParent());
-
 	light_node_ = MakeSharedPtr<SceneNode>(L"LightNode", SceneNode::SOA_Cullable);
 	light_node_->TransformToParent(MathWorker::translation(0.0f, 2.0f, -3.0f));
 	light_node_->AddComponent(light_);
-	light_node_->AddChild(light_proxy->RootNode());
+
+	if (IsEditorMode())
+	{
+		light_proxy_ = LoadLightSourceProxyModel(light_);
+		if (light_proxy_ && light_proxy_->RootNode())
+		{
+			light_proxy_->RootNode()->TransformToParent(
+				MathWorker::scaling(0.05f, 0.05f, 0.05f) * light_proxy_->RootNode()->TransformToParent());
+			light_node_->AddChild(light_proxy_->RootNode());
+		}
+		else
+		{
+			LogError() << "Could NOT load editor light proxy: PointLightProxy.glb" << std::endl;
+		}
+	}
+
 	root_node.AddChild(light_node_);
 }
 
@@ -895,11 +978,51 @@ void AScene::LoadAmbientLight(JsonValue const& config)
 	}
 
 	root_node.AddComponent(ambient_light_);
+
+	if (IsEditorMode())
+	{
+		ambient_proxy_ = LoadLightSourceProxyModel(ambient_light_);
+		if (ambient_proxy_ && ambient_proxy_->RootNode())
+		{
+			ambient_proxy_->RootNode()->Name(L"AmbientLight");
+			ambient_proxy_->RootNode()->TransformToParent(
+				MathWorker::scaling(0.05f, 0.05f, 0.05f) * MathWorker::translation(0.0f, 3.0f, 0.0f));
+			root_node.AddChild(ambient_proxy_->RootNode());
+		}
+		else
+		{
+			LogError() << "Could NOT load editor light proxy: AmbientLightProxy.glb" << std::endl;
+		}
+	}
+}
+
+void AScene::ClearCamera()
+{
+	if (camera_node_)
+	{
+		if (auto* parent = camera_node_->Parent())
+		{
+			parent->RemoveChild(camera_node_);
+		}
+		camera_node_.reset();
+	}
+	camera_proxy_.reset();
+	camera_frustum_.reset();
+	scene_camera_.reset();
 }
 
 void AScene::ClearLights()
 {
 	auto& root_node = Context::Instance().WorldInstance().SceneRootNode();
+
+	if (ambient_proxy_ && ambient_proxy_->RootNode())
+	{
+		if (auto* parent = ambient_proxy_->RootNode()->Parent())
+		{
+			parent->RemoveChild(ambient_proxy_->RootNode());
+		}
+	}
+	ambient_proxy_.reset();
 
 	if (ambient_light_)
 	{
@@ -916,6 +1039,7 @@ void AScene::ClearLights()
 		light_node_.reset();
 	}
 
+	light_proxy_.reset();
 	light_.reset();
 }
 

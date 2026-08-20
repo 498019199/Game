@@ -1,6 +1,7 @@
 #pragma once
 
 #include <world/SceneComponent.h>
+#include <math/Frustum.h>
 
 namespace RenderWorker
 {
@@ -55,6 +56,8 @@ public:
     const float4x4& InverseViewMatrix() const;
     const float4x4& InverseProjMatrix() const;
     const float4x4& InverseViewProjMatrix() const;
+
+    const Frustum& ViewFrustum() const;
     // 设置摄像机的投射矩阵
 	//////////////////////////////////////////////////////////////////////////////////
 	void ProjParams(float fov, float aspect, float near_plane, float far_plane);
@@ -81,6 +84,9 @@ private:
     mutable float4x4	inv_view_proj_mat_ {float4x4::Identity()}; 
     mutable bool        view_proj_mat_dirty_{false};
 	mutable bool		camera_dirty_ = true;
+
+    mutable Frustum frustum_;
+    mutable bool frustum_dirty_ {true};
 
 };
 

@@ -1,5 +1,7 @@
 #pragma once
 #include <base/ZEngine.h>
+#include <render/Camera.h>
+#include <render/GraphicsBuffer.h>
 #include <render/Renderable.h>
 
 namespace RenderWorker
@@ -20,6 +22,21 @@ class ZENGINE_CORE_API RenderableSphere : public Renderable
 {
 public:
     RenderableSphere(float radius, int levels, int slices, const Color & color);
+};
+
+class ZENGINE_CORE_API RenderableCameraFrustum final : public Renderable
+{
+public:
+    explicit RenderableCameraFrustum(CameraPtr const& camera);
+
+    void OnRenderBegin() override;
+
+private:
+    void UpdateFrustumVertices();
+
+private:
+    CameraPtr camera_;
+    GraphicsBufferPtr vertex_buffer_;
 };
 
 class ZENGINE_CORE_API RenderablePlane : public Renderable

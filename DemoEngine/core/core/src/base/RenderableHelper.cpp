@@ -4,6 +4,8 @@
 #include <render/RenderableHelper.h>
 #include <render/RenderEffect.h>
 #include <render/RenderFactory.h>
+#include <array>
+#include <cstring>
 #include <filesystem>
 
 namespace RenderWorker
@@ -232,6 +234,78 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
 	effect_attrs_ |= EA_SimpleForward;
 
 	this->UpdateBoundBox();
+}
+
+RenderableCameraFrustum::RenderableCameraFrustum(CameraPtr const& camera)
+    : Renderable(L"CameraFrustum"), camera_(camera)
+{
+    effect_ = SyncLoadRenderEffect("CameraFrustum.shader");
+    technique_ = simple_forward_tech_ = effect_->TechniqueByName("CameraFrustum");
+    effect_attrs_ |= EA_SimpleForward;
+
+    mtl_ = MakeSharedPtr<RenderMaterial>();
+    mtl_->Albedo(float4(1.0f, 0.8f, 0.1f, 1.0f));
+
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    rls_[0] = rf.MakeRenderLayout();
+    rls_[0]->TopologyType(RenderLayout::TT_LineList);
+
+    std::array<float3, 8> vertices {};
+    vertex_buffer_ = rf.MakeVertexBuffer(BU_Dynamic, EAH_CPU_Write | EAH_GPU_Read,
+        static_cast<uint32_t>(sizeof(vertices)), vertices.data());
+    rls_[0]->BindVertexStream(vertex_buffer_, VertexElement(VEU_Position, 0, EF_BGR32F));
+
+    // Near rectangle, far rectangle, and the four connecting edges.
+    uint16_t const indices[] = {
+        0, 1, 1, 3, 3, 2, 2, 0,
+        4, 5, 5, 7, 7, 6, 6, 4,
+        0, 4, 1, 5, 2, 6, 3, 7
+    };
+    auto index_buffer = rf.MakeIndexBuffer(
+        BU_Static, EAH_GPU_Read | EAH_Immutable, sizeof(indices), indices);
+    rls_[0]->BindIndexStream(index_buffer, EF_R16UI);
+
+    tc_aabb_ = AABBox(float3::Zero(), float3::Zero());
+    this->UpdateFrustumVertices();
+}
+
+void RenderableCameraFrustum::OnRenderBegin()
+{
+    this->UpdateFrustumVertices();
+    Renderable::OnRenderBegin();
+}
+
+void RenderableCameraFrustum::UpdateFrustumVertices()
+{
+    if (!camera_ || !camera_->BoundSceneNode())
+    {
+        return;
+    }
+
+    std::array<float3, 8> vertices;
+    Frustum const& frustum = camera_->ViewFrustum();
+    float4x4 const& view = camera_->ViewMatrix();
+    for (uint32_t i = 0; i < vertices.size(); ++i)
+    {
+        // The renderable shares the camera node, so convert the world-space
+        // Frustum corners back to that node's local space before drawing.
+        vertices[i] = MathWorker::transform_coord(frustum.Corner(i), view);
+    }
+
+    {
+        GraphicsBuffer::Mapper mapper(*vertex_buffer_, BA_Write_Only);
+        std::memcpy(mapper.Pointer<float3>(), vertices.data(), sizeof(vertices));
+    }
+
+    float3 min_corner = vertices[0];
+    float3 max_corner = vertices[0];
+    for (uint32_t i = 1; i < vertices.size(); ++i)
+    {
+        min_corner = MathWorker::minimize(min_corner, vertices[i]);
+        max_corner = MathWorker::maximize(max_corner, vertices[i]);
+    }
+    pos_aabb_ = AABBox(min_corner, max_corner);
+    this->UpdateBoundBox();
 }
 
 RenderablePlane::RenderablePlane(float length, float width,

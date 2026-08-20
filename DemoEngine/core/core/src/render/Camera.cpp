@@ -35,8 +35,8 @@ SceneComponentPtr Camera::Clone() const
     // ret->view_proj_mat_wo_adjust_dirty_ = view_proj_mat_wo_adjust_dirty_;
     ret->camera_dirty_ = camera_dirty_;
 
-    //ret->frustum_ = frustum_;
-    //ret->frustum_dirty_ = frustum_dirty_;
+    ret->frustum_ = frustum_;
+    ret->frustum_dirty_ = frustum_dirty_;
 
     //ret->mode_ = mode_;
     //ret->cur_jitter_index_ = cur_jitter_index_;
@@ -115,6 +115,16 @@ const float4x4& Camera::InverseViewProjMatrix() const
     return inv_view_proj_mat_;
 }
 
+const Frustum& Camera::ViewFrustum() const
+{
+    if (frustum_dirty_)
+    {
+        frustum_.ClipMatrix(this->ViewProjMatrix(), this->InverseViewProjMatrix());
+        frustum_dirty_ = false;
+    }
+    return frustum_;
+}
+
 void Camera::ProjParams(float fov, float aspect, float near_plane, float far_plane)
 {
     fov_		= fov;
@@ -127,6 +137,7 @@ void Camera::ProjParams(float fov, float aspect, float near_plane, float far_pla
 
     camera_dirty_ = true;
     view_proj_mat_dirty_ = true;
+    frustum_dirty_ = true;
 }
 
 void Camera::ProjOrthoParams(float w, float h, float near_plane, float far_plane)
@@ -141,6 +152,7 @@ void Camera::ProjOrthoParams(float w, float h, float near_plane, float far_plane
 
     camera_dirty_ = true;
     view_proj_mat_dirty_ = true;
+    frustum_dirty_ = true;
 }
 
 void Camera::Dirty()
@@ -148,7 +160,7 @@ void Camera::Dirty()
     view_proj_mat_dirty_ = true;
     //view_proj_mat_wo_adjust_dirty_ = true;
     camera_dirty_ = true;
-    //frustum_dirty_ = true;
+    frustum_dirty_ = true;
 }
 
 void Camera::Active(RenderEffectConstantBuffer& camera_cbuffer, uint32_t index, float4x4 const& model_mat, float4x4 const& inv_model_mat,

@@ -96,3 +96,21 @@ TEST(MathTest, NormalizeFloat4)
 	v = MathWorker::normalize(v);
 	EXPECT_LT(MathWorker::abs(MathWorker::length(v) - 1.0f), 1e-5f);
 }
+
+TEST(MathTest, FrustumFromDirect3DClipMatrix)
+{
+	Frustum frustum;
+	frustum.ClipMatrix(float4x4::Identity(), float4x4::Identity());
+
+	EXPECT_EQ(float3(-1, -1, 0), frustum.Corner(0));
+	EXPECT_EQ(float3(1, 1, 1), frustum.Corner(7));
+	EXPECT_TRUE(frustum.VecInBound(float3(0, 0, 0.5f)));
+	EXPECT_FALSE(frustum.VecInBound(float3(2, 0, 0.5f)));
+
+	EXPECT_EQ(BoundOverlap::Yes,
+		frustum.Intersect(AABBox(float3(-0.5f, -0.5f, 0.25f), float3(0.5f, 0.5f, 0.75f))));
+	EXPECT_EQ(BoundOverlap::Partial,
+		frustum.Intersect(AABBox(float3(0.5f, -0.5f, 0.25f), float3(1.5f, 0.5f, 0.75f))));
+	EXPECT_EQ(BoundOverlap::No,
+		frustum.Intersect(AABBox(float3(2, -0.5f, 0.25f), float3(3, 0.5f, 0.75f))));
+}

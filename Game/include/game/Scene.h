@@ -2,6 +2,7 @@
 
 #include <game/GameApi.h>
 #include <render/Light.h>
+#include <render/Camera.h>
 #include <render/Mesh.h>
 #include <base/ZEngine.h>
 #include <base/Input.h>
@@ -24,6 +25,8 @@ public:
 	RenderModelPtr FindModelForNode(RenderWorker::SceneNode const& node) const;
 
 	void LoadScene(std::string_view scene_path);
+	void SetEditorMode(bool enabled);
+	bool IsEditorMode() const;
 	void SetupCameraController(RenderWorker::Camera& camera);
 	void SetCameraControllerInputEnabled(bool enabled);
 	void SetCameraControllerMoveBoost(bool boost);
@@ -52,7 +55,15 @@ private:
 	RenderWorker::LightSourcePtr ambient_light_;
 	RenderWorker::LightSourcePtr light_;
 	SceneNodePtr light_node_;
+	RenderModelPtr light_proxy_;
+	RenderModelPtr ambient_proxy_;
+
+	RenderWorker::CameraPtr scene_camera_;
+	SceneNodePtr camera_node_;
+	RenderModelPtr camera_proxy_;
+	RenderablePtr camera_frustum_;
 
 	RenderWorker::FirstPersonController camera_controller_;
 	bool camera_move_boost_ { false };
+	bool editor_mode_ { false };
 };

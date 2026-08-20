@@ -43,6 +43,7 @@ set(COMMON_SOURCE_FILES
 
 set(MATH_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/common/include/math/AABBox.h
+    ${PROJECT_SOURCE_DIR}/common/include/math/Frustum.h
     ${PROJECT_SOURCE_DIR}/common/include/math/color.h
     ${PROJECT_SOURCE_DIR}/common/include/math/half.h
     ${PROJECT_SOURCE_DIR}/common/include/math/math_helper.h
@@ -55,6 +56,7 @@ set(MATH_HEADER_FILES
 
 set(MATH_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/common/src/math/AABBox.cpp
+    ${PROJECT_SOURCE_DIR}/common/src/math/Frustum.cpp
     ${PROJECT_SOURCE_DIR}/common/src/math/color.cpp
     ${PROJECT_SOURCE_DIR}/common/src/math/half.cpp
     ${PROJECT_SOURCE_DIR}/common/src/math/math.cpp
