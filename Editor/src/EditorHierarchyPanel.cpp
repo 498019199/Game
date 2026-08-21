@@ -53,6 +53,24 @@ namespace
         return nullptr;
     }
 
+    size_t ModelComponentCount(PrefabData const* npc)
+    {
+        if (!npc)
+        {
+            return 1;
+        }
+
+        size_t count = 0;
+        for (ModelData const& component : npc->components)
+        {
+            if (component.model)
+            {
+                ++count;
+            }
+        }
+        return std::max<size_t>(count, 1);
+    }
+
     void CollectStaticMeshes(RenderWorker::SceneNode const& node, std::vector<RenderWorker::Renderable const*>& meshes)
     {
         node.ForEachComponentOfType<RenderWorker::RenderableComponent>(
@@ -132,16 +150,31 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
     // 设置面板具体内容
     if (ImGui::Begin("Hierarchy", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
-        int i = 0;
-        for( const auto& node : Context::Instance().WorldInstance().SceneRootNode().Children() )
+        auto const& scene_nodes = Context::Instance().WorldInstance().SceneRootNode().Children();
+        for (size_t node_index = 0; node_index < scene_nodes.size();)
         {
-            if (i == 0)
+            if (node_index == 0)
                 ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
-            ImGui::PushID(i);
+            RenderWorker::SceneNodePtr const& node = scene_nodes[node_index];
             std::string node_name;
             CommonWorker::Convert(node_name, node->Name());
             PrefabData const* npc = GameContext::Instance().DataManagerInstance().FindNpcByName(node_name);
+
+            size_t grouped_nodes = 1;
+            size_t const expected_models = ModelComponentCount(npc);
+            while ((grouped_nodes < expected_models) && (node_index + grouped_nodes < scene_nodes.size()))
+            {
+                std::string candidate_name;
+                CommonWorker::Convert(candidate_name, scene_nodes[node_index + grouped_nodes]->Name());
+                if (candidate_name != node_name)
+                {
+                    break;
+                }
+                ++grouped_nodes;
+            }
+
+            ImGui::PushID(static_cast<int>(node_index));
 
             ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
             if (editor.IsHierarchyItemSelected(node.get(), {}))
@@ -157,11 +190,16 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
 
             if (open)
             {
-                RenderModelMeshes(*node, npc, editor);
+                for (size_t component_index = 0; component_index < grouped_nodes; ++component_index)
+                {
+                    ImGui::PushID(static_cast<int>(component_index));
+                    RenderModelMeshes(*scene_nodes[node_index + component_index], npc, editor);
+                    ImGui::PopID();
+                }
                 ImGui::TreePop();
             }
             ImGui::PopID();
-            i++;
+            node_index += grouped_nodes;
         }
 
         // 窗口空白右键菜单
