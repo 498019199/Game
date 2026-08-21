@@ -37,6 +37,12 @@ public:
 
         MeshConverter mc;
         auto model = mc.Load(metadata);
+        if (!model)
+        {
+            LogError() << "ConvertModel failed to load: " << input_name
+                << " (metadata=" << metadata_name_ptr << ")" << std::endl;
+            return {};
+        }
 
         std::filesystem::path input_path(input_name);
         std::filesystem::path output_path(output_name);

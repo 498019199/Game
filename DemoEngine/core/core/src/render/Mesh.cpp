@@ -80,6 +80,12 @@ namespace
 			}
 
 			model_desc_.sw_model = LoadSoftwareModel(model_desc_.res_name);
+			if (!model_desc_.sw_model)
+			{
+				LogError() << "Failed to load model: " << model_desc_.res_name << std::endl;
+				model_desc_.model->reset();
+				return;
+			}
 
 			RenderFactory& rf = Context::Instance().RenderFactoryInstance();
 			RenderDeviceCaps const & caps = rf.RenderEngineInstance().DeviceCaps();
@@ -190,6 +196,11 @@ namespace
 
 		void MainThreadStageNoLock()
 		{
+			if (!model_desc_.sw_model)
+			{
+				return;
+			}
+
 			RenderModelPtr const & model = *model_desc_.model;
 			if (!model || !model->HWResourceReady())
 			{
