@@ -77,47 +77,59 @@ int main()
 	const uint32_t defaultProjectHeight = 200;
 	const uint32_t defaultInspectorWidth = 300;
 	const uint32_t defaultMainBarHeight = 58;
-    uint32_t srcWidth = config.graphics_cfg.width;
-	uint32_t srcHeight = config.graphics_cfg.height;
-    uint32_t fullWidth = srcWidth + defaultHierarchyWidth + defaultInspectorWidth;
-	uint32_t fullHeight = srcHeight + defaultProjectHeight + defaultMainBarHeight;
+    // KlayGE.cfg describes the complete Editor client area. The game view is
+    // the space left after the surrounding Editor panels are laid out.
+    uint32_t editorWidth = config.graphics_cfg.width;
+    uint32_t editorHeight = config.graphics_cfg.height;
     uint32_t hWidth = defaultHierarchyWidth;
     uint32_t pHeight = defaultProjectHeight;
     uint32_t iWidth = defaultInspectorWidth;
 
     bool const dpi_aware = EnableDpiAwareness();
-    RECT work_area = {};
-    if (!::SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0))
+    RECT available_area = {};
+    if (config.graphics_cfg.full_screen)
     {
-        work_area.right = ::GetSystemMetrics(SM_CXSCREEN);
-        work_area.bottom = ::GetSystemMetrics(SM_CYSCREEN);
+        available_area.right = ::GetSystemMetrics(SM_CXSCREEN);
+        available_area.bottom = ::GetSystemMetrics(SM_CYSCREEN);
+    }
+    else if (!::SystemParametersInfoW(SPI_GETWORKAREA, 0, &available_area, 0))
+    {
+        available_area.right = ::GetSystemMetrics(SM_CXSCREEN);
+        available_area.bottom = ::GetSystemMetrics(SM_CYSCREEN);
     }
 
     HDC hdc = GetDC(NULL);
     int const dpi_x = dpi_aware ? GetDeviceCaps(hdc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     int const dpi_y = dpi_aware ? GetDeviceCaps(hdc, LOGPIXELSY) : USER_DEFAULT_SCREEN_DPI;
     ReleaseDC(NULL, hdc);
-    uint32_t const screenResolutionX = To96DpiUnits(work_area.right - work_area.left, dpi_x);
-    uint32_t const screenResolutionY = To96DpiUnits(work_area.bottom - work_area.top, dpi_y);
+    uint32_t const screenResolutionX = To96DpiUnits(available_area.right - available_area.left, dpi_x);
+    uint32_t const screenResolutionY = To96DpiUnits(available_area.bottom - available_area.top, dpi_y);
 
-    // 宽度已经超过了屏幕分辨率，自适应缩小
-    if (fullWidth > screenResolutionX && screenResolutionX > 0)
+    if (config.graphics_cfg.full_screen)
     {
-        float scaleRatio = static_cast<float>(screenResolutionX) / static_cast<float>(fullWidth);
+        // A borderless full-screen window has the same size as its client area.
+        editorWidth = screenResolutionX;
+        editorHeight = screenResolutionY;
+    }
+    // Editor 客户区宽度已经超过工作区，自适应缩小
+    else if (editorWidth > screenResolutionX && screenResolutionX > 0)
+    {
+        float scaleRatio = static_cast<float>(screenResolutionX) / static_cast<float>(editorWidth);
         hWidth = static_cast<uint32_t>(static_cast<float>(hWidth) * scaleRatio);
         iWidth = static_cast<uint32_t>(static_cast<float>(iWidth) * scaleRatio);
-        srcWidth = static_cast<uint32_t>(static_cast<float>(srcWidth) * scaleRatio);
+        editorWidth = screenResolutionX;
     }
-    // 高度已经超过了屏幕分辨率，自适应缩小
-    if (fullHeight > screenResolutionY && screenResolutionY > defaultMainBarHeight)
+    // Editor 客户区高度已经超过工作区，自适应缩小
+    if (!config.graphics_cfg.full_screen && editorHeight > screenResolutionY && screenResolutionY > defaultMainBarHeight)
     {
-        float scaleRatio = static_cast<float>(screenResolutionY - defaultMainBarHeight) / static_cast<float>(fullHeight - defaultMainBarHeight);
+        float scaleRatio = static_cast<float>(screenResolutionY - defaultMainBarHeight)
+            / static_cast<float>(editorHeight - defaultMainBarHeight);
         pHeight = static_cast<uint32_t>(static_cast<float>(pHeight) * scaleRatio);
-        srcHeight = static_cast<uint32_t>(static_cast<float>(srcHeight) * scaleRatio);
+        editorHeight = screenResolutionY;
     }
 
     EditorSetting setting;
-    setting.SetWindowSize(srcWidth, srcHeight, hWidth, pHeight, iWidth);
+    setting.SetWindowSize(editorWidth, editorHeight, hWidth, pHeight, iWidth);
     config.graphics_cfg.width = setting.srcWidth;
     config.graphics_cfg.height = setting.srcHeight;
     Context::Instance().Config(config);

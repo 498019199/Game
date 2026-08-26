@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-// Locked P0 data conventions — see openspec/plan/gas-data-conventions.md
+// Locked P0 data conventions — see openspec/plan/gas/gas-data-conventions.md
 // Do not introduce a second unit system for the same field.
 
 namespace Gas

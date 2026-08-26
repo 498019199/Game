@@ -364,7 +364,7 @@ D3D11RenderWindow::D3D11RenderWindow(D3D11Adapter* adapter, const std::string& n
 
 D3D11RenderWindow::~D3D11RenderWindow()
 {
-    
+    Destroy();
 }
 
 void D3D11RenderWindow::Destroy()

@@ -68,17 +68,18 @@ namespace CommonWorker
 		return (dll_handle_ != nullptr);
 	}
 
-	void DllLoader::Free()
-	{
-		if (dll_handle_)
+		void DllLoader::Free()
 		{
-#ifdef ZENGINE_PLATFORM_WINDOWS
-			::FreeLibrary(static_cast<HMODULE>(dll_handle_));
-#else
-			::dlclose(dll_handle_);
-#endif
+			if (dll_handle_)
+			{
+	#ifdef ZENGINE_PLATFORM_WINDOWS
+				::FreeLibrary(static_cast<HMODULE>(dll_handle_));
+	#else
+				::dlclose(dll_handle_);
+	#endif
+				dll_handle_ = nullptr;
+			}
 		}
-	}
 
 	void* DllLoader::GetProcAddress(std::string const & proc_name)
 	{

@@ -47,9 +47,9 @@ private:
 
     DXGI_SWAP_CHAIN_DESC1 sc_desc1_;
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	DXGI_SWAP_CHAIN_FULLSCREEN_DESC sc_fs_desc_;
-	DWORD stereo_cookie_;
-#endif
+		DXGI_SWAP_CHAIN_FULLSCREEN_DESC sc_fs_desc_;
+		DWORD stereo_cookie_{0};
+	#endif
 
 	IDXGISwapChain1Ptr swap_chain_1_;
 	bool main_wnd_  {false};

@@ -43,23 +43,24 @@ namespace EditorWorker
 {
 using namespace RenderWorker;
 
-void EditorSetting::SetWindowSize(uint32_t _srcWidth, uint32_t _srcHeight, int hWidth, int pHeight, int iWidth)
+void EditorSetting::SetWindowSize(uint32_t editorWidth, uint32_t editorHeight, int hWidth, int pHeight, int iWidth)
 {
-    gameViewWidth = _srcWidth;
-    gameViewHeight = _srcHeight;
+    srcWidth = static_cast<int>(editorWidth);
+    srcHeight = static_cast<int>(editorHeight);
+    mainBarWidth = srcWidth;
+    mainBarHeight = 58;
 
-    hierarchyWidth = hWidth;
+    hierarchyWidth = (std::max)(0, hWidth);
+    inspectorWidth = (std::max)(0, iWidth);
+    projectHeight = (std::max)(0, pHeight);
+    gameViewWidth = (std::max)(1, srcWidth - hierarchyWidth - inspectorWidth);
+    gameViewHeight = (std::max)(1, srcHeight - projectHeight - mainBarHeight);
+
     hierarchyHeight = gameViewHeight;
     consoleWidth = (gameViewWidth + hierarchyWidth) / 3;
-    consoleHeight = pHeight;
+    consoleHeight = projectHeight;
     projectWidth = gameViewWidth + hierarchyWidth - consoleWidth;
-    projectHeight = pHeight;
-    inspectorWidth = iWidth;
     inspectorHeight = gameViewHeight + projectHeight;
-    mainBarWidth = gameViewWidth + hierarchyWidth + inspectorWidth;
-    mainBarHeight = 58;
-    srcWidth = mainBarWidth;
-    srcHeight = inspectorHeight + mainBarHeight;
 }
 
 void EditorSetting::ApplyDpiScale(float scale)
