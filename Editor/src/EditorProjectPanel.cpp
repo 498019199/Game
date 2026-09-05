@@ -1,4 +1,6 @@
 #include <editor/EditorProjectPanel.h>
+#include <editor/EditorAssetScanner.h>
+#include <limits>
 #include <editor/EditorManager.h>
 
 #include <render/Texture.h>
@@ -233,55 +235,48 @@ void EditorProjectPanel::SetCurNode(const EditorAssetNodePtr& node)
 
 void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
 {
-    for (const auto& entry : std::filesystem::directory_iterator(node->path))
+    EditorAssetScanner scanner;
+    std::vector<EditorAssetNodePtr> pending{node};
+    while (!pending.empty())
     {
-        std::string extension = entry.path().filename().extension().string();
-        // 如果是忽略的文件类型，就跳过
-        if (ignoreExtensions.find(extension) != ignoreExtensions.end())
-        {    
-            continue;
-        }
-        if( 0 == entry.path().stem().string().compare("Private") )
+        auto current = pending.back();
+        pending.pop_back();
+        current->children.clear();
+        for (auto const& entry : scanner.ReadDirectory(current->path))
         {
-            continue;
-        }
+            try
+            {
+                auto extension = entry.path.extension().string();
+                StringUtil::ToLower(extension);
+                auto name = entry.path.stem().string();
+                if (ignoreExtensions.contains(extension) || name == "Private")
+                    continue;
 
-        EditorAssetNodePtr child =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
-        child->parent = node;
-        child->path = entry.path().string();
-        child->name = entry.path().stem().string();
-        child->extension = extension;
-
-        if (entry.is_directory())
-        {
-            child->size = 0;
-            child->type = AssetType::Folder;
-        }
-        else
-        {
-            child->size = static_cast<uint32_t>(entry.file_size());
-            child->type = GetAssetType(child->extension);
-        }
-        node->children.push_back(child);
-
-        // 排序
-        std::sort(node->children.begin(), node->children.end(), 
-            [](const EditorAssetNodePtr& a, const EditorAssetNodePtr& b) 
-            { 
-                // 文件夹排在前面
-                if (a->type == AssetType::Folder && b->type != AssetType::Folder)
-                    return true;
-                if (a->type != AssetType::Folder && b->type == AssetType::Folder)
-                    return false;
-                // 按名字排序
-                return a->name < b->name;
+                auto child = CommonWorker::MakeSharedPtr<EditorAssetNode>();
+                child->parent = current;
+                child->path = entry.path.string();
+                child->name = std::move(name);
+                child->extension = std::move(extension);
+                child->size = static_cast<uint32_t>((std::min)(entry.size,
+                    static_cast<uintmax_t>((std::numeric_limits<uint32_t>::max)())));
+                child->type = entry.directory ? AssetType::Folder : GetAssetType(child->extension);
+                current->children.push_back(child);
+                if (entry.directory)
+                    pending.push_back(child);
             }
-        );
-
-        if (child->type == AssetType::Folder)
-        {    
-            GetChildren(child);
+            catch (std::system_error const&)
+            {
+                // Path encoding conversion may fail even when enumeration succeeds.
+                continue;
+            }
         }
+        std::sort(current->children.begin(), current->children.end(),
+            [](EditorAssetNodePtr const& a, EditorAssetNodePtr const& b)
+            {
+                if ((a->type == AssetType::Folder) != (b->type == AssetType::Folder))
+                    return a->type == AssetType::Folder;
+                return a->name < b->name;
+            });
     }
 }
 

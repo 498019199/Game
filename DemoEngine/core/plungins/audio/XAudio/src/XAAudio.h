@@ -33,6 +33,7 @@
 #include <base/SALWrapper.h>
 
 #include <vector>
+#include <atomic>
 #include <windows.h>
 #include <xaudio2.h>
 
@@ -249,7 +250,7 @@ namespace RenderWorker
 		bool loop_;
 
 		bool played_;
-		bool stopped_;
+		std::atomic<bool> stopped_;
 		std::condition_variable play_cond_;
 		std::mutex play_mutex_;
 		std::future<void> play_thread_;

@@ -138,7 +138,7 @@ namespace RenderWorker
 		while (!stopped_)
 		{
 			XAUDIO2_VOICE_STATE state;
-			for (;;)
+			for (; !stopped_;)
 			{
 				source_voice_->GetState(&state);
 				if (state.BuffersQueued < buffer_count_ - 1)
@@ -149,22 +149,19 @@ namespace RenderWorker
 				::WaitForSingleObjectEx(checked_cast<MusicVoiceContext&>(*voice_call_back_).GetBufferEndEvent(), INFINITE, FALSE);
 			}
 
+			if (stopped_)
+				break;
+
 			if (this->FillData(buffer_size_))
 			{
 				if (loop_)
 				{
-					stopped_ = false;
 					this->DoReset();
 				}
 				else
 				{
+					// Let the final queued buffers finish; DoStop joins this worker.
 					stopped_ = true;
-
-					HRESULT hr = source_voice_->Stop();
-					if (SUCCEEDED(hr))
-					{
-						source_voice_->FlushSourceBuffers();
-					}
 				}
 			}
 		}
@@ -201,12 +198,10 @@ namespace RenderWorker
 
 	void XAMusicBuffer::DoStop()
 	{
-		if (!stopped_)
-		{
-			stopped_ = true;
-			::SetEvent(checked_cast<MusicVoiceContext&>(*voice_call_back_).GetBufferEndEvent());
+		stopped_ = true;
+		::SetEvent(checked_cast<MusicVoiceContext&>(*voice_call_back_).GetBufferEndEvent());
+		if (play_thread_.valid())
 			play_thread_.wait();
-		}
 
 		HRESULT hr = source_voice_->Stop();
 		if (SUCCEEDED(hr))
@@ -223,13 +218,14 @@ namespace RenderWorker
 		XAUDIO2_BUFFER buf{};
 		buf.AudioBytes = static_cast<uint32_t>(read_size);
 		buf.pAudioData = &audio_data_[curr_buffer_index_ * buffer_size_];
-		if (curr_buffer_index_ * buffer_size_ + read_size >= data_source_->Size())
+		if (read_size < size)
 		{
 			buf.Flags = XAUDIO2_END_OF_STREAM;
 			ret = true;
 		}
 
-		source_voice_->SubmitSourceBuffer(&buf);
+		if (read_size != 0)
+			source_voice_->SubmitSourceBuffer(&buf);
 		curr_buffer_index_ = (curr_buffer_index_ + 1) % buffer_count_;
 
 		return ret;

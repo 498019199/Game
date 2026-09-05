@@ -382,10 +382,12 @@ ELSE()
 	SET(RTTI_FLAG "-frtti")
 	SET(NO_RTTI_FLAG "-fno-rtti")
 ENDIF()
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${RTTI_FLAG}")
+# Casts cross core/game/plugin boundaries; all producers of polymorphic types
+# must emit RTTI, not just the Editor executable performing the cast.
 FOREACH(flag_var
-	CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL)
-	SET(${flag_var} "${${flag_var}} ${NO_RTTI_FLAG}")
+	CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL)
+	STRING(REPLACE "${NO_RTTI_FLAG}" "" ${flag_var} "${${flag_var}}")
+	SET(${flag_var} "${${flag_var}} ${RTTI_FLAG}")
 ENDFOREACH()
 
 SET(ZENGINE_OUTPUT_SUFFIX _${ZENGINE_COMPILER_NAME}${ZENGINE_COMPILER_VERSION})

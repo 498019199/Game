@@ -52,6 +52,10 @@ if(WIN32)
             imgui
         PRIVATE
             d3dcompiler)
+
+    add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL tests/EditorRegressionTests.cpp)
+    target_link_libraries(ZENGINE_editor_tests PRIVATE ZENGINE_core ZENGINE_common gtest imgui)
+    add_dependencies(ZENGINE_editor_tests ZENGINE_AudioEngine_XAudio ZENGINE_AudioDataSource_OggVorbis)
 endif()
 
 add_executable(ZENGINE_game_app

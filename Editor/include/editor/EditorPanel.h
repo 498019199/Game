@@ -112,6 +112,15 @@ using AssetModelInfoPtr =  std::shared_ptr<AssetModelInfo>;
 struct AssetAudioInfo: public AssertBaseInfo
 {
     AudioDataSourcePtr audio_buff_;
+    AudioBufferPtr preview_buffer_;
+    size_t decoded_size = 0;
+    std::string error;
+
+    ~AssetAudioInfo() override
+    {
+        if (preview_buffer_)
+            preview_buffer_->Stop();
+    }
 };
 
 class EditorPanel

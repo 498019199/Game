@@ -25,15 +25,14 @@ void MusicBuffer::Reset()
 void MusicBuffer::Play(bool loop)
 {
     this->DoStop();
+    data_source_->Reset();
     this->DoPlay(loop);
 }
 
 void MusicBuffer::Stop()
 {
-    if (this->IsPlaying())
-    {
-        this->DoStop();
-        data_source_->Reset();
-    }
+    // Queued GPU/audio buffers are not a reliable indication of worker lifetime.
+    this->DoStop();
+    data_source_->Reset();
 }
 }

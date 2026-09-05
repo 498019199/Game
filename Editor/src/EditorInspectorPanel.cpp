@@ -1,6 +1,8 @@
 #include <editor/EditorInspectorPanel.h>
 #include <editor/EditorManager.h>
 #include <editor/EditorProjectPanel.h>
+#include <editor/EditorTransform.h>
+#include <exception>
 
 #include <base/ZEngine.h>
 #include <common/Util.h>
@@ -93,8 +95,13 @@ void EditorInspectorPanel::DrawScript(AssertBaseInfo& info)
 
 void EditorInspectorPanel::DrawShader(AssertBaseInfo& info)
 {
-    const auto& script_info = checked_cast<const AssetScriptInfo&>(info);
-    std::string title = script_info.name + " (Shader)";
+    const auto* shader_info = dynamic_cast<const AssetShaderInfo*>(&info);
+    if (!shader_info)
+    {
+        ImGui::TextUnformatted("Invalid shader asset information.");
+        return;
+    }
+    std::string title = shader_info->name + " (Shader)";
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (!ImGui::CollapsingHeader(title.c_str()))
     {    
@@ -102,7 +109,7 @@ void EditorInspectorPanel::DrawShader(AssertBaseInfo& info)
     }
 
     ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextUnformatted(script_info.preview.c_str());
+    ImGui::TextUnformatted(shader_info->preview.c_str());
     ImGui::PopTextWrapPos();
 }
 
@@ -149,6 +156,16 @@ void EditorInspectorPanel::DrawTexture(AssertBaseInfo& info)
 void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
 {
     auto& audio_info = checked_cast<AssetAudioInfo&>(info);
+    if (!audio_info.error.empty())
+    {
+        ImGui::TextWrapped("%s", audio_info.error.c_str());
+        return;
+    }
+    if (!audio_info.audio_buff_)
+    {
+        ImGui::TextUnformatted("Audio is not loaded.");
+        return;
+    }
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (!ImGui::CollapsingHeader("Audio"))
         return;
@@ -168,31 +185,47 @@ void EditorInspectorPanel::DrawAudio(AssertBaseInfo& info)
         case AudioFormat::AF_Stereo8:
             ImGui::Text("%s", "AF_Stereo8"); break;
         case AudioFormat::AF_Stereo16:
-            ImGui::Text("%s", "AF_Stereo8"); break;
+            ImGui::Text("%s", "AF_Stereo16"); break;
         default:
             ImGui::Text("%s", "AF_Unknown");
     }
     
     ImGui::Text("Size:");
     ImGui::SameLine(120);
-    ImGui::Text("%d", audio_info.audio_buff_->Size() );
+    ImGui::Text("%zu", audio_info.decoded_size);
 
-    auto& context = Context::Instance();
-    AudioFactory& af = context.AudioFactoryInstance();
-	AudioEngine& ae = af.AudioEngineInstance();
-    ae.AddBuffer(1, af.MakeMusicBuffer(audio_info.audio_buff_, 3));
+    // One buffer per selection, owned here rather than by a global numeric ID.
+    if (!audio_info.preview_buffer_)
+    {
+        try
+        {
+            auto& af = Context::Instance().AudioFactoryInstance();
+            audio_info.preview_buffer_ = af.MakeMusicBuffer(audio_info.audio_buff_, 3);
+            if (!audio_info.preview_buffer_)
+                audio_info.error = "Audio preview buffer creation failed.";
+        }
+        catch (std::exception const& e)
+        {
+            audio_info.error = e.what();
+        }
+        if (!audio_info.preview_buffer_)
+        {
+            ImGui::TextWrapped("%s", audio_info.error.c_str());
+            return;
+        }
+    }
 
 
     ImGui::SetCursorPosX(80);
     if (ImGui::Button("Play", ImVec2(60.0f, 20.0f)))
     {
-        ae.Play(1, false);
+        audio_info.preview_buffer_->Play(false);
     }
     
     ImGui::SetCursorPosX(80);
     if (ImGui::Button("Stop", ImVec2(60.0f, 20.0f)))
     {
-        ae.Stop(1);
+        audio_info.preview_buffer_->Stop();
     }
 }
 
@@ -215,45 +248,40 @@ void EditorInspectorPanel::DrawModel(AssertBaseInfo& info)
 
     if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        static RenderWorker::RenderModel* editing_model = nullptr;
-        static float pos[3] = { 0.0f, 0.0f, 0.0f };
-        static float rot[3] = { 0.0f, 0.0f, 0.0f };
-        static float scl[3] = { 1.0f, 1.0f, 1.0f };
-
         auto node = model_info.model->RootNode();
-        if (editing_model != model_info.model.get())
+        auto const original = node->TransformToParent();
+        RenderWorker::float3 scale;
+        bool nonsingular = true;
+        for (size_t row = 0; row < 3; ++row)
         {
-            editing_model = model_info.model.get();
-
-            RenderWorker::float3 scale;
+            scale[row] = std::sqrt(original(row, 0) * original(row, 0) +
+                original(row, 1) * original(row, 1) + original(row, 2) * original(row, 2));
+            nonsingular &= scale[row] > 1e-6f;
+        }
+        RenderWorker::float3 angles(0, 0, 0);
+        if (nonsingular)
+        {
             RenderWorker::quater rotation;
             RenderWorker::float3 translation;
-            MathWorker::decompose(scale, rotation, translation, node->TransformToParent());
-
-            pos[0] = translation.x();
-            pos[1] = translation.y();
-            pos[2] = translation.z();
-            rot[0] = rot[1] = rot[2] = 0.0f;
-            scl[0] = scale.x();
-            scl[1] = scale.y();
-            scl[2] = scale.z();
+            MathWorker::decompose(scale, rotation, translation, original);
+            angles = InspectorEulerDegrees(MathWorker::to_matrix(rotation));
         }
+        float pos[3] = {original(3, 0), original(3, 1), original(3, 2)};
+        float rot[3] = {angles.x(), angles.y(), angles.z()};
+        float scl[3] = {scale.x(), scale.y(), scale.z()};
 
-        bool changed = false;
-        changed |= ImGui::DragFloat3("Position##pos", pos, 0.1f);
-        changed |= ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
-        changed |= ImGui::DragFloat3("Scale##scl", scl, 0.1f);
+        bool const position_changed = ImGui::DragFloat3("Position##pos", pos, 0.1f);
+        ImGui::BeginDisabled(!nonsingular);
+        bool const rotation_changed = ImGui::DragFloat3("Rotation##rot", rot, 0.5f);
+        bool const scale_changed = ImGui::DragFloat3("Scale##scl", scl, 0.1f, 0.001f, 10000.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::EndDisabled();
+        if (!nonsingular)
+            ImGui::TextUnformatted("Rotation/scale editing requires non-zero scale.");
 
-        if (changed)
+        if (position_changed || rotation_changed || scale_changed)
         {
-            RenderWorker::float4x4 transform =
-                MathWorker::translation(pos[0], pos[1], pos[2]) *
-                MathWorker::rotation_matrix_yaw_pitch_roll(
-                    MathWorker::Deg2Rad(rot[1]),
-                    MathWorker::Deg2Rad(rot[0]),
-                    MathWorker::Deg2Rad(rot[2])) *
-                MathWorker::scaling(scl[0], scl[1], scl[2]);
-
+            auto transform = InspectorTransform(original, RenderWorker::float3(pos),
+                RenderWorker::float3(rot), RenderWorker::float3(scl), scale, rotation_changed, scale_changed);
             node->TransformToParent(transform);
             node->UpdateTransforms();
         }

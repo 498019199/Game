@@ -63,7 +63,7 @@ namespace RenderWorker
 		ResIdentifierPtr oggFile_;
 		int64_t length_;
 
-		OggVorbis_File vf_;
+		OggVorbis_File vf_{};
 	};
 }
 

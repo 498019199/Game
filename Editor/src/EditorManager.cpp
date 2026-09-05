@@ -22,6 +22,7 @@
 #include <render/RenderFactory.h>
 #include <game/GameContext.h>
 #include <game/Model.h>
+#include <common/ErrorHandling.h>
 
 namespace
 {
@@ -315,6 +316,7 @@ void EditorManager::DoUpdateOverlay()
 
 void EditorManager::OnDestroy()
 {
+    selected_asset_info_.reset();
 #ifndef EDITOR_DEBUG_MODE
 	ShutdownImGui();
 	ImGui::DestroyContext();
@@ -510,11 +512,23 @@ void EditorManager::SetSelectedAssert(const EditorAssetNodePtr pAssert)
             auto ptr = CommonWorker::MakeSharedPtr<AssetAudioInfo>();
             ptr->name = pAssert->name + pAssert->extension;
 
-            auto& context = Context::Instance();
-            AudioDataSourceFactory& adsf = context.AudioDataSourceFactoryInstance();
-            auto& res_loader = context.ResLoaderInstance();
-            ptr->audio_buff_ = adsf.MakeAudioDataSource();
-            ptr->audio_buff_->Open( res_loader.Open( pAssert->path ) );
+            try
+            {
+                auto& context = Context::Instance();
+                auto file = context.ResLoaderInstance().Open(pAssert->path);
+                if (!file)
+                    TMSG("Audio resource not found: " + pAssert->path);
+                auto source = context.AudioDataSourceFactoryInstance().MakeAudioDataSource();
+                if (!source)
+                    TMSG("Audio decoder creation failed");
+                source->Open(file);
+                ptr->decoded_size = source->Size();
+                ptr->audio_buff_ = std::move(source);
+            }
+            catch (std::exception const& e)
+            {
+                ptr->error = e.what();
+            }
 
             selected_asset_info_ = ptr;
         }

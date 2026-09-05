@@ -95,9 +95,26 @@ function(ApplyPatch name patch)
 	set(external_folder "${CMAKE_CURRENT_SOURCE_DIR}")
 	set(external_lib_folder "${external_folder}/${name}")
 
-	execute_process(COMMAND "${GIT_EXECUTABLE}" "apply" "--check" "--ignore-space-change" "${patch}" WORKING_DIRECTORY ${external_lib_folder} RESULT_VARIABLE checkout_err)
-	if(NOT checkout_err)
+	# Already-applied patches (including overlapping patch series) commonly fail
+	# this probe. Keep its diagnostics out of normal configure/build output.
+	execute_process(
+		COMMAND "${GIT_EXECUTABLE}" "apply" "--check" "--ignore-space-change" "${patch}"
+		WORKING_DIRECTORY "${external_lib_folder}"
+		RESULT_VARIABLE patch_check_result
+		OUTPUT_VARIABLE patch_check_output
+		ERROR_VARIABLE patch_check_error
+	)
+	if("${patch_check_result}" STREQUAL "0")
 		message(STATUS "Applying ${patch}...")
-		execute_process(COMMAND "${GIT_EXECUTABLE}" "apply" "--ignore-space-change" "${patch}" WORKING_DIRECTORY ${external_lib_folder})
+		execute_process(
+			COMMAND "${GIT_EXECUTABLE}" "apply" "--ignore-space-change" "${patch}"
+			WORKING_DIRECTORY "${external_lib_folder}"
+			RESULT_VARIABLE patch_apply_result
+		)
+		if(NOT "${patch_apply_result}" STREQUAL "0")
+			message(FATAL_ERROR "Failed to apply ${patch}: ${patch_apply_result}")
+		endif()
+	else()
+		message(DEBUG "Skipping ${patch}: git apply --check returned ${patch_check_result}\n${patch_check_output}${patch_check_error}")
 	endif()
 endfunction()

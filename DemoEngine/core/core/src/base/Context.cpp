@@ -47,6 +47,7 @@ namespace RenderWorker
 
 #include <filesystem>
 #include <fstream>
+#include <common/ErrorHandling.h>
 namespace RenderWorker
 {
 using namespace CommonWorker;
@@ -131,6 +132,10 @@ public:
                 this->LoadAudioFactory(cfg_.audio_factory_name);
             }
         }
+        if (!audio_factory_)
+        {
+            TMSG("Audio factory unavailable: " + cfg_.audio_factory_name);
+        }
         return *audio_factory_;
     }
 
@@ -147,6 +152,10 @@ public:
             {
                 this->LoadAudioDataSourceFactory(cfg_.audio_data_source_factory_name);
             }
+        }
+        if (!audio_data_src_factory_)
+        {
+            TMSG("Audio data source factory unavailable: " + cfg_.audio_data_source_factory_name);
         }
         return *audio_data_src_factory_;
     }
@@ -287,7 +296,7 @@ public:
         audio_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string audio_path = res_loader.Locate("audio");
-        std::string fn = ZENGINE_DLL_PREFIX"_Audio" + af_name + DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioEngine_" + af_name + DLL_SUFFIX;
 
         std::string path = audio_path + "/" + fn;
         audio_loader_.Load(res_loader.Locate(path));
@@ -315,7 +324,7 @@ public:
         ads_loader_.Free();
         auto& res_loader = ResLoaderInstance();
         std::string adsf_path = res_loader.Locate("audio");
-        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource" + af_name + DLL_SUFFIX;
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource_" + af_name + DLL_SUFFIX;
 
         std::string path = adsf_path + "/" + fn;
         ads_loader_.Load(res_loader.Locate(path));
@@ -448,6 +457,8 @@ public:
 
 		std::string rf_name;
         std::string if_name;
+        std::string af_name = "XAudio";
+        std::string adsf_name = "OggVorbis";
 
         auto& res_loader = ResLoaderInstance();
         ResIdentifierPtr file = res_loader.Open(file_name);
@@ -456,6 +467,20 @@ public:
             XMLNode cfg_root = LoadXml(*file);
             XMLNode const* context_node = cfg_root.FirstNode("context");
             XMLNode const* graphics_node = cfg_root.FirstNode("graphics");
+
+            if (context_node)
+            {
+                if (auto const* node = context_node->FirstNode("audio_factory"))
+                {
+                    if (auto const* attr = node->Attrib("name"))
+                        af_name = std::string(attr->ValueString());
+                }
+                if (auto const* node = context_node->FirstNode("audio_data_source_factory"))
+                {
+                    if (auto const* attr = node->Attrib("name"))
+                        adsf_name = std::string(attr->ValueString());
+                }
+            }
 
             if (XMLNode const* rf_node = context_node->FirstNode("render_factory"))
             {
@@ -568,6 +593,19 @@ public:
 
         cfg_.render_factory_name = std::move(rf_name);
         cfg_.input_factory_name = std::move(if_name);
+        // These are the audio plugins currently built by this repository.
+        if (af_name != "XAudio")
+        {
+            LogError() << "Unsupported audio factory: " << af_name << "; using XAudio" << std::endl;
+            af_name = "XAudio";
+        }
+        if (adsf_name != "OggVorbis")
+        {
+            LogError() << "Unsupported audio data source factory: " << adsf_name << "; using OggVorbis" << std::endl;
+            adsf_name = "OggVorbis";
+        }
+        cfg_.audio_factory_name = std::move(af_name);
+        cfg_.audio_data_source_factory_name = std::move(adsf_name);
         cfg_.graphics_cfg.left = cfg_.graphics_cfg.top = 0;
         cfg_.graphics_cfg.width = width;
         cfg_.graphics_cfg.height = height;

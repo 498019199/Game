@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <cstring>
+#include <common/ErrorHandling.h>
 
 #include "OggVorbisSource.h"
 
@@ -36,6 +37,8 @@ namespace RenderWorker
 
 	void OggVorbisSource::Open(ResIdentifierPtr const & file)
 	{
+		if (!file)
+			TMSG("Cannot open a missing Ogg Vorbis resource");
 		oggFile_ = file;
 
 		oggFile_->seekg(0, std::ios_base::end);
@@ -48,7 +51,8 @@ namespace RenderWorker
 		vorbis_callbacks.seek_func = OggVorbisSource::VorbisSeek;
 		vorbis_callbacks.tell_func = OggVorbisSource::VorbisTell;
 
-		Verify(0 == ov_open_callbacks(this, &vf_, nullptr, 0, vorbis_callbacks));
+		if (ov_open_callbacks(this, &vf_, nullptr, 0, vorbis_callbacks) != 0)
+			TMSG("Invalid Ogg Vorbis resource");
 
 		vorbis_info* vorbis_info = ov_info(&vf_, -1);
 		format_ = (1 == vorbis_info->channels) ? AF_Mono16 : AF_Stereo16;
