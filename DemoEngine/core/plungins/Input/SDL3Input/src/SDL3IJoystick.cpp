@@ -4,8 +4,7 @@
  * @section DESCRIPTION
  *
  * SDL3 gamepad device. The axis ranges, dead zones and button ordering mirror
- * the XInput device of the MsgInput plugin, so action maps authored against
- * MsgInput keep working unchanged.
+ * the existing gamepad action layout, so existing action maps keep working unchanged.
  */
 
 #include <base/ZEngine.h>

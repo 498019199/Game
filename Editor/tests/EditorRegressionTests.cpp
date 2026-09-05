@@ -1,6 +1,10 @@
 #include <base/ZEngine.h>
 #include <base/Audio.h>
 #include <base/AudioFactory.h>
+#include <base/App3D.h>
+#include <base/Window.h>
+#include <base/UIManager.h>
+#include <base/InputFactory.h>
 #include <editor/EditorTransform.h>
 #include <editor/EditorPanel.h>
 #include <editor/EditorAssetScanner.h>
@@ -116,6 +120,17 @@ TEST(EditorAudio, SelectionOwnsAndStopsItsPreview)
         buffer->Play();
     }
     EXPECT_FALSE(source->worker_active);
+}
+
+TEST(EditorRender, MissingPluginThrows)
+{
+    auto& context = Context::Instance();
+    context.LoadConfig("missing-editor-regression.cfg");
+    auto cfg = context.Config();
+    cfg.render_factory_name = "MissingEditorTest";
+    context.Config(cfg);
+    EXPECT_THROW(context.RenderFactoryInstance(), std::runtime_error);
+    Context::Destroy();
 }
 
 TEST(EditorAudio, MissingPluginThrows)
@@ -235,6 +250,61 @@ TEST_F(EditorAssetScan, SkipsAncestorAndDanglingLinks)
     EXPECT_EQ(1u, scanner.ReadDirectory(root).size());
     EXPECT_TRUE(scanner.ReadDirectory(root / "nested").empty());
     EXPECT_TRUE(scanner.ReadDirectory(root / "nested" / "parent").empty());
+}
+
+namespace
+{
+class InputTestApp : public App3D
+{
+public:
+    InputTestApp() : App3D("Input routing regression") {}
+private:
+    uint32_t DoUpdate(uint32_t) override { return 0; }
+};
+}
+
+TEST(InputRouting, EditorPriorityGamePassthroughAndFocusLoss)
+{
+    Context::Instance().LoadConfig("KlayGE.cfg");
+    auto cfg = Context::Instance().Config();
+    cfg.graphics_cfg.hide_win = true;
+    Context::Instance().Config(cfg);
+    InputTestApp app;
+    ASSERT_NE(nullptr, app.MainWnd()->GetSDLWindow());
+    app.MainWnd()->Active(true);
+    auto& ui = Context::Instance().UIManagerInstance();
+    ui.SetInputViewport(false, false, 0, 0, 640, 480);
+    ui.RouteInput(true);
+    EXPECT_TRUE(ui.GameKeyboardBlocked());
+    EXPECT_TRUE(ui.GamePointerBlocked());
+    ui.AcknowledgeGameInput();
+    ui.SetInputViewport(true, true, 0, 0, 640, 480);
+    ui.RouteInput(true);
+    EXPECT_FALSE(ui.GameKeyboardBlocked());
+    EXPECT_FALSE(ui.GamePointerBlocked());
+    ui.RouteInput(true, true);
+    EXPECT_TRUE(ui.GameKeyboardBlocked());
+    EXPECT_TRUE(ui.GamePointerBlocked());
+    ui.AcknowledgeGameInput();
+    ui.SetInputViewport(false, false, 0, 0, 1, 1);
+    ui.RouteInput(false);
+    EXPECT_FALSE(ui.GameKeyboardBlocked());
+    EXPECT_FALSE(ui.GamePointerBlocked());
+    app.MainWnd()->Active(false);
+    ui.RouteInput(false);
+    EXPECT_TRUE(ui.GameKeyboardBlocked());
+    EXPECT_TRUE(ui.GamePointerBlocked());
+}
+
+TEST(InputRouting, SDL3FactoryLoadsKeyboardAndMouse)
+{
+    Context::Instance().LoadConfig("KlayGE.cfg");
+    EXPECT_EQ("SDL3", Context::Instance().Config().input_factory_name);
+    auto& input = Context::Instance().InputFactoryInstance().InputEngineInstance();
+    input.EnumDevices();
+    ASSERT_GE(input.NumDevices(), 2u);
+    EXPECT_EQ(InputEngine::IDT_Keyboard, input.Device(0)->Type());
+    EXPECT_EQ(InputEngine::IDT_Mouse, input.Device(1)->Type());
 }
 
 int main(int argc, char** argv)

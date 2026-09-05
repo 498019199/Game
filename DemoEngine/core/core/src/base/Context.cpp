@@ -104,7 +104,7 @@ public:
         return render_factory_ != nullptr;
     }
 
-    RenderFactory& RenderFactoryInstance() noexcept
+    RenderFactory& RenderFactoryInstance()
     {
         if (!render_factory_)
         {
@@ -114,6 +114,8 @@ public:
                 this->LoadRenderFactory( cfg_.render_factory_name );
             }
         }
+        if (!render_factory_)
+            TMSG("Render factory is unavailable: " + cfg_.render_factory_name);
         return *render_factory_;
     }
 
@@ -175,6 +177,8 @@ public:
                 this->LoadInputFactory(cfg_.input_factory_name);
             }
         }
+        if (!input_factory_)
+            TMSG("SDL3 input factory is unavailable");
         return *input_factory_;
     }
 
@@ -423,10 +427,8 @@ public:
     {
 #if defined(ZENGINE_PLATFORM_WINDOWS)
         static char const* available_rfs_array[] = {"D3D11" , "SDL3"};
-        static char const* available_ifs_array[] = {"MsgInput"};
 #else
         static char const* available_rfs_array[] = {"SDL3"};
-        static char const* available_ifs_array[] = {"SDL3"};
 #endif
 
 
@@ -456,7 +458,6 @@ public:
         bool location_sensor = false;
 
 		std::string rf_name;
-        std::string if_name;
         std::string af_name = "XAudio";
         std::string adsf_name = "OggVorbis";
 
@@ -485,10 +486,6 @@ public:
             if (XMLNode const* rf_node = context_node->FirstNode("render_factory"))
             {
                 rf_name = std::string(rf_node->Attrib("name")->ValueString());
-            }
-            if (XMLNode const* if_node = context_node->FirstNode("input_factory"))
-            {
-                if_name = std::string(if_node->Attrib("name")->ValueString());
             }
             if (XMLNode const* perf_profiler_node = context_node->FirstNode("perf_profiler"))
             {
@@ -583,16 +580,12 @@ public:
                 rf_name = available_rfs[0];
             }
             
-            std::span<char const*> const available_ifs = available_ifs_array;
-            if (std::find(available_ifs.begin(), available_ifs.end(), if_name) == available_ifs.end())
-            {
-                if_name = available_ifs[0];
-            }
             
         }
 
         cfg_.render_factory_name = std::move(rf_name);
-        cfg_.input_factory_name = std::move(if_name);
+        // Migrate old or unsupported input settings to the sole input backend.
+        cfg_.input_factory_name = "SDL3";
         // These are the audio plugins currently built by this repository.
         if (af_name != "XAudio")
         {
@@ -665,7 +658,7 @@ private:
 	static std::unique_ptr<Context> context_instance_;
 
     // 窗口实例
-    App3D* app_;
+    App3D* app_ = nullptr;
 
     // 基础配置
     ContextConfig cfg_;
@@ -737,7 +730,7 @@ bool Context::AppValid() const noexcept
     return pimpl_->AppValid();
 }
 
-RenderFactory& Context::RenderFactoryInstance() noexcept
+RenderFactory& Context::RenderFactoryInstance()
 {
     return pimpl_->RenderFactoryInstance();
 }

@@ -1,4 +1,5 @@
 #include <editor/EditorManagerSDL3.h>
+#include <base/Window.h>
 
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -20,6 +21,9 @@ void EditorManagerSDL3::InitializeImGui()
 {
     auto& re = checked_cast<SDL3RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
     ImGui_ImplSDL3_InitForSDLGPU(re.Window());
+    sdl_events_ = MainWnd()->OnSDLEvent().Connect([](SDL_Event const& event) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+    });
 
     ImGui_ImplSDLGPU3_InitInfo init_info{};
     init_info.Device = re.Device();
@@ -33,18 +37,13 @@ void EditorManagerSDL3::InitializeImGui()
 
 void EditorManagerSDL3::ShutdownImGui()
 {
+    sdl_events_.Disconnect();
     ImGui_ImplSDLGPU3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
 }
 
 void EditorManagerSDL3::NewImGuiFrame() const
 {
-    SDL_PumpEvents();
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        ImGui_ImplSDL3_ProcessEvent(&event);
-    }
     ImGui_ImplSDLGPU3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
 }

@@ -16,45 +16,12 @@ SDL_Window* CreateSDLWindow(std::string const& name, RenderSettings const& setti
 {
 	owns_window = true;
 
-#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
-	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
 	auto const& main_wnd = Context::Instance().AppInstance().MainWnd();
 	if (main_wnd && main_wnd->GetSDLWindow())
 	{
 		owns_window = false;
 		return main_wnd->GetSDLWindow();
 	}
-#endif
-
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
-	// Reuse the engine Win32 HWND so we do not get a second "Game App" window.
-	auto const& main_wnd = Context::Instance().AppInstance().MainWnd();
-	HWND hwnd = (main_wnd && main_wnd->GetHWND()) ? main_wnd->GetHWND() : nullptr;
-	if (hwnd)
-	{
-		SDL_PropertiesID props = SDL_CreateProperties();
-		SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, hwnd);
-		SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, name.c_str());
-		SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, static_cast<Sint64>(width));
-		SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, static_cast<Sint64>(height));
-		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
-		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
-		if (settings.hide_win)
-		{
-			SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true);
-		}
-		if (settings.full_screen)
-		{
-			SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, true);
-		}
-		SDL_Window* wnd = SDL_CreateWindowWithProperties(props);
-		SDL_DestroyProperties(props);
-		SDL3Check(wnd != nullptr, "SDL_CreateWindowWithProperties(win32 hwnd)");
-		// EXTERNAL HWND: SDL_DestroyWindow cleans SDL state only, not the Win32 window.
-		owns_window = true;
-		return wnd;
-	}
-#endif
 
 	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	if (settings.hide_win)

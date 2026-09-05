@@ -15,6 +15,7 @@ public:
 #endif
 
 private:
+    Signal::Connection sdl_events_;
     void InitializeImGui() override;
     void ShutdownImGui() override;
     void NewImGuiFrame() const override;

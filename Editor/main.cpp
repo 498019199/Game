@@ -19,10 +19,6 @@ namespace
 {
 	LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (GameContext::Instance().GmDebugWindowInstance().Visible())
-		{
-			Context::Instance().UIManagerInstance().ProcessGmWin32Message(msg, wParam, lParam);
-		}
 #ifndef EDITOR_DEBUG_MODE
 		// SDL3 owns ImGui input when the SDL_GPU renderer is active. The legacy
 		// Win32 backend must not also consume the same native messages, otherwise

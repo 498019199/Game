@@ -291,11 +291,11 @@ void UIManager::Init()
 		::Rml::Debugger::SetVisible(false);
 	}
 
-	game_image_hovered_last_ = false;
 }
 
 void UIManager::Destroy() noexcept
 {
+	input_state_.reset();
 	if (destroyed_)
 	{
 		return;
@@ -503,120 +503,11 @@ void UIManager::ProcessTextInput(char32_t character)
 {
 	if (rml_context_)
 	{
-		rml_context_->ProcessTextInput(character);
+		rml_context_->ProcessTextInput(static_cast<Rml::Character>(character));
 	}
 }
 
-#if defined(_WIN32)
-namespace
-{
-int RmlKeyModifiersFromWin32()
-{
-	int mods = 0;
-	if (::GetKeyState(VK_CONTROL) & 0x8000)
-	{
-		mods |= Rml::Input::KM_CTRL;
-	}
-	if (::GetKeyState(VK_SHIFT) & 0x8000)
-	{
-		mods |= Rml::Input::KM_SHIFT;
-	}
-	if (::GetKeyState(VK_MENU) & 0x8000)
-	{
-		mods |= Rml::Input::KM_ALT;
-	}
-	return mods;
-}
 
-int VkToRmlKeyIdentifier(std::uintptr_t vk)
-{
-	if (vk >= 'A' && vk <= 'Z')
-	{
-		return Rml::Input::KI_A + static_cast<int>(vk - 'A');
-	}
-	if (vk >= '0' && vk <= '9')
-	{
-		return Rml::Input::KI_0 + static_cast<int>(vk - '0');
-	}
-
-	switch (vk)
-	{
-	case VK_BACK:
-		return Rml::Input::KI_BACK;
-	case VK_TAB:
-		return Rml::Input::KI_TAB;
-	case VK_RETURN:
-		return Rml::Input::KI_RETURN;
-	case VK_DELETE:
-		return Rml::Input::KI_DELETE;
-	case VK_INSERT:
-		return Rml::Input::KI_INSERT;
-	case VK_LEFT:
-		return Rml::Input::KI_LEFT;
-	case VK_RIGHT:
-		return Rml::Input::KI_RIGHT;
-	case VK_UP:
-		return Rml::Input::KI_UP;
-	case VK_DOWN:
-		return Rml::Input::KI_DOWN;
-	case VK_HOME:
-		return Rml::Input::KI_HOME;
-	case VK_END:
-		return Rml::Input::KI_END;
-	case VK_PRIOR:
-		return Rml::Input::KI_PRIOR;
-	case VK_NEXT:
-		return Rml::Input::KI_NEXT;
-	default:
-		return -1;
-	}
-}
-} // namespace
-
-void UIManager::ProcessGmWin32Message(unsigned msg, std::uintptr_t w_param, std::intptr_t /*l_param*/)
-{
-	if (!rml_context_)
-	{
-		return;
-	}
-
-	int const mods = RmlKeyModifiersFromWin32();
-	switch (msg)
-	{
-	case WM_CHAR:
-		if ((::GetKeyState(VK_CONTROL) & 0x8000) == 0 && w_param >= 32 && w_param != '`' && w_param != '~')
-		{
-			rml_context_->ProcessTextInput(static_cast<Rml::Character>(w_param));
-		}
-		break;
-
-	case WM_KEYDOWN:
-	case WM_SYSKEYDOWN:
-	{
-		int const key = VkToRmlKeyIdentifier(w_param);
-		if (key >= 0)
-		{
-			rml_context_->ProcessKeyDown(static_cast<Rml::Input::KeyIdentifier>(key), mods);
-		}
-		break;
-	}
-
-	case WM_KEYUP:
-	case WM_SYSKEYUP:
-	{
-		int const key = VkToRmlKeyIdentifier(w_param);
-		if (key >= 0)
-		{
-			rml_context_->ProcessKeyUp(static_cast<Rml::Input::KeyIdentifier>(key), mods);
-		}
-		break;
-	}
-
-	default:
-		break;
-	}
-}
-#endif // _WIN32
 
 void UIManager::SetDebuggerVisible(bool visible)
 {
@@ -629,73 +520,6 @@ void UIManager::SetDebuggerVisible(bool visible)
 bool UIManager::IsDebuggerVisible() const
 {
 	return debugger_initialized_ && ::Rml::Debugger::IsVisible();
-}
-
-void UIManager::ProcessGameViewPointer(bool image_hovered, int mouse_x, int mouse_y, int key_modifier_state,
-	bool left_pressed, bool left_released, bool right_pressed, bool right_released, bool middle_pressed,
-	bool middle_released, float wheel_x, float wheel_y)
-{
-	if (!rml_context_)
-	{
-		return;
-	}
-
-	if (!image_hovered)
-	{
-		if (game_image_hovered_last_)
-		{
-			rml_context_->ProcessMouseLeave();
-		}
-		game_image_hovered_last_ = false;
-		mouse_on_ui_ = false;
-		return;
-	}
-
-	game_image_hovered_last_ = true;
-
-	int const mx = (std::clamp)(mouse_x, 0, width_ - 1);
-	int const my = (std::clamp)(mouse_y, 0, height_ - 1);
-	rml_context_->ProcessMouseMove(mx, my, key_modifier_state);
-
-	if (left_pressed)
-	{
-		rml_context_->ProcessMouseButtonDown(0, key_modifier_state);
-	}
-	if (right_pressed)
-	{
-		rml_context_->ProcessMouseButtonDown(1, key_modifier_state);
-	}
-	if (middle_pressed)
-	{
-		rml_context_->ProcessMouseButtonDown(2, key_modifier_state);
-	}
-
-	if (left_released)
-	{
-		rml_context_->ProcessMouseButtonUp(0, key_modifier_state);
-	}
-	if (right_released)
-	{
-		rml_context_->ProcessMouseButtonUp(1, key_modifier_state);
-	}
-	if (middle_released)
-	{
-		rml_context_->ProcessMouseButtonUp(2, key_modifier_state);
-	}
-
-	if (wheel_x != 0.f || wheel_y != 0.f)
-	{
-		rml_context_->ProcessMouseWheel(::Rml::Vector2f(wheel_x, wheel_y), key_modifier_state);
-	}
-
-	if (Rml::Element* hover = rml_context_->GetHoverElement())
-	{
-		mouse_on_ui_ = hover != rml_context_->GetRootElement();
-	}
-	else
-	{
-		mouse_on_ui_ = false;
-	}
 }
 
 bool UIManager::MouseOnUI() const noexcept

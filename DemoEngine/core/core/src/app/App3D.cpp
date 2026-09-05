@@ -93,6 +93,7 @@ void App3D::Run()
 		}
 		else
 		{
+			Window::PumpEvents();
 			re.Refresh();
 		}
     }

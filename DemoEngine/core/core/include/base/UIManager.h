@@ -3,6 +3,9 @@
 
 #include <string>
 #include <string_view>
+#include <functional>
+
+union SDL_Event;
 
 namespace Rml {
 	class Context;
@@ -15,6 +18,7 @@ namespace RenderWorker
 class EditorRmlSystemInterface;
 class RmlUiFileInterface;
 class RmlUiRenderInterfaceD3D11;
+struct UIInputState;
 
 /// RmlUi overlay drawn into the game-view render target after the 3D pass.
 /// All Rml document ops must go through this class (RmlUi is statically linked into core only).
@@ -66,23 +70,25 @@ public:
 	void ProcessKeyUp(int rml_key_identifier, int key_modifier_state);
 	void ProcessTextInput(char32_t character);
 
-#if defined(_WIN32)
-	/// Forward Win32 WM_CHAR / WM_KEY* to Rml when GM console has keyboard focus.
-	void ProcessGmWin32Message(unsigned msg, std::uintptr_t w_param, std::intptr_t l_param);
-#endif
 
 	void SetDebuggerVisible(bool visible);
 	bool IsDebuggerVisible() const;
 
-	void ProcessGameViewPointer(bool image_hovered, int mouse_x, int mouse_y, int key_modifier_state, bool left_pressed,
-		bool left_released, bool right_pressed, bool right_released, bool middle_pressed, bool middle_released,
-		float wheel_x, float wheel_y);
 
 	bool MouseOnUI() const noexcept;
 
+	// One event source, with Editor explicitly granting access to the game viewport.
+	void QueueInput(SDL_Event const& event);
+	void SetInputViewport(bool mouse, bool keyboard, float x, float y, float width, float height);
+	void RouteInput(bool editor_mode, bool imgui_exclusive = false);
+	bool GameKeyboardBlocked() const noexcept;
+	bool GamePointerBlocked() const noexcept;
+	void AcknowledgeGameInput() noexcept;
+	void SetKeyHandler(std::function<bool(int)> handler);
+
 private:
+	std::shared_ptr<UIInputState> input_state_;
 	bool debugger_initialized_ {false};
-	bool game_image_hovered_last_ {false};
 	int width_ {1};
 	int height_ {1};
 	bool mouse_on_ui_ {false};

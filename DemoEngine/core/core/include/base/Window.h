@@ -8,6 +8,7 @@ using MsgProcFunc = LRESULT(*)(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
 struct SDL_Window;
+union SDL_Event;
 
 namespace RenderWorker
 {
@@ -33,11 +34,8 @@ public:
     void BindMsgProc(MsgProcFunc func) { msg_proc_ptr_ = func; }
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
-#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
-	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
 	SDL_Window* GetSDLWindow() const noexcept { return sdl_wnd_; }
 	static void PumpEvents();
-#endif
 
     int32_t Left() const { return left_; }
     int32_t Top() const { return top_; }
@@ -83,21 +81,14 @@ private:
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
 public:
-#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	typedef Signal::Signal<void(Window const& wnd, HRAWINPUT ri)> RawInputEvent;
-#endif
+    using SDLEvent = Signal::Signal<void(SDL_Event const&)>;
+    SDLEvent& OnSDLEvent() { return sdl_event_; }
     typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id)> PointerDownEvent;
     typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id)> PointerUpEvent;
     typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id, bool down)> PointerUpdateEvent;
     typedef Signal::Signal<void(Window const& wnd, int2 const& pt, uint32_t id, int32_t wheel_delta)> PointerWheelEvent;
     typedef Signal::Signal<void(Window const& wnd)> CloseEvent;
 
-#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    RawInputEvent& OnRawInput()
-    {
-        return raw_input_event_;
-    }
-#endif
     PointerDownEvent& OnPointerDown()
     {
         return pointer_down_event_;
@@ -120,9 +111,7 @@ public:
     }
 
 private:
-#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	RawInputEvent raw_input_event_;
-#endif
+    SDLEvent sdl_event_;
     PointerDownEvent pointer_down_event_;
     PointerUpEvent pointer_up_event_;
     PointerUpdateEvent pointer_update_event_;
@@ -148,9 +137,8 @@ protected:
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #endif //ZENGINE_PLATFORM_WINDOWS
 
-#if defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
-	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
 	SDL_Window* sdl_wnd_{nullptr};
+#if !defined(ZENGINE_PLATFORM_WINDOWS)
 	bool hide_{false};
 	std::string name_;
 #endif

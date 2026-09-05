@@ -48,14 +48,14 @@ if(WIN32)
             ZENGINE_DevHelps
             ZENGINE_AudioEngine_XAudio
             ZENGINE_AudioDataSource_OggVorbis
-            ZENGINE_InputEngine_Input
+            ZENGINE_InputEngine_InputSDL3
             imgui
         PRIVATE
             d3dcompiler)
 
     add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL tests/EditorRegressionTests.cpp)
     target_link_libraries(ZENGINE_editor_tests PRIVATE ZENGINE_core ZENGINE_common gtest imgui)
-    add_dependencies(ZENGINE_editor_tests ZENGINE_AudioEngine_XAudio ZENGINE_AudioDataSource_OggVorbis)
+    add_dependencies(ZENGINE_editor_tests ZENGINE_AudioEngine_XAudio ZENGINE_AudioDataSource_OggVorbis ZENGINE_InputEngine_InputSDL3)
 endif()
 
 add_executable(ZENGINE_game_app
@@ -70,7 +70,9 @@ if(MSVC)
     target_compile_options(ZENGINE_game_app PRIVATE /std:c++20)
 endif()
 
-add_dependencies(ZENGINE_game_app ZENGINE_game ZENGINE_DevHelps)
+# The shipped configuration selects SDL3 on every platform. Build the dynamically
+# loaded renderer even when only the game executable is requested.
+add_dependencies(ZENGINE_game_app ZENGINE_game ZENGINE_DevHelps ZENGINE_Render_SDL3)
 
 target_link_libraries(ZENGINE_game_app
     PUBLIC
@@ -84,7 +86,7 @@ if(WIN32)
             ZENGINE_Render_D3D11
             ZENGINE_AudioEngine_XAudio
             ZENGINE_AudioDataSource_OggVorbis
-            ZENGINE_InputEngine_Input
+            ZENGINE_InputEngine_InputSDL3
         PRIVATE
             d3dcompiler)
 else()

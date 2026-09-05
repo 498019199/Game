@@ -31,20 +31,8 @@ namespace
 	RenderWorker::InputActionDefine actions[] =
 	{
 		RenderWorker::InputActionDefine(Exit, RenderWorker::KS_Escape),
-		RenderWorker::InputActionDefine(ToggleGm, RenderWorker::KS_Grave),
-		RenderWorker::InputActionDefine(GmSubmit, RenderWorker::KS_Enter),
 	};
 
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
-	LRESULT CALLBACK GmWndProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		if (GameContext::Instance().GmDebugWindowInstance().Visible())
-		{
-			RenderWorker::Context::Instance().UIManagerInstance().ProcessGmWin32Message(msg, wParam, lParam);
-		}
-		return -1;
-	}
-#endif
 }
 
 namespace EditorWorker
@@ -102,12 +90,6 @@ void GameApp::OnCreate()
 		LogError() << "GameApp: GM debug window failed to initialize." << std::endl;
 	}
 
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP)
-	if (MainWnd())
-	{
-		MainWnd()->BindMsgProc(GmWndProc);
-	}
-#endif
 }
 
 void GameApp::ApplySceneCamera()
@@ -228,6 +210,7 @@ void GameApp::RebuildBackFaceDepthTarget(RenderFactory& rf, RenderDeviceCaps con
 	case 2:
 	{
 		ZENGINE_ZONE("GameApp::Pass2_RmlUI");
+		Context::Instance().UIManagerInstance().RouteInput(false);
 		Context::Instance().UIManagerInstance().RenderIntoGameView();
 		return URV_Finished;
 	}

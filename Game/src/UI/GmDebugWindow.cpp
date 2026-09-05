@@ -3,6 +3,7 @@
 #include <charconv>
 
 #include <base/UIManager.h>
+#include <RmlUi/Core/Input.h>
 #include <base/ZEngine.h>
 #include <common/Log.h>
 #include <common/Util.h>
@@ -55,6 +56,13 @@ bool GmDebugWindow::Initialize()
 	ui.HideDocument(document_);
 	visible_ = false;
 	initialized_ = true;
+	ui.SetKeyHandler([this](int key) {
+		if (key == Rml::Input::KI_OEM_3) { ToggleVisible(); return true; }
+		if (!visible_) return false;
+		if (key == Rml::Input::KI_RETURN) { Submit(); return true; }
+		if (key == Rml::Input::KI_ESCAPE) { SetVisible(false); return true; }
+		return false;
+	});
 	return true;
 }
 
@@ -62,6 +70,7 @@ void GmDebugWindow::Shutdown()
 {
 	if (document_)
 	{
+		Context::Instance().UIManagerInstance().SetKeyHandler({});
 		Context::Instance().UIManagerInstance().CloseDocument(document_);
 		document_ = nullptr;
 	}

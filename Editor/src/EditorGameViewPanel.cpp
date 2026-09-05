@@ -9,27 +9,6 @@ namespace EditorWorker
 {
 using namespace RenderWorker;
 
-namespace
-{
-int ImGuiKeyModifiers()
-{
-	ImGuiIO const& io = ImGui::GetIO();
-	int mods = 0;
-	if (io.KeyCtrl)
-	{
-		mods |= Rml::Input::KM_CTRL;
-	}
-	if (io.KeyShift)
-	{
-		mods |= Rml::Input::KM_SHIFT;
-	}
-	if (io.KeyAlt)
-	{
-		mods |= Rml::Input::KM_ALT;
-	}
-	return mods;
-}
-} // namespace
 
 EditorGameViewPanel::EditorGameViewPanel() = default;
 
@@ -139,22 +118,9 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 
 			if (game_srv != nullptr && image_size.x > 1.f && image_size.y > 1.f)
 			{
-				ImVec2 const mouse = ImGui::GetIO().MousePos;
-				float const u = (mouse.x - image_min.x) / image_size.x;
-				float const v = (mouse.y - image_min.y) / image_size.y;
-				int const mx = static_cast<int>(u * setting.gameViewWidth);
-				int const my = static_cast<int>(v * setting.gameViewHeight);
-				int const mods = ImGuiKeyModifiers();
-				ui.ProcessGameViewPointer(
-					image_hovered,
-					mx, my, mods,
-					ImGui::IsMouseClicked(ImGuiMouseButton_Left),
-					ImGui::IsMouseReleased(ImGuiMouseButton_Left),
-					ImGui::IsMouseClicked(ImGuiMouseButton_Right),
-					ImGui::IsMouseReleased(ImGuiMouseButton_Right),
-					ImGui::IsMouseClicked(ImGuiMouseButton_Middle),
-					ImGui::IsMouseReleased(ImGuiMouseButton_Middle),
-					0.f, ImGui::GetIO().MouseWheel);
+				ImVec2 const origin = ImGui::GetMainViewport()->Pos;
+				ui.SetInputViewport(image_hovered, ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows),
+					image_min.x - origin.x, image_min.y - origin.y, image_size.x, image_size.y);
 			}
 
 			if (EditorProfilerPanel::Visible())
@@ -163,6 +129,7 @@ void EditorGameViewPanel::OnRender(const EditorSetting& setting)
 				if (ImGui::IsItemHovered() || ImGui::IsItemActive())
 				{
 					game_view_input_active = false;
+					ui.SetInputViewport(false, false, 0, 0, 1, 1);
 				}
 			}
 		}

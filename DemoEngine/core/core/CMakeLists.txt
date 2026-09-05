@@ -9,6 +9,7 @@ set(APP_HEADER_FILES
 set(APP_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/core/core/src/app/App3D.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/app/Window.cpp
+    ${PROJECT_SOURCE_DIR}/core/core/src/app/WindowSDLEvents.cpp
 )
 
 if(ZENGINE_PLATFORM_WINDOWS)
@@ -164,6 +165,8 @@ set(UI_HEADER_FILES
     ${PROJECT_SOURCE_DIR}/core/core/include/base/RmlUiRenderInterface.h
 )
 set(UI_SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/core/core/src/ui/UIInput.cpp
+    ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends/RmlUi_Platform_SDL.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/ui/UIManager.cpp
     ${PROJECT_SOURCE_DIR}/core/core/src/ui/RmlUiRenderInterface.cpp
 )
@@ -181,6 +184,7 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
 )
 
 target_include_directories(ZENGINE_core
+    PRIVATE ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends
     PUBLIC
         ${ZENGINE_ROOT_DIR}/common/include
         ${ZENGINE_ROOT_DIR}/core/core/include
@@ -201,6 +205,7 @@ set_target_properties(ZENGINE_core PROPERTIES
 target_compile_definitions(ZENGINE_core
     PRIVATE
         -DZENGINE_EXPORTS
+        RMLUI_SDL_VERSION_MAJOR=3
 )
 
 target_link_libraries(ZENGINE_core
@@ -223,9 +228,7 @@ if(ZENGINE_ENABLE_TRACY)
     target_compile_definitions(ZENGINE_core PUBLIC ZENGINE_ENABLE_TRACY)
 endif()
 
-if(ZENGINE_PLATFORM_LINUX OR ZENGINE_PLATFORM_DARWIN OR ZENGINE_PLATFORM_ANDROID OR ZENGINE_PLATFORM_IOS)
 	target_link_libraries(ZENGINE_core PRIVATE SDL3::SDL3)
-endif()
 
 
 if(ZENGINE_IS_DEV_PLATFORM)

@@ -70,7 +70,7 @@ public:
     World& WorldInstance() noexcept;
     
     bool RenderFactoryValid() const noexcept;
-    RenderFactory& RenderFactoryInstance() noexcept;
+    RenderFactory& RenderFactoryInstance();
     
     bool AudioDataSourceFactoryValid() const noexcept;
     AudioDataSourceFactory& AudioDataSourceFactoryInstance();

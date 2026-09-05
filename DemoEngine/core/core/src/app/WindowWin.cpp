@@ -9,6 +9,7 @@
 #include <ShellScalingAPI.h>
 #endif
 #include <windowsx.h>
+#include <SDL3/SDL.h>
 
 namespace RenderWorker
 {
@@ -120,6 +121,17 @@ Window::Window(const std::string& name, const RenderSettings& settings, void* na
 
 	::SetWindowLongPtrW(wnd_, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
+    // Register the native window with SDL for input, regardless of renderer.
+    if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_InitSubSystem(SDL_INIT_VIDEO))
+        TMSG(SDL_GetError());
+    auto const props = SDL_CreateProperties();
+    SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, wnd_);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
+    sdl_wnd_ = SDL_CreateWindowWithProperties(props);
+    SDL_DestroyProperties(props);
+    if (!sdl_wnd_)
+        TMSG(SDL_GetError());
+
 	::ShowWindow(wnd_, hide_ ? SW_HIDE : SW_SHOWNORMAL);
 	::UpdateWindow(wnd_);
 
@@ -128,6 +140,12 @@ Window::Window(const std::string& name, const RenderSettings& settings, void* na
 
 Window::~Window()
 {
+    // SDL restores the native WndProc; it does not destroy the external HWND.
+    if (sdl_wnd_)
+    {
+        SDL_DestroyWindow(sdl_wnd_);
+        sdl_wnd_ = nullptr;
+    }
     if (keep_screen_on_)
     {
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
@@ -231,10 +249,6 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 #endif
-		case WM_INPUT:
-			this->OnRawInput()(*this, reinterpret_cast<HRAWINPUT>(lParam));
-			break;
-
         case WM_CLOSE:
 			{		
 				this->OnClose()(*this);

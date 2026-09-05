@@ -17,6 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <base/Input.h>
+#include <base/UIManager.h>
 
 
 namespace RenderWorker
@@ -75,6 +76,10 @@ namespace RenderWorker
 				for (auto const & device : devices_)
 				{
 					InputActionsType const theAction(device->UpdateActionMap(id));
+					auto& ui = Context::Instance().UIManagerInstance();
+					bool const pointer = device->Type() == IDT_Mouse || device->Type() == IDT_Touch;
+					if (pointer ? ui.GamePointerBlocked() : ui.GameKeyboardBlocked())
+						continue;
 
 					// 去掉重复的动作
 					for (auto const & act : theAction)
@@ -89,6 +94,7 @@ namespace RenderWorker
 					}
 				}
 			}
+			Context::Instance().UIManagerInstance().AcknowledgeGameInput();
 		}
 	}
 

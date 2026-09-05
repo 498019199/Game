@@ -36,8 +36,6 @@ namespace
 	InputActionDefine actions[] =
 	{
 		InputActionDefine(Exit, KS_Escape),
-		InputActionDefine(ToggleGm, KS_Grave),
-		InputActionDefine(GmSubmit, KS_Enter),
 	};
 }
 
@@ -388,6 +386,7 @@ void EditorManager::RenderEditorPanels() const
 #ifndef EDITOR_DEBUG_MODE
 	NewImGuiFrame();
     ImGui::NewFrame();
+	Context::Instance().UIManagerInstance().SetInputViewport(false, false, 0, 0, 1, 1);
 
     for(auto panel : panel_list_)
     {
@@ -398,6 +397,9 @@ void EditorManager::RenderEditorPanels() const
     }
 
     EditorDialogBoxManager::Instance().OnRender();
+	Context::Instance().UIManagerInstance().RouteInput(true,
+		ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
+		ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel));
     ImGui::Render();
 
 	RenderImGuiDrawData(ImGui::GetDrawData());
