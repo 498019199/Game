@@ -85,13 +85,21 @@ EditorProjectPanel::~EditorProjectPanel()
 
 void EditorProjectPanel::OnRender(const EditorSetting& setting)
 {
+    auto& manager = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    if (manager.assets_refresh_requested)
+    {
+        try { Refresh(manager.assets_select_path); refresh_error_.clear(); }
+        catch (std::exception const& e) { refresh_error_ = e.what(); }
+        manager.assets_refresh_requested = false; manager.assets_select_path.clear();
+    }
     // 面板大小和位置
     ImGui::SetNextWindowPos(ImVec2(0, (float)setting.mainBarHeight + (float)setting.hierarchyHeight));
     ImGui::SetNextWindowSize(ImVec2((float)setting.projectWidth, (float)setting.projectHeight));
 
     // 设置面板具体内容
-    ImGui::Begin("Peoject", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Project", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
     {
+        if (!refresh_error_.empty()) ImGui::TextWrapped("%s", refresh_error_.c_str());
         // 记录一下按钮原本颜色
         ImGuiStyle& style = ImGui::GetStyle();
         ImVec4 btnColor = style.Colors[ImGuiCol_Button];
@@ -100,6 +108,8 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
 		ImVec4 selectTextColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         // 当前路径节点，如果当前节点不是文件夹，就用当前节点的父节点
         auto curPathNode = cur_->type == AssetType::Folder ? cur_ : cur_->parent;
+
+        if (ImGui::Button("Refresh")) manager.assets_refresh_requested = true;
 
         // 绘制路径条
         ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
@@ -198,7 +208,10 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
                 ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
             }
 
-            ImGui::Button(node->name.c_str(), ImVec2(cellW, nameSize.y));
+            if (ImGui::Button(node->name.c_str(), ImVec2(cellW, nameSize.y)))
+            {
+                selected_ = static_cast<int>(i); SetCurNode(node);
+            }
             ImGui::PopStyleColor(2);
 
             ImGui::EndGroup();
@@ -212,6 +225,9 @@ void EditorProjectPanel::OnRender(const EditorSetting& setting)
         }
     }
     ImGui::End();
+    // Publish the final directory after navigation; asset selection uses its parent folder.
+    auto const folder = cur_->type == AssetType::Folder ? cur_ : cur_->parent;
+    manager.project_asset_directory = MaterialUtf8(MaterialPath(folder->path).lexically_relative(MaterialPath(root_->path)));
 }
 
 AssetType EditorProjectPanel::GetAssetType(const std::string& extension)
@@ -242,19 +258,19 @@ void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
         auto current = pending.back();
         pending.pop_back();
         current->children.clear();
-        for (auto const& entry : scanner.ReadDirectory(current->path))
+        for (auto const& entry : scanner.ReadDirectory(MaterialPath(current->path)))
         {
             try
             {
                 auto extension = entry.path.extension().string();
                 StringUtil::ToLower(extension);
-                auto name = entry.path.stem().string();
+                auto name = MaterialUtf8(entry.path.stem());
                 if (ignoreExtensions.contains(extension) || name == "Private")
                     continue;
 
                 auto child = CommonWorker::MakeSharedPtr<EditorAssetNode>();
                 child->parent = current;
-                child->path = entry.path.string();
+                child->path = MaterialUtf8(entry.path);
                 child->name = std::move(name);
                 child->extension = std::move(extension);
                 child->size = static_cast<uint32_t>((std::min)(entry.size,
@@ -278,6 +294,34 @@ void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
                 return a->name < b->name;
             });
     }
+}
+
+void EditorProjectPanel::Refresh(std::string const& select_path)
+{
+    auto desired = select_path.empty() ? MaterialPath(cur_->path) : MaterialPath(root_->path) / MaterialPath(select_path);
+    desired = std::filesystem::weakly_canonical(desired);
+    // Break the scanner's shared parent/child cycles before replacing the tree.
+    std::vector<EditorAssetNodePtr> old {root_};
+    while (!old.empty()) {
+        auto node = old.back(); old.pop_back();
+        for (auto const& child : node->children) { old.push_back(child); child->parent.reset(); }
+        node->children.clear();
+    }
+    GetChildren(root_); cur_ = root_; selected_ = -1;
+    std::vector<EditorAssetNodePtr> nodes {root_};
+    while (!nodes.empty()) {
+        auto node = nodes.back(); nodes.pop_back();
+        if (std::filesystem::weakly_canonical(MaterialPath(node->path)) == desired) {
+            SetCurNode(node);
+            if (node->parent) {
+                auto const& siblings = node->parent->children;
+                selected_ = static_cast<int>(std::find(siblings.begin(), siblings.end(), node) - siblings.begin());
+            }
+            return;
+        }
+        nodes.insert(nodes.end(), node->children.begin(), node->children.end());
+    }
+    checked_cast<EditorManager&>(Context::Instance().AppInstance()).ClearAssetSelection();
 }
 
 void EditorProjectPanel::OnResize()

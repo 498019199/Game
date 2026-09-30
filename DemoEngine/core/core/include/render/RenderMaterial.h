@@ -2,11 +2,14 @@
 
 #include <render/RenderEffect.h>
 #include <render/RenderView.h>
+#include <filesystem>
 
 namespace RenderWorker
 {
 class RenderMaterial;
 using RenderMaterialPtr = std::shared_ptr<RenderMaterial>;
+// UTF-8 filesystem destination; errors throw and never fall back to another directory.
+ZENGINE_CORE_API void SaveRenderMaterial(RenderMaterialPtr const& mtl, std::string const& mtlml_name, bool replace_existing = true);
 
 class ZENGINE_CORE_API RenderMaterial final
 {
@@ -41,6 +44,10 @@ public:
 	void Name(std::string_view name);
 	const std::string& Name() const;
 
+    void Template(std::string_view name);
+    std::string const& Template() const { return template_; }
+    std::string_view EffectName() const { return template_ == "EditorLitV1" ? "EditorLitV1.shader" : "SimpleAlbedoNormal.shader"; }
+    std::string_view TechniqueName() const { return template_ == "EditorLitV1" ? "EditorLitV1Tech" : "SimpleAlbedoNormalTech"; }
     void Albedo(const float4& value);
 	const float4&  Albedo() const;
     void Metalness(float value);
@@ -88,9 +95,14 @@ public:
     
 	void LoadTextureSlots();
 private:
+	friend class RenderMaterialLoadingDesc;
+	friend void SaveRenderMaterial(RenderMaterialPtr const&, std::string const&, bool);
+	// Preserve extension attributes/elements when editing known fields.
+	std::shared_ptr<CommonWorker::XMLNode const> serialization_source_;
 	std::string name_;
 
-	bool is_sw_mode_ = false;
+    std::string template_;
+    bool is_sw_mode_ = false;
     RenderEffectConstantBufferPtr cbuffer_;
     std::vector<uint32_t> sw_cbuffer_;
 
@@ -126,8 +138,10 @@ inline float Glossiness2Shininess(float glossiness)
 
 
 ZENGINE_CORE_API RenderMaterialPtr SyncLoadRenderMaterial(std::string_view mtlml_name);
+// Fresh filesystem read, deliberately bypassing ResLoader's resource cache.
+// Paths use the filesystem's native encoding; loading texture GPU resources is optional.
+ZENGINE_CORE_API RenderMaterialPtr LoadRenderMaterialFile(std::filesystem::path const& path, bool load_textures = true);
 ZENGINE_CORE_API RenderMaterialPtr ASyncLoadRenderMaterial(std::string_view mtlml_name);
-ZENGINE_CORE_API void SaveRenderMaterial(RenderMaterialPtr const & mtl, std::string const & mtlml_name);
 
 
 

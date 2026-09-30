@@ -94,6 +94,8 @@ SDL3RenderWindow::SDL3RenderWindow(std::string const& name, RenderSettings const
 	re.Device(device, window_);
 
 	depth_stencil_fmt_ = settings.depth_stencil_fmt;
+	sample_count_ = settings.sample_count;
+	sample_quality_ = settings.sample_quality;
 	if (IsDepthFormat(depth_stencil_fmt_))
 	{
 		auto dsv = MakeSharedPtr<SDL3DepthStencilView>(width_, height_, depth_stencil_fmt_, settings.sample_count,
@@ -143,6 +145,19 @@ void SDL3RenderWindow::Destroy()
 
 void SDL3RenderWindow::SwapBuffers()
 {
+}
+
+void SDL3RenderWindow::Resize(uint32_t width, uint32_t height)
+{
+	if (!width || !height || (width == width_ && height == height_)) return;
+	// SDL owns swapchain resizing; our depth attachment and viewport must follow it.
+	if (IsDepthFormat(depth_stencil_fmt_))
+		Attach(MakeSharedPtr<SDL3DepthStencilView>(width, height, depth_stencil_fmt_, sample_count_, sample_quality_));
+	width_ = width;
+	height_ = height;
+	viewport_->Width(width);
+	viewport_->Height(height);
+	views_dirty_ = true;
 }
 
 } // namespace RenderWorker

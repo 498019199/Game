@@ -76,6 +76,10 @@ public:
     virtual void SwapBuffers()
     {
     }
+
+    // Window framebuffers resize their swapchain/depth attachments at a frame boundary.
+    // Off-screen framebuffers retain the dimensions of their attached textures.
+    virtual void Resize(uint32_t, uint32_t) {}
     
     virtual void WaitOnSwapBuffers()
     {

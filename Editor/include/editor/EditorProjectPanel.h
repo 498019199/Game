@@ -39,9 +39,11 @@ private:
 
     void SetCurNode(const EditorAssetNodePtr& node);
     void GetChildren(const EditorAssetNodePtr& node);
+    void Refresh(std::string const& select_path = {});
 private:
     // 当前选中的id
     int selected_ {-1};
+    std::string refresh_error_;
     EditorAssetNodePtr root_ ;
     EditorAssetNodePtr cur_ ;
 

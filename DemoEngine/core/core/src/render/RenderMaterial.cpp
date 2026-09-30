@@ -2,34 +2,114 @@
 #include <render/RenderFactory.h>
 #include <render/RenderMaterial.h>
 #include <render/Texture.h>
+#include <render/detail/MaterialFileIO.h>
 
 #include <mutex>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <set>
+#include <cmath>
+#include <locale>
+#include <unordered_map>
+#include <algorithm>
+#include <cctype>
 
 namespace
 {
 using namespace RenderWorker;
 using namespace CommonWorker;
 
+// Saving an asset invalidates subsequent cached material queries, without mutating
+// objects currently used by a scene. Existing references keep their own lifetime.
+std::mutex material_revisions_mutex;
+std::unordered_map<std::string, uint64_t> material_revisions;
+std::string MaterialRevisionKey(std::filesystem::path path)
+{
+    std::error_code ec;
+    auto normalized = std::filesystem::weakly_canonical(path, ec);
+    if (!ec) path = std::move(normalized);
+    auto u8 = path.generic_u8string();
+    std::string key(reinterpret_cast<char const*>(u8.data()), u8.size());
+#ifdef _WIN32
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+#endif
+    return key;
+}
+
 template <int N>
 void ExtractFVector(std::string_view value_str, float* v)
 {
-	std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(' '));
+	std::istringstream values {std::string(value_str)};
+	values.imbue(std::locale::classic());
 	for (size_t i = 0; i < N; ++ i)
 	{
-		if (i < strs.size())
-		{
-			strs[i] = StringUtil::Trim(strs[i]);
-			v[i] = stof(std::string(strs[i]));
-		}
-		else
-		{
-			v[i] = 0;
-		}
+		if (!(values >> v[i])) TMSG("Invalid material vector");
 	}
 }
 
+float MaterialFloat(XMLAttribute const& attr)
+{
+	std::istringstream input {std::string(attr.ValueString())};
+	input.imbue(std::locale::classic());
+	float value;
+	if (!(input >> value) || !std::isfinite(value)) TMSG("Invalid material number: " + std::string(attr.Name()));
+	return value;
+}
+
+void ValidateMaterialXml(XMLNode const& node)
+{
+	std::set<std::string> attributes;
+	for (auto* attr = node.FirstAttrib(); attr; attr = node.NextAttrib(*attr))
+		if (!attributes.emplace(attr->Name()).second)
+			TMSG("Duplicate material attribute: " + std::string(attr->Name()));
+	for (auto* child = node.FirstNode(); child; child = child->NextSibling()) ValidateMaterialXml(*child);
+}
+
+void ValidateNumbers(XMLNode const& root)
+{
+	struct Field { char const* node; char const* attribute; unsigned count; };
+	Field const fields[] = {
+		{"albedo", "color", 4}, {"metalness_glossiness", "metalness", 1}, {"metalness_glossiness", "glossiness", 1},
+		{"metalness", "value", 1}, {"glossiness", "value", 1}, {"emissive", "color", 3},
+		{"normal", "scale", 1}, {"height", "offset", 1}, {"height", "scale", 1}, {"occlusion", "strength", 1},
+		{"alpha_test", "value", 1}, {"transparent", "value", 1}, {"sss", "value", 1}, {"two_sided", "value", 1}};
+	auto validate = [](XMLAttribute const* attr, unsigned count) {
+		if (!attr) return;
+		std::istringstream in(std::string(attr->ValueString()));
+		in.imbue(std::locale::classic());
+		for (unsigned i = 0; i < count; ++i)
+		{
+			float value;
+			if (!(in >> value) || !std::isfinite(value)) TMSG("Invalid material number: " + std::string(attr->Name()));
+		}
+		in >> std::ws;
+		if (!in.eof()) TMSG("Trailing material numeric data: " + std::string(attr->Name()));
+	};
+	for (auto const& field : fields)
+		if (auto* node = root.FirstNode(field.node))
+		{
+			if (node->NextSibling(field.node)) TMSG("Duplicate material element: " + std::string(field.node));
+			validate(node->Attrib(field.attribute), field.count);
+		}
+	for (auto name : {"transparent", "sss", "two_sided"})
+		if (auto* node = root.FirstNode(name))
+			if (auto* attr = node->Attrib("value"); attr && attr->ValueString() != "0" && attr->ValueString() != "1")
+				TMSG("Material boolean must be 0 or 1");
+	if (auto* detail = root.FirstNode("detail"))
+	{
+		if (detail->NextSibling("detail")) TMSG("Duplicate material detail element");
+		if (auto* tess = detail->FirstNode("tess"))
+		{
+			if (tess->NextSibling("tess")) TMSG("Duplicate material tess element");
+			for (auto name : {"edge_hint", "inside_hint", "min", "max"}) validate(tess->Attrib(name), 1);
+		}
+	}
+}
+}
+
+namespace RenderWorker
+{
 class RenderMaterialLoadingDesc : public ResLoadingDesc
 {
 private:
@@ -40,6 +120,7 @@ private:
 		struct RenderMaterialData
 		{
 			std::string name;
+			std::shared_ptr<XMLNode const> source;
 
 			float4 albedo;
 			float metalness;
@@ -66,9 +147,16 @@ private:
 	};
 
 public:
-	explicit RenderMaterialLoadingDesc(std::string_view res_name)
+	explicit RenderMaterialLoadingDesc(std::string_view res_name, ResIdentifierPtr input = {}, bool load_textures = true)
+		: input_(std::move(input)), load_textures_(load_textures)
 	{
 		mtl_desc_.res_name = std::string(res_name);
+        if (!input_) {
+            auto located = Context::Instance().ResLoaderInstance().Locate(res_name);
+            auto key = MaterialRevisionKey(std::filesystem::u8path(located.empty() ? std::string(res_name) : located));
+            std::lock_guard lock(material_revisions_mutex);
+            revision_ = material_revisions[key];
+        }
 		mtl_desc_.mtl_data = MakeSharedPtr<RenderMaterialDesc::RenderMaterialData>();
 		mtl_desc_.mtl = MakeSharedPtr<RenderMaterialPtr>();
 	}
@@ -92,9 +180,16 @@ public:
 			return;
 		}
 
-		ResIdentifierPtr mtl_input = Context::Instance().ResLoaderInstance().Open(mtl_desc_.res_name);
+		ResIdentifierPtr mtl_input = input_ ? input_ : Context::Instance().ResLoaderInstance().Open(mtl_desc_.res_name);
+		if (!mtl_input || !*mtl_input) TMSG("Cannot open material: " + mtl_desc_.res_name);
 
 		XMLNode root = LoadXml(*mtl_input);
+		if (root.Name() != "material") TMSG("Expected material root: " + mtl_desc_.res_name);
+		ValidateMaterialXml(root);
+		ValidateNumbers(root);
+		if (auto* mg = root.FirstNode("metalness_glossiness"); mg && mg->Attrib("value"))
+			TMSG("Ambiguous legacy metalness_glossiness/value; specify metalness and glossiness separately: " + mtl_desc_.res_name);
+		mtl_desc_.mtl_data->source = std::make_shared<XMLNode>(root);
 
 		if (XMLAttribute const* attr = root.Attrib("name"))
 		{
@@ -137,11 +232,11 @@ public:
 		{
 			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("metalness"))
 			{
-				mtl_desc_.mtl_data->metalness = attr->ValueFloat();
+				mtl_desc_.mtl_data->metalness = MaterialFloat(*attr);
 			}
 			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("glossiness"))
 			{
-				mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
+				mtl_desc_.mtl_data->glossiness = MaterialFloat(*attr);
 			}
 			if (XMLAttribute const* attr = metalness_glossiness_node->Attrib("texture"))
 			{
@@ -154,7 +249,7 @@ public:
 			{
 				if (XMLAttribute const* attr = metalness_node->Attrib("value"))
 				{
-					mtl_desc_.mtl_data->metalness = attr->ValueFloat();
+					mtl_desc_.mtl_data->metalness = MaterialFloat(*attr);
 				}
 				if (XMLAttribute const* attr = metalness_node->Attrib("texture"))
 				{
@@ -166,7 +261,7 @@ public:
 			{
 				if (XMLAttribute const* attr = glossiness_node->Attrib("value"))
 				{
-					mtl_desc_.mtl_data->glossiness = attr->ValueFloat();
+					mtl_desc_.mtl_data->glossiness = MaterialFloat(*attr);
 				}
 				if (XMLAttribute const* attr = glossiness_node->Attrib("texture"))
 				{
@@ -193,7 +288,7 @@ public:
 			}
 			if (XMLAttribute const* attr = normal_node->Attrib("scale"))
 			{
-				mtl_desc_.mtl_data->normal_scale = attr->ValueFloat();
+				mtl_desc_.mtl_data->normal_scale = MaterialFloat(*attr);
 			}
 		}
 		if (XMLNode const* height_node = root.FirstNode("height"))
@@ -204,11 +299,11 @@ public:
 			}
 			if (XMLAttribute const* attr = height_node->Attrib("offset"))
 			{
-				mtl_desc_.mtl_data->height_offset_scale.x() = attr->ValueFloat();
+				mtl_desc_.mtl_data->height_offset_scale.x() = MaterialFloat(*attr);
 			}
 			if (XMLAttribute const* attr = height_node->Attrib("scale"))
 			{
-				mtl_desc_.mtl_data->height_offset_scale.y() = attr->ValueFloat();
+				mtl_desc_.mtl_data->height_offset_scale.y() = MaterialFloat(*attr);
 			}
 		}
 		if (XMLNode const* occlusion_node = root.FirstNode("occlusion"))
@@ -219,7 +314,7 @@ public:
 			}
 			if (XMLAttribute const* attr = occlusion_node->Attrib("strength"))
 			{
-				mtl_desc_.mtl_data->occlusion_strength = attr->ValueFloat();
+				mtl_desc_.mtl_data->occlusion_strength = MaterialFloat(*attr);
 			}
 		}
 		if (XMLNode const* detail_node = root.FirstNode("detail"))
@@ -239,25 +334,27 @@ public:
 				{
 					mtl_desc_.mtl_data->detail_mode = RenderMaterial::SurfaceDetailMode::SmoothTessellation;
 				}
+				else if (CtHash("Parallax Mapping") != mode_hash)
+					TMSG("Unknown material detail mode: " + std::string(attr->ValueString()));
 			}
 
 			if (XMLNode const* tess_node = detail_node->FirstNode("tess"))
 			{
 				if (XMLAttribute const* attr = tess_node->Attrib("edge_hint"))
 				{
-					mtl_desc_.mtl_data->tess_factors.x() = attr->ValueFloat();
+					mtl_desc_.mtl_data->tess_factors.x() = MaterialFloat(*attr);
 				}
 				if (XMLAttribute const* attr = tess_node->Attrib("inside_hint"))
 				{
-					mtl_desc_.mtl_data->tess_factors.y() = attr->ValueFloat();
+					mtl_desc_.mtl_data->tess_factors.y() = MaterialFloat(*attr);
 				}
 				if (XMLAttribute const* attr = tess_node->Attrib("min"))
 				{
-					mtl_desc_.mtl_data->tess_factors.z() = attr->ValueFloat();
+					mtl_desc_.mtl_data->tess_factors.z() = MaterialFloat(*attr);
 				}
 				if (XMLAttribute const* attr = tess_node->Attrib("max"))
 				{
-					mtl_desc_.mtl_data->tess_factors.w() = attr->ValueFloat();
+					mtl_desc_.mtl_data->tess_factors.w() = MaterialFloat(*attr);
 				}
 			}
 		}
@@ -272,7 +369,7 @@ public:
 		{
 			if (XMLAttribute const* attr = alpha_test_node->Attrib("value"))
 			{
-				mtl_desc_.mtl_data->alpha_test = attr->ValueFloat();
+				mtl_desc_.mtl_data->alpha_test = MaterialFloat(*attr);
 			}
 		}
 		if (XMLNode const* sss_node = root.FirstNode("sss"))
@@ -317,7 +414,7 @@ public:
 		if (this->Type() == rhs.Type())
 		{
 			RenderMaterialLoadingDesc const & mtlld = static_cast<RenderMaterialLoadingDesc const &>(rhs);
-			return (mtl_desc_.res_name == mtlld.mtl_desc_.res_name);
+			return (mtl_desc_.res_name == mtlld.mtl_desc_.res_name) && revision_ == mtlld.revision_;
 		}
 		return false;
 	}
@@ -348,6 +445,8 @@ private:
 		if (!*mtl_desc_.mtl)
 		{
 			RenderMaterialPtr mtl = MakeSharedPtr<RenderMaterial>();
+			mtl->serialization_source_ = mtl_desc_.mtl_data->source;
+            if (auto attr = mtl->serialization_source_->Attrib("template")) mtl->Template(attr->ValueString());
 
 			mtl->Name(mtl_desc_.mtl_data->name);
 
@@ -377,7 +476,7 @@ private:
 			mtl->MinTessFactor(mtl_desc_.mtl_data->tess_factors.z());
 			mtl->MaxTessFactor(mtl_desc_.mtl_data->tess_factors.w());
 
-			mtl->LoadTextureSlots();
+			if (load_textures_) mtl->LoadTextureSlots();
 
 			*mtl_desc_.mtl = mtl;
 		}
@@ -385,8 +484,15 @@ private:
 
 private:
 	RenderMaterialDesc mtl_desc_;
+	ResIdentifierPtr input_;
+	bool load_textures_;
+    uint64_t revision_ = 0;
 	std::mutex main_thread_stage_mutex_;
 };
+}
+
+namespace
+{
 
 // TODO: Need refactors
 
@@ -489,7 +595,7 @@ void RenderMaterial::Glossiness(float value)
 	}
 	else
 	{
-		PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).y() = MathWorker::clamp(value, 1e-6f, 0.999f);
+		PredefinedMaterialCBufferInstance().MetalnessGlossinessFactor(*cbuffer_).y() = value;
 		cbuffer_->Dirty(true);
 	}
 }
@@ -816,8 +922,16 @@ RenderMaterialPtr RenderMaterial::Clone() const
     ret->two_sided_ = two_sided_;
     ret->detail_mode_ = detail_mode_;
     ret->textures_ = textures_;
+	ret->serialization_source_ = serialization_source_;
+    ret->template_ = template_;
 
 	return ret;
+}
+
+void RenderMaterial::Template(std::string_view name)
+{
+    if (!name.empty() && name != "EditorLitV1") TMSG("Unsupported material template: " + std::string(name));
+    template_ = name;
 }
 
 void RenderMaterial::Name(std::string_view name)
@@ -843,7 +957,7 @@ const std::string& RenderMaterial::TextureName(TextureSlot slot) const
 
 void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 {
-	auto const& pmcb = PredefinedMaterialCBufferInstance();
+	auto const* pmcb = is_sw_mode_ ? nullptr : &PredefinedMaterialCBufferInstance();
 		switch (slot)
 		{
 		case TS_Albedo:
@@ -853,7 +967,7 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 			}
 			else
 			{
-				pmcb.AlbedoMapEnabled(*cbuffer_) = srv ? 1 : 0;
+				pmcb->AlbedoMapEnabled(*cbuffer_) = srv ? 1 : 0;
 			}
 			break;
 
@@ -864,7 +978,7 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 			}
 			else
 			{
-				pmcb.MetalnessGlossinessFactor(*cbuffer_).z() = srv ? 1.0f : 0.0f;
+				pmcb->MetalnessGlossinessFactor(*cbuffer_).z() = srv ? 1.0f : 0.0f;
 			}
 			break;
 
@@ -875,7 +989,7 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 			}
 			else
 			{
-				pmcb.EmissiveClr(*cbuffer_).w() = srv ? 1.0f : 0.0f;
+				pmcb->EmissiveClr(*cbuffer_).w() = srv ? 1.0f : 0.0f;
 			}
 			break;
 
@@ -886,7 +1000,7 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 			}
 			else
 			{
-				pmcb.NormalMapEnabled(*cbuffer_) = srv ? 1 : 0;
+				pmcb->NormalMapEnabled(*cbuffer_) = srv ? 1 : 0;
 			}
 			break;
 
@@ -900,8 +1014,8 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 				}
 				else
 				{
-					pmcb.HeightMapParallaxEnabled(*cbuffer_) = srv ? 1 : 0;
-					pmcb.HeightMapTessEnabled(*cbuffer_) = 0;
+					pmcb->HeightMapParallaxEnabled(*cbuffer_) = srv ? 1 : 0;
+					pmcb->HeightMapTessEnabled(*cbuffer_) = 0;
 				}
 			}
 			else
@@ -913,8 +1027,8 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 				}
 				else
 				{
-					pmcb.HeightMapParallaxEnabled(*cbuffer_) = 0;
-					pmcb.HeightMapTessEnabled(*cbuffer_) = srv ? 1 : 0;
+					pmcb->HeightMapParallaxEnabled(*cbuffer_) = 0;
+					pmcb->HeightMapTessEnabled(*cbuffer_) = srv ? 1 : 0;
 				}
 			}
 			break;
@@ -922,11 +1036,11 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 		case TS_Occlusion:
 			if (is_sw_mode_)
 			{
-				reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_occlusion_map_enabled_offset_]) = 0;
+				reinterpret_cast<uint32_t&>(sw_cbuffer_[sw_occlusion_map_enabled_offset_]) = srv ? 1 : 0;
 			}
 			else
 			{
-				pmcb.OcclusionMapEnabled(*cbuffer_) = srv ? 1 : 0;
+				pmcb->OcclusionMapEnabled(*cbuffer_) = srv ? 1 : 0;
 			}
 			break;
 
@@ -934,7 +1048,7 @@ void RenderMaterial::Texture(TextureSlot slot, ShaderResourceViewPtr srv)
 			ZENGINE_UNREACHABLE("Invalid texture slot");
 		}
 
-		cbuffer_->Dirty(true);
+		if (cbuffer_) cbuffer_->Dirty(true);
 
 		textures_[slot].second = std::move(srv);
 }
@@ -1028,7 +1142,7 @@ void RenderMaterial::Active(RenderEffect& effect)
 		pmcb.AlbedoMapEnabled(*cbuffer_) = this->Texture(RenderMaterial::TS_Albedo) ? 1 : 0;
 		pmcb.NormalMapEnabled(*cbuffer_) = this->Texture(RenderMaterial::TS_Normal) ? 1 : 0;
 		float3 const rgb = float3(this->Albedo().x(), this->Albedo().y(), this->Albedo().z());
-		if (this->Texture(RenderMaterial::TS_Albedo) && (MathWorker::dot(rgb, rgb) < 1e-6f))
+		if (template_.empty() && this->Texture(RenderMaterial::TS_Albedo) && (MathWorker::dot(rgb, rgb) < 1e-6f))
 		{
 			pmcb.AlbedoClr(*cbuffer_) = float4(1, 1, 1, this->Albedo().w());
 		}
@@ -1048,173 +1162,89 @@ RenderMaterialPtr ASyncLoadRenderMaterial(std::string_view mtlml_name)
 	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderMaterial>(MakeSharedPtr<RenderMaterialLoadingDesc>(mtlml_name));
 }
 
-void SaveRenderMaterial(RenderMaterialPtr const & mtl, std::string const & mtlml_name)
+void SaveRenderMaterial(RenderMaterialPtr const& mtl, std::string const& mtlml_name, bool replace_existing)
 {
-	XMLNode root(XMLNodeType::Element, "material");
-
-	{
-		XMLNode albedo_node(XMLNodeType::Element, "albedo");
-
-		float4 const& albedo = mtl->Albedo();
-		albedo_node.AppendAttrib(XMLAttribute("color", std::format("{} {} {} {}", albedo.x(), albedo.y(), albedo.z(), albedo.w())));
-
-		if (!mtl->TextureName(RenderMaterial::TS_Albedo).empty())
-		{
-			albedo_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Albedo)));
-		}
-
-		root.AppendNode(std::move(albedo_node));
-	}
-
-	if ((mtl->Metalness() > 0) || (mtl->Glossiness() > 0) || !mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness).empty())
-	{
-		XMLNode metalness_glossiness_node(XMLNodeType::Element, "metalness_glossiness");
-
-		if (mtl->Metalness() > 0)
-		{
-			metalness_glossiness_node.AppendAttrib(XMLAttribute("value", mtl->Metalness()));
-		}
-		if (mtl->Glossiness() > 0)
-		{
-			metalness_glossiness_node.AppendAttrib(XMLAttribute("value", mtl->Glossiness()));
-		}
-		if (!mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness).empty())
-		{
-			metalness_glossiness_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness)));
-		}
-
-		root.AppendNode(std::move(metalness_glossiness_node));
-	}
-
-	float3 const& emissive = mtl->Emissive();
-	if ((emissive.x() > 0) || (emissive.y() > 0) || (emissive.z() > 0)
-		|| (!mtl->TextureName(RenderMaterial::TS_Emissive).empty()))
-	{
-		XMLNode emissive_node(XMLNodeType::Element, "emissive");
-
-		if ((emissive.x() > 0) || (emissive.y() > 0) || (emissive.z() > 0))
-		{
-			emissive_node.AppendAttrib(XMLAttribute("color", std::format("{} {} {}", emissive.x(), emissive.y(), emissive.z())));
-		}
-		if (!mtl->TextureName(RenderMaterial::TS_Emissive).empty())
-		{
-			emissive_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Emissive)));
-		}
-
-		root.AppendNode(std::move(emissive_node));
-	}
-
-	if (!mtl->TextureName(RenderMaterial::TS_Normal).empty())
-	{
-		XMLNode normal_node(XMLNodeType::Element, "normal");
-
-		normal_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Normal)));
-		normal_node.AppendAttrib(XMLAttribute("scale", mtl->NormalScale()));
-
-		root.AppendNode(std::move(normal_node));
-	}
-
-	if (!mtl->TextureName(RenderMaterial::TS_Height).empty())
-	{
-		XMLNode height_node(XMLNodeType::Element, "height");
-
-		height_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Height)));
-		height_node.AppendAttrib(XMLAttribute("offset", mtl->HeightOffset()));
-		height_node.AppendAttrib(XMLAttribute("scale", mtl->HeightScale()));
-
-		root.AppendNode(std::move(height_node));
-	}
-
-	if (!mtl->TextureName(RenderMaterial::TS_Occlusion).empty())
-	{
-		XMLNode occlusion_node(XMLNodeType::Element, "occlusion");
-
-		occlusion_node.AppendAttrib(XMLAttribute("texture", mtl->TextureName(RenderMaterial::TS_Occlusion)));
-		occlusion_node.AppendAttrib(XMLAttribute("strength", mtl->OcclusionStrength()));
-
-		root.AppendNode(std::move(occlusion_node));
-	}
-
-	if (mtl->DetailMode() != RenderMaterial::SurfaceDetailMode::ParallaxMapping)
-	{
-		XMLNode detail_node(XMLNodeType::Element, "detail");
-
-		std::string detail_mode_str;
-		switch (mtl->DetailMode())
-		{
-		case RenderMaterial::SurfaceDetailMode::ParallaxOcclusionMapping:
-			detail_mode_str = "Parallax Occlusion Mapping";
-			break;
-
-		case RenderMaterial::SurfaceDetailMode::FlatTessellation:
-			detail_mode_str = "Flat Tessellation";
-			break;
-
-		case RenderMaterial::SurfaceDetailMode::SmoothTessellation:
-			detail_mode_str = "Smooth Tessellation";
-			break;
-
-		default:
-			ZENGINE_UNREACHABLE("Invalid surface detail mode");
-		}
-		detail_node.AppendAttrib(XMLAttribute("mode", detail_mode_str));
-
-		if ((mtl->DetailMode() == RenderMaterial::SurfaceDetailMode::FlatTessellation) ||
-			(mtl->DetailMode() == RenderMaterial::SurfaceDetailMode::SmoothTessellation))
-		{
-			XMLNode tess_node(XMLNodeType::Element, "tess");
-			tess_node.AppendAttrib(XMLAttribute("edge_hint", mtl->EdgeTessHint()));
-			tess_node.AppendAttrib(XMLAttribute("inside_hint", mtl->InsideTessHint()));
-			tess_node.AppendAttrib(XMLAttribute("min", mtl->MinTessFactor()));
-			tess_node.AppendAttrib(XMLAttribute("max", mtl->MaxTessFactor()));
-			detail_node.AppendNode(std::move(tess_node));
-		}
-
-		root.AppendNode(std::move(detail_node));
-	}
-
-	if (mtl->Transparent())
-	{
-		XMLNode transparent_node(XMLNodeType::Element, "transparent");
-
-		transparent_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
-
-		root.AppendNode(std::move(transparent_node));
-	}
-
-	if (mtl->AlphaTestThreshold() > 0)
-	{
-		XMLNode alpha_test_node(XMLNodeType::Element, "alpha_test");
-
-		alpha_test_node.AppendAttrib(XMLAttribute("value", mtl->AlphaTestThreshold()));
-
-		root.AppendNode(std::move(alpha_test_node));
-	}
-
-	if (mtl->Sss())
-	{
-		XMLNode sss_node(XMLNodeType::Element, "sss");
-
-		sss_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
-
-		root.AppendNode(std::move(sss_node));
-	}
-
-	if (mtl->TwoSided())
-	{
-		XMLNode two_sided_node(XMLNodeType::Element, "two_sided");
-
-		two_sided_node.AppendAttrib(XMLAttribute("value", std::string_view("1")));
-
-		root.AppendNode(std::move(two_sided_node));
-	}
-
-	std::ofstream ofs(std::string(mtlml_name).c_str());
-	if (!ofs)
-	{
-		ofs.open((Context::Instance().ResLoaderInstance().LocalFolder() + mtlml_name).c_str());
-	}
-	SaveXml(root, ofs);
+    if (!mtl) TMSG("Cannot save a null material");
+    XMLNode root = mtl->serialization_source_ ? *mtl->serialization_source_ : XMLNode(XMLNodeType::Element, "material");
+    auto node = [](XMLNode& parent, std::string_view name) -> XMLNode& {
+        if (auto* existing = parent.FirstNode(name)) return *existing;
+        parent.AppendNode(XMLNode(XMLNodeType::Element, name));
+        return *parent.FirstNode(name);
+    };
+    auto text = [](XMLNode& target, std::string_view name, std::string_view value) {
+        if (auto* attr = target.Attrib(name)) attr->Value(value);
+        else target.AppendAttrib(XMLAttribute(name, value));
+    };
+    auto number = [&](XMLNode& target, std::string_view name, float value) {
+        if (!std::isfinite(value)) TMSG("Cannot save non-finite material value: " + std::string(name));
+        // XMLAttribute(float) uses to_string (six decimals); shortest round-trip
+        // formatting avoids losing small values or precision on repeated saves.
+        text(target, name, std::format("{}", value));
+    };
+    auto vector = [&](XMLNode& target, auto const& value, size_t count) {
+        std::string result;
+        for (size_t i = 0; i < count; ++i)
+        {
+            if (!std::isfinite(value[i])) TMSG("Cannot save non-finite material color");
+            if (i) result += ' ';
+            result += std::format("{}", value[i]);
+        }
+        text(target, "color", result);
+    };
+    text(root, "name", mtl->Name());
+    text(root, "template", mtl->Template());
+    auto& albedo = node(root, "albedo");
+    vector(albedo, mtl->Albedo(), 4);
+    text(albedo, "texture", mtl->TextureName(RenderMaterial::TS_Albedo));
+    auto& mg = node(root, "metalness_glossiness");
+    number(mg, "metalness", mtl->Metalness());
+    number(mg, "glossiness", mtl->Glossiness());
+    text(mg, "texture", mtl->TextureName(RenderMaterial::TS_MetalnessGlossiness));
+    auto& emissive = node(root, "emissive");
+    vector(emissive, mtl->Emissive(), 3);
+    text(emissive, "texture", mtl->TextureName(RenderMaterial::TS_Emissive));
+    auto& normal = node(root, "normal");
+    text(normal, "texture", mtl->TextureName(RenderMaterial::TS_Normal));
+    number(normal, "scale", mtl->NormalScale());
+    auto& height = node(root, "height");
+    text(height, "texture", mtl->TextureName(RenderMaterial::TS_Height));
+    number(height, "offset", mtl->HeightOffset());
+    number(height, "scale", mtl->HeightScale());
+    auto& occlusion = node(root, "occlusion");
+    text(occlusion, "texture", mtl->TextureName(RenderMaterial::TS_Occlusion));
+    number(occlusion, "strength", mtl->OcclusionStrength());
+    text(node(root, "transparent"), "value", mtl->Transparent() ? "1" : "0");
+    number(node(root, "alpha_test"), "value", mtl->AlphaTestThreshold());
+    text(node(root, "sss"), "value", mtl->Sss() ? "1" : "0");
+    text(node(root, "two_sided"), "value", mtl->TwoSided() ? "1" : "0");
+    auto& detail = node(root, "detail");
+    std::string_view mode;
+    switch (mtl->DetailMode())
+    {
+    case RenderMaterial::SurfaceDetailMode::ParallaxMapping: mode = "Parallax Mapping"; break;
+    case RenderMaterial::SurfaceDetailMode::ParallaxOcclusionMapping: mode = "Parallax Occlusion Mapping"; break;
+    case RenderMaterial::SurfaceDetailMode::FlatTessellation: mode = "Flat Tessellation"; break;
+    case RenderMaterial::SurfaceDetailMode::SmoothTessellation: mode = "Smooth Tessellation"; break;
+    default: TMSG("Cannot save unknown material detail mode");
+    }
+    text(detail, "mode", mode);
+    auto& tess = node(detail, "tess");
+    number(tess, "edge_hint", mtl->EdgeTessHint());
+    number(tess, "inside_hint", mtl->InsideTessHint());
+    number(tess, "min", mtl->MinTessFactor());
+    number(tess, "max", mtl->MaxTessFactor());
+    std::ostringstream out;
+    SaveXml(root, out);
+    if (!out) TMSG("Cannot serialize material");
+    // UTF-8 API paths are resolved exactly once. Do not retry at an unrelated
+    // LocalFolder destination when saving fails.
+    auto const path = std::filesystem::path(std::u8string(mtlml_name.begin(), mtlml_name.end()));
+    auto const key = MaterialRevisionKey(path);
+    // Reserve bookkeeping before commit, so allocation failure cannot turn a successful save into a reported failure.
+    std::lock_guard lock(material_revisions_mutex);
+    auto& revision = material_revisions[key];
+    Detail::WriteMaterialFileAtomically(path, out.str(), {}, replace_existing);
+    ++revision;
 }
 
 
@@ -1328,4 +1358,16 @@ float4& PredefinedMaterialCBuffer::TessFactors(RenderEffectConstantBuffer& cbuff
 {
 	return *cbuff.template VariableInBuff<float4>(tess_factors_offset_);
 }
+}
+
+RenderWorker::RenderMaterialPtr RenderWorker::LoadRenderMaterialFile(std::filesystem::path const& path, bool load_textures)
+{
+	auto stream = std::make_shared<std::ifstream>(path, std::ios::binary);
+	auto utf8 = path.u8string();
+	std::string name(reinterpret_cast<char const*>(utf8.data()), utf8.size());
+	if (!*stream) TMSG("Cannot open material: " + name);
+	RenderMaterialLoadingDesc desc(name, std::make_shared<ResIdentifier>(name, 0, stream), load_textures);
+	desc.SubThreadStage();
+	desc.MainThreadStage();
+	return std::static_pointer_cast<RenderMaterial>(desc.Resource());
 }

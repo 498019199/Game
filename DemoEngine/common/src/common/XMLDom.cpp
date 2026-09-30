@@ -31,6 +31,7 @@
 
 #include <common/Util.h>
 #include <common/StringUtil.h>
+#include <common/ErrorHandling.h>
 
 #include <iterator>
 #include <string>
@@ -1241,14 +1242,26 @@ namespace CommonWorker
 	XMLNode LoadXml(ResIdentifier& source)
 	{
 		source.seekg(0, std::ios_base::end);
-		size_t const len = static_cast<size_t>(source.tellg());
+		auto const end = source.tellg();
+		if (end <= 0) TMSG("Empty or unreadable XML: " + source.ResName());
+		size_t const len = static_cast<size_t>(end);
 		source.seekg(0, std::ios_base::beg);
 		auto xml_src = MakeUniquePtr<char[]>(len + 1);
 		source.read(&xml_src[0], len);
+		if (source.gcount() != static_cast<int64_t>(len)) TMSG("Incomplete XML read: " + source.ResName());
 		xml_src[len] = 0;
 
 		rapidxml::xml_document<char> doc;
-		doc.parse<0>(xml_src.get());
+		try
+		{
+			doc.parse<rapidxml::parse_validate_closing_tags>(xml_src.get());
+		}
+		catch (rapidxml::parse_error const& e)
+		{
+			TMSG("Invalid XML in " + source.ResName() + ": " + e.what());
+		}
+		if (!doc.first_node() || doc.first_node()->next_sibling())
+			TMSG("XML must contain one root element: " + source.ResName());
 
 		return CreateXmlNodeFromRapidXmlNode(*doc.first_node());
 	}

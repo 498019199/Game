@@ -118,6 +118,7 @@ void App3D::Suspend()
 	
 void App3D::Quit()
 {
+    if (!OnCloseRequested()) return;
 #ifdef ZENGINE_PLATFORM_WINDOWS
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     ::PostQuitMessage(0);

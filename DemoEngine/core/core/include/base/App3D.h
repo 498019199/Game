@@ -53,6 +53,8 @@ public:
     void Suspend();
     // 退出程序
     void Quit();
+    // Editors may defer both native and programmatic close for unsaved documents.
+    virtual bool OnCloseRequested() { return true; }
     void Destroy();
 
     const std::string& Name() const;

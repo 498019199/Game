@@ -12,6 +12,9 @@ if(WIN32)
         ${DEMOENGINE_DIR}/core/plungins/render/sdl3/src)
 
     set(SRC_LIST
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/EditorResizeSmoke.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorSetting.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorMaterialService.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorConsolePanel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorDialogBoxManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorGameViewPanel.cpp
@@ -53,9 +56,19 @@ if(WIN32)
         PRIVATE
             d3dcompiler)
 
-    add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL tests/EditorRegressionTests.cpp)
+    add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL
+        tests/EditorRegressionTests.cpp tests/MaterialSerializationTests.cpp
+        tests/EditorMaterialDocumentTests.cpp src/EditorMaterialService.cpp src/EditorSetting.cpp)
     target_link_libraries(ZENGINE_editor_tests PRIVATE ZENGINE_core ZENGINE_common gtest imgui)
     add_dependencies(ZENGINE_editor_tests ZENGINE_AudioEngine_XAudio ZENGINE_AudioDataSource_OggVorbis ZENGINE_InputEngine_InputSDL3)
+    add_executable(ZENGINE_material_gpu_tests EXCLUDE_FROM_ALL tests/MaterialGpuTests.cpp)
+    target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common ZENGINE_Render_D3D11 ZENGINE_Render_SDL3 SDL3::SDL3 dbghelp)
+    add_dependencies(ZENGINE_material_gpu_tests ZENGINE_DevHelps)
+    
+    set_target_properties(ZENGINE_editor_tests PROPERTIES
+        OUTPUT_NAME ZENGINE_editor_tests${ZENGINE_OUTPUT_SUFFIX}
+    FOLDER "test"
+)
 endif()
 
 add_executable(ZENGINE_game_app
@@ -96,3 +109,9 @@ else()
             ZENGINE_InputEngine_InputSDL3
             ZENGINE_AudioDataSource_OggVorbis)
 endif()
+
+set_target_properties(ZENGINE_material_gpu_tests PROPERTIES
+    OUTPUT_NAME ZENGINE_material_gpu_tests${ZENGINE_OUTPUT_SUFFIX}
+    FOLDER "test"
+)
+

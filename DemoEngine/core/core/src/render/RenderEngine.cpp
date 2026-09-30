@@ -78,7 +78,27 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
 
 void RenderEngine::BeginFrame()
 {
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    // Coalesce WM_SIZE changes here, outside the native message callback and render passes.
+    auto& app = Context::Instance().AppInstance();
+    RECT client{};
+    auto const hwnd = app.MainWnd()->GetHWND();
+    bool resized = false;
+    if (!::IsIconic(hwnd) && ::GetClientRect(hwnd, &client) && client.right > 0 && client.bottom > 0)
+    {
+        auto const width = static_cast<uint32_t>(client.right);
+        auto const height = static_cast<uint32_t>(client.bottom);
+        if (screen_frame_buffer_->Width() != width || screen_frame_buffer_->Height() != height)
+        {
+            screen_frame_buffer_->Resize(width, height);
+            resized = true;
+        }
+    }
+#endif
     this->BindFrameBuffer(default_frame_buffers_[0]);
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    if (resized) app.OnResize(screen_frame_buffer_->Width(), screen_frame_buffer_->Height());
+#endif
 }
 
 void RenderEngine::BeginPass()

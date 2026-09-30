@@ -1,8 +1,10 @@
 #include <editor/EditorInspectorPanel.h>
 #include <editor/EditorManager.h>
 #include <editor/EditorProjectPanel.h>
+#include <editor/EditorAssetScanner.h>
 #include <editor/EditorTransform.h>
 #include <exception>
+#include <algorithm>
 
 #include <base/ZEngine.h>
 #include <common/Util.h>
@@ -33,7 +35,13 @@ void EditorInspectorPanel::OnRender(const EditorSetting& setting)
     if (ImGui::Begin("Inspector", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
             auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
-            const auto& pAsset = editor.GetSelectedAssert();
+            if (ImGui::BeginCombo("Materials", "Open documents"))
+            {
+                for (auto const& [path, doc] : editor.Materials().Documents())
+                    if (ImGui::Selectable((path + (doc->Dirty() ? " *" : "")).c_str())) editor.SelectMaterialDocument(doc);
+                ImGui::EndCombo();
+            }
+            const auto pAsset = editor.GetSelectedAssert();
             if( pAsset )
             {
                 switch (editor.GetAssertType())
@@ -320,7 +328,126 @@ void EditorInspectorPanel::DrawModel(AssertBaseInfo& info)
 
 void EditorInspectorPanel::DrawMaterial(AssertBaseInfo& info)
 {
-    
+    auto& asset = checked_cast<AssetMaterialInfo&>(info);
+    auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    auto& service = editor.Materials();
+    auto attempt = [&](auto action) {
+        try { action(); asset.error.clear(); }
+        catch (std::exception const& e) { asset.error = e.what(); }
+    };
+    if (!asset.error.empty()) ImGui::TextWrapped("Error: %s", asset.error.c_str());
+    if (!asset.document)
+    {
+        ImGui::TextWrapped("Material unavailable: %s", asset.path.c_str());
+        if (ImGui::Button("Retry Open")) attempt([&] { asset.document = service.Open(asset.path); });
+        return;
+    }
+    auto doc = asset.document;
+    ImGui::TextWrapped("%s%s", doc->Path().c_str(), doc->Dirty() ? " * (unsaved)" : " (saved)");
+    ImGui::Text("Template: %s", doc->Material().Template().empty() ? "Legacy" : doc->Material().Template().c_str());
+    ImGui::TextWrapped("M2: edit and save data. Sphere preview / model assignment arrive in M3 / M4.");
+    if (doc->Material().Template().empty()) ImGui::TextWrapped("Legacy rendering is preserved; not every parameter is visible in the legacy shader.");
+    if (ImGui::Button("Save")) attempt([&] { service.Save(*doc); });
+    ImGui::SameLine(); if (ImGui::Button("Save As")) ImGui::OpenPopup("Save Material As");
+    if (ImGui::Button("Revert")) ImGui::OpenPopup("Revert material?");
+    ImGui::SameLine(); if (ImGui::Button("Reload Disk")) ImGui::OpenPopup("Reload material?");
+    ImGui::SameLine(); if (ImGui::Button("Close")) ImGui::OpenPopup("Close material?");
+
+    if (ImGui::BeginPopupModal("Save Material As", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextUnformatted("New Assets-relative .mat path (existing files are never overwritten)");
+        ImGui::InputText("Path", asset.save_as, sizeof(asset.save_as));
+        if (!asset.error.empty()) ImGui::TextWrapped("%s", asset.error.c_str());
+        if (ImGui::Button("Save new asset")) attempt([&] {
+            auto created = service.SaveAs(*doc, asset.save_as);
+            editor.SelectMaterialDocument(created);
+            editor.assets_refresh_requested = true; editor.assets_select_path = created->Path();
+            ImGui::CloseCurrentPopup();
+        });
+        ImGui::SameLine(); if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+    auto confirm = [&](char const* title, auto action) {
+        if (ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::TextUnformatted("Discard current edits? This cannot be undone.");
+            if (!asset.error.empty()) ImGui::TextWrapped("%s", asset.error.c_str());
+            if (ImGui::Button("Confirm")) attempt([&] { action(); ImGui::CloseCurrentPopup(); });
+            ImGui::SameLine(); if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
+    };
+    confirm("Revert material?", [&] { doc->Revert(); });
+    confirm("Reload material?", [&] { service.Reload(*doc); });
+    confirm("Reset parameters?", [&] { doc->ResetParameters(); });
+    if (ImGui::BeginPopupModal("Close material?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextUnformatted(doc->Dirty() ? "Save changes before closing?" : "Close this document?");
+        if (!asset.error.empty()) ImGui::TextWrapped("%s", asset.error.c_str());
+        auto close = [&](MaterialCloseChoice choice) { attempt([&] {
+            if (service.Close(doc, choice)) editor.ClearAssetSelection();
+            ImGui::CloseCurrentPopup();
+        }); };
+        if (ImGui::Button("Save and Close")) close(MaterialCloseChoice::Save);
+        ImGui::SameLine(); if (ImGui::Button("Discard and Close")) close(MaterialCloseChoice::Discard);
+        ImGui::SameLine(); if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::Separator();
+    auto p = doc->Parameters();
+    char name[512] = {};
+    std::copy_n(p.name.data(), (std::min)(p.name.size(), sizeof(name) - 1), name);
+    bool changed = ImGui::InputText("Name", name, sizeof(name));
+    if (changed) p.name = name;
+    float color[] = {p.albedo[0], p.albedo[1], p.albedo[2], p.albedo[3]};
+    if (ImGui::ColorEdit4("Albedo", color, ImGuiColorEditFlags_Float)) { p.albedo = float4(color); changed = true; }
+    changed |= ImGui::SliderFloat("Metalness", &p.metalness, 0, 1, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+    changed |= ImGui::SliderFloat("Glossiness", &p.glossiness, 0, 1, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+    float emission[] = {p.emissive[0], p.emissive[1], p.emissive[2]};
+    if (ImGui::DragFloat3("Emissive", emission, 0.01f, 0, 64, "%.3f", ImGuiSliderFlags_AlwaysClamp)) { p.emissive = float3(emission); changed = true; }
+    changed |= ImGui::SliderFloat("Normal Scale", &p.normal_scale, 0, 4, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+    changed |= ImGui::SliderFloat("Occlusion", &p.occlusion_strength, 0, 1, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+    if (changed) attempt([&] { doc->Edit(p); });
+    if (ImGui::Button("Reset Parameters")) ImGui::OpenPopup("Reset parameters?");
+    ImGui::TextWrapped("Reset preserves name, textures and advanced fields. Emissive: 0..64; normal: 0..4; other values: 0..1.");
+
+    if (ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::Button("Refresh Texture List")) attempt([&] {
+            asset.texture_choices.clear();
+            auto root = std::filesystem::path(Context::Instance().ResLoaderInstance().LocalFolder()) / "../../Assets";
+            EditorAssetScanner scanner;
+            std::vector<std::filesystem::path> pending {root};
+            while (!pending.empty()) {
+                auto directory = pending.back(); pending.pop_back();
+                for (auto const& entry : scanner.ReadDirectory(directory)) {
+                    if (entry.directory) pending.push_back(entry.path);
+                    else if (EditorMaterialService::IsTexture(entry.path))
+                        asset.texture_choices.push_back(MaterialUtf8(entry.path.lexically_relative(root)));
+                }
+            }
+            std::sort(asset.texture_choices.begin(), asset.texture_choices.end());
+        });
+        char const* labels[] = {"Albedo texture", "Metalness / Glossiness", "Normal texture", "Emissive texture", "Occlusion texture"};
+        RenderMaterial::TextureSlot slots[] = {RenderMaterial::TS_Albedo, RenderMaterial::TS_MetalnessGlossiness, RenderMaterial::TS_Normal, RenderMaterial::TS_Emissive, RenderMaterial::TS_Occlusion};
+        for (int i = 0; i < 5; ++i) {
+            ImGui::PushID(i);
+            ImGui::TextUnformatted(labels[i]);
+            auto const current = doc->Material().TextureName(slots[i]);
+            ImGui::TextWrapped("Current: %s", current.empty() ? "(none)" : current.c_str());
+            if (ImGui::BeginCombo("Pick", "Select texture")) {
+                for (auto const& path : asset.texture_choices)
+                    if (ImGui::Selectable(path.c_str(), path == current)) attempt([&] { service.SetTexture(*doc, slots[i], path); });
+                ImGui::EndCombo();
+            }
+            ImGui::InputText("Path", asset.texture_path[i], sizeof(asset.texture_path[i]));
+            if (ImGui::Button("Use Path")) attempt([&] { service.SetTexture(*doc, slots[i], asset.texture_path[i]); });
+            ImGui::SameLine(); if (ImGui::Button("Clear")) attempt([&] { service.SetTexture(*doc, slots[i], ""); });
+            auto const srv = doc->Material().Texture(slots[i]);
+            if (srv) if (auto handle = editor.ImGuiTextureHandle(srv)) ImGui::Image((ImTextureID)(intptr_t)handle, ImVec2(64, 64));
+            ImGui::PopID();
+        }
+    }
 }
 
 }

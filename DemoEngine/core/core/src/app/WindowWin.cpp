@@ -1,4 +1,5 @@
 #include <base/Window.h>
+#include <base/App3D.h>
 #include <base/ZEngine.h>
 #include <world/World.h>
 #include <render/RenderEngine.h>
@@ -251,6 +252,7 @@ LRESULT Window::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #endif
         case WM_CLOSE:
 			{		
+                if (!Context::Instance().AppInstance().OnCloseRequested()) return 0;
 				this->OnClose()(*this);
 
 				active_ = false;

@@ -599,4 +599,25 @@ void D3D11RenderWindow::CreateSwapChain(ID3D11Device* d3d_device, bool try_hdr_d
         }
     }
 }
+
+void D3D11RenderWindow::Resize(uint32_t width, uint32_t height)
+{
+    if (!width || !height || (width == width_ && height == height_)) return;
+    auto& re = checked_cast<D3D11RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+    // DXGI requires releasing all references (including context bindings) to the old backbuffer.
+    re.OMSetRenderTargets(0, nullptr, nullptr);
+    re.InvalidRTVCache();
+    Detach(Attachment::Color0);
+    Detach();
+    render_target_view_.reset();
+    render_target_view_right_eye_.reset();
+    depth_stencil_view_.reset();
+    depth_stencil_view_right_eye_.reset();
+    back_buffer_.reset();
+    depth_stencil_.reset();
+    TIFHR(swap_chain_1_->ResizeBuffers(sc_desc1_.BufferCount, width, height, sc_desc1_.Format, sc_desc1_.Flags));
+    width_ = sc_desc1_.Width = width;
+    height_ = sc_desc1_.Height = height;
+    UpdateSurfacesPtrs();
+}
 }

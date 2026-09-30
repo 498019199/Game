@@ -46,6 +46,8 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
                     POP_MESSAGE("Notice", "This feature is not implemented yet.");
                 if (ImGui::MenuItem("Save Project"))
                     POP_MESSAGE("Notice", "This feature is not implemented yet.");
+                ImGui::Separator();
+                if (ImGui::MenuItem("Exit")) checked_cast<EditorManager&>(Context::Instance().AppInstance()).Quit();
 
                 ImGui::EndMenu();
             }
@@ -190,8 +192,8 @@ void EditorMainBarPanel::OnRender(const EditorSetting& setting)
                 // SceneManager::GetInstance()->GetCurScene()->Update();
             }
         }
-		ImGui::End();
     }
+    ImGui::End();
 
 }
 

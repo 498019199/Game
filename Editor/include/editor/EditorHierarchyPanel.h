@@ -11,6 +11,9 @@ public:
 
     virtual void OnRender(const EditorSetting& setting) override;
     virtual void OnResize() override;
+private:
+    char material_name_[256] = "Demo.mat";
+    std::string material_folder_, material_error_;
 };
 
 }

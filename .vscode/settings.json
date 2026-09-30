@@ -103,7 +103,12 @@
 
     "files.exclude": {
       "build": true,
+      "out": true,
       "bin": true,
+      ".codegraph": true,
+      ".codex": true,
+      ".cursor": true,
+      ".githooks": true,
 
       "**/.kfx": true,
     },

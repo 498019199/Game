@@ -8,6 +8,7 @@
 #include <base/UIManager.h>
 #include <game/GameContext.h>
 #include <filesystem>
+#include <iostream>
 
 #include <windows.h>
 
@@ -68,11 +69,24 @@ namespace
     }
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    std::string backend, smoke_material;
+    bool smoke_resize = false;
+    for (int i = 1; i < argc; ++i) {
+        std::string_view arg(argv[i]);
+        if (arg.starts_with("--backend=")) backend = arg.substr(10);
+        else if (arg.starts_with("--smoke-material=")) smoke_material = arg.substr(17);
+        else if (arg == "--smoke-resize") smoke_resize = true;
+        else { std::cerr << "Unknown argument: " << arg << std::endl; return 2; }
+    }
+    if (!backend.empty() && backend != "SDL3" && backend != "D3D11") {
+        std::cerr << "Supported editor backends: SDL3, D3D11" << std::endl; return 2;
+    }
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
     Context::Instance().LoadConfig(cfg_path.c_str());
     auto config = Context::Instance().Config();
+    if (!backend.empty()) config.render_factory_name = backend;
     const uint32_t defaultHierarchyWidth = 150;
 	const uint32_t defaultProjectHeight = 200;
 	const uint32_t defaultInspectorWidth = 300;
@@ -156,9 +170,21 @@ int main()
     app->MainWnd()->BindMsgProc(EditorWndProc);
 #endif //EDITOR_DEBUG_MODE
 
-    app->Run();
+    int result = 0;
+    if (smoke_material.empty() && !smoke_resize) app->Run();
+    else {
+        // Bounded startup/Inspector rendering smoke test; never edit or save assets.
+        ::ShowWindow(app->MainWnd()->GetHWND(), SW_HIDE);
+        try {
+            if (!smoke_material.empty()) app->SelectMaterialDocument(app->Materials().Open(smoke_material));
+            if (smoke_resize) app->RunResizeSmokeTest();
+            for (int i = 0; i < 3; ++i) Context::Instance().WorldInstance().Update();
+            std::cout << "PASS: Editor material Inspector rendered 3 frames (" << config.render_factory_name << ")" << std::endl;
+        } catch (std::exception const& e) { std::cerr << e.what() << std::endl; result = 1; }
+        app->OnDestroy();
+    }
     app.reset();
     GameContext::Instance().Shutdown();
     Context::Destroy();
-    return 0;
+    return result;
 }

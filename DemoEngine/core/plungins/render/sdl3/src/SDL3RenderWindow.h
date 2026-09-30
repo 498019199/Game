@@ -14,6 +14,7 @@ public:
 
 	void Destroy();
 	void SwapBuffers() override;
+	void Resize(uint32_t width, uint32_t height) override;
 
 	bool FullScreen() const { return is_full_screen_; }
 	SDL_Window* SDLWindow() const noexcept { return window_; }
@@ -25,6 +26,7 @@ private:
 	bool is_full_screen_{false};
 	uint32_t sync_interval_{0};
 	ElementFormat depth_stencil_fmt_{EF_Unknown};
+	uint32_t sample_count_{1}, sample_quality_{0};
 };
 
 using SDL3RenderWindowPtr = std::shared_ptr<SDL3RenderWindow>;

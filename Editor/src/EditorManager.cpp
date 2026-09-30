@@ -43,51 +43,6 @@ namespace EditorWorker
 {
 using namespace RenderWorker;
 
-void EditorSetting::SetWindowSize(uint32_t editorWidth, uint32_t editorHeight, int hWidth, int pHeight, int iWidth)
-{
-    srcWidth = static_cast<int>(editorWidth);
-    srcHeight = static_cast<int>(editorHeight);
-    mainBarWidth = srcWidth;
-    mainBarHeight = 58;
-
-    hierarchyWidth = (std::max)(0, hWidth);
-    inspectorWidth = (std::max)(0, iWidth);
-    projectHeight = (std::max)(0, pHeight);
-    gameViewWidth = (std::max)(1, srcWidth - hierarchyWidth - inspectorWidth);
-    gameViewHeight = (std::max)(1, srcHeight - projectHeight - mainBarHeight);
-
-    hierarchyHeight = gameViewHeight;
-    consoleWidth = (gameViewWidth + hierarchyWidth) / 3;
-    consoleHeight = projectHeight;
-    projectWidth = gameViewWidth + hierarchyWidth - consoleWidth;
-    inspectorHeight = gameViewHeight + projectHeight;
-}
-
-void EditorSetting::ApplyDpiScale(float scale)
-{
-    if (scale <= 0.f)
-    {
-        return;
-    }
-    auto mul = [scale](int& v) {
-        v = static_cast<int>(static_cast<float>(v) * scale + 0.5f);
-    };
-    mul(hierarchyWidth);
-    mul(hierarchyHeight);
-    mul(consoleWidth);
-    mul(consoleHeight);
-    mul(projectWidth);
-    mul(projectHeight);
-    mul(inspectorWidth);
-    mul(inspectorHeight);
-    mul(mainBarWidth);
-    mul(mainBarHeight);
-    mul(srcWidth);
-    mul(srcHeight);
-    mul(gameViewWidth);
-    mul(gameViewHeight);
-}
-
 EditorManager::EditorManager()
     : App3D("Editor App")
     , scene_path_("Scenes/DefaultScene.scene")
@@ -102,6 +57,13 @@ EditorManager::~EditorManager()
 void EditorManager::OnCreate()
 {
     GameContext::Instance().Startup();
+    materials_ = std::make_unique<EditorMaterialService>(
+        std::filesystem::path(Context::Instance().ResLoaderInstance().LocalFolder()) / "../../Assets",
+        [](std::filesystem::path const& path) {
+            auto tex = SyncLoadTexture(MaterialUtf8(path), EAH_GPU_Read | EAH_Immutable);
+            if (!tex) TMSG("Texture load failed: " + MaterialUtf8(path));
+            return Context::Instance().RenderFactoryInstance().MakeTextureSrv(tex);
+        });
 
     auto& context = Context::Instance();
 	RenderFactory& rf = context.RenderFactoryInstance();
@@ -163,12 +125,21 @@ void EditorManager::OnCreate()
 
 void EditorManager::OnResize(uint32_t width, uint32_t height)
 {
-    App3D::OnResize(width, height);
+    if (!width || !height) return;
+    // BeginFrame runs outside World::Update's traversal lock. Protect the mesh
+    // depth bindings and shared camera while the scene update thread is active.
+    std::lock_guard<std::mutex> lock(Context::Instance().WorldInstance().MutexForUpdate());
+    setting_.ResizeClient(width, height);
 
     auto& rf = Context::Instance().RenderFactoryInstance();
-    RenderDeviceCaps const& caps = rf.RenderEngineInstance().DeviceCaps();
-    RebuildBackFaceDepthTarget(rf, caps, width, height);
+    auto& re = rf.RenderEngineInstance();
+    RenderDeviceCaps const& caps = re.DeviceCaps();
+    RebuildBackFaceDepthTarget(rf, caps, setting_.gameViewWidth, setting_.gameViewHeight);
     RebuildGameViewRenderTarget(rf, caps);
+    auto& camera = *re.ScreenFrameBuffer()->Viewport()->Camera();
+    camera.ProjParams(re.DefaultFOV(), static_cast<float>(setting_.gameViewWidth) / setting_.gameViewHeight,
+        camera.NearPlane(), camera.FarPlane());
+    for (auto const& panel : panel_list_) panel->OnResize();
 }
 
 void EditorManager::ApplySceneCamera()
@@ -268,7 +239,7 @@ void EditorManager::RebuildGameViewRenderTarget(RenderFactory& rf, RenderDeviceC
 	game_view_fb_->Attach(FrameBuffer::Attachment::Color0, color_rtv);
 	game_view_fb_->Attach(game_dsv);
 
-	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().CurFrameBuffer();
+	FrameBufferPtr screen_buffer = rf.RenderEngineInstance().ScreenFrameBuffer();
 	game_view_fb_->Viewport()->Camera(screen_buffer->Viewport()->Camera());
 
 	game_view_srv_ = rf.MakeTextureSrv(game_view_color_tex_);
@@ -316,6 +287,7 @@ void EditorManager::DoUpdateOverlay()
 void EditorManager::OnDestroy()
 {
     selected_asset_info_.reset();
+    materials_.reset();
 #ifndef EDITOR_DEBUG_MODE
 	ShutdownImGui();
 	ImGui::DestroyContext();
@@ -382,7 +354,7 @@ uint32_t EditorManager::DoUpdate(uint32_t pass)
     }
 }
 
-void EditorManager::RenderEditorPanels() const
+void EditorManager::RenderEditorPanels()
 {
 #ifndef EDITOR_DEBUG_MODE
 	NewImGuiFrame();
@@ -395,6 +367,25 @@ void EditorManager::RenderEditorPanels() const
         {
             panel->OnRender(setting_);
         }
+    }
+
+    if (exit_pending_) ImGui::OpenPopup("Unsaved materials - Exit");
+    if (ImGui::BeginPopupModal("Unsaved materials - Exit", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextUnformatted("Save all modified materials before exiting?");
+        for (auto const& [path, doc] : materials_->Documents())
+            if (doc->Dirty()) ImGui::BulletText("%s", path.c_str());
+        if (!exit_error_.empty()) ImGui::TextWrapped("%s", exit_error_.c_str());
+        auto finish = [&](MaterialCloseChoice choice) {
+            try {
+                if (materials_->ResolveExit(choice)) { exit_approved_ = true; Quit(); }
+                exit_pending_ = false; exit_error_.clear(); ImGui::CloseCurrentPopup();
+            } catch (std::exception const& e) { exit_error_ = e.what(); }
+        };
+        if (ImGui::Button("Save All")) finish(MaterialCloseChoice::Save);
+        ImGui::SameLine(); if (ImGui::Button("Discard All")) finish(MaterialCloseChoice::Discard);
+        ImGui::SameLine(); if (ImGui::Button("Cancel")) finish(MaterialCloseChoice::Cancel);
+        ImGui::EndPopup();
     }
 
     EditorDialogBoxManager::Instance().OnRender();
@@ -441,7 +432,7 @@ void EditorManager::InputHandler(RenderWorker::InputEngine const & sender, Rende
 
 void EditorManager::SetSelectedAssert(const EditorAssetNodePtr pAssert)
 {
-    if(selected_asset_ptr_ == pAssert.get())
+    if(selected_asset_ptr_ == pAssert)
     {
         return;
     }
@@ -450,7 +441,7 @@ void EditorManager::SetSelectedAssert(const EditorAssetNodePtr pAssert)
     selected_asset_info_ = nullptr;
     selected_scene_node_ = nullptr;
     selected_mesh_name_.clear();
-    selected_asset_ptr_ = pAssert.get();
+    selected_asset_ptr_ = pAssert;
     selected_asset_type_ = pAssert->type;
     switch(pAssert->type)
     {
@@ -489,6 +480,12 @@ void EditorManager::SetSelectedAssert(const EditorAssetNodePtr pAssert)
         {
             auto ptr = CommonWorker::MakeSharedPtr<AssetMaterialInfo>();
             ptr->name = pAssert->name;
+            try {
+                ptr->path = MaterialUtf8(std::filesystem::relative(MaterialPath(pAssert->path),
+                    std::filesystem::path(Context::Instance().ResLoaderInstance().LocalFolder()) / "../../Assets"));
+                ptr->document = Materials().Open(ptr->path);
+            }
+            catch (std::exception const& e) { ptr->error = e.what(); }
             selected_asset_info_ = ptr;
         }
         break;
@@ -537,6 +534,27 @@ void EditorManager::SetSelectedAssert(const EditorAssetNodePtr pAssert)
         }
         break;
     }
+}
+
+void EditorManager::ClearAssetSelection()
+{
+    selected_asset_ptr_.reset(); selected_asset_info_.reset(); selected_asset_type_ = AssetType::Other;
+    selected_scene_node_ = nullptr; selected_mesh_name_.clear();
+}
+
+void EditorManager::SelectMaterialDocument(MaterialDocumentPtr doc)
+{
+    ClearAssetSelection();
+    auto info = std::make_shared<AssetMaterialInfo>();
+    info->document = std::move(doc); info->path = info->document->Path(); info->name = info->document->Material().Name();
+    selected_asset_type_ = AssetType::Material; selected_asset_info_ = std::move(info);
+}
+
+bool EditorManager::OnCloseRequested()
+{
+    if (exit_approved_ || !materials_ || !materials_->HasDirty()) return true;
+    exit_pending_ = true;
+    return false;
 }
 
 void EditorManager::SetSelectedSceneNode(SceneNode const* node, std::string_view mesh_name)

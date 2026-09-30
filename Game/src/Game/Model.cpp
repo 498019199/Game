@@ -1,4 +1,5 @@
 #include <game/Model.h>
+#include <common/ErrorHandling.h>
 
 #include <base/App3D.h>
 #include <render/RenderEngine.h>
@@ -33,6 +34,16 @@ void DetailedMesh::DoBuildMeshInfo(RenderModel const& model)
 
 void DetailedMesh::OnRenderBegin()
 {
+    auto const shader = mtl_ ? mtl_->EffectName() : std::string_view("SimpleAlbedoNormal.shader");
+    if (active_effect_name_ != shader)
+    {
+        auto effect = SyncLoadRenderEffect(shader);
+        auto technique = effect->TechniqueByName(mtl_ ? mtl_->TechniqueName() : std::string_view("SimpleAlbedoNormalTech"));
+        if (!technique) TMSG("Material technique is missing");
+        effect_ = std::move(effect);
+        technique_ = technique;
+        active_effect_name_ = shader;
+    }
 	StaticMesh::OnRenderBegin();
 
 	auto& app = Context::Instance().AppInstance();

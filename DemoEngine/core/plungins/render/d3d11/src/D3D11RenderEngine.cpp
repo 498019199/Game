@@ -552,6 +552,15 @@ void D3D11RenderEngine::DetachSRV(void* rtv_src, uint32_t rt_first_subres, uint3
 
 void D3D11RenderEngine::OMSetRenderTargets(UINT num_rtvs, ID3D11RenderTargetView* const * rtvs, ID3D11DepthStencilView* dsv)
 {
+	// Explicit unbind must reach the context even after InvalidRTVCache(). Never
+	// index an empty cache (or form a range from nullptr) for a zero-target bind.
+	if (num_rtvs == 0)
+	{
+		d3d_imm_ctx_1_->OMSetRenderTargets(0, nullptr, dsv);
+		rtv_ptr_cache_.clear();
+		dsv_ptr_cache_ = dsv;
+		return;
+	}
 	if ((rtv_ptr_cache_.size() != num_rtvs) || (dsv_ptr_cache_ != dsv)
 		|| (memcmp(&rtv_ptr_cache_[0], rtvs, num_rtvs * sizeof(rtvs[0])) != 0))
 	{

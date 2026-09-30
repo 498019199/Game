@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<material name="M2 Seed" template="EditorLitV1" sample="M2-manual-acceptance">
+    <albedo color="0.8 0.25 0.1 1" texture=""/>
+    <metalness_glossiness metalness="0.25" glossiness="0.75" texture=""/>
+    <emissive color="0.05 0 0" texture=""/>
+    <normal scale="1" texture=""/>
+    <occlusion strength="1" texture=""/>
+    <height offset="-0.2" scale="0.06" texture=""/>
+    <detail mode="Parallax Mapping"><tess edge_hint="5" inside_hint="5" min="1" max="9"/></detail>
+    <vendor_note value="Keep this extension when editing ordinary parameters"/>
+</material>

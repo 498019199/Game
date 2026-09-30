@@ -29,12 +29,14 @@ void Window::PumpEvents()
 		switch (event.type)
 		{
 		case SDL_EVENT_QUIT:
+			if (!app.OnCloseRequested()) break;
 			wnd->Closed(true);
 			wnd->OnClose()(*wnd);
 			break;
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 			if (SDL_GetWindowFromID(event.window.windowID) == wnd->GetSDLWindow())
 			{
+				if (!app.OnCloseRequested()) break;
 				wnd->Closed(true);
 				wnd->OnClose()(*wnd);
 			}

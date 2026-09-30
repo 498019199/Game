@@ -53,7 +53,17 @@ public:
     ETransformType GetTransformType() const { return current_transform_type_; }
 
     void GetEditorSetting( const EditorSetting& setting) { setting_ = setting; }
-    void RenderEditorPanels() const;
+    void RenderEditorPanels();
+    // Bounded CLI regression probe; never called by normal interactive startup.
+    void RunResizeSmokeTest();
+    EditorMaterialService& Materials() { return *materials_; }
+    void SelectMaterialDocument(MaterialDocumentPtr doc);
+    void ClearAssetSelection();
+    bool OnCloseRequested() override;
+    bool assets_refresh_requested = false;
+    std::string assets_select_path;
+    // Assets-relative directory published by Project; no retained asset-node pointers.
+    std::string project_asset_directory = ".";
 
     /// Native texture handle for ImGui::Image; the scene is rendered to an
     /// off-screen target before sampling (never sample while bound as an RT).
@@ -90,7 +100,10 @@ protected:
     std::vector<EditorPanelPtr> panel_list_;
     EditorSetting setting_;
 
-    EditorAssetNode* selected_asset_ptr_ { nullptr};
+    EditorAssetNodePtr selected_asset_ptr_;
+    std::unique_ptr<EditorMaterialService> materials_;
+    bool exit_pending_ = false, exit_approved_ = false;
+    std::string exit_error_;
     AssertBaseInfoPtr selected_asset_info_ { nullptr };
     AssetType selected_asset_type_ { AssetType::Other };
     RenderWorker::SceneNode const* selected_scene_node_ { nullptr };

@@ -15,6 +15,59 @@
 using namespace RenderWorker;
 using namespace EditorWorker;
 
+TEST(EditorLayout, MaximizeAndRestore)
+{
+    EditorSetting s;
+    s.SetWindowSize(1280, 720, 150, 200, 300);
+    s.is_game_started_ = true;
+    s.ResizeClient(1920, 1080);
+    EXPECT_EQ(s.mainBarWidth, 1920);
+    EXPECT_EQ(s.gameViewWidth, 1470);
+    EXPECT_EQ(s.gameViewHeight, 822);
+    EXPECT_EQ(s.hierarchyWidth + s.gameViewWidth + s.inspectorWidth, s.srcWidth);
+    EXPECT_EQ(s.mainBarHeight + s.inspectorHeight, s.srcHeight);
+    EXPECT_EQ(s.projectWidth + s.consoleWidth + s.inspectorWidth, s.srcWidth);
+    s.ResizeClient(1280, 720);
+    EXPECT_EQ(s.gameViewWidth, 830);
+    EXPECT_EQ(s.gameViewHeight, 462);
+    EXPECT_TRUE(s.is_game_started_);
+}
+
+TEST(EditorLayout, DpiDoesNotAccumulateDuringResize)
+{
+    EditorSetting s;
+    s.SetWindowSize(1280, 720, 150, 200, 300);
+    s.ApplyDpiScale(1.5f);
+    s.ApplyDpiScale(1.5f);
+    EXPECT_EQ(s.srcWidth, 1920);
+    for (int i = 0; i < 10; ++i) { s.ResizeClient(2560, 1440); s.ResizeClient(1920, 1080); }
+    EXPECT_EQ(s.hierarchyWidth, 225);
+    EXPECT_EQ(s.inspectorWidth, 450);
+    EXPECT_EQ(s.mainBarHeight, 87);
+    EXPECT_EQ(s.projectHeight, 300);
+    EXPECT_EQ(s.gameViewHeight, 693);
+}
+
+TEST(EditorLayout, TinyAndMinimizedClientPreservesPreferredPanels)
+{
+    EditorSetting s;
+    s.SetWindowSize(1280, 720, 150, 200, 300);
+    s.ResizeClient(100, 100);
+    EXPECT_GE(s.gameViewWidth, 1);
+    EXPECT_GE(s.gameViewHeight, 1);
+    EXPECT_EQ(s.hierarchyWidth + s.gameViewWidth + s.inspectorWidth, 100);
+    EXPECT_EQ(s.mainBarHeight + s.gameViewHeight + s.projectHeight, 100);
+    s.ResizeClient(0, 0);
+    EXPECT_EQ(s.srcWidth, 100);
+    s.ResizeClient(1, 1);
+    EXPECT_EQ(s.gameViewWidth, 1);
+    EXPECT_EQ(s.gameViewHeight, 1);
+    s.ResizeClient(1280, 720);
+    EXPECT_EQ(s.hierarchyWidth, 150);
+    EXPECT_EQ(s.inspectorWidth, 300);
+    EXPECT_EQ(s.projectHeight, 200);
+}
+
 namespace
 {
 void ExpectMatrixNear(float4x4 const& lhs, float4x4 const& rhs)

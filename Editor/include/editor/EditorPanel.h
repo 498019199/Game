@@ -2,6 +2,7 @@
 #include <base/ZEngine.h>
 #include <render/Texture.h>
 #include <render/RenderMaterial.h>
+#include <editor/EditorMaterialService.h>
 #include <base/Audio.h>
 #include <render/Mesh.h>
 #include <imgui.h>
@@ -42,6 +43,13 @@ struct EditorSetting
     // Layout from SetWindowSize matches cfg / RenderSettings (96-DPI style units). ImGui uses the
     // HWND client rect in physical pixels; scale layout when Window was created with DPIScale() != 1.
     void ApplyDpiScale(float scale);
+    // Physical client pixels; fixed panel preferences survive shrinking and restoring.
+    void ResizeClient(uint32_t width, uint32_t height);
+
+private:
+    int preferred_hierarchy_ = 0, preferred_project_ = 0, preferred_inspector_ = 0;
+    uint32_t logical_width_ = 0, logical_height_ = 0;
+    float dpi_scale_ = 1.f;
 };
 
 
@@ -98,6 +106,11 @@ using AssetTextureInfoPtr =  std::shared_ptr<AssetTextureInfo>;
 struct AssetMaterialInfo: public AssertBaseInfo
 {
     RenderMaterialPtr material;
+    MaterialDocumentPtr document;
+    std::string path, error;
+    char save_as[512] = {};
+    char texture_path[5][512] = {};
+    std::vector<std::string> texture_choices;
 };
 using AssetMaterialInfoPtr =  std::shared_ptr<AssetMaterialInfo>;
 

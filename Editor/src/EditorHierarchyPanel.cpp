@@ -203,9 +203,10 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
         }
 
         // 窗口空白右键菜单
+        bool create_material = false;
         auto& root_node = RenderWorker::Context::Instance().WorldInstance().SceneRootNode();
         RenderWorker::Color DefaultColor(1.0f, 0.0f, 0.0f, 1.0f);
-        if (ImGui::BeginPopupContextWindow())
+        if (ImGui::BeginPopupContextWindow("HierarchyCreate", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
         {
             if (ImGui::BeginMenu("3D Object"))
             {
@@ -269,6 +270,37 @@ void EditorHierarchyPanel::OnRender(const EditorSetting& setting)
                 ImGui::MenuItem("Text");
                 ImGui::EndMenu();
             }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Material"))
+            {
+                // Snapshot the directory, not a Project node that a refresh can invalidate.
+                material_folder_ = editor.project_asset_directory;
+                material_error_.clear();
+                create_material = true;
+            }
+            ImGui::EndPopup();
+        }
+        // Open outside the context popup so its closure cannot also close the modal.
+        if (create_material) ImGui::OpenPopup("Create Material");
+        if (ImGui::BeginPopupModal("Create Material", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::TextWrapped("Folder: Assets/%s", material_folder_.c_str());
+            ImGui::InputText("Filename", material_name_, sizeof(material_name_));
+            if (!material_error_.empty()) ImGui::TextWrapped("%s", material_error_.c_str());
+            if (ImGui::Button("Create"))
+            {
+                try
+                {
+                    auto doc = editor.Materials().CreateInFolder(material_folder_, material_name_);
+                    editor.SelectMaterialDocument(doc);
+                    editor.assets_refresh_requested = true;
+                    editor.assets_select_path = doc->Path();
+                    ImGui::CloseCurrentPopup();
+                }
+                catch (std::exception const& e) { material_error_ = e.what(); }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }
     }

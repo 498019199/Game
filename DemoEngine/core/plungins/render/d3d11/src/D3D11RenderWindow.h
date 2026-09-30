@@ -15,6 +15,7 @@ public:
 	void Destroy();
 
 	void SwapBuffers() override;
+	void Resize(uint32_t width, uint32_t height) override;
 	void WaitOnSwapBuffers() override;
 
 	// 获取是否是全屏状态
