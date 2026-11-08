@@ -1,0 +1,170 @@
+{
+    "Camera": {
+        "Position": [
+            0,
+            2.8,
+            -13
+        ],
+        "LookAt": [
+            0,
+            1.4,
+            0
+        ],
+        "Up": [
+            0,
+            1,
+            0
+        ],
+        "FOV": 45,
+        "Aspect": 1.7777778,
+        "Near": 0.1,
+        "Far": 100
+    },
+    "AmbientLight": {
+        "Color": [
+            0.12,
+            0.12,
+            0.12
+        ],
+        "UseSkyBox": false
+    },
+    "GameObjects": [],
+    "ParticleEffects": [
+        {
+            "Name": "Looping explosion",
+            "Matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -3,
+                1.4,
+                0,
+                1
+            ],
+            "Settings": {
+                "MaxParticles": 512,
+                "EmissionRate": 0,
+                "BurstCount": 96,
+                "LifetimeMin": 0.4,
+                "LifetimeMax": 1.2,
+                "SpeedMin": 2,
+                "SpeedMax": 6,
+                "Spread": 3.141592653589793,
+                "Radius": 0.08,
+                "StartSize": 0.16,
+                "EndSize": 0.02,
+                "Direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "Acceleration": [
+                    0,
+                    -2,
+                    0
+                ],
+                "StartColor": [
+                    1,
+                    0.85,
+                    0.35,
+                    1
+                ],
+                "EndColor": [
+                    1,
+                    0.08,
+                    0.005,
+                    0
+                ],
+                "Blend": "Additive",
+                "Looping": true,
+                "Duration": 2,
+                "Seed": 1337,
+                "SimulationSpace": "World",
+                "RotationMin": 0,
+                "RotationMax": 6.283185307179586,
+                "AngularSpeedMin": -3,
+                "AngularSpeedMax": 3,
+                "VelocityStretch": 0.15,
+                "EmissiveIntensity": 2,
+                "GlowStrength": 0.6,
+                "FlickerFrequency": 8,
+                "FlickerAmount": 0.3,
+                "DistortionStrength": 0
+            }
+        },
+        {
+            "Name": "Stretched sparks - move in Scene view",
+            "Matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                0,
+                0,
+                1
+            ],
+            "Settings": {
+                "MaxParticles": 512,
+                "EmissionRate": 65,
+                "LifetimeMin": 0.5,
+                "LifetimeMax": 1.5,
+                "SpeedMin": 2,
+                "SpeedMax": 5,
+                "Spread": 0.8,
+                "Radius": 0.08,
+                "StartSize": 0.09,
+                "EndSize": 0.015,
+                "Direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "Acceleration": [
+                    0,
+                    -5,
+                    0
+                ],
+                "StartColor": [
+                    1,
+                    0.85,
+                    0.35,
+                    1
+                ],
+                "EndColor": [
+                    1,
+                    0.18,
+                    0.01,
+                    0
+                ],
+                "Blend": "Additive",
+                "Looping": true,
+                "Duration": 2,
+                "Seed": 1337,
+                "SimulationSpace": "World",
+                "VelocityStretch": 0.18,
+                "EmissiveIntensity": 1.8,
+                "GlowStrength": 0.3,
+                "FlickerFrequency": 3,
+                "FlickerAmount": 0.25
+            }
+        }
+    ]
+}

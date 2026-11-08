@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>netstandard2.1</TargetFramework><Nullable>disable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="generated/**/*.cs" />
+    <PackageReference Include="Google.Protobuf" Version="3.36.2" />
+    <Compile Include="$(ProtocolGeneratedDir)/Gameplay.cs" />
+  </ItemGroup>
+  <Target Name="RequireGeneratedProtocol" BeforeTargets="BeforeCompile" Condition="!Exists('$(ProtocolGeneratedDir)/Gameplay.cs')">
+    <Error Text="Generate protocol with CMake first, or set ProtocolGeneratedDir to protoc's C# output directory." />
+  </Target>
+</Project>

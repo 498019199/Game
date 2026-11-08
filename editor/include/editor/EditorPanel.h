@@ -1,0 +1,152 @@
+#pragma once
+#include <base/ZEngine.h>
+#include <render/Texture.h>
+#include <render/RenderMaterial.h>
+#include <editor/EditorMaterialService.h>
+#include <base/Audio.h>
+#include <render/Mesh.h>
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+
+//#define EDITOR_DEBUG_MODE 1
+
+using namespace CommonWorker;
+using namespace RenderWorker;
+
+namespace EditorWorker
+{
+struct EditorSetting
+{
+    int hierarchyWidth {0};
+    int hierarchyHeight {0};
+    int consoleWidth {0};
+    int consoleHeight {0};
+    int projectWidth {0};
+    int projectHeight {0};
+    int inspectorWidth {0};
+    int inspectorHeight {0};
+    int mainBarWidth {0};
+    int mainBarHeight {0};
+
+    int srcWidth {0};
+    int srcHeight {0};
+
+    int gameViewWidth {0};
+    int gameViewHeight {0};
+
+    bool is_game_started_ {false};
+    bool is_game_paused_ {false};
+
+    // width/height are the complete Editor client area, not the game view.
+    void SetWindowSize(uint32_t editorWidth, uint32_t editorHeight, int hWidth, int pHeight, int iWidth);
+
+    // Layout from SetWindowSize matches cfg / RenderSettings (96-DPI style units). ImGui uses the
+    // HWND client rect in physical pixels; scale layout when Window was created with DPIScale() != 1.
+    void ApplyDpiScale(float scale);
+    // Physical client pixels; fixed panel preferences survive shrinking and restoring.
+    void ResizeClient(uint32_t width, uint32_t height);
+
+private:
+    int preferred_hierarchy_ = 0, preferred_project_ = 0, preferred_inspector_ = 0;
+    uint32_t logical_width_ = 0, logical_height_ = 0;
+    float dpi_scale_ = 1.f;
+};
+
+
+enum class AssetType
+{
+    Other,
+    Folder,
+    Material,
+    DeferredMaterial,
+    RayTracingMaterial,
+    Prefab,
+    Script,
+    Shader,
+    Texture,
+    Scene,
+    Model,
+    RayTracingShader,
+    Audio,
+    Text,
+    Count,
+};
+
+struct AssertBaseInfo
+{
+    std::string name;
+
+    virtual ~AssertBaseInfo() = default;
+};
+using AssertBaseInfoPtr = std::shared_ptr<AssertBaseInfo>;
+
+
+struct AssetScriptInfo: public AssertBaseInfo
+{
+    std::string preview;
+};
+using AssetScriptInfoPtr =  std::shared_ptr<AssetScriptInfo>;
+
+
+struct AssetShaderInfo: public AssertBaseInfo
+{
+    std::string preview;
+};
+using AssetShaderInfoPtr =  std::shared_ptr<AssetShaderInfo>;
+
+
+struct AssetTextureInfo: public AssertBaseInfo
+{
+    std::string format;
+    TexturePtr  texture;
+};
+using AssetTextureInfoPtr =  std::shared_ptr<AssetTextureInfo>;
+
+
+struct AssetMaterialInfo: public AssertBaseInfo
+{
+    RenderMaterialPtr material;
+    MaterialDocumentPtr document;
+    std::string path, error;
+    char save_as[512] = {};
+    char texture_path[5][512] = {};
+    std::vector<std::string> texture_choices;
+};
+using AssetMaterialInfoPtr =  std::shared_ptr<AssetMaterialInfo>;
+
+
+struct AssetModelInfo: public AssertBaseInfo
+{
+    std::string     format;
+    RenderModelPtr  model;
+    std::string error;
+};
+using AssetModelInfoPtr =  std::shared_ptr<AssetModelInfo>;
+
+
+struct AssetAudioInfo: public AssertBaseInfo
+{
+    AudioDataSourcePtr audio_buff_;
+    AudioBufferPtr preview_buffer_;
+    size_t decoded_size = 0;
+    std::string error;
+
+    ~AssetAudioInfo() override
+    {
+        if (preview_buffer_)
+            preview_buffer_->Stop();
+    }
+};
+
+class EditorPanel
+{
+public:
+    EditorPanel() = default;
+    virtual ~EditorPanel() = default;
+
+    virtual void OnRender(const EditorSetting& setting) = 0;
+    virtual void OnResize() = 0;
+private:
+};
+using EditorPanelPtr = std::shared_ptr<EditorPanel>;
+}

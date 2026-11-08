@@ -1,0 +1,11 @@
+{
+	"name": "Rabbit",
+	"components":[
+		{
+			"type" : "model",
+			"path": "models/Rabbit.obj",
+			"render_effect": "SimpleAlbedoNormal.shader",
+			"render_technique": "SimpleAlbedoNormalTech"
+		}
+	]
+}

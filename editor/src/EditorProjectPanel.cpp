@@ -1,0 +1,332 @@
+#include <editor/EditorProjectPanel.h>
+#include <editor/EditorAssetScanner.h>
+#include <limits>
+#include <editor/EditorManager.h>
+
+#include <render/Texture.h>
+#include <render/RenderFactory.h>
+
+#include <unordered_set>
+#include <string>
+#include <filesystem>
+#include <algorithm>
+
+
+namespace EditorWorker
+{
+using namespace RenderWorker;
+
+// 在Project面板中屏蔽的文件类型
+std::unordered_set<std::string> ignoreExtensions = 
+{ 
+    // 生成的HLSL代码
+    ".hlsl",
+    // 预编译的D3D12 Shader
+    ".fxc",
+    // 生成的GLSL代码
+    ".vert", ".frag", ".geom",
+    // 预编译的Vulkan Shader
+    ".spv",
+};
+
+EditorProjectPanel::EditorProjectPanel()
+{
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>("",          AssetType::Folder            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".mat",      AssetType::Material          ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".drmat",    AssetType::DeferredMaterial  ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".rtmat",    AssetType::RayTracingMaterial));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".prefab",   AssetType::Prefab            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".lua",      AssetType::Script            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".shader",   AssetType::Shader            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".dxr",      AssetType::RayTracingShader  ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".vkr",      AssetType::RayTracingShader  ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".png",      AssetType::Texture           ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".tga",      AssetType::Texture           ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".jpg",      AssetType::Texture           ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".scene",    AssetType::Scene             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".obj",      AssetType::Model             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".fbx",      AssetType::Model             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".glb",      AssetType::Model             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".wav",      AssetType::Audio             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".ogg",      AssetType::Audio             ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".txt",      AssetType::Text              ));
+
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    fileIcons_[(int)AssetType::Other]              = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/other.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Folder]             = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/folder.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Material]           = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::DeferredMaterial]   = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::RayTracingMaterial] = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/material.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Prefab]             = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/prefab.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Script]             = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/lua.png",     EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Shader]             = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/shader.png",  EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Texture]            = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/texture.png", EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Scene]              = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/scene.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Model]              = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/model.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::RayTracingShader]   = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/raytrace.png",EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Audio]              = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/audio.png",   EAH_GPU_Read | EAH_Immutable));
+    fileIcons_[(int)AssetType::Text]               = rf.MakeTextureSrv(SyncLoadTexture("editorassets/icons/text.png",    EAH_GPU_Read | EAH_Immutable));
+
+    root_ =  CommonWorker::MakeSharedPtr<EditorAssetNode>();
+    root_->parent = nullptr;
+    const std::string& LocalPath = RenderWorker::Context::Instance().ResLoaderInstance().LocalFolder();
+    root_->path = (LocalPath + "../../assets");
+    root_->name = "Assets";
+    root_->extension = "";
+    root_->type = AssetType::Folder;
+    GetChildren(root_);
+    cur_ = root_;
+}
+
+EditorProjectPanel::~EditorProjectPanel()
+{
+    
+}
+
+void EditorProjectPanel::OnRender(const EditorSetting& setting)
+{
+    auto& manager = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    if (manager.assets_refresh_requested)
+    {
+        try { Refresh(manager.assets_select_path); refresh_error_.clear(); }
+        catch (std::exception const& e) { refresh_error_ = e.what(); }
+        manager.assets_refresh_requested = false; manager.assets_select_path.clear();
+    }
+    // 面板大小和位置
+    ImGui::SetNextWindowPos(ImVec2(0, (float)setting.mainBarHeight + (float)setting.hierarchyHeight));
+    ImGui::SetNextWindowSize(ImVec2((float)setting.projectWidth, (float)setting.projectHeight));
+
+    // 设置面板具体内容
+    ImGui::Begin("Project", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    {
+        if (!refresh_error_.empty()) ImGui::TextWrapped("%s", refresh_error_.c_str());
+        // 记录一下按钮原本颜色
+        ImGuiStyle& style = ImGui::GetStyle();
+        ImVec4 btnColor = style.Colors[ImGuiCol_Button];
+        ImVec4 selectBtnColor = ImVec4(btnColor.x - 0.1f, btnColor.y - 0.1f, btnColor.z - 0.1f, 1.0f);
+        ImVec4 textColor = style.Colors[ImGuiCol_Text];
+		ImVec4 selectTextColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        // 当前路径节点，如果当前节点不是文件夹，就用当前节点的父节点
+        auto curPathNode = cur_->type == AssetType::Folder ? cur_ : cur_->parent;
+
+        if (ImGui::Button("Refresh")) manager.assets_refresh_requested = true;
+
+        // 绘制路径条
+        ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
+        auto tmpPathNode = curPathNode;
+        std::vector<EditorAssetNodePtr> pathNodes;
+        while ( tmpPathNode )
+        {
+            pathNodes.push_back(tmpPathNode);
+            tmpPathNode = tmpPathNode->parent;
+        }
+        // 倒叙绘制，从root到当前位置
+        for (auto i = pathNodes.size(); i > 0; i--)
+        {
+            ImGui::SameLine(); 
+            if (ImGui::SmallButton(pathNodes[i - 1]->name.c_str()))
+            {
+                SetCurNode( pathNodes[i - 1] );
+                // 切换路径的时候刷新选中状态
+                selected_ = -1;
+            }
+            if (i > 1)
+            {
+                ImGui::SameLine();
+                ImGui::Text(">");
+            }
+        }
+        ImGui::PopStyleColor(1);
+        ImGui::Separator();
+
+        // 当前路径文件数量
+        std::size_t childNum = curPathNode->children.size();
+        // 当前窗口的x最大值(右边界位置)
+        float const window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+        // 图标列宽（含 FramePadding）；名字列宽按实际文本计算，避免固定宽度裁掉末尾字符
+        float const iconItemW = iconSize.x + style.FramePadding.x * 2.f;
+
+        for (size_t i = 0; i < childNum; i++)
+        {
+            auto node = curPathNode->children[i];
+            ImGui::PushID(static_cast<int>(i));
+
+            float const nameTextW = ImGui::CalcTextSize(node->name.c_str()).x + style.FramePadding.x * 2.f;
+            float const cellW = std::max(iconItemW, nameTextW);
+
+            ImGui::BeginGroup();
+
+            float const groupX = ImGui::GetCursorPosX();
+
+            if (selected_ >= 0 && i == static_cast<size_t>(selected_))
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
+            }
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, btnColor);
+            }
+
+            ImGui::SetCursorPosX(groupX + (cellW - iconItemW) * 0.5f);
+            auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+            auto icon = editor.ImGuiTextureHandle(fileIcons_[(int)node->type]);
+            bool click = false;
+            if (icon)
+            {
+                click = ImGui::ImageButton("##icon", (ImTextureID)(intptr_t)icon, iconSize);
+            }
+            else
+            {
+                click = ImGui::Button("##icon", iconSize);
+            }
+            ImGui::PopStyleColor(1);
+
+            if (click)
+            {
+                selected_ = static_cast<int>(i);
+                SetCurNode(node);
+                if (node->type == AssetType::Folder)
+                {
+                    selected_ = -1;
+                    ImGui::EndGroup();
+                    ImGui::PopID();
+                    break;
+                }
+            }
+
+            ImGui::Dummy(ImVec2(0.f, 0.5f * std::min(style.ItemSpacing.y, 4.f)));
+
+            ImGui::SetCursorPosX(groupX);
+            if (selected_ >= 0 && i == static_cast<size_t>(selected_))
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, selectTextColor);
+                ImGui::PushStyleColor(ImGuiCol_Button, selectBtnColor);
+            }
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+                ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_WindowBg]);
+            }
+
+            if (ImGui::Button(node->name.c_str(), ImVec2(cellW, nameSize.y)))
+            {
+                selected_ = static_cast<int>(i); SetCurNode(node);
+            }
+            ImGui::PopStyleColor(2);
+
+            ImGui::EndGroup();
+            ImGui::PopID();
+
+            float const last_x2 = ImGui::GetItemRectMax().x;
+            if (i + 1 < childNum && last_x2 + style.ItemSpacing.x + cellW <= window_visible_x2)
+            {
+                ImGui::SameLine();
+            }
+        }
+    }
+    ImGui::End();
+    // Publish the final directory after navigation; asset selection uses its parent folder.
+    auto const folder = cur_->type == AssetType::Folder ? cur_ : cur_->parent;
+    manager.project_asset_directory = MaterialUtf8(MaterialPath(folder->path).lexically_relative(MaterialPath(root_->path)));
+}
+
+AssetType EditorProjectPanel::GetAssetType(const std::string& extension)
+{
+    auto input_ext = extension;
+    StringUtil::ToLower(input_ext);
+    auto it = ext_type_map_.find( input_ext );
+    if (it == ext_type_map_.end())
+        return AssetType::Other;
+    else
+        return it->second;
+}
+
+void EditorProjectPanel::SetCurNode(const EditorAssetNodePtr& node)
+{
+    cur_ = node;
+
+    auto& editor = checked_cast<EditorManager&>(Context::Instance().AppInstance());
+    editor.SetSelectedAssert( node );
+}
+
+void EditorProjectPanel::GetChildren(const EditorAssetNodePtr& node)
+{
+    EditorAssetScanner scanner;
+    std::vector<EditorAssetNodePtr> pending{node};
+    while (!pending.empty())
+    {
+        auto current = pending.back();
+        pending.pop_back();
+        current->children.clear();
+        for (auto const& entry : scanner.ReadDirectory(MaterialPath(current->path)))
+        {
+            try
+            {
+                auto extension = entry.path.extension().string();
+                StringUtil::ToLower(extension);
+                auto name = MaterialUtf8(entry.path.stem());
+                if (ignoreExtensions.contains(extension) || name == "private")
+                    continue;
+
+                auto child = CommonWorker::MakeSharedPtr<EditorAssetNode>();
+                child->parent = current;
+                child->path = MaterialUtf8(entry.path);
+                child->name = std::move(name);
+                child->extension = std::move(extension);
+                child->size = static_cast<uint32_t>((std::min)(entry.size,
+                    static_cast<uintmax_t>((std::numeric_limits<uint32_t>::max)())));
+                child->type = entry.directory ? AssetType::Folder : GetAssetType(child->extension);
+                current->children.push_back(child);
+                if (entry.directory)
+                    pending.push_back(child);
+            }
+            catch (std::system_error const&)
+            {
+                // Path encoding conversion may fail even when enumeration succeeds.
+                continue;
+            }
+        }
+        std::sort(current->children.begin(), current->children.end(),
+            [](EditorAssetNodePtr const& a, EditorAssetNodePtr const& b)
+            {
+                if ((a->type == AssetType::Folder) != (b->type == AssetType::Folder))
+                    return a->type == AssetType::Folder;
+                return a->name < b->name;
+            });
+    }
+}
+
+void EditorProjectPanel::Refresh(std::string const& select_path)
+{
+    auto desired = select_path.empty() ? MaterialPath(cur_->path) : MaterialPath(root_->path) / MaterialPath(select_path);
+    desired = std::filesystem::weakly_canonical(desired);
+    // Break the scanner's shared parent/child cycles before replacing the tree.
+    std::vector<EditorAssetNodePtr> old {root_};
+    while (!old.empty()) {
+        auto node = old.back(); old.pop_back();
+        for (auto const& child : node->children) { old.push_back(child); child->parent.reset(); }
+        node->children.clear();
+    }
+    GetChildren(root_); cur_ = root_; selected_ = -1;
+    std::vector<EditorAssetNodePtr> nodes {root_};
+    while (!nodes.empty()) {
+        auto node = nodes.back(); nodes.pop_back();
+        if (std::filesystem::weakly_canonical(MaterialPath(node->path)) == desired) {
+            SetCurNode(node);
+            if (node->parent) {
+                auto const& siblings = node->parent->children;
+                selected_ = static_cast<int>(std::find(siblings.begin(), siblings.end(), node) - siblings.begin());
+            }
+            return;
+        }
+        nodes.insert(nodes.end(), node->children.begin(), node->children.end());
+    }
+    checked_cast<EditorManager&>(Context::Instance().AppInstance()).ClearAssetSelection();
+}
+
+void EditorProjectPanel::OnResize()
+{
+    
+}
+
+}

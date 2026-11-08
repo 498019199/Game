@@ -1,0 +1,22 @@
+{
+    "SkyBox":
+    {
+        "Directory": "textures/scene/defaultscene"
+    },
+    "AmbientLight":
+    {
+        "Color": [0.1, 0.1, 0.1],
+        "UseSkyBox": true
+    },
+    "GameObjects":
+    [
+        {
+            "NpcId": 300001,
+            "Position": [0, 0, 0],
+            "Rotation": [90, 0, 0],
+            "Scale": [1, 1, 1]
+        }
+    ]
+}
+
+

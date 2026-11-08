@@ -1,0 +1,854 @@
+#include <common/Thread.h>
+#include <base/ZEngine.h>
+#include <common/DllLoader.h>
+
+#include <base/ResLoader.h>
+#include <base/DevHelper.h>
+#include <render/ElementFormat.h>
+#include <render/RenderFactory.h>
+#include <base/InputFactory.h>
+#include <base/AudioFactory.h>
+#include <world/World.h>
+#include <base/UIManager.h>
+
+#if defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
+    #define ZENGINE_STATIC_LINK_PLUGINS
+#endif
+
+#ifdef ZENGINE_STATIC_LINK_PLUGINS
+extern "C"
+{
+    void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
+	void MakeRenderFactory(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+    void MakeAudioFactory(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
+    void MakeInputFactory(std::unique_ptr<RenderWorker::InputFactory>& ptr);
+	void MakeDevHelper(std::unique_ptr<RenderWorker::DevHelper>& ptr);
+    void MakeAudioDataSourceFactory(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr);
+}
+#else
+extern "C"
+{
+	void MakeRenderWorld(std::unique_ptr<RenderWorker::World>& ptr);
+}
+namespace RenderWorker
+{
+	typedef void (*MakeRenderFactoryFunc)(std::unique_ptr<RenderWorker::RenderFactory>& ptr);
+    typedef void (*MakeAudioFactoryFunc)(std::unique_ptr<RenderWorker::AudioFactory>& ptr);
+    typedef void (*MakeAudioDataSourceFactoryFunc)(std::unique_ptr<RenderWorker::AudioDataSourceFactory>& ptr);
+    typedef void (*MakeInputFactoryFunc)(std::unique_ptr<RenderWorker::InputFactory>& ptr);
+#define ZENGINE_DLL_PREFIX DLL_PREFIX ZENGINE_STRINGIZE(ZENGINE_NAME)
+#if ZENGINE_IS_DEV_PLATFORM
+	typedef void (*MakeDevHelperFunc)(std::unique_ptr<RenderWorker::DevHelper>& ptr);
+#endif
+}
+
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+
+
+#include <filesystem>
+#include <fstream>
+#include <common/ErrorHandling.h>
+namespace RenderWorker
+{
+using namespace CommonWorker;
+
+class Context::Impl final
+{
+    ZENGINE_NONCOPYABLE(Impl);
+
+public:
+
+    Impl() = default;
+
+    static Context& Instance()
+    {
+        if (!context_instance_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!context_instance_)
+            {
+                context_instance_ = MakeUniquePtr<Context>();
+            }
+        }
+        return *context_instance_;
+    }
+    static void Destroy() noexcept
+    {
+        std::lock_guard<std::mutex> lock(singleton_mutex_);
+        if(context_instance_)
+        {
+            context_instance_->pimpl_->DestroyAll();
+            context_instance_.reset();
+        }
+    }
+
+    void AppInstance(App3D& app) noexcept
+    {
+        app_ = &app;
+    }
+
+    bool AppValid() const noexcept
+    {
+        return app_ != nullptr;
+    }
+
+    App3D& AppInstance() noexcept
+    {
+        COMMON_ASSERT(app_);
+        COMMON_ASSUME(app_);
+        return *app_;
+    }
+
+    bool RenderFactoryValid() const noexcept
+    {
+        return render_factory_ != nullptr;
+    }
+
+    RenderFactory& RenderFactoryInstance()
+    {
+        if (!render_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!render_factory_)
+            {
+                this->LoadRenderFactory( cfg_.render_factory_name );
+            }
+        }
+        if (!render_factory_)
+            TMSG("Render factory is unavailable: " + cfg_.render_factory_name);
+        return *render_factory_;
+    }
+
+    bool AudioFactoryValid() const noexcept
+    {
+        return audio_factory_ != nullptr;
+    }
+
+    AudioFactory& AudioFactoryInstance()
+    {
+        if (!audio_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!audio_factory_)
+            {
+                this->LoadAudioFactory(cfg_.audio_factory_name);
+            }
+        }
+        if (!audio_factory_)
+        {
+            TMSG("Audio factory unavailable: " + cfg_.audio_factory_name);
+        }
+        return *audio_factory_;
+    }
+
+    bool AudioDataSourceFactoryValid() const noexcept
+    {
+        return audio_data_src_factory_ != nullptr;
+    }
+    AudioDataSourceFactory& AudioDataSourceFactoryInstance()
+    {
+        if (!audio_data_src_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!audio_data_src_factory_)
+            {
+                this->LoadAudioDataSourceFactory(cfg_.audio_data_source_factory_name);
+            }
+        }
+        if (!audio_data_src_factory_)
+        {
+            TMSG("Audio data source factory unavailable: " + cfg_.audio_data_source_factory_name);
+        }
+        return *audio_data_src_factory_;
+    }
+
+    bool InputFactoryValid() const noexcept
+    {
+        return input_factory_ != nullptr;
+    }
+
+    InputFactory& InputFactoryInstance()
+    {
+        if (!input_factory_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!input_factory_)
+            {
+                this->LoadInputFactory(cfg_.input_factory_name);
+            }
+        }
+        if (!input_factory_)
+            TMSG("SDL3 input factory is unavailable");
+        return *input_factory_;
+    }
+
+    bool WorldValid() const noexcept
+    {
+        return render_world_ != nullptr;
+    }
+
+    World& WorldInstance() noexcept
+    {
+        if (!render_world_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!render_world_)
+            {
+                this->LoadRenderWorld( );
+            }
+        }
+        return *render_world_;
+    }
+
+    ThreadPool& ThreadPoolInstance()
+    {
+        return global_thread_pool_;
+    }
+
+    ResLoader& ResLoaderInstance()
+    {
+        if (!res_loader_.Valid())
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!res_loader_.Valid())
+            {
+                res_loader_.Init(global_thread_pool_);
+            }
+        }
+
+        return res_loader_;
+    }
+
+#if ZENGINE_IS_DEV_PLATFORM
+    bool DevHelperValid() const noexcept
+    {
+        return dev_helper_ != nullptr;
+    }
+    bool EnsureDevHelper()
+    {
+        if (!dev_helper_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!dev_helper_)
+            {
+                this->LoadDevHelper();
+            }
+        }
+        return dev_helper_ != nullptr;
+    }
+    DevHelper& DevHelperInstance()
+    {
+        if (!dev_helper_)
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!dev_helper_)
+            {
+                this->LoadDevHelper();
+            }
+        }
+        Verify(dev_helper_ != nullptr);
+        return *dev_helper_;
+    }
+#endif// ZENGINE_IS_DEV_PLATFORM
+
+    UIManager& UIManagerInstance()
+    {
+        if (!ui_mgr_.Valid())
+        {
+            std::lock_guard<std::mutex> lock(singleton_mutex_);
+            if (!ui_mgr_.Valid())
+            {
+                ui_mgr_.Init();
+            }
+        }
+
+        return ui_mgr_;
+    }
+
+    void LoadRenderFactory( std::string const& rf_name )
+    {
+        render_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        render_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string render_path = res_loader.Locate("render");
+        std::string fn = ZENGINE_DLL_PREFIX"_Render_" + rf_name + DLL_SUFFIX;
+
+        std::string path = render_path + "/" + fn;
+        render_loader_.Load(res_loader.Locate(path));
+
+        auto* mrf = reinterpret_cast<MakeRenderFactoryFunc>(render_loader_.GetProcAddress("MakeRenderFactory"));
+        if (mrf != nullptr)
+        {
+            mrf(render_factory_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            render_loader_.Free();
+        }
+#else
+        KFL_UNUSED(rf_name);
+        MakeRenderFactory(render_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadAudioFactory( std::string const& af_name )
+    {
+        audio_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        audio_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string audio_path = res_loader.Locate("audio");
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioEngine_" + af_name + DLL_SUFFIX;
+
+        std::string path = audio_path + "/" + fn;
+        audio_loader_.Load(res_loader.Locate(path));
+
+        auto* maf = reinterpret_cast<MakeAudioFactoryFunc>(audio_loader_.GetProcAddress("MakeAudioFactory"));
+        if (maf != nullptr)
+        {
+            maf(audio_factory_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            audio_loader_.Free();
+        }
+#else
+        KFL_UNUSED(af_name);
+        MakeAudioFactory(audio_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadAudioDataSourceFactory( std::string const& af_name )
+    {
+        audio_data_src_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        ads_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string adsf_path = res_loader.Locate("audio");
+        std::string fn = ZENGINE_DLL_PREFIX"_AudioDataSource_" + af_name + DLL_SUFFIX;
+
+        std::string path = adsf_path + "/" + fn;
+        ads_loader_.Load(res_loader.Locate(path));
+
+        auto* madsf = reinterpret_cast<MakeAudioDataSourceFactoryFunc>(ads_loader_.GetProcAddress("MakeAudioDataSourceFactory"));
+        if (madsf != nullptr)
+        {
+            madsf(audio_data_src_factory_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            ads_loader_.Free();
+        }
+#else
+        KFL_UNUSED(af_name);
+        MakeAudioDataSourceFactory(audio_data_src_factory_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+
+    void LoadInputFactory( std::string const& if_name )
+    {
+        input_factory_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        input_loader_.Free();
+
+        auto& res_loader = ResLoaderInstance();
+        std::string input_path = res_loader.Locate("input");
+        std::string fn = ZENGINE_DLL_PREFIX"_InputEngine_Input" + if_name + DLL_SUFFIX;
+
+        std::string path = input_path + "/" + fn;
+        input_loader_.Load(res_loader.Locate(path));
+
+        auto* mif = reinterpret_cast<MakeInputFactoryFunc>(input_loader_.GetProcAddress("MakeInputFactory"));
+        if (mif != nullptr)
+        {
+            mif(input_factory_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            input_loader_.Free();
+        }
+#else
+        KFL_UNUSED(if_name);
+        MakeInputFactory(input_factory_);
+#endif
+    }
+
+    void LoadRenderWorld( )
+    {
+        MakeRenderWorld(render_world_);
+    }
+
+#if ZENGINE_IS_DEV_PLATFORM
+    void LoadDevHelper()
+    {
+        dev_helper_.reset();
+#ifndef ZENGINE_STATIC_LINK_PLUGINS
+        dev_helper_loader_.Free();
+        auto& res_loader = ResLoaderInstance();
+        std::string render_path = res_loader.Locate("render");
+		std::string fn = ZENGINE_DLL_PREFIX"_DevHelps" DLL_SUFFIX;
+
+        std::string path = render_path + "/" + fn;
+        dev_helper_loader_.Load(res_loader.Locate(path));
+
+        auto* mdh = reinterpret_cast<MakeDevHelperFunc>(dev_helper_loader_.GetProcAddress("MakeDevHelper"));
+        if (mdh != nullptr)
+        {
+            mdh(dev_helper_);
+        }
+        else
+        {
+            LogError() << "Loading " << path << " failed" << std::endl;
+            dev_helper_loader_.Free();
+        }
+#else
+        MakeDevHelper(dev_helper_);
+#endif// ZENGINE_STATIC_LINK_PLUGINS
+    }
+#endif// ZENGINE_IS_DEV_PLATFORM
+
+
+    void Config(const ContextConfig& cfg)
+    {
+        cfg_ = cfg;
+    }
+
+    const ContextConfig& Config() const
+    {
+        return cfg_;
+    }
+
+    void LoadConfig(const char* file_name)
+    {
+#if defined(ZENGINE_PLATFORM_WINDOWS)
+        static char const* available_rfs_array[] = {"D3D11" , "SDL3"};
+#else
+        static char const* available_rfs_array[] = {"SDL3"};
+#endif
+
+
+        uint32_t width = 800;
+        uint32_t height = 600;
+        ElementFormat color_fmt = EF_ARGB8;
+        ElementFormat depth_stencil_fmt = EF_D16;
+        uint32_t sample_count = 1;
+        uint32_t sample_quality = 0;
+        bool full_screen = false;
+        uint32_t sync_interval = 0;
+        bool hdr = false;
+        bool ppaa = false;
+        bool gamma = false;
+        bool color_grading = false;
+        float bloom = 0.25f;
+        bool blue_shift = true;
+        bool keep_screen_on = true;
+        StereoMethod stereo_method = STM_None;
+        float stereo_separation = 0;
+        DisplayOutputMethod display_output_method = DOM_sRGB;
+        uint32_t paper_white = 100;
+        uint32_t display_max_luminance = 100;
+        std::vector<std::pair<std::string, std::string>> graphics_options;
+        bool debug_context = false;
+        bool perf_profiler = false;
+        bool location_sensor = false;
+
+		std::string rf_name;
+        std::string af_name = "auto";
+        std::string adsf_name = "OggVorbis";
+
+        auto& res_loader = ResLoaderInstance();
+        ResIdentifierPtr file = res_loader.Open(file_name);
+        if(file)
+        {
+            XMLNode cfg_root = LoadXml(*file);
+            XMLNode const* context_node = cfg_root.FirstNode("context");
+            XMLNode const* graphics_node = cfg_root.FirstNode("graphics");
+
+            if (context_node)
+            {
+                if (auto const* node = context_node->FirstNode("audio_factory"))
+                {
+                    if (auto const* attr = node->Attrib("name"))
+                        af_name = std::string(attr->ValueString());
+                }
+                if (auto const* node = context_node->FirstNode("audio_data_source_factory"))
+                {
+                    if (auto const* attr = node->Attrib("name"))
+                        adsf_name = std::string(attr->ValueString());
+                }
+            }
+
+            if (XMLNode const* rf_node = context_node->FirstNode("render_factory"))
+            {
+                rf_name = std::string(rf_node->Attrib("name")->ValueString());
+            }
+            if (XMLNode const* perf_profiler_node = context_node->FirstNode("perf_profiler"))
+            {
+                perf_profiler = perf_profiler_node->Attrib("enabled")->ValueInt() ? true : false;
+            }
+            if (XMLNode const* location_sensor_node = context_node->FirstNode("location_sensor"))
+            {
+                location_sensor = location_sensor_node->Attrib("enabled")->ValueInt() ? true : false;
+            }
+
+            // 屏幕宽高
+            XMLNode const* frame_node = graphics_node->FirstNode("frame");
+            if (XMLAttribute const* attr = frame_node->Attrib("width"))
+            {
+                width = attr->ValueUInt();
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("height"))
+            {
+                height = attr->ValueUInt();
+            }
+            std::string color_fmt_str = "ARGB8";
+            if (XMLAttribute const* attr = frame_node->Attrib("color_fmt"))
+            {
+                color_fmt_str = std::string(attr->ValueString());
+            }
+            std::string depth_stencil_fmt_str = "D16";
+            if (XMLAttribute const* attr = frame_node->Attrib("depth_stencil_fmt"))
+            {
+                depth_stencil_fmt_str = std::string(attr->ValueString());
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("fullscreen"))
+            {
+                full_screen = attr->ValueBool();
+            }
+            if (XMLAttribute const* attr = frame_node->Attrib("keep_screen_on"))
+            {
+                keep_screen_on = attr->ValueBool();
+            }
+
+            size_t const color_fmt_str_hash = RtHash(color_fmt_str.c_str());
+            if (CtHash("ARGB8") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ARGB8;
+            }
+            else if (CtHash("ABGR8") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ABGR8;
+            }
+            else if (CtHash("A2BGR10") == color_fmt_str_hash)
+            {
+                color_fmt = EF_A2BGR10;
+            }
+            else if (CtHash("ABGR16F") == color_fmt_str_hash)
+            {
+                color_fmt = EF_ABGR16F;
+            }
+
+            size_t const depth_stencil_fmt_str_hash = RtHash(depth_stencil_fmt_str.c_str());
+            if (CtHash("D16") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D16;
+            }
+            else if (CtHash("D24S8") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D24S8;
+            }
+            else if (CtHash("D32F") == depth_stencil_fmt_str_hash)
+            {
+                depth_stencil_fmt = EF_D32F;
+            }
+            else
+            {
+                depth_stencil_fmt = EF_Unknown;
+            }
+
+            // 多重采样
+            XMLNode const* sample_node = frame_node->FirstNode("sample");
+            if (XMLAttribute const* attr = sample_node->Attrib("count"))
+            {
+                sample_count = attr->ValueUInt();
+            }
+            if (XMLAttribute const* attr = sample_node->Attrib("quality"))
+            {
+                sample_quality = attr->ValueUInt();
+            }
+        }
+        else
+        {
+            std::span<char const*> const available_rfs = available_rfs_array;
+            if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
+            {
+                rf_name = available_rfs[0];
+            }
+            
+            
+        }
+
+        cfg_.render_factory_name = std::move(rf_name);
+        // Migrate old or unsupported input settings to the sole input backend.
+        cfg_.input_factory_name = "SDL3";
+        // The shared config is portable; legacy XAudio configs migrate on non-Windows hosts.
+#if defined(ZENGINE_PLATFORM_WINDOWS)
+        constexpr char const* default_audio = "XAudio";
+        bool const supported_audio = af_name == "XAudio" || af_name == "SDL3";
+#else
+        constexpr char const* default_audio = "SDL3";
+        bool const supported_audio = af_name == "SDL3";
+#endif
+        if (af_name.empty() || af_name == "auto") af_name = default_audio;
+        else if (!supported_audio)
+        {
+            LogWarn() << "Audio factory '" << af_name << "' is unavailable on this platform; using " << default_audio << std::endl;
+            af_name = default_audio;
+        }
+        if (adsf_name != "OggVorbis")
+        {
+            LogError() << "Unsupported audio data source factory: " << adsf_name << "; using OggVorbis" << std::endl;
+            adsf_name = "OggVorbis";
+        }
+        cfg_.audio_factory_name = std::move(af_name);
+        cfg_.audio_data_source_factory_name = std::move(adsf_name);
+        cfg_.graphics_cfg.left = cfg_.graphics_cfg.top = 0;
+        cfg_.graphics_cfg.width = width;
+        cfg_.graphics_cfg.height = height;
+        cfg_.graphics_cfg.color_fmt = color_fmt;
+        cfg_.graphics_cfg.depth_stencil_fmt = depth_stencil_fmt;
+        cfg_.graphics_cfg.sample_count = sample_count;
+        cfg_.graphics_cfg.sample_quality = sample_quality;
+        cfg_.graphics_cfg.full_screen = full_screen;
+        cfg_.graphics_cfg.sync_interval = sync_interval;
+        cfg_.graphics_cfg.hdr = hdr;
+        cfg_.graphics_cfg.ppaa = ppaa;
+        cfg_.graphics_cfg.gamma = gamma;
+        cfg_.graphics_cfg.color_grading = color_grading;
+        cfg_.graphics_cfg.bloom = bloom;
+        cfg_.graphics_cfg.blue_shift = blue_shift;
+        cfg_.graphics_cfg.keep_screen_on = keep_screen_on;
+        cfg_.graphics_cfg.stereo_method = stereo_method;
+        cfg_.graphics_cfg.stereo_separation = stereo_separation;
+        cfg_.graphics_cfg.display_output_method = display_output_method;
+        cfg_.graphics_cfg.paper_white = paper_white;
+        cfg_.graphics_cfg.display_max_luminance = display_max_luminance;
+        cfg_.graphics_cfg.options = std::move(graphics_options);
+        cfg_.graphics_cfg.debug_context = debug_context;
+
+        cfg_.deferred_rendering = false;
+        cfg_.perf_profiler = perf_profiler;
+        cfg_.location_sensor = location_sensor;
+    }
+
+    void SaveConfig()
+    {
+        
+    }
+
+    void DestroyAll() noexcept
+    {
+        render_world_.reset();
+
+        if (res_loader_.Valid())
+        {
+            res_loader_.Destroy();
+        }
+        
+        // RmlUi must shut down before the D3D device / render factory go away.
+        ui_mgr_.Destroy();
+
+        render_factory_.reset();
+        audio_factory_.reset();
+        audio_data_src_factory_.reset();
+        input_factory_.reset();
+#if ZENGINE_IS_DEV_PLATFORM
+        dev_helper_.reset();
+#endif
+        app_ = nullptr;
+    }
+private:
+	static std::mutex singleton_mutex_;
+	static std::unique_ptr<Context> context_instance_;
+
+    // 窗口实例
+    App3D* app_ = nullptr;
+
+    // 基础配置
+    ContextConfig cfg_;
+
+    // 分配渲染相关对象接口
+    std::unique_ptr<RenderFactory> render_factory_;
+    // 场景对象管理
+    std::unique_ptr<World> render_world_;
+    // 音频工厂
+    std::unique_ptr<AudioFactory> audio_factory_;
+    // 音频解析
+    std::unique_ptr<AudioDataSourceFactory> audio_data_src_factory_;
+    // 输入工厂
+    std::unique_ptr<InputFactory> input_factory_;
+#if ZENGINE_IS_DEV_PLATFORM
+    // 开发辅助工具
+    std::unique_ptr<DevHelper> dev_helper_;
+#endif
+
+    DllLoader render_loader_;
+    DllLoader audio_loader_;
+    DllLoader input_loader_;
+    DllLoader ads_loader_;
+#if ZENGINE_IS_DEV_PLATFORM
+	DllLoader dev_helper_loader_;
+#endif
+    
+    // 载入资源管理器
+    ResLoader res_loader_;
+    // UI管理器
+    UIManager ui_mgr_;
+    // 全局线程池
+    ThreadPool global_thread_pool_;
+};
+
+std::mutex Context::Impl::singleton_mutex_;
+std::unique_ptr<Context> Context::Impl::context_instance_;
+
+Context::Context()
+{
+#ifdef ZENGINE_COMPILER_MSVC
+#ifdef ZENGINE_DEBUG
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
+
+    pimpl_ = MakeUniquePtr<Impl>();
+}
+
+Context::~Context() noexcept = default;
+
+Context& Context::Instance()
+{
+    return Impl::Instance();
+}
+
+void Context::AppInstance(App3D& app) noexcept
+{
+    pimpl_->AppInstance(app);
+}
+
+App3D& Context::AppInstance() noexcept
+{
+    return pimpl_->AppInstance();
+}
+
+bool Context::AppValid() const noexcept
+{
+    return pimpl_->AppValid();
+}
+
+RenderFactory& Context::RenderFactoryInstance()
+{
+    return pimpl_->RenderFactoryInstance();
+}
+
+bool Context::RenderFactoryValid() const noexcept
+{
+    return pimpl_->RenderFactoryValid();
+}
+
+AudioDataSourceFactory& Context::AudioDataSourceFactoryInstance()
+{
+    return pimpl_->AudioDataSourceFactoryInstance();
+}
+
+bool Context::AudioDataSourceFactoryValid() const noexcept
+{
+    return pimpl_->AudioDataSourceFactoryValid();
+}
+
+bool Context::InputFactoryValid() const noexcept
+{
+    return pimpl_->InputFactoryValid();
+}
+
+InputFactory& Context::InputFactoryInstance()
+{
+    return pimpl_->InputFactoryInstance();
+}
+
+bool Context::AudioFactoryValid() const noexcept
+{
+    return pimpl_->AudioFactoryValid();
+}
+
+AudioFactory& Context::AudioFactoryInstance()
+{
+    return pimpl_->AudioFactoryInstance();
+}
+
+bool Context::WorldValid() const noexcept
+{
+    return pimpl_->WorldValid();
+}
+
+World& Context::WorldInstance() noexcept
+{
+    return pimpl_->WorldInstance();
+}
+
+ResLoader& Context::ResLoaderInstance()
+{
+    return pimpl_->ResLoaderInstance();
+}
+
+ThreadPool& Context::ThreadPoolInstance()
+{
+    return pimpl_->ThreadPoolInstance();
+}
+
+UIManager& Context::UIManagerInstance()
+{
+    return pimpl_->UIManagerInstance();
+}
+
+#if ZENGINE_IS_DEV_PLATFORM
+bool Context::DevHelperValid() const noexcept
+{
+    return pimpl_->DevHelperValid();
+}
+
+bool Context::EnsureDevHelper()
+{
+    return pimpl_->EnsureDevHelper();
+}
+
+DevHelper& Context::DevHelperInstance()
+{
+    return pimpl_->DevHelperInstance();
+}
+#endif// ZENGINE_IS_DEV_PLATFORM
+
+const ContextConfig& Context::Config() const noexcept
+{
+    return pimpl_->Config();
+}
+
+void Context::Config(const ContextConfig& cfg) noexcept
+{
+    pimpl_->Config(cfg);
+}
+
+void Context::LoadConfig(const char* file_name)
+{
+    pimpl_->LoadConfig(file_name);
+}
+
+void Context::SaveConfig()
+{
+    pimpl_->SaveConfig();
+}
+
+void Context::Destroy() noexcept
+{
+    Impl::Destroy();
+}
+
+void Context::Suspend()
+{
+    
+}
+
+}

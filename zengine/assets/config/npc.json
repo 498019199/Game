@@ -1,0 +1,26 @@
+[
+    {
+        "id": 100000,
+        "prefab": "prefabs/model/Rabbit.prefab"
+    },
+    {
+        "id": 100001,
+        "prefab": "prefabs/model/Spring.prefab"
+    },
+    {
+        "id": 200000,
+        "prefab": "prefabs/Bp_F_C23_C.prefab"
+    },
+    {
+        "id": 300000,
+        "prefab": "prefabs/model/ogre_magi.prefab"
+    },
+    {
+        "id": 300001,
+        "prefab": "prefabs/model/chaos_knight.prefab"
+    },
+    {
+        "id": 300002,
+        "prefab": "prefabs/model/ancient_apparition.prefab"
+    }
+]

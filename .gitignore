@@ -1,56 +1,64 @@
+# Local editor and agent settings
 .DS_Store
+/.idea/
+/.codegraph/
+/.cursor/
+/.codex/
+/.githooks/
+/.agents/
+/.vscode/settings.json
+AGENTS.md
 
-/.idea
-/.codegraph
-/.cursor
-/.codex
-/openspec
-.vscode/settings.json
-/.githooks
-/.agents
+# Local notes, configuration, and helper scripts
+/openspec/
+/config/
+/tools/
 
-/tools
-/out
-/build
-/DemoEngine/example
-/DemoEngine/lib
-/DemoEngine/build
-/DemoEngine/bin
+# Build and runtime outputs
+/out/
+/build/
+/engine/example/
+/engine/lib/
+/engine/build/
+/engine/bin/
+/zengine/bin/
 
-/DemoEngine/3rd/7z/7z
-/DemoEngine/3rd/assimp/assimp
-/DemoEngine/3rd/d3dcompiler/d3dcompiler
-/DemoEngine/3rd/DirectX-Headers
-/DemoEngine/3rd/FreeImage/FreeImage
-/DemoEngine/3rd/googletest/googletest
-/DemoEngine/3rd/fmt/fmt
-/DemoEngine/3rd/tracy/tracy
-/DemoEngine/3rd/NanoRtti/NanoRtti
-/DemoEngine/3rd/ogg/ogg
-/DemoEngine/3rd/rapidjson/rapidjson
-/DemoEngine/3rd/rapidxml/rapidxml
-/DemoEngine/3rd/RmlUi/RmlUi
-/DemoEngine/3rd/freetype/freetype
-/DemoEngine/3rd/scope-lite/scope-lite
-/DemoEngine/3rd/vorbis/vorbis
-/DemoEngine/3rd/zlib/zlib
-/DemoEngine/3rd/dxsdk/dxsdk
+# Downloaded third-party sources; keep CMake wrappers and patches trackable
+/engine/3rd/7z/7z/
+/engine/3rd/assimp/assimp/
+/engine/3rd/d3dcompiler/d3dcompiler/
+/engine/3rd/DirectX-Headers/DirectX-Headers/
+/engine/3rd/FreeImage/FreeImage/
+/engine/3rd/googletest/googletest/
+/engine/3rd/fmt/fmt/
+/engine/3rd/tracy/tracy/
+/engine/3rd/NanoRtti/NanoRtti/
+/engine/3rd/ogg/ogg/
+/engine/3rd/rapidjson/rapidjson/
+/engine/3rd/rapidxml/rapidxml/
+/engine/3rd/RmlUi/RmlUi/
+/engine/3rd/SDL3/SDL/
+/engine/3rd/freetype/freetype/
+/engine/3rd/scope-lite/scope-lite/
+/engine/3rd/shader_tools/glslang/
+/engine/3rd/shader_tools/SPIRV-Cross/
+/engine/3rd/vorbis/vorbis/
+/engine/3rd/zlib/zlib/
+/engine/3rd/dxsdk/dxsdk/
 
-/ZEngine/bin
-/ZEngine/Assets/Models
-/ZEngine/Assets/Textures
+# Local assets and tool data
+/zengine/assets/models/
+/zengine/assets/textures/
+/game/tool/tracy/
+/game/tool/dota2_tex/resources/
+/game/tool/dota2_tex/netres/
+
 # Private company assets — do not commit or push
-/ZEngine/Assets/Private/**
-!/ZEngine/Assets/Private/README.md
-/Config
-/Game/Tool/tracy
-/Game/Tool/dota2_tex/resources
-/Game/Tool/dota2_tex/NetRes
-/Game/Tool
-/Game/Tool/CMakeLists.txt
+/zengine/assets/private/**
+!/zengine/assets/private/README.md
 
+# Generated resource caches
 *.png.dds
 *.jpg.dds
 *.kfx
 *.model_bin
-AGENTS.md

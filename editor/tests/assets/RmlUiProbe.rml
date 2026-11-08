@@ -1,0 +1,8 @@
+<rml><head><title>RmlUi GPU probe</title><style>
+div { display: block; }
+body { margin: 0; width: 128px; height: 128px; font-family: Segoe UI; font-size: 18px; color: white; }
+#solid { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; background-color: #ff0000; }
+#clip { position: absolute; left: 8px; top: 40px; width: 16px; height: 12px; overflow: hidden; }
+#overflow { width: 40px; height: 12px; background-color: #00ff00; }
+#text { position: absolute; left: 4px; top: 72px; }
+</style></head><body><div id="solid"/><div id="clip"><div id="overflow"/></div><div id="text">RmlUi</div></body></rml>

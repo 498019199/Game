@@ -1,0 +1,56 @@
+if (NOT ZENGINE_IS_DEV_PLATFORM)
+	return()
+endif()
+
+add_library(ZENGINE_DevHelps ${ZENGINE_PREFERRED_LIB_TYPE}
+    src/DevHelper.cpp
+    src/ImagePlane.cpp
+    src/ImagePlane.h
+    src/MeshConverter.cpp
+    src/MeshMetadata.cpp
+    src/MetadataUtil.cpp
+    src/MetadataUtil.h
+    src/TexConverter.cpp
+    src/TexMetadata.cpp
+)
+target_include_directories(ZENGINE_DevHelps
+	PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+
+if(ZENGINE_PREFERRED_LIB_TYPE STREQUAL "SHARED")
+	set_target_properties(ZENGINE_DevHelps PROPERTIES
+	CXX_VISIBILITY_PRESET hidden
+	VISIBILITY_INLINES_HIDDEN ON
+	)
+endif()
+
+target_precompile_headers(ZENGINE_DevHelps
+	PRIVATE
+		<base/ZEngine.h>)
+
+
+target_link_libraries(ZENGINE_DevHelps
+        PRIVATE
+            assimp
+            FreeImage
+        PUBLIC
+            ZENGINE_common
+            ZENGINE_core
+    )
+
+set_target_properties(ZENGINE_DevHelps PROPERTIES
+	OUTPUT_NAME ZENGINE_DevHelps${ZENGINE_OUTPUT_SUFFIX}
+	FOLDER "ZENGINE"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+	LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/render"
+)
