@@ -86,16 +86,14 @@ gm
 
 目录统一使用小写（第三方依赖保留上游命名），文件名、C++ 类型和 `ZENGINE_core` 等 CMake target 名称保持不变。资源和运行输出分别位于 `zengine/assets`、`zengine/bin`。迁移已有构建目录时需重新配置 CMake；旧平台缓存可以保留作备份，再建立新的构建目录。
 
-## Zed 编译与调试（macOS Apple Silicon）
+## VS Code 编译与调试（Windows x64）
 
-在 Zed 中打开仓库根目录。编译任务位于 `.zed/tasks.json`，沿用 `CMakePresets.json` 中的 Apple Clang / Ninja Multi-Config 配置；需要已安装 CMake、Ninja、Xcode Command Line Tools 和项目所需的 .NET SDK。
+在 VS Code 中打开仓库根目录。需要 Microsoft C/C++ 扩展、Visual Studio 2022 的 MSVC x64 工具和 Windows SDK，以及 PATH 中的 CMake 3.28 或更新版本和 Git。CMake Tools 扩展可为 IntelliSense 提供目标的头文件路径和编译选项。首次配置会下载缺失的 C++ 第三方依赖。
 
-- **编译**：按 `Cmd+Shift+P`，执行 `task: spawn`，选择 `CMake: Build Editor (Debug, macOS)`。也可选择 Editor Release 或 Game Debug 任务。编译任务先配置 CMake，再增量构建，并在编译前保存所有已编辑文件。
-- **运行**：先编译对应目标，再通过 `task: spawn` 选择 `Run: Editor (current build, macOS)` 或 Game 任务。运行任务直接启动当前已有的二进制，不执行编译。
-- **调试**：在 `editor/main.cpp` 或 `editor/game_main.cpp` 的可执行代码行旁点击设置断点，执行 `debugger: start`，选择 `Debug Editor (macOS)` 或 `Debug Game (macOS)`。调试启动前自动构建 Debug 目标；首次使用 CodeLLDB 时 Zed 可能需要联网下载调试适配器。命中断点后可查看变量、调用栈，并继续或单步执行。
-- **补全与跳转**：根目录 `.clangd` 指向 `out/build/macos-apple-clang` 中的编译数据库；首次编译或执行 Configure 任务后即可使用。如仍显示旧诊断，在命令面板执行 `editor: restart language server`。
+- **编译 Editor**按 `Ctrl+Shift+B`。要编译 Game，在命令面板执行 `Tasks: Run Task`，选择 `CMake: Build Game (Debug)`。
+- **断点调试**在 `editor/main.cpp` 或 `editor/game_main.cpp` 的可执行代码行设置断点。在「运行和调试」选择 `vscode-editor` 或 `vscode-game`，按 `F5`。VS Code 会先编译相应的 Debug 目标，再从 `zengine/bin/win_x64` 启动。
 
-两个启动配置均以 `zengine/bin/darwin_arm64` 为工作目录，便于加载引擎资源；Editor 显式使用 SDL3 后端。Debug 和 Release 共用该输出目录，运行任务使用最后一次构建的版本；调试入口会先重新构建 Debug。此配置面向 macOS Apple Silicon，Windows 的 Visual Studio 配置仍位于 `.vscode/launch.json`。
+默认构建使用 C++，NPC 配置来自 `zengine/assets/config/npc.json`，GM 控制台支持 `help`、`clear` 和 `/createnpc <id>`。需要 C# 战斗、技能及 `/gas` 时，可用 `-DZENGINE_ENABLE_MANAGED_GAMEPLAY=ON` 配置 CMake，此模式需要 .NET 10 SDK。
 
 ## macOS Editor 与 RmlUi 验证
 

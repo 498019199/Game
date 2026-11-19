@@ -1,8 +1,0 @@
-**/bin
-**/obj
-build
-artifacts
-.dotnet
-client
-tests
-bridge

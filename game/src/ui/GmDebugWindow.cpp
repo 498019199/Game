@@ -8,10 +8,16 @@
 #include <common/Util.h>
 #include <game/GameContext.h>
 #include <game/NpcSpawner.h>
-#include <GameSession.h>
 #include <manager/DataManager.h>
 #include <render/Mesh.h>
 #include <world/SceneNode.h>
+
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
+#include <GameSession.h>
+#else
+#include <charconv>
+#include <sstream>
+#endif
 
 using namespace RenderWorker;
 
@@ -135,6 +141,7 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
     if (command.empty()) return;
     LogInfo() << "[GM] " << command << std::endl;
     AppendLog(std::string("> ") + std::string(command));
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
     Gameplay::Protocol::Request request;
     request.mutable_gm()->set_command(std::string(command));
     auto response = GameContext::Instance().GameplayInstance().Call(std::move(request));
@@ -147,6 +154,30 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
         Context::Instance().UIManagerInstance().SetInnerRml(document_, "gm_log", "");
     if (response.has_npc()) CreateNpc(response.npc().id());
     else if (!response.message().empty()) AppendLog(response.message());
+#else
+    std::istringstream input{std::string(command)};
+    std::string name;
+    if (!(input >> name)) return;
+
+    if (name == "help")
+        AppendLog("commands: help, clear, /createnpc <id>");
+    else if (name == "clear")
+        Context::Instance().UIManagerInstance().SetInnerRml(document_, "gm_log", "");
+    else if (name == "/createnpc")
+    {
+        std::string id_text;
+        input >> id_text;
+        int32_t id = 0;
+        auto const end = id_text.data() + id_text.size();
+        auto const [last, error] = std::from_chars(id_text.data(), end, id);
+        if (error == std::errc{} && last == end)
+            CreateNpc(id);
+        else
+            AppendLog("usage: /createnpc <id>");
+    }
+    else
+        AppendLog("unknown: " + std::string(command));
+#endif
 }
 
 //createnpc 100000

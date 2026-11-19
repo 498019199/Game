@@ -5,6 +5,7 @@
             "name": "vscode-editor",
             "type": "cppvsdbg",
             "request": "launch",
+            "preLaunchTask": "CMake: Build Editor (Debug)",
             "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_editor.exe",
             "args": [],
             "stopAtEntry": false,
@@ -15,12 +16,12 @@
             "name": "vscode-game",
             "type": "cppvsdbg",
             "request": "launch",
+            "preLaunchTask": "CMake: Build Game (Debug)",
             "program": "${workspaceFolder}\\ZEngine\\bin\\win_x64\\ZENGINE_game_app.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}\\ZEngine\\bin\\win_x64",
             "environment": []
-        },
-
+        }
     ]
 }

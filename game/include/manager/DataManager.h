@@ -18,7 +18,7 @@ public:
 	DataManager& operator=(DataManager const&) = delete;
 
 	bool LoadPrefabs(std::string_view path);
-	bool LoadNpcConfig(); // C# protobuf catalog -> native presentation cache
+	bool LoadNpcConfig();
 	bool LoadGameConfig();
 
 	bool LoadConfig(std::string_view path);

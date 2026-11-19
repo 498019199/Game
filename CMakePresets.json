@@ -13,6 +13,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
                 "ZENGINE_ENABLE_TRACY": "ON",
                 "ZENGINE_TRACY_ON_DEMAND": "ON"
             },

@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-  </PropertyGroup>
-  <ItemGroup><ProjectReference Include="../runtime/Game.Runtime.csproj" /><ProjectReference Include="../protocol/Game.Protocol.csproj" /><ProjectReference Include="../shared/Game.Combat.csproj" /></ItemGroup>
-</Project>

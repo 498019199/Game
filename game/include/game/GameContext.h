@@ -3,11 +3,13 @@
 #include <manager/DataManager.h>
 #include <game/GameApi.h>
 #include <ui/GmDebugWindow.h>
+
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
 #include <memory>
 
 namespace Gameplay { class GameSession; }
+#endif
 
-// Native engine/UI adapter. All gameplay state and rules live in the C# session.
 class GAME_API GameContext
 {
 public:
@@ -21,14 +23,18 @@ public:
     DataManager const& DataManagerInstance() const noexcept;
     GmDebugWindow& GmDebugWindowInstance() noexcept;
     GmDebugWindow const& GmDebugWindowInstance() const noexcept;
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
     Gameplay::GameSession& GameplayInstance();
     void TickCombat(float dt_seconds);
+#endif
 private:
     GameContext();
     ~GameContext();
     bool started_ = false;
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
     double pending_ms_ = 0;
     std::unique_ptr<Gameplay::GameSession> gameplay_;
+#endif
     DataManager data_manager_;
     GmDebugWindow gm_debug_window_;
 };

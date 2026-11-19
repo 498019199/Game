@@ -1,4 +1,6 @@
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
 #include <game/GameContext.h>
+#endif
 #include <game/Scene.h>
 #include <game/SceneAssets.h>
 #include <game/SceneParticles.h>
@@ -1311,10 +1313,12 @@ void AScene::ClearLights()
 
 void AScene::UpdateDetailedMeshes(float3 const& eye_pos, bool back_face_depth_pass)
 {
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
 	if (back_face_depth_pass)
 	{
 		GameContext::Instance().TickCombat(Context::Instance().AppInstance().FrameTime());
 	}
+#endif
 
 	float3 const light_pos = light_ ? light_->Position() : float3(0.0f, 0.0f, 0.0f);
 	float3 light_color(0.0f, 0.0f, 0.0f);

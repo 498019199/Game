@@ -1,6 +1,9 @@
 #include <manager/DataManager.h>
+
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
 #include <game/GameContext.h>
 #include <GameSession.h>
+#endif
 
 #include <base/ZEngine.h>
 #include <common/JsonDom.h>
@@ -9,6 +12,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <string>
+#include <utility>
 
 namespace
 {
@@ -111,22 +115,47 @@ bool DataManager::LoadNpcConfig()
 {
     npc_entries_.clear();
     npc_id_to_prefab_.clear();
+
+    auto cache_npc = [this](int32_t id, std::string_view prefab_path)
+    {
+        auto const* prefab = FindPrefabByPathOrName(prefabs_data_, prefab_path);
+        if (!prefab)
+        {
+            LogError() << "NPC presentation asset unavailable: " << prefab_path << std::endl;
+            return;
+        }
+        auto const index = static_cast<std::size_t>(prefab - prefabs_data_.data());
+        if (npc_id_to_prefab_.emplace(id, index).second)
+            npc_entries_.push_back(NpcConfigEntry{id, std::string(prefab_path)});
+    };
+
+#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
     Gameplay::Protocol::Request request;
     request.mutable_npc_catalog();
     auto response = GameContext::Instance().GameplayInstance().Call(std::move(request));
     if (response.status() != Gameplay::Protocol::ERROR_CODE_OK) return false;
-    // C# owns NPC definitions. This is only an ID -> loaded render-asset cache.
     for (auto const& definition : response.npc_catalog())
+        cache_npc(definition.id(), definition.prefab());
+#else
+    using CommonWorker::JsonValueType;
+    constexpr std::string_view npc_config = "config/npc.json";
+    if (!LoadConfig(npc_config)) return false;
+
+    auto const* catalog = GetConfig(npc_config);
+    if (catalog->Type() != JsonValueType::Array) return false;
+    for (auto const& entry : catalog->ValueArray())
     {
-        auto const* prefab = FindPrefabByPathOrName(prefabs_data_, definition.prefab());
-        if (!prefab)
-        {
-            LogError() << "NPC presentation asset unavailable: " << definition.prefab() << std::endl;
-            continue;
-        }
-        npc_id_to_prefab_.emplace(definition.id(), static_cast<std::size_t>(prefab - prefabs_data_.data()));
-        npc_entries_.push_back(NpcConfigEntry{definition.id(), definition.prefab()});
+        if (entry.Type() != JsonValueType::Object) continue;
+        auto const* id = entry.Member("id");
+        auto const* prefab = entry.Member("prefab");
+        if (!id || !prefab || prefab->Type() != JsonValueType::String) continue;
+
+        if (id->Type() == JsonValueType::Int)
+            cache_npc(id->ValueInt(), prefab->ValueString());
+        else if (id->Type() == JsonValueType::UInt && std::in_range<int32_t>(id->ValueUInt()))
+            cache_npc(static_cast<int32_t>(id->ValueUInt()), prefab->ValueString());
     }
+#endif
     return true;
 }
 

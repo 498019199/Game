@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure (Visual Studio 2022 x64)",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--preset", "Visual Studio Community 2022 Release - amd64"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build Editor (Debug)",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build", "--preset", "Visual Studio Community 2022 Release - amd64-debug",
+                "--target", "ZENGINE_editor"
+            ],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "CMake: Configure (Visual Studio 2022 x64)",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "CMake: Build Game (Debug)",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build", "--preset", "Visual Studio Community 2022 Release - amd64-debug",
+                "--target", "ZENGINE_game_app"
+            ],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "CMake: Configure (Visual Studio 2022 x64)",
+            "group": "build",
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
