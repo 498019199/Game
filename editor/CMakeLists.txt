@@ -19,7 +19,6 @@ set(SRC_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorInspectorPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorMainBarPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerSDL3.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProfilerPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorProjectPanel.cpp)
 
@@ -27,7 +26,9 @@ if(WIN32 OR ZENGINE_PLATFORM_DARWIN)
     list(APPEND SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/tests/EditorResizeSmoke.cpp)
 endif()
 if(WIN32)
-    list(APPEND SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/EditorManagerD3D11.cpp)
+    list(APPEND SRC_LIST src/EditorManagerD3D11.cpp src/EditorManagerD3D12.cpp)
+else()
+    list(APPEND SRC_LIST src/EditorManagerMetal.mm)
 endif()
 
 add_executable(ZENGINE_editor
@@ -42,39 +43,39 @@ if(MSVC)
     target_compile_options(ZENGINE_editor PRIVATE /std:c++20)
 endif()
 
-add_dependencies(ZENGINE_editor ZENGINE_game ZENGINE_Render_SDL3)
+add_dependencies(ZENGINE_editor ZENGINE_game ${ZENGINE_DESKTOP_RENDERER})
 
 target_link_libraries(ZENGINE_editor
     PRIVATE
         ZENGINE_game
         ZENGINE_common
         ZENGINE_core
-        ZENGINE_Render_SDL3
+        ${ZENGINE_DESKTOP_RENDERER}
         ZENGINE_DevHelps
         ZENGINE_AudioDataSource_OggVorbis
-        ZENGINE_InputEngine_InputSDL3
+        ZENGINE_InputEngine_InputDesktop
         imgui
         editor_imguizmo
-        SDL3::SDL3
+        glfw
         ZENGINE_RmlUiHeaders)
 
 if(WIN32)
-    target_link_libraries(ZENGINE_editor PRIVATE ZENGINE_Render_D3D11 ZENGINE_AudioEngine_XAudio d3dcompiler)
+    target_link_libraries(ZENGINE_editor PRIVATE ZENGINE_Render_D3D11 ZENGINE_AudioEngine_XAudio d3dcompiler d3d12 dxgi)
 endif()
 
 add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL
-    tests/EditorGizmoTests.cpp tests/EditorRegressionTests.cpp tests/MaterialSerializationTests.cpp tests/SDL3AudioTests.cpp
+    tests/EditorGizmoTests.cpp tests/EditorRegressionTests.cpp tests/MaterialSerializationTests.cpp $<$<PLATFORM_ID:Darwin>:tests/CoreAudioTests.cpp>
     tests/EditorMaterialDocumentTests.cpp tests/SceneMaterialTests.cpp tests/ParticleSystemTests.cpp tests/SceneParticleTests.cpp
     src/EditorMaterialService.cpp src/EditorSetting.cpp)
 target_link_libraries(ZENGINE_editor_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common gtest imgui editor_imguizmo)
-add_dependencies(ZENGINE_editor_tests ZENGINE_AudioDataSource_OggVorbis ZENGINE_InputEngine_InputSDL3)
+add_dependencies(ZENGINE_editor_tests ZENGINE_AudioDataSource_OggVorbis ZENGINE_InputEngine_InputDesktop)
 if(WIN32)
     add_dependencies(ZENGINE_editor_tests ZENGINE_AudioEngine_XAudio)
 endif()
 
 if(WIN32 OR ZENGINE_PLATFORM_DARWIN)
     add_executable(ZENGINE_particle_gpu_tests EXCLUDE_FROM_ALL tests/ParticleGpuTests.cpp)
-    target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_core ZENGINE_common ZENGINE_Render_SDL3 SDL3::SDL3)
+    target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER} glfw)
     if(WIN32)
         target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_Render_D3D11)
     endif()
@@ -84,7 +85,7 @@ if(WIN32 OR ZENGINE_PLATFORM_DARWIN)
         FOLDER "test")
 
     add_executable(ZENGINE_material_gpu_tests EXCLUDE_FROM_ALL tests/MaterialGpuTests.cpp)
-    target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common ZENGINE_Render_SDL3 SDL3::SDL3)
+    target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER} glfw)
     if(WIN32)
         target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_Render_D3D11 dbghelp)
     endif()
@@ -111,9 +112,9 @@ if(MSVC)
     target_compile_options(ZENGINE_game_app PRIVATE /std:c++20)
 endif()
 
-# The shipped configuration selects SDL3 on every platform. Build the dynamically
+# The shipped configuration selects the native renderer for each platform. Build the dynamically
 # loaded renderer even when only the game executable is requested.
-add_dependencies(ZENGINE_game_app ZENGINE_game ZENGINE_DevHelps ZENGINE_Render_SDL3)
+add_dependencies(ZENGINE_game_app ZENGINE_game ZENGINE_DevHelps ${ZENGINE_DESKTOP_RENDERER})
 
 target_link_libraries(ZENGINE_game_app
     PRIVATE
@@ -127,20 +128,22 @@ if(WIN32)
             ZENGINE_Render_D3D11
             ZENGINE_AudioEngine_XAudio
             ZENGINE_AudioDataSource_OggVorbis
-            ZENGINE_InputEngine_InputSDL3
+            ZENGINE_InputEngine_InputDesktop
         PRIVATE
             d3dcompiler)
 else()
     target_link_libraries(ZENGINE_game_app
         PRIVATE
-            ZENGINE_Render_SDL3
-            ZENGINE_InputEngine_InputSDL3
+            ${ZENGINE_DESKTOP_RENDERER}
+            ZENGINE_InputEngine_InputDesktop
             ZENGINE_AudioDataSource_OggVorbis)
 endif()
 
 foreach(app_target IN ITEMS ZENGINE_game_app ZENGINE_editor ZENGINE_editor_tests ZENGINE_material_gpu_tests ZENGINE_particle_gpu_tests)
     if(TARGET ${app_target})
-        add_dependencies(${app_target} ZENGINE_AudioEngine_SDL3)
+        if(ZENGINE_PLATFORM_DARWIN)
+            add_dependencies(${app_target} ZENGINE_AudioEngine_CoreAudio)
+        endif()
         target_include_directories(${app_target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_precompile_headers(${app_target} PRIVATE <base/ZEngine.h>)
     endif()
@@ -148,7 +151,7 @@ endforeach()
 
 if(ZENGINE_PLATFORM_DARWIN)
     add_executable(ZENGINE_rmlui_gpu_tests EXCLUDE_FROM_ALL tests/RmlUiGpuTests.cpp)
-    target_link_libraries(ZENGINE_rmlui_gpu_tests PRIVATE ZENGINE_core ZENGINE_Render_SDL3)
+    target_link_libraries(ZENGINE_rmlui_gpu_tests PRIVATE ZENGINE_core ${ZENGINE_DESKTOP_RENDERER})
     target_compile_definitions(ZENGINE_rmlui_gpu_tests PRIVATE RMLUI_GPU_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/assets/RmlUiProbe.rml")
     target_precompile_headers(ZENGINE_rmlui_gpu_tests PRIVATE <base/ZEngine.h>)
     set_target_properties(ZENGINE_rmlui_gpu_tests PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON FOLDER "test")

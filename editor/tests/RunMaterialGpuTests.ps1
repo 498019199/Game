@@ -1,4 +1,4 @@
-param([ValidateSet('SDL3', 'D3D11')][string]$Backend = 'SDL3')
+param([ValidateSet('D3D12', 'D3D11')][string]$Backend = 'D3D12')
 $ErrorActionPreference = 'Stop'
 $workspace = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $binaryDir = Join-Path $workspace 'zengine/bin/win_x64'

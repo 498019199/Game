@@ -1,4 +1,4 @@
-# HLSL -> SPIR-V -> MSL for the SDL_GPU Metal backend.
+# HLSL -> SPIR-V -> MSL for the native Metal backend.
 UpdateExternalLib("glslang" "https://github.com/KhronosGroup/glslang.git" "8a85691a0740d390761a1008b4696f57facd02c4")
 UpdateExternalLib("SPIRV-Cross" "https://github.com/KhronosGroup/SPIRV-Cross.git" "9c3c8e2cefdd8194b193bb8ed2fdff4d5527e382")
 

@@ -6,9 +6,8 @@
 #include <render/RenderFactory.h>
 #include <render/RenderEngine.h>
 #include <render/FrameBuffer.h>
-#include <SDL3RenderEngine.h>
-#include <SDL3Texture.h>
-#include <SDL3/SDL.h>
+#include <MetalRenderEngine.h>
+#include <MetalTexture.h>
 #include <cstring>
 #include <iostream>
 
@@ -22,36 +21,36 @@ class App final : public App3D
 public: App() : App3D("RmlUi GPU Tests") {}
 private: uint32_t DoUpdate(uint32_t) override { return URV_Finished; }
 };
-std::vector<uint8_t> Readback(SDL3RenderEngine& re, TexturePtr const& texture)
+std::vector<uint8_t> Readback(MetalRenderEngine& re, TexturePtr const& texture)
 {
     std::vector<uint8_t> pixels(size * size * 4);
-    SDL_GPUTransferBufferCreateInfo info{};
-    info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD; info.size = static_cast<Uint32>(pixels.size());
-    auto* buffer = SDL_CreateGPUTransferBuffer(re.Device(), &info);
+    metal::TransferBufferCreateInfo info{};
+    info.usage = metal::TRANSFERBUFFERUSAGE_DOWNLOAD; info.size = static_cast<uint32_t>(pixels.size());
+    auto* buffer = metal::CreateTransferBuffer(re.Device(), &info);
     Require(buffer != nullptr, "Readback buffer creation failed");
-    auto release_buffer = CommonWorker::Defer([&] { SDL_ReleaseGPUTransferBuffer(re.Device(), buffer); });
-    auto* commands = SDL_AcquireGPUCommandBuffer(re.Device());
+    auto release_buffer = CommonWorker::Defer([&] { metal::ReleaseTransferBuffer(re.Device(), buffer); });
+    auto* commands = metal::AcquireCommandBuffer(re.Device());
     Require(commands != nullptr, "Readback command allocation failed");
-    auto* copy = SDL_BeginGPUCopyPass(commands);
-    SDL_GPUTextureRegion source{};
-    source.texture = dynamic_cast<SDL3Texture&>(*texture).GpuTexture(); source.w = size; source.h = size; source.d = 1;
-    SDL_GPUTextureTransferInfo dest{}; dest.transfer_buffer = buffer; dest.pixels_per_row = size; dest.rows_per_layer = size;
-    SDL_DownloadFromGPUTexture(copy, &source, &dest);
-    SDL_EndGPUCopyPass(copy);
-    auto* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commands);
+    auto* copy = metal::BeginCopyPass(commands);
+    metal::TextureRegion source{};
+    source.texture = dynamic_cast<MetalTexture&>(*texture).GpuTexture(); source.w = size; source.h = size; source.d = 1;
+    metal::TextureTransferInfo dest{}; dest.transfer_buffer = buffer; dest.pixels_per_row = size; dest.rows_per_layer = size;
+    metal::DownloadFromTexture(copy, &source, &dest);
+    metal::EndCopyPass(copy);
+    auto* fence = metal::SubmitCommandBufferAndAcquireFence(commands);
     Require(fence != nullptr, "Readback submit failed");
-    auto release_fence = CommonWorker::Defer([&] { SDL_ReleaseGPUFence(re.Device(), fence); });
-    Require(SDL_WaitForGPUFences(re.Device(), true, &fence, 1), "Readback wait failed");
-    auto* bytes = SDL_MapGPUTransferBuffer(re.Device(), buffer, false);
+    auto release_fence = CommonWorker::Defer([&] { metal::ReleaseFence(re.Device(), fence); });
+    Require(metal::WaitForFences(re.Device(), true, &fence, 1), "Readback wait failed");
+    auto* bytes = metal::MapTransferBuffer(re.Device(), buffer, false);
     Require(bytes != nullptr, "Readback map failed");
     std::memcpy(pixels.data(), bytes, pixels.size());
-    SDL_UnmapGPUTransferBuffer(re.Device(), buffer);
+    metal::UnmapTransferBuffer(re.Device(), buffer);
     return pixels;
 }
 void Test()
 {
     auto& ctx = Context::Instance(); auto& rf = ctx.RenderFactoryInstance();
-    auto& re = dynamic_cast<SDL3RenderEngine&>(rf.RenderEngineInstance());
+    auto& re = dynamic_cast<MetalRenderEngine&>(rf.RenderEngineInstance());
     auto& ui = ctx.UIManagerInstance();
     ui.Init(); Require(ui.Valid(), "RmlUi pipeline/context initialization failed");
     ui.SetDimensions(size, size);
@@ -96,7 +95,7 @@ int main()
     int result = 0;
     try {
         auto& ctx = Context::Instance(); ctx.LoadConfig("KlayGE.cfg"); auto cfg = ctx.Config();
-        cfg.render_factory_name = "SDL3";
+        cfg.render_factory_name = "Metal";
         cfg.graphics_cfg.width = size; cfg.graphics_cfg.height = size;
         cfg.graphics_cfg.full_screen = false; cfg.graphics_cfg.gamma = false; cfg.graphics_cfg.hide_win = true;
         ctx.Config(cfg);

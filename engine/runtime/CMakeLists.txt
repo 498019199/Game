@@ -23,18 +23,8 @@ set(APP_HEADER_FILES
 set(APP_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/App3D.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/Window.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/WindowSDLEvents.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/DesktopWindow.cpp
 )
-
-if(ZENGINE_PLATFORM_WINDOWS)
-    set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/WindowWin.cpp
-)
-elseif(ZENGINE_PLATFORM_ANDROID OR ZENGINE_PLATFORM_IOS OR ZENGINE_PLATFORM_LINUX OR ZENGINE_PLATFORM_DARWIN)
-    set(APP_SOURCE_FILES ${APP_SOURCE_FILES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/WindowSDL.cpp
-)
-endif()
 
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
 SOURCE_GROUP("Base\\Header Files" FILES ${BASE_HEADER_FILES})
@@ -184,7 +174,7 @@ set(UI_HEADER_FILES
 )
 set(UI_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/UIInput.cpp
-    ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends/RmlUi_Platform_SDL.cpp
+    ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends/RmlUi_Platform_GLFW.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/UIManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/RmlUiRenderInterface.cpp
 )
@@ -221,7 +211,7 @@ set_target_properties(ZENGINE_core PROPERTIES
 target_compile_definitions(ZENGINE_core
     PRIVATE
         -DZENGINE_EXPORTS
-        RMLUI_SDL_VERSION_MAJOR=3
+        GLFW_INCLUDE_NONE
 )
 
 target_link_libraries(ZENGINE_core
@@ -240,11 +230,15 @@ if(WIN32)
     target_link_libraries(ZENGINE_core PRIVATE dxsdk d3d11 dxgi d3dcompiler)
 endif()
 
-target_link_libraries(ZENGINE_core PRIVATE SDL3::SDL3)
+target_link_libraries(ZENGINE_core PRIVATE glfw)
 
 
 if(ZENGINE_IS_DEV_PLATFORM)
 	if(NOT (ZENGINE_ARCH_NAME STREQUAL "arm64"))
 		#add_dependencies(ZENGINE_core D3DCompilerRedist)
 	endif()
+endif()
+if(ZENGINE_PLATFORM_DARWIN)
+    target_sources(ZENGINE_core PRIVATE src/app/CocoaWindow.mm)
+    target_link_libraries(ZENGINE_core PRIVATE "-framework AppKit")
 endif()

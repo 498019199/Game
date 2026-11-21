@@ -41,11 +41,7 @@ using namespace RenderWorker;
 using namespace CommonWorker;
 
 GameApp::GameApp(std::string_view scene_path)
-#if defined(ZENGINE_PLATFORM_WINDOWS)
-	: App3D("Game App <DirectX 11>")
-#else
-	: App3D("Game App <SDL3>")
-#endif
+: App3D("Game App")
 	, scene_path_(scene_path)
 {
 }

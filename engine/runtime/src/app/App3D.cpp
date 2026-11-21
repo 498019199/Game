@@ -66,47 +66,16 @@ void App3D::Create()
 
 void App3D::Run()
 {
-#if defined ZENGINE_PLATFORM_WINDOWS_DESKTOP
-	bool gotMsg;
-    MSG msg = {0};
-	::PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE);
-
-    while(	WM_QUIT != msg.message )
-	{
-		// 如果窗口是激活的，用 PeekMessage()以便我们可以用空闲时间渲染场景
-		// 不然, 用 GetMessage() 减少 CPU 占用率+-
-		if ( main_wnd_->Active() )
-		{
-			gotMsg = (::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != 0);
-		}
-		else
-		{
-			gotMsg = (::GetMessage(&msg, nullptr, 0, 0) != 0);
-		}
-
-
-		const auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
-		if (gotMsg)
-		{
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-		}
-		else
-		{
-			Window::PumpEvents();
-			re.Refresh();
-		}
+    auto& renderer = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
+#ifdef ZENGINE_PLATFORM_DARWIN
+    extern void RunCocoaLoop(Window&, RenderEngine&);
+    RunCocoaLoop(*main_wnd_, renderer);
+#else
+    while (!main_wnd_->Closed()) {
+        Window::PumpEvents();
+        if (!main_wnd_->Closed()) renderer.Refresh();
     }
-#elif defined(ZENGINE_PLATFORM_LINUX) || defined(ZENGINE_PLATFORM_DARWIN) \
-	|| defined(ZENGINE_PLATFORM_ANDROID) || defined(ZENGINE_PLATFORM_IOS)
-	const auto& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
-	while (!main_wnd_->Closed())
-	{
-		Window::PumpEvents();
-		re.Refresh();
-	}
 #endif
-
     this->OnDestroy();
 }
 

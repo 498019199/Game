@@ -9,9 +9,8 @@
 #include <render/RenderFactory.h>
 #include <world/ParticleSystem.h>
 #include <world/SceneNode.h>
-#include <SDL3RenderEngine.h>
-#include <SDL3Texture.h>
-#include <SDL3/SDL.h>
+#include "DesktopGpuTestBackend.h"
+#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -20,6 +19,7 @@
 #include <iostream>
 
 using namespace RenderWorker;
+namespace gpu = DesktopGpuTest::gpu;
 namespace
 {
 constexpr uint32_t size = 128;
@@ -34,30 +34,30 @@ std::vector<uint8_t> Readback(RenderFactory& rf, TexturePtr const& texture)
     auto const width = texture->Width(0), height = texture->Height(0);
     std::vector<uint8_t> pixels(width * height * 4);
     auto& re = rf.RenderEngineInstance();
-    if (auto* sdl = dynamic_cast<SDL3RenderEngine*>(&re))
+    if (auto* native = dynamic_cast<DesktopGpuTest::Renderer*>(&re))
     {
-        SDL_GPUTransferBufferCreateInfo info{};
-        info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD; info.size = static_cast<Uint32>(pixels.size());
-        auto* buffer = SDL_CreateGPUTransferBuffer(sdl->Device(), &info);
+        gpu::TransferBufferCreateInfo info{};
+        info.usage = gpu::TRANSFERBUFFERUSAGE_DOWNLOAD; info.size = static_cast<uint32_t>(pixels.size());
+        auto* buffer = gpu::CreateTransferBuffer(native->Device(), &info);
         Require(buffer != nullptr, "Readback buffer creation failed");
-        auto release_buffer = CommonWorker::Defer([&] { SDL_ReleaseGPUTransferBuffer(sdl->Device(), buffer); });
-        auto* commands = SDL_AcquireGPUCommandBuffer(sdl->Device());
+        auto release_buffer = CommonWorker::Defer([&] { gpu::ReleaseTransferBuffer(native->Device(), buffer); });
+        auto* commands = gpu::AcquireCommandBuffer(native->Device());
         Require(commands != nullptr, "Readback command allocation failed");
-        auto* copy = SDL_BeginGPUCopyPass(commands);
-        SDL_GPUTextureRegion source{};
-        source.texture = dynamic_cast<SDL3Texture&>(*texture).GpuTexture(); source.w = width; source.h = height; source.d = 1;
-        SDL_GPUTextureTransferInfo dest{};
+        auto* copy = gpu::BeginCopyPass(commands);
+        gpu::TextureRegion source{};
+        source.texture = dynamic_cast<DesktopGpuTest::Texture&>(*texture).GpuTexture(); source.w = width; source.h = height; source.d = 1;
+        gpu::TextureTransferInfo dest{};
         dest.transfer_buffer = buffer; dest.pixels_per_row = width; dest.rows_per_layer = height;
-        SDL_DownloadFromGPUTexture(copy, &source, &dest);
-        SDL_EndGPUCopyPass(copy);
-        auto* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commands);
+        gpu::DownloadFromTexture(copy, &source, &dest);
+        gpu::EndCopyPass(copy);
+        auto* fence = gpu::SubmitCommandBufferAndAcquireFence(commands);
         Require(fence != nullptr, "Readback submit failed");
-        auto release_fence = CommonWorker::Defer([&] { SDL_ReleaseGPUFence(sdl->Device(), fence); });
-        Require(SDL_WaitForGPUFences(sdl->Device(), true, &fence, 1), "Readback wait failed");
-        auto* bytes = SDL_MapGPUTransferBuffer(sdl->Device(), buffer, false);
+        auto release_fence = CommonWorker::Defer([&] { gpu::ReleaseFence(native->Device(), fence); });
+        Require(gpu::WaitForFences(native->Device(), true, &fence, 1), "Readback wait failed");
+        auto* bytes = gpu::MapTransferBuffer(native->Device(), buffer, false);
         Require(bytes != nullptr, "Readback map failed");
         std::memcpy(pixels.data(), bytes, pixels.size());
-        SDL_UnmapGPUTransferBuffer(sdl->Device(), buffer);
+        gpu::UnmapTransferBuffer(native->Device(), buffer);
     }
     else
     {
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
     try
     {
         auto& ctx = Context::Instance(); ctx.LoadConfig("KlayGE.cfg"); auto cfg = ctx.Config();
-        cfg.render_factory_name = argc > 1 ? argv[1] : "SDL3";
+        cfg.render_factory_name = argc > 1 ? argv[1] : DesktopRendererName;
         cfg.graphics_cfg.width = size; cfg.graphics_cfg.height = size;
         cfg.graphics_cfg.full_screen = false; cfg.graphics_cfg.gamma = false;
         ctx.Config(cfg);
@@ -323,10 +323,10 @@ int main(int argc, char** argv)
         ctx.ResLoaderInstance().AddPath("../../assets");
         {
             App app; app.Create();
-            if (app.MainWnd()->GetSDLWindow())
+            if (app.MainWnd()->DesktopWindow())
             {
-                Require(SDL_ShowWindow(app.MainWnd()->GetSDLWindow()), "Cannot show GPU probe window");
-                Require(SDL_SyncWindow(app.MainWnd()->GetSDLWindow()), "Cannot sync GPU probe window");
+                Require((glfwShowWindow(app.MainWnd()->DesktopWindow()), true), "Cannot show GPU probe window");
+                Require((glfwPollEvents(), true), "Cannot sync GPU probe window");
             }
             Test(argc > 2 && std::string_view(argv[2]) == "--write-previews");
         }

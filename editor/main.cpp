@@ -1,5 +1,5 @@
 #include <editor/EditorManager.h>
-#include <editor/EditorManagerSDL3.h>
+#include <base/DesktopBackend.h>
 #include <base/ZEngine.h>
 #include <base/ResLoader.h>
 #include <base/Window.h>
@@ -11,32 +11,19 @@
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #include <editor/EditorManagerD3D11.h>
+#include <editor/EditorManagerD3D12.h>
 #include <windows.h>
 #else
-#include <SDL3/SDL.h>
+#include <editor/EditorManagerMetal.h>
+#include <GLFW/glfw3.h>
 #endif
 
 using namespace EditorWorker;
 using namespace RenderWorker;
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace
 {
-	LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-#ifndef EDITOR_DEBUG_MODE
-		// SDL3 owns ImGui input when the SDL_GPU renderer is active. The legacy
-		// Win32 backend must not also consume the same native messages, otherwise
-		// keyboard and mouse events are submitted twice.
-		if (Context::Instance().RenderFactoryValid())
-		{
-			CommonWorker::checked_cast<EditorManager&>(Context::Instance().AppInstance()).ProcessWindowMessage(hWnd, msg, wParam, lParam);
-		}
-#endif
-		return -1;
-	}
-
     bool EnableDpiAwareness()
     {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
@@ -88,25 +75,17 @@ int main(int argc, char** argv)
         else if (arg == "--smoke-material-binding") smoke_material_binding = true;
         else { std::cerr << "Unknown argument: " << arg << std::endl; return 2; }
     }
-    if (!backend.empty() && backend != "SDL3" && backend != "D3D11") {
-        std::cerr << "Supported editor backends: SDL3, D3D11" << std::endl; return 2;
-    }
-#ifndef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    if (backend == "D3D11") {
-        std::cerr << "D3D11 is available only on Windows; use --backend=SDL3." << std::endl; return 2;
-    }
-#ifndef ZENGINE_PLATFORM_DARWIN
-    if (smoke_resize) {
-        std::cerr << "The native resize smoke test is available only on Windows and macOS." << std::endl; return 2;
-    }
+    if (!backend.empty() && backend != DesktopRendererName
+#ifdef _WIN32
+        && backend != "D3D11"
 #endif
-#endif
+    ) { std::cerr << "Unsupported render backend: " << backend << std::endl; return 2; }
     if ((smoke_material_binding || smoke_resize) && smoke_material.empty()) smoke_material = "materials/m2demo/Seed.mat";
     std::string cfg_path = Context::Instance().ResLoaderInstance().Locate("KlayGE.cfg");
     Context::Instance().LoadConfig(cfg_path.c_str());
     auto config = Context::Instance().Config();
 #ifndef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    config.render_factory_name = "SDL3";
+    config.render_factory_name = DesktopRendererName;
 #endif
     if (!backend.empty()) config.render_factory_name = backend;
     const uint32_t defaultHierarchyWidth = 150;
@@ -142,16 +121,17 @@ int main(int argc, char** argv)
     uint32_t const screenResolutionX = To96DpiUnits(available_area.right - available_area.left, dpi_x);
     uint32_t const screenResolutionY = To96DpiUnits(available_area.bottom - available_area.top, dpi_y);
 #else
-    if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_InitSubSystem(SDL_INIT_VIDEO)) {
-        std::cerr << "SDL video initialization failed: " << SDL_GetError() << std::endl; return 1;
+    Window::InitializeDesktop();
+    auto* display = glfwGetPrimaryMonitor();
+    int x=0, y=0, w=0, h=0;
+    if (display) {
+        glfwGetMonitorWorkarea(display, &x, &y, &w, &h);
+        if (config.graphics_cfg.full_screen) {
+            if (auto mode=glfwGetVideoMode(display)) { w=mode->width; h=mode->height; }
+        }
     }
-    SDL_Rect available_area{};
-    SDL_DisplayID const display = SDL_GetPrimaryDisplay();
-    bool const have_bounds = config.graphics_cfg.full_screen
-        ? SDL_GetDisplayBounds(display, &available_area)
-        : SDL_GetDisplayUsableBounds(display, &available_area);
-    uint32_t const screenResolutionX = have_bounds ? static_cast<uint32_t>(available_area.w) : editorWidth;
-    uint32_t const screenResolutionY = have_bounds ? static_cast<uint32_t>(available_area.h) : editorHeight;
+    uint32_t const screenResolutionX = w>0 ? static_cast<uint32_t>(w) : editorWidth;
+    uint32_t const screenResolutionY = h>0 ? static_cast<uint32_t>(h) : editorHeight;
 #endif
 
     if (config.graphics_cfg.full_screen)
@@ -191,21 +171,17 @@ int main(int argc, char** argv)
     res_loader.AddPath("../../assets/rmlui");
 
     std::unique_ptr<EditorManager> app;
-    if (config.render_factory_name == "SDL3")
-    {
-        app = MakeUniquePtr<EditorManagerSDL3>();
-    }
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    else
-    {
+    if (config.render_factory_name == "D3D11")
         app = MakeUniquePtr<EditorManagerD3D11>();
-    }
+    else
+        app = MakeUniquePtr<EditorManagerD3D12>();
+#else
+    app = MakeUniquePtr<EditorManagerMetal>();
 #endif
     app->GetEditorSetting( setting );
     app->Create();
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP) && !defined(EDITOR_DEBUG_MODE)
-    app->MainWnd()->BindMsgProc(EditorWndProc);
-#endif //EDITOR_DEBUG_MODE
+
 
     int result = 0;
     if (smoke_material.empty() && !smoke_resize) app->Run();
@@ -214,7 +190,7 @@ int main(int argc, char** argv)
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
         ::ShowWindow(app->MainWnd()->GetHWND(), SW_HIDE);
 #else
-        SDL_HideWindow(app->MainWnd()->GetSDLWindow());
+        glfwHideWindow(app->MainWnd()->DesktopWindow());
 #endif
         try {
             if (!smoke_material.empty()) app->SelectMaterialDocument(app->Materials().Open(smoke_material));

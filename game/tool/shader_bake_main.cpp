@@ -1,3 +1,4 @@
+#include <base/DesktopBackend.h>
 #include <base/App3D.h>
 #include <base/ResLoader.h>
 #include <base/ZEngine.h>
@@ -21,7 +22,7 @@ struct BakeOptions
 	std::vector<std::string> shaders;
 	std::vector<std::string> assets_dirs;
 	std::string config_path;
-	std::string factory; // D3D11 or SDL3; empty = use cfg
+	std::string factory; // D3D11 or D3D12; empty = use cfg
 	bool force {false};
 	bool show_help {false};
 };
@@ -37,12 +38,12 @@ void PrintUsage()
 		<< "Options:\n"
 		<< "  -h, --help            Show this help\n"
 		<< "  -f, --force           Delete platform .kfx (and legacy .kfx) before bake\n"
-		<< "  --factory <name>      Render factory: D3D11 or SDL3 (Windows)\n"
+		<< "  --factory <name>      Render factory: D3D12 or D3D11 on Windows, Metal on macOS\n"
 		<< "  --config <path>       KlayGE.cfg path\n"
 		<< "  --assets-dir <dir>    Add resource search path (repeatable)\n\n"
 		<< "Output (next to source):\n"
 		<< "  Foo.shader + D3D11 -> Foo.d3d_11_0.kfx\n"
-		<< "  Foo.shader + SDL3  -> Foo.d3d_12.kfx (Windows) / Foo.metal_spirv.kfx (macOS)\n";
+		<< "  Foo.shader + native backend  -> Foo.d3d_12.kfx (Windows) / Foo.metal_spirv.kfx (macOS)\n";
 }
 
 BakeOptions ParseArgs(int argc, char* argv[])
@@ -63,7 +64,7 @@ BakeOptions ParseArgs(int argc, char* argv[])
 		{
 			if ((i + 1) >= argc)
 			{
-				throw std::runtime_error("--factory requires D3D11 or SDL3");
+				throw std::runtime_error("--factory requires a renderer name");
 			}
 			options.factory = argv[++i];
 		}
@@ -223,15 +224,15 @@ int main(int argc, char* argv[])
 		}
 
 #if !defined(ZENGINE_PLATFORM_WINDOWS)
-		if (!options.factory.empty() && (options.factory != "SDL3"))
+		if (!options.factory.empty() && (options.factory != RenderWorker::DesktopRendererName))
 		{
-			std::cerr << "Only --factory SDL3 is supported on this platform." << std::endl;
+			std::cerr << "Only --factory Metal is supported on this platform." << std::endl;
 			return 2;
 		}
 #else
-		if (!options.factory.empty() && (options.factory != "D3D11") && (options.factory != "SDL3"))
+		if (!options.factory.empty() && (options.factory != "D3D11") && (options.factory != RenderWorker::DesktopRendererName))
 		{
-			std::cerr << "--factory must be D3D11 or SDL3." << std::endl;
+			std::cerr << "--factory must be D3D11 or D3D12." << std::endl;
 			return 2;
 		}
 #endif

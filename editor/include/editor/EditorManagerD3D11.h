@@ -10,9 +10,6 @@ public:
     EditorManagerD3D11();
     ~EditorManagerD3D11() override;
 
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    void ProcessWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
-#endif
 
 private:
     void InitializeImGui() override;

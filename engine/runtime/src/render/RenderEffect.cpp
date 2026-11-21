@@ -1329,23 +1329,23 @@ using namespace detail;
 		}
 		str += '\n';
 
-		// SDL_GPU D3D12 root signature (see SDL_gpu.h): VS uniforms (b[n], space1),
+		// D3D12 root signature: VS uniforms (b[n], space1),
 		// PS uniforms (b[n], space3); sampled resources (t/s[n], space0 VS / space2 PS).
-		// Only enabled for DXC/DXIL (KLAYGE_SDL3_GPU_BINDINGS). FXC vs_5_0 reflection
+		// Only enabled for DXC/DXIL (KLAYGE_NATIVE_GPU_BINDINGS). FXC vs_5_0 reflection
 		// cannot parse register spaces, so BindToCBuffer uses classic space0 DXBC.
-		str += "#if KLAYGE_SDL3_GPU_BINDINGS\n";
+		str += "#if KLAYGE_NATIVE_GPU_BINDINGS\n";
 		str += "#if KLAYGE_VERTEX_SHADER\n";
-		str += "#define KLAYGE_SDL_CBV_SPACE space1\n";
-		str += "#define KLAYGE_SDL_RES_SPACE space0\n";
+		str += "#define KLAYGE_NATIVE_CBV_SPACE space1\n";
+		str += "#define KLAYGE_NATIVE_RES_SPACE space0\n";
 		str += "#elif KLAYGE_PIXEL_SHADER\n";
-		str += "#define KLAYGE_SDL_CBV_SPACE space3\n";
-		str += "#define KLAYGE_SDL_RES_SPACE space2\n";
+		str += "#define KLAYGE_NATIVE_CBV_SPACE space3\n";
+		str += "#define KLAYGE_NATIVE_RES_SPACE space2\n";
 		str += "#elif KLAYGE_COMPUTE_SHADER\n";
-		str += "#define KLAYGE_SDL_CBV_SPACE space1\n";
-		str += "#define KLAYGE_SDL_RES_SPACE space0\n";
+		str += "#define KLAYGE_NATIVE_CBV_SPACE space1\n";
+		str += "#define KLAYGE_NATIVE_RES_SPACE space0\n";
 		str += "#else\n";
-		str += "#define KLAYGE_SDL_CBV_SPACE space0\n";
-		str += "#define KLAYGE_SDL_RES_SPACE space0\n";
+		str += "#define KLAYGE_NATIVE_CBV_SPACE space0\n";
+		str += "#define KLAYGE_NATIVE_RES_SPACE space0\n";
 		str += "#endif\n";
 		str += "#endif\n\n";
 
@@ -1447,16 +1447,16 @@ using namespace detail;
 			str += "};\n";
 		}
 
-		uint32_t sdl_srv_reg = 0;
-		uint32_t sdl_samp_reg = 0;
+		uint32_t native_srv_reg = 0;
+		uint32_t native_samp_reg = 0;
 		// Resource registers are injected later for DXC from FXC reflection bind points
 		// (dense used slots). Assigning every effect resource a fixed register here made
 		// DXIL need b2/tN while num_uniform_buffers/num_samplers only covered used counts.
-		auto emit_sdl_resource = [&str](std::string const& decl, char /*reg_letter*/, uint32_t& /*reg_counter*/) {
+		auto emit_native_resource = [&str](std::string const& decl, char /*reg_letter*/, uint32_t& /*reg_counter*/) {
 			str += decl + ";\n";
 		};
-		(void)sdl_srv_reg;
-		(void)sdl_samp_reg;
+		(void)native_srv_reg;
+		(void)native_samp_reg;
 
 		for (auto const& param : params_)
 		{
@@ -1502,16 +1502,16 @@ using namespace detail;
 			switch (param.Type())
 			{
 			case REDT_texture1D:
-				emit_sdl_resource("Texture1D<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture1D<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_texture2D:
-				emit_sdl_resource("Texture2D<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture2D<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_texture2DMS:
 				str += "#if KLAYGE_EXPLICIT_MULTI_SAMPLE_SUPPORT\n";
-				emit_sdl_resource("Texture2DMS<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture2DMS<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				str += "#endif\n";
 				break;
 
@@ -1524,49 +1524,49 @@ using namespace detail;
 				break;
 
 			case REDT_textureCUBE:
-				emit_sdl_resource("TextureCube<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("TextureCube<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_texture1DArray:
 				str += "#if KLAYGE_MAX_TEX_ARRAY_LEN > 1\n";
-				emit_sdl_resource("Texture1DArray<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture1DArray<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				str += "#endif\n";
 				break;
 
 			case REDT_texture2DArray:
 				str += "#if KLAYGE_MAX_TEX_ARRAY_LEN > 1\n";
-				emit_sdl_resource("Texture2DArray<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture2DArray<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				str += "#endif\n";
 				break;
 
 			case REDT_texture2DMSArray:
 				str += "#if KLAYGE_MAX_TEX_ARRAY_LEN > 1\n";
 				str += "#if KLAYGE_EXPLICIT_MULTI_SAMPLE_SUPPORT\n";
-				emit_sdl_resource("Texture2DMSArray<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Texture2DMSArray<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				str += "#endif\n";
 				str += "#endif\n";
 				break;
 
 			case REDT_textureCUBEArray:
 				str += "#if (KLAYGE_MAX_TEX_ARRAY_LEN > 1) && (KLAYGE_SHADER_MODEL >= SHADER_MODEL(4, 1))\n";
-				emit_sdl_resource("TextureCubeArray<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("TextureCubeArray<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				str += "#endif\n";
 				break;
 
 			case REDT_buffer:
-				emit_sdl_resource("Buffer<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("Buffer<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_sampler:
-				emit_sdl_resource("sampler " + param_name, 's', sdl_samp_reg);
+				emit_native_resource("sampler " + param_name, 's', native_samp_reg);
 				break;
 
 			case REDT_structured_buffer:
-				emit_sdl_resource("StructuredBuffer<" + elem_type + "> " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("StructuredBuffer<" + elem_type + "> " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_byte_address_buffer:
-				emit_sdl_resource("ByteAddressBuffer " + param_name, 't', sdl_srv_reg);
+				emit_native_resource("ByteAddressBuffer " + param_name, 't', native_srv_reg);
 				break;
 
 			case REDT_rw_buffer:
@@ -3751,7 +3751,7 @@ private:
 				return fallback_offset;
 			}
 
-			// Without DXBC reflection (Metal/SDL3), cbuffers often stay size 0.
+			// Without DXBC reflection (Metal), cbuffers often stay size 0.
 			// BindToCBuffer writes the current value into the buffer — grow first.
 			if (RenderEffectConstantBuffer* cb = effect.CBufferByIndex(cb_index))
 			{

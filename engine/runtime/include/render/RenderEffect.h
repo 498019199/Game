@@ -950,7 +950,7 @@ ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffects(std::span<std::string con
 ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffect(std::string_view effect_name);
 ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffects(std::span<std::string const> effect_names);
 
-// When shader reflection did not BindToCBuffer (e.g. Mac SDL3 without DXBC reflect),
+// When shader reflection did not BindToCBuffer (e.g. Metal without DXBC reflect),
 // bind with a known HLSL packing offset so Predefined*CBuffer can still initialize.
 ZENGINE_CORE_API uint32_t EnsureParameterCBufferOffset(RenderEffect& effect, std::string_view param_name,
 	std::string_view cb_name, uint32_t fallback_offset, uint32_t stride);

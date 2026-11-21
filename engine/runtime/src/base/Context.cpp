@@ -178,7 +178,7 @@ public:
             }
         }
         if (!input_factory_)
-            TMSG("SDL3 input factory is unavailable");
+            TMSG("Desktop input factory is unavailable");
         return *input_factory_;
     }
 
@@ -426,9 +426,9 @@ public:
     void LoadConfig(const char* file_name)
     {
 #if defined(ZENGINE_PLATFORM_WINDOWS)
-        static char const* available_rfs_array[] = {"D3D11" , "SDL3"};
+        static char const* available_rfs_array[] = {"D3D12", "D3D11"};
 #else
-        static char const* available_rfs_array[] = {"SDL3"};
+        static char const* available_rfs_array[] = {"Metal"};
 #endif
 
 
@@ -572,27 +572,20 @@ public:
                 sample_quality = attr->ValueUInt();
             }
         }
-        else
-        {
-            std::span<char const*> const available_rfs = available_rfs_array;
-            if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
-            {
-                rf_name = available_rfs[0];
-            }
-            
-            
-        }
+        std::span<char const*> const available_rfs = available_rfs_array;
+        if (std::find(available_rfs.begin(), available_rfs.end(), rf_name) == available_rfs.end())
+            rf_name = available_rfs.front();
 
         cfg_.render_factory_name = std::move(rf_name);
         // Migrate old or unsupported input settings to the sole input backend.
-        cfg_.input_factory_name = "SDL3";
+        cfg_.input_factory_name = "Desktop";
         // The shared config is portable; legacy XAudio configs migrate on non-Windows hosts.
 #if defined(ZENGINE_PLATFORM_WINDOWS)
         constexpr char const* default_audio = "XAudio";
-        bool const supported_audio = af_name == "XAudio" || af_name == "SDL3";
+        bool const supported_audio = af_name == "XAudio";
 #else
-        constexpr char const* default_audio = "SDL3";
-        bool const supported_audio = af_name == "SDL3";
+        constexpr char const* default_audio = "CoreAudio";
+        bool const supported_audio = af_name == "CoreAudio";
 #endif
         if (af_name.empty() || af_name == "auto") af_name = default_audio;
         else if (!supported_audio)

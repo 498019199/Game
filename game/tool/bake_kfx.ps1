@@ -1,12 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  One-command multi-target shader bake on Windows: D3D11 + SDL3 (d3d_12) .kfx files.
+  One-command multi-target shader bake on Windows: D3D11 + D3D12 (d3d_12) .kfx files.
 
 .DESCRIPTION
-  Runs ZENGINE_shader_bake twice (--factory D3D11, then SDL3) so each .shader
+  Runs ZENGINE_shader_bake twice (--factory D3D11, then D3D12) so each .shader
   gets Foo.d3d_11_0.kfx and Foo.d3d_12.kfx next to the source.
-  Mac metal_spirv bake is not included here (needs SDL3 CompileShader SPIR-V path).
+  Mac metal_spirv bake is not included here (needs D3D12 CompileShader SPIR-V path).
 
 .EXAMPLE
   .\game\tool\bake_kfx.ps1
@@ -19,7 +19,7 @@ param(
 		"RmlUi.shader",
 		"LightSourceProxy.shader"
 	),
-	[string[]]$Factories = @("D3D11", "SDL3"),
+	[string[]]$Factories = @("D3D11", "D3D12"),
 	[string]$Config = "",
 	[string]$BinDir = "",
 	[switch]$Force
@@ -67,4 +67,4 @@ foreach ($factory in $Factories) {
 
 Write-Host "Done. Expected outputs next to each .shader:" -ForegroundColor Green
 Write-Host "  *.d3d_11_0.kfx  (D3D11)"
-Write-Host "  *.d3d_12.kfx    (Win SDL3)"
+Write-Host "  *.d3d_12.kfx    (Win D3D12)"

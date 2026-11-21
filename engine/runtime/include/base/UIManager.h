@@ -6,7 +6,7 @@
 #include <functional>
 #include <vector>
 
-union SDL_Event;
+#include <base/WindowInput.h>
 
 namespace Rml {
 	class Context;
@@ -79,7 +79,7 @@ public:
 	bool MouseOnUI() const noexcept;
 
 	// One event source, with Editor explicitly granting access to the game viewport.
-	void QueueInput(SDL_Event const& event);
+	void QueueInput(WindowInput const& event);
 	void SetInputViewport(bool mouse, bool keyboard, float x, float y, float width, float height);
 	void RouteInput(bool editor_mode, bool imgui_exclusive = false);
 	bool GameKeyboardBlocked() const noexcept;

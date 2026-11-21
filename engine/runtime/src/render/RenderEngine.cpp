@@ -7,7 +7,7 @@
 #include <render/RenderView.h>
 #include <render/Texture.h>
 #ifdef ZENGINE_PLATFORM_DARWIN
-#include <SDL3/SDL.h>
+#include <GLFW/glfw3.h>
 #endif
 
 
@@ -131,14 +131,12 @@ void RenderEngine::BeginFrame()
         }
     }
 #elif defined(ZENGINE_PLATFORM_DARWIN)
-    // SDL resizes the swapchain automatically, but not our depth target or app layout.
-    // Poll at the frame boundary, never rebuild GPU resources inside an SDL callback.
     auto& app = Context::Instance().AppInstance();
-    auto* window = app.MainWnd()->GetSDLWindow();
+    auto* window = app.MainWnd()->DesktopWindow();
     int pixel_width = 0, pixel_height = 0;
     bool resized = false;
-    if (window && !(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)
-        && SDL_GetWindowSizeInPixels(window, &pixel_width, &pixel_height)
+    if (window) glfwGetFramebufferSize(window, &pixel_width, &pixel_height);
+    if (window && !glfwGetWindowAttrib(window, GLFW_ICONIFIED)
         && pixel_width > 0 && pixel_height > 0)
     {
         auto const width = static_cast<uint32_t>(pixel_width);

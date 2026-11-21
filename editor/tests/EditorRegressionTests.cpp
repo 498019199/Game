@@ -207,7 +207,7 @@ TEST(EditorAudio, DefaultConfigLoadsBuiltFactoriesAndRejectsMissingResource)
 #if defined(ZENGINE_PLATFORM_WINDOWS)
     EXPECT_EQ("XAudio", context.Config().audio_factory_name);
 #else
-    EXPECT_EQ("SDL3", context.Config().audio_factory_name);
+    EXPECT_EQ("CoreAudio", context.Config().audio_factory_name);
 #endif
     EXPECT_EQ("OggVorbis", context.Config().audio_data_source_factory_name);
     EXPECT_NO_THROW(context.AudioFactoryInstance());
@@ -327,7 +327,7 @@ TEST(InputRouting, EditorPriorityGamePassthroughAndFocusLoss)
     cfg.graphics_cfg.hide_win = true;
     Context::Instance().Config(cfg);
     InputTestApp app;
-    ASSERT_NE(nullptr, app.MainWnd()->GetSDLWindow());
+    ASSERT_NE(nullptr, app.MainWnd()->DesktopWindow());
     app.MainWnd()->Active(true);
     auto& ui = Context::Instance().UIManagerInstance();
     ui.SetInputViewport(false, false, 0, 0, 640, 480);
@@ -353,10 +353,10 @@ TEST(InputRouting, EditorPriorityGamePassthroughAndFocusLoss)
     EXPECT_TRUE(ui.GamePointerBlocked());
 }
 
-TEST(InputRouting, SDL3FactoryLoadsKeyboardAndMouse)
+TEST(InputRouting, DesktopFactoryLoadsKeyboardAndMouse)
 {
     Context::Instance().LoadConfig("KlayGE.cfg");
-    EXPECT_EQ("SDL3", Context::Instance().Config().input_factory_name);
+    EXPECT_EQ("Desktop", Context::Instance().Config().input_factory_name);
     auto& input = Context::Instance().InputFactoryInstance().InputEngineInstance();
     input.EnumDevices();
     ASSERT_GE(input.NumDevices(), 2u);

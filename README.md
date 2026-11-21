@@ -50,7 +50,7 @@ Direct3D 11.4
 用法：先开 Tracy GUI → 再跑 Editor（需 ZENGINE_ENABLE_TRACY=ON）。On-demand 模式下连上后才会开始采数据。
 文档（可选）：同一页的 tracy.pdf。
 
-3SDL 在windows上使用dX12
+Windows 默认加载 `engine/plugins/render/d3d12`，也可以选择 `d3d11`。macOS 加载 `engine/plugins/render/metal`。三个目录各自定义渲染插件、工厂和设备实现。
     
 gm
 /createnpc 100000 1
@@ -75,7 +75,7 @@ gm
 - 模块通过 `target_link_libraries` 声明直接依赖；公共头文件路径由所属 target 的 `PUBLIC` include 传递，不手写其他模块的源码路径。
 - 公共头文件需要的依赖使用 `PUBLIC`；仅实现使用的依赖和可执行程序的依赖使用 `PRIVATE`。预编译头由各 target 自行选择，不向下游传播。
 - RmlUi 的静态运行库由 `ZENGINE_core` 持有。只使用类型和枚举的模块依赖 `ZENGINE_RmlUiHeaders`，实际 UI 操作通过 `UIManager` 调用，避免多个动态库各自包含 RmlUi 运行时。
-- SDL3 后端向编辑器暴露互操作头文件，由 `ZENGINE_Render_SDL3` 提供对应 include、core 和 SDL3 依赖；普通游戏逻辑使用引擎接口。
+- 编辑器通过 `ZENGINE_Render_D3D12` 或 `ZENGINE_Render_Metal` 获取原生绘图对象。游戏逻辑使用引擎接口，桌面窗口和键鼠事件由 GLFW 接入 Win32 和 Cocoa。
 
 ## 引擎源码目录
 
@@ -97,23 +97,23 @@ gm
 
 ## macOS Editor 与 RmlUi 验证
 
-macOS 的 SDL3 渲染后端使用固定版本的 glslang 将引擎 HLSL 编译为 SPIR-V，再通过 SPIRV-Cross 生成 Metal Shading Language。常量缓冲布局、资源槽位和顶点语义由反射映射；编译器源码由 `engine/3rd/shader_tools` 管理，无需另外安装命令行 Shader 编译器。当前接入顶点和片元阶段。
+macOS 的 Metal 渲染后端使用固定版本的 glslang 将引擎 HLSL 编译为 SPIR-V，再通过 SPIRV-Cross 生成 Metal Shading Language。常量缓冲布局、资源槽位和顶点语义由反射映射；编译器源码由 `engine/3rd/shader_tools` 管理，无需另外安装命令行 Shader 编译器。当前接入顶点和片元阶段。
 
 ```sh
 cmake --preset macos-apple-clang
 cmake --build --preset macos-apple-clang-debug --target ZENGINE_editor ZENGINE_rmlui_gpu_tests
 cd zengine/bin/darwin_arm64
 ./ZENGINE_rmlui_gpu_tests
-./ZENGINE_editor --backend=SDL3
+./ZENGINE_editor --backend=Metal
 ```
 
 `ZENGINE_rmlui_gpu_tests` 使用真实 Metal GPU 绘制测试文档并读取离屏像素，验证位置/颜色、裁剪、字体纹理及隐藏/显示；不加载或修改用户场景。macOS 使用系统 Arial 字体映射已有 RmlUi 文档的字体族，字体文件不复制进仓库。
 
 ## 音频后端与回归测试
 
-`zengine/assets/KlayGE.cfg` 的 `audio_factory="auto"` 按平台选择音频后端：Windows 使用 XAudio，macOS 使用 SDL3（CoreAudio）。旧配置在 macOS 指定 XAudio 时会提示并回退到 SDL3；也可以显式选择 SDL3。构建编辑器和游戏程序时会一并构建所需插件。
+`zengine/assets/KlayGE.cfg` 的 `audio_factory="auto"` 按平台选择音频后端：Windows 使用 XAudio，macOS 使用 Core Audio。旧配置中不可用的插件名会回退到当前平台的默认后端。构建编辑器和游戏程序时会一并构建所需插件。
 
-SDL3 音频支持 PCM 音效预加载与多声部、音乐流式播放、循环、停止和音量控制，现用于编辑器音频预览；位置、速度和朝向接口保留状态，尚未实现 3D 空间音效。
+Core Audio 支持 PCM 音效预加载与多声部、音乐流式播放、循环、停止和音量控制，现用于编辑器音频预览；位置、速度和朝向接口保留状态，尚未实现 3D 空间音效。
 
 ```sh
 cmake --build --preset macos-apple-clang-debug --target ZENGINE_editor ZENGINE_editor_tests
@@ -121,7 +121,7 @@ cd zengine/bin/darwin_arm64
 ./ZENGINE_editor_tests_clang210
 ```
 
-音频回归测试使用静音 PCM 实际打开播放设备，检查播放完成、循环和停止时解码器同步。没有音频设备的 CI 可以设置 `SDL_AUDIODRIVER=dummy` 运行同一组测试。
+音频回归测试使用静音 PCM 实际打开播放设备，检查播放完成、循环和停止时解码器同步。播放测试需要系统提供可用的音频输出设备。
 
 ## 粒子特效
 
@@ -137,7 +137,7 @@ cd zengine/bin/darwin_arm64
 
 `Emissive intensity` 控制特效自身的亮度，`Glow strength` 增加柔和光晕（不是全屏 Bloom）。`Flicker frequency` 和 `Flicker amount` 控制闪烁频率与深度。选择 **Heat haze** 预设或 Distortion 混合模式，使用 `Distortion` 像素强度扭曲后方场景；将它放在模型、地面纹理等有细节的背景前，纯色背景看不出明显折射。扭曲会读取当前场景颜色，每个扭曲发射器需要一次颜色复制。
 
-当前 SDL3 后端的热浪扭曲支持编辑器 **Scene** 和 **Game** 的离屏视图；直接绘制到交换链的运行路径不支持读取当前颜色，因此暂不支持热浪扭曲。
+原生渲染后端的热浪扭曲支持编辑器 **Scene** 和 **Game** 的离屏视图；直接绘制到交换链的运行路径不支持读取当前颜色，因此暂不支持热浪扭曲。
 
 此版本使用 CPU 粒子模拟。参数变化会重置预览，播放/暂停属于临时预览状态；暂停时不会追加爆发。
 
@@ -149,7 +149,7 @@ cd zengine/bin/darwin_arm64
 cmake --build --preset macos-apple-clang-debug --target ZENGINE_editor_tests ZENGINE_particle_gpu_tests
 cd zengine/bin/darwin_arm64
 ./ZENGINE_editor_tests_clang210 --gtest_filter='ParticleSystem.*:SceneParticles.*'
-./ZENGINE_particle_gpu_tests_clang210 SDL3 --write-previews
+./ZENGINE_particle_gpu_tests_clang210 Metal --write-previews
 ```
 
 GPU 测试检查火焰、烟雾、火花和爆炸的实际像素，覆盖深度遮挡、透明粒子不写深度、缓冲扩容、世界空间、速度拖尾、发光、闪烁、背景折射，以及画面缓存的尺寸变化与复用；预览图写入系统临时目录。烟雾在单个发射器内按深度排序，多个交叠发射器尚未进行全局逐粒子排序。

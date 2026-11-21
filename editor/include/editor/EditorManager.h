@@ -91,9 +91,6 @@ public:
 
     void InputHandler(RenderWorker::InputEngine const & sender, RenderWorker::InputAction const & action);
 
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    virtual void ProcessWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;
-#endif
 
 private :
     virtual uint32_t DoUpdate(uint32_t pass) override;

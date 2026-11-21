@@ -26,7 +26,7 @@ if(ZENGINE_PLATFORM_WINDOWS)
 		d3dcompiler)
 else()
 	set(ZENGINE_MODEL_CONVERT_RENDER_LIBS
-		ZENGINE_Render_SDL3)
+		${ZENGINE_DESKTOP_RENDERER})
 endif()
 
 target_link_libraries(ZENGINE_model_convert
@@ -55,8 +55,8 @@ target_precompile_headers(ZENGINE_shader_bake PRIVATE <base/ZEngine.h>)
 add_dependencies(ZENGINE_shader_bake ZENGINE_DevHelps)
 
 if(ZENGINE_PLATFORM_WINDOWS)
-	# Runtime loads render DLLs by name; link D3D11 for create path, depend on SDL3 so both plugins build.
-	add_dependencies(ZENGINE_shader_bake ZENGINE_Render_D3D11 ZENGINE_Render_SDL3)
+	# Runtime loads render DLLs by name; link D3D11 for create path, depend on D3D12 so both plugins build.
+	add_dependencies(ZENGINE_shader_bake ZENGINE_Render_D3D11 ${ZENGINE_DESKTOP_RENDERER})
 	target_link_libraries(ZENGINE_shader_bake
 		PRIVATE
 			ZENGINE_common
@@ -70,5 +70,5 @@ else()
 			ZENGINE_common
 			ZENGINE_core
 			ZENGINE_DevHelps
-			ZENGINE_Render_SDL3)
+			${ZENGINE_DESKTOP_RENDERER})
 endif()

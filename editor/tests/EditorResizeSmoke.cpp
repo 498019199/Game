@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cmath>
 #ifdef ZENGINE_PLATFORM_DARWIN
-#include <SDL3/SDL.h>
+#include <GLFW/glfw3.h>
 #endif
 #ifdef _MSC_VER
 #include <crtdbg.h>
@@ -24,7 +24,7 @@ void EditorManager::RunResizeSmokeTest()
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     auto const hwnd = MainWnd()->GetHWND();
 #else
-    auto* window = MainWnd()->GetSDLWindow();
+    auto* window = MainWnd()->DesktopWindow();
 #endif
     auto const selection = selected_asset_info_;
     auto material = std::dynamic_pointer_cast<AssetMaterialInfo>(selection);
@@ -59,8 +59,8 @@ void EditorManager::RunResizeSmokeTest()
         pixel_height = static_cast<uint32_t>(client.bottom);
 #else
         int w = 0, h = 0;
-        require(SDL_GetWindowSize(window, &layout_width, &layout_height), "SDL_GetWindowSize failed");
-        require(SDL_GetWindowSizeInPixels(window, &w, &h), "SDL_GetWindowSizeInPixels failed");
+        glfwGetWindowSize(window, &layout_width, &layout_height);
+        glfwGetFramebufferSize(window, &w, &h);
         pixel_width = static_cast<uint32_t>(w);
         pixel_height = static_cast<uint32_t>(h);
 #endif
@@ -121,45 +121,48 @@ void EditorManager::RunResizeSmokeTest()
     check("smaller");
     ::ShowWindow(hwnd, SW_HIDE);
 #else
-    auto sync = [&] {
-        require(SDL_SyncWindow(window), "SDL_SyncWindow failed");
+    // Cocoa reports minimize/restore after the window animation completes.
+    auto waitFor = [&](auto ready) {
+        double deadline = glfwGetTime() + 4.0;
+        while (!ready() && glfwGetTime() < deadline) glfwWaitEventsTimeout(0.02);
         Window::PumpEvents();
+        require(ready(), "Timed out waiting for the requested window state");
     };
-    require(SDL_ShowWindow(window), "SDL_ShowWindow failed");
-    require(SDL_RestoreWindow(window), "SDL_RestoreWindow failed");
-    require(SDL_SetWindowSize(window, 1100, 760), "SDL_SetWindowSize failed");
-    sync();
+    glfwShowWindow(window);
+    glfwRestoreWindow(window);
+    glfwSetWindowSize(window, 1100, 760);
+    waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
     check("windowed");
     auto const initial_width = setting_.srcWidth;
     auto const initial_height = setting_.srcHeight;
     for (int i = 0; i < 2; ++i)
     {
-        require(SDL_MaximizeWindow(window), "SDL_MaximizeWindow failed");
-        sync();
-        require((SDL_GetWindowFlags(window) & SDL_WINDOW_MAXIMIZED) != 0, "Window did not maximize");
+        glfwMaximizeWindow(window);
+        waitFor([&]{ return glfwGetWindowAttrib(window, GLFW_MAXIMIZED); });
+        require((glfwGetWindowAttrib(window, GLFW_MAXIMIZED)) != 0, "Window did not maximize");
         check("maximized");
         require(setting_.srcWidth != initial_width || setting_.srcHeight != initial_height, "Maximize did not resize the window");
-        require(SDL_RestoreWindow(window), "SDL_RestoreWindow failed");
-        sync();
+        glfwRestoreWindow(window);
+        waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_MAXIMIZED); });
         check("restored");
         require(setting_.srcWidth == initial_width && setting_.srcHeight == initial_height, "Restore did not recover the window size");
     }
-    require(SDL_MinimizeWindow(window), "SDL_MinimizeWindow failed");
-    sync();
-    require((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0, "Window did not minimize");
+    glfwIconifyWindow(window);
+    waitFor([&]{ return glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
+    require((glfwGetWindowAttrib(window, GLFW_ICONIFIED)) != 0, "Window did not minimize");
     auto const texture = game_view_color_tex_;
     // Exercise the same resize gate without drawing to an unavailable drawable.
     re.BeginFrame();
     re.EndFrame();
     require(game_view_color_tex_ == texture, "Minimize recreated Game texture");
-    require(SDL_RestoreWindow(window), "SDL_RestoreWindow failed");
-    sync();
+    glfwRestoreWindow(window);
+    waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
     check("restore-after-minimize");
-    require(SDL_SetWindowSize(window, 900, 650), "SDL_SetWindowSize failed");
-    sync();
+    glfwSetWindowSize(window, 900, 650);
+    Window::PumpEvents();
     check("smaller");
     require(setting_.srcWidth == 900 && setting_.srcHeight == 650, "Smaller size was not applied");
-    SDL_HideWindow(window);
+    glfwHideWindow(window);
 #endif
 }
 }
