@@ -327,7 +327,7 @@ TEST(InputRouting, EditorPriorityGamePassthroughAndFocusLoss)
     cfg.graphics_cfg.hide_win = true;
     Context::Instance().Config(cfg);
     InputTestApp app;
-    ASSERT_NE(nullptr, app.MainWnd()->DesktopWindow());
+    ASSERT_NE(nullptr, app.MainWnd()->NativeHandle());
     app.MainWnd()->Active(true);
     auto& ui = Context::Instance().UIManagerInstance();
     ui.SetInputViewport(false, false, 0, 0, 640, 480);
@@ -352,6 +352,41 @@ TEST(InputRouting, EditorPriorityGamePassthroughAndFocusLoss)
     EXPECT_TRUE(ui.GameKeyboardBlocked());
     EXPECT_TRUE(ui.GamePointerBlocked());
 }
+
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+TEST(InputRouting, Win32MessagesUpdateKeysAndDispatchPointerSignal)
+{
+    Context::Instance().LoadConfig("KlayGE.cfg");
+    auto cfg = Context::Instance().Config();
+    cfg.graphics_cfg.hide_win = true;
+    Context::Instance().Config(cfg);
+    InputTestApp app;
+    auto& window = *app.MainWnd();
+    auto const hwnd = window.GetHWND();
+    ASSERT_NE(nullptr, hwnd);
+    SendMessageW(hwnd, WM_SETFOCUS, 0, 0);
+    SendMessageW(hwnd, WM_KEYDOWN, 'A', 1 | (KS_A << 16));
+    SendMessageW(hwnd, WM_KEYDOWN, VK_RIGHT, 1 | ((KS_RightArrow & 0x7f) << 16) | 0x01000000);
+    EXPECT_TRUE(window.KeyDown(KS_A));
+    EXPECT_TRUE(window.KeyDown(KS_RightArrow));
+    SendMessageW(hwnd, WM_KEYUP, 'A', 1 | (KS_A << 16));
+    EXPECT_FALSE(window.KeyDown(KS_A));
+    SendMessageW(hwnd, WM_KILLFOCUS, 0, 0);
+    EXPECT_FALSE(window.KeyDown(KS_RightArrow));
+
+    int wheel = 0;
+    auto const connection = window.OnPointerWheel().Connect(
+        [&](Window const&, int2 const&, uint32_t, int32_t delta) { wheel += delta; });
+    POINT point{20, 20};
+    ASSERT_TRUE(ClientToScreen(hwnd, &point));
+    for (int i = 0; i < 2; ++i)
+        SendMessageW(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA / 2), MAKELPARAM(point.x, point.y));
+    EXPECT_EQ(1, wheel);
+    EXPECT_EQ(20, window.PointerPosition().x());
+    EXPECT_EQ(20, window.PointerPosition().y());
+    window.OnPointerWheel().Disconnect(connection);
+}
+#endif
 
 TEST(InputRouting, DesktopFactoryLoadsKeyboardAndMouse)
 {

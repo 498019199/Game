@@ -75,7 +75,7 @@ gm
 - 模块通过 `target_link_libraries` 声明直接依赖；公共头文件路径由所属 target 的 `PUBLIC` include 传递，不手写其他模块的源码路径。
 - 公共头文件需要的依赖使用 `PUBLIC`；仅实现使用的依赖和可执行程序的依赖使用 `PRIVATE`。预编译头由各 target 自行选择，不向下游传播。
 - RmlUi 的静态运行库由 `ZENGINE_core` 持有。只使用类型和枚举的模块依赖 `ZENGINE_RmlUiHeaders`，实际 UI 操作通过 `UIManager` 调用，避免多个动态库各自包含 RmlUi 运行时。
-- 编辑器通过 `ZENGINE_Render_D3D12` 或 `ZENGINE_Render_Metal` 获取原生绘图对象。游戏逻辑使用引擎接口，桌面窗口和键鼠事件由 GLFW 接入 Win32 和 Cocoa。
+- 编辑器通过 `ZENGINE_Render_D3D12` 或 `ZENGINE_Render_Metal` 获取原生绘图对象。游戏逻辑使用引擎接口，桌面窗口和键鼠事件由 Win32 和 Cocoa 提供，经引擎的 Window 接口传递。
 
 ## 引擎源码目录
 

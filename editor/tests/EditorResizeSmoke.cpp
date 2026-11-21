@@ -6,9 +6,8 @@
 #include <common/ErrorHandling.h>
 #include <iostream>
 #include <cmath>
-#ifdef ZENGINE_PLATFORM_DARWIN
-#include <GLFW/glfw3.h>
-#endif
+#include <chrono>
+#include <thread>
 #ifdef _MSC_VER
 #include <crtdbg.h>
 #endif
@@ -24,7 +23,7 @@ void EditorManager::RunResizeSmokeTest()
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     auto const hwnd = MainWnd()->GetHWND();
 #else
-    auto* window = MainWnd()->DesktopWindow();
+    auto const& window = MainWnd();
 #endif
     auto const selection = selected_asset_info_;
     auto material = std::dynamic_pointer_cast<AssetMaterialInfo>(selection);
@@ -58,11 +57,11 @@ void EditorManager::RunResizeSmokeTest()
         pixel_width = static_cast<uint32_t>(client.right);
         pixel_height = static_cast<uint32_t>(client.bottom);
 #else
-        int w = 0, h = 0;
-        glfwGetWindowSize(window, &layout_width, &layout_height);
-        glfwGetFramebufferSize(window, &w, &h);
-        pixel_width = static_cast<uint32_t>(w);
-        pixel_height = static_cast<uint32_t>(h);
+        layout_width = window->Width();
+        layout_height = window->Height();
+        auto const pixels = window->FramebufferSize();
+        pixel_width = static_cast<uint32_t>(pixels.x());
+        pixel_height = static_cast<uint32_t>(pixels.y());
 #endif
         auto const& screen = re.ScreenFrameBuffer();
         require(setting_.srcWidth == layout_width && setting_.srcHeight == layout_height, "Stale Editor layout");
@@ -123,46 +122,51 @@ void EditorManager::RunResizeSmokeTest()
 #else
     // Cocoa reports minimize/restore after the window animation completes.
     auto waitFor = [&](auto ready) {
-        double deadline = glfwGetTime() + 4.0;
-        while (!ready() && glfwGetTime() < deadline) glfwWaitEventsTimeout(0.02);
+        using namespace std::chrono_literals;
+        auto const deadline = std::chrono::steady_clock::now() + 4s;
+        while (!ready() && std::chrono::steady_clock::now() < deadline)
+        {
+            Window::PumpEvents();
+            std::this_thread::sleep_for(20ms);
+        }
         Window::PumpEvents();
         require(ready(), "Timed out waiting for the requested window state");
     };
-    glfwShowWindow(window);
-    glfwRestoreWindow(window);
-    glfwSetWindowSize(window, 1100, 760);
-    waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
+    window->SetVisible(true);
+    window->Restore();
+    window->SetContentSize(1100, 760);
+    waitFor([&]{ return !window->Minimized(); });
     check("windowed");
     auto const initial_width = setting_.srcWidth;
     auto const initial_height = setting_.srcHeight;
     for (int i = 0; i < 2; ++i)
     {
-        glfwMaximizeWindow(window);
-        waitFor([&]{ return glfwGetWindowAttrib(window, GLFW_MAXIMIZED); });
-        require((glfwGetWindowAttrib(window, GLFW_MAXIMIZED)) != 0, "Window did not maximize");
+        window->Maximize();
+        waitFor([&]{ return window->IsMaximized(); });
+        require((window->IsMaximized()) != 0, "Window did not maximize");
         check("maximized");
         require(setting_.srcWidth != initial_width || setting_.srcHeight != initial_height, "Maximize did not resize the window");
-        glfwRestoreWindow(window);
-        waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_MAXIMIZED); });
+        window->Restore();
+        waitFor([&]{ return !window->IsMaximized(); });
         check("restored");
         require(setting_.srcWidth == initial_width && setting_.srcHeight == initial_height, "Restore did not recover the window size");
     }
-    glfwIconifyWindow(window);
-    waitFor([&]{ return glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
-    require((glfwGetWindowAttrib(window, GLFW_ICONIFIED)) != 0, "Window did not minimize");
+    window->Minimize();
+    waitFor([&]{ return window->Minimized(); });
+    require((window->Minimized()) != 0, "Window did not minimize");
     auto const texture = game_view_color_tex_;
     // Exercise the same resize gate without drawing to an unavailable drawable.
     re.BeginFrame();
     re.EndFrame();
     require(game_view_color_tex_ == texture, "Minimize recreated Game texture");
-    glfwRestoreWindow(window);
-    waitFor([&]{ return !glfwGetWindowAttrib(window, GLFW_ICONIFIED); });
+    window->Restore();
+    waitFor([&]{ return !window->Minimized(); });
     check("restore-after-minimize");
-    glfwSetWindowSize(window, 900, 650);
+    window->SetContentSize(900, 650);
     Window::PumpEvents();
     check("smaller");
     require(setting_.srcWidth == 900 && setting_.srcHeight == 650, "Smaller size was not applied");
-    glfwHideWindow(window);
+    window->SetVisible(false);
 #endif
 }
 }

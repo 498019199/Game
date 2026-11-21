@@ -23,7 +23,6 @@ set(APP_HEADER_FILES
 set(APP_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/App3D.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/Window.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/DesktopWindow.cpp
 )
 
 SOURCE_GROUP("Base\\Source Files" FILES ${BASE_SOURCE_FILES})
@@ -174,7 +173,6 @@ set(UI_HEADER_FILES
 )
 set(UI_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/UIInput.cpp
-    ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends/RmlUi_Platform_GLFW.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/UIManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/RmlUiRenderInterface.cpp
 )
@@ -194,7 +192,6 @@ add_library(ZENGINE_core ${ZENGINE_PREFERRED_LIB_TYPE}
 add_dependencies(ZENGINE_core TableGen)
 
 target_include_directories(ZENGINE_core
-    PRIVATE ${ZENGINE_ROOT_DIR}/3rd/RmlUi/RmlUi/Backends
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
@@ -211,7 +208,6 @@ set_target_properties(ZENGINE_core PROPERTIES
 target_compile_definitions(ZENGINE_core
     PRIVATE
         -DZENGINE_EXPORTS
-        GLFW_INCLUDE_NONE
 )
 
 target_link_libraries(ZENGINE_core
@@ -227,10 +223,9 @@ target_link_libraries(ZENGINE_core
 )
 
 if(WIN32)
-    target_link_libraries(ZENGINE_core PRIVATE dxsdk d3d11 dxgi d3dcompiler)
+    target_sources(ZENGINE_core PRIVATE src/app/Win32Window.cpp)
+    target_link_libraries(ZENGINE_core PRIVATE dxsdk d3d11 dxgi d3dcompiler user32)
 endif()
-
-target_link_libraries(ZENGINE_core PRIVATE glfw)
 
 
 if(ZENGINE_IS_DEV_PLATFORM)
@@ -240,5 +235,6 @@ if(ZENGINE_IS_DEV_PLATFORM)
 endif()
 if(ZENGINE_PLATFORM_DARWIN)
     target_sources(ZENGINE_core PRIVATE src/app/CocoaWindow.mm)
+    target_compile_options(ZENGINE_core PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
     target_link_libraries(ZENGINE_core PRIVATE "-framework AppKit")
 endif()

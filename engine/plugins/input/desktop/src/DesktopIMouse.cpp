@@ -2,7 +2,7 @@
 
 #include "DesktopInput.hpp"
 
-#include <GLFW/glfw3.h>
+#include <base/Window.h>
 #include <base/App3D.h>
 
 namespace RenderWorker
@@ -26,11 +26,8 @@ void DesktopInputMouse::OnPointerWheel(int32_t wheel_delta)
 void DesktopInputMouse::UpdateInputs()
 {
     auto &ctx = Context::Instance();
-    auto *w = ctx.AppValid() ? ctx.AppInstance().MainWnd()->DesktopWindow() : nullptr;
-    double x = 0, y = 0;
-    if (w)
-        glfwGetCursorPos(w, &x, &y);
-    int2 const abs_pos(static_cast<int32_t>(x), static_cast<int32_t>(y));
+    auto const* window = ctx.AppValid() ? ctx.AppInstance().MainWnd().get() : nullptr;
+    int2 const abs_pos = window ? window->PointerPosition() : int2(0, 0);
     if (!has_last_abs_)
     {
         last_abs_state_ = abs_pos;
@@ -43,14 +40,14 @@ void DesktopInputMouse::UpdateInputs()
     wheel_state_ = 0;
 
     std::array<bool, 8> buttons_state{};
-    for (int i = 0; w && i < 5; ++i)
-        buttons_state[i] = glfwGetMouseButton(w, i);
+    for (int i = 0; window && i < num_buttons_; ++i)
+        buttons_state[i] = window->ButtonDown(i);
     index_ = !index_;
     buttons_[index_] = buttons_state;
 
-    auto held = [w](int l, int r) { return w && (glfwGetKey(w, l) || glfwGetKey(w, r)); };
-    shift_ctrl_alt_ = (held(GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT) ? MB_Shift : 0) |
-                      (held(GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_CONTROL) ? MB_Ctrl : 0) |
-                      (held(GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT_ALT) ? MB_Alt : 0);
+    auto held = [window](int l, int r) { return window && (window->KeyDown(l) || window->KeyDown(r)); };
+    shift_ctrl_alt_ = (held(KS_LeftShift, KS_RightShift) ? MB_Shift : 0) |
+                      (held(KS_LeftCtrl, KS_RightCtrl) ? MB_Ctrl : 0) |
+                      (held(KS_LeftAlt, KS_RightAlt) ? MB_Alt : 0);
 }
 }

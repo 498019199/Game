@@ -6,7 +6,7 @@ $reports = Join-Path $workspace 'out/test-results'
 New-Item -ItemType Directory -Path $reports -Force | Out-Null
 $stdout = Join-Path $reports "material-m2-$Backend.log"
 $stderr = Join-Path $reports "material-m2-$Backend-error.log"
-$probe = Start-Process -FilePath (Join-Path $binaryDir 'ZENGINE_material_gpu_tests.exe') -ArgumentList $Backend -WorkingDirectory $binaryDir -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+$probe = Start-Process -FilePath (Join-Path $binaryDir 'ZENGINE_material_gpu_tests_vc143.exe') -ArgumentList $Backend -WorkingDirectory $binaryDir -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
 if (-not $probe.WaitForExit(30000)) {
     Stop-Process -Id $probe.Id
     throw 'Material GPU test exceeded 30 seconds.'

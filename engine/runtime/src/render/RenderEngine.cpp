@@ -6,9 +6,6 @@
 #include <render/RenderFactory.h>
 #include <render/RenderView.h>
 #include <render/Texture.h>
-#ifdef ZENGINE_PLATFORM_DARWIN
-#include <GLFW/glfw3.h>
-#endif
 
 
 #include <mutex>
@@ -114,46 +111,25 @@ void RenderEngine::CreateRenderWindow(std::string const & name, RenderSettings& 
 
 void RenderEngine::BeginFrame()
 {
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    // Coalesce WM_SIZE changes here, outside the native message callback and render passes.
+    // Resize at a frame boundary, outside native callbacks and render passes.
     auto& app = Context::Instance().AppInstance();
-    RECT client{};
-    auto const hwnd = app.MainWnd()->GetHWND();
+    auto const& window = app.MainWnd();
+    auto const pixels = window->FramebufferSize();
     bool resized = false;
-    if (!::IsIconic(hwnd) && ::GetClientRect(hwnd, &client) && client.right > 0 && client.bottom > 0)
+    if (!window->Minimized() && pixels.x() > 0 && pixels.y() > 0)
     {
-        auto const width = static_cast<uint32_t>(client.right);
-        auto const height = static_cast<uint32_t>(client.bottom);
+        auto const width = static_cast<uint32_t>(pixels.x());
+        auto const height = static_cast<uint32_t>(pixels.y());
         if (screen_frame_buffer_->Width() != width || screen_frame_buffer_->Height() != height)
         {
             screen_frame_buffer_->Resize(width, height);
             resized = true;
         }
     }
-#elif defined(ZENGINE_PLATFORM_DARWIN)
-    auto& app = Context::Instance().AppInstance();
-    auto* window = app.MainWnd()->DesktopWindow();
-    int pixel_width = 0, pixel_height = 0;
-    bool resized = false;
-    if (window) glfwGetFramebufferSize(window, &pixel_width, &pixel_height);
-    if (window && !glfwGetWindowAttrib(window, GLFW_ICONIFIED)
-        && pixel_width > 0 && pixel_height > 0)
-    {
-        auto const width = static_cast<uint32_t>(pixel_width);
-        auto const height = static_cast<uint32_t>(pixel_height);
-        if (screen_frame_buffer_->Width() != width || screen_frame_buffer_->Height() != height)
-        {
-            screen_frame_buffer_->Resize(width, height);
-            resized = true;
-        }
-    }
-#endif
     this->BindFrameBuffer(default_frame_buffers_[0]);
-#if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP) || defined(ZENGINE_PLATFORM_DARWIN)
     // The framebuffer uses physical pixels. EditorManager converts to logical
     // window points for ImGui on macOS, where Retina scaling is already applied.
     if (resized) app.OnResize(screen_frame_buffer_->Width(), screen_frame_buffer_->Height());
-#endif
 }
 
 void RenderEngine::BeginPass()

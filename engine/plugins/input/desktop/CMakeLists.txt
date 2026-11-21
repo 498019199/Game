@@ -28,7 +28,6 @@ target_link_libraries(ZENGINE_InputEngine_InputDesktop
 	PRIVATE
 		ZENGINE_common
 		ZENGINE_core
-		glfw
 )
 
 set_target_properties(ZENGINE_InputEngine_InputDesktop PROPERTIES

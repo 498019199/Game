@@ -6,8 +6,8 @@
 #include <windows.h>
 #endif// ZENGINE_PLATFORM_WINDOWS_DESKTOP
 
-struct GLFWwindow;
 #include <base/WindowInput.h>
+#include <array>
 
 namespace RenderWorker
 {
@@ -31,17 +31,35 @@ public:
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     HWND GetHWND() const;
 #endif
-    GLFWwindow* DesktopWindow() const { return window_; }
     void* NativeHandle() const;
     static void InitializeDesktop();
     static void PumpEvents();
+    void SetVisible(bool visible);
+    bool Minimized() const;
+    int2 FramebufferSize() const;
+#ifdef ZENGINE_PLATFORM_DARWIN
+    static int2 PrimaryDisplaySize(bool fullscreen);
+    void SetContentSize(int width, int height);
+    bool IsMaximized() const;
+    void Maximize();
+    void Minimize();
+    void Restore();
+#endif
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    void SetNativeMessageHandler(WNDPROC handler) { message_handler_ = handler; }
+#endif
+    static constexpr int KeyCount = 256;
+    static constexpr int ButtonCount = 8;
+    bool KeyDown(int key) const;
+    bool ButtonDown(int button) const;
+    int2 PointerPosition() const { return pointer_position_; }
     int32_t Left() const { return left_; }
     int32_t Top() const { return top_; }
     uint32_t Width() const { return width_; }
     uint32_t Height() const { return height_; }
 
     bool Active() const { return active_; }
-    void Active(bool active){ active_ = active; }
+    void Active(bool active);
     bool Ready() const { return ready_; }
     void Ready(bool ready) { ready_ = ready; }
     bool Closed() const { return closed_; }
@@ -93,7 +111,24 @@ public:
     }
 
 private:
-    GLFWwindow* window_{};
+    void DispatchInput(WindowInput const& event);
+    void DispatchText(char16_t code_unit);
+    bool RequestClose();
+
+#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
+    static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+    LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+    HWND window_{};
+    WNDPROC message_handler_{};
+#else
+    friend struct CocoaWindowEvents;
+    void* window_{};
+#endif
+    std::array<bool, KeyCount> keys_{};
+    std::array<bool, ButtonCount> buttons_{};
+    int2 pointer_position_{0, 0};
+    char16_t pending_surrogate_{};
+    double wheel_remainder_{};
     PointerDownEvent pointer_down_event_;
     PointerUpEvent pointer_up_event_;
     PointerUpdateEvent pointer_update_event_;

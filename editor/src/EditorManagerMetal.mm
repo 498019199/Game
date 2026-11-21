@@ -1,9 +1,10 @@
+#import <AppKit/AppKit.h>
 #import <Metal/Metal.h>
 #include <editor/EditorManagerMetal.h>
 #include <base/Window.h>
 #include <MetalRenderEngine.h>
 #include <MetalTexture.h>
-#include <imgui_impl_glfw.h>
+#include <imgui_impl_osx.h>
 #include <imgui_impl_metal.h>
 
 namespace EditorWorker
@@ -17,14 +18,21 @@ EditorManagerMetal::EditorManagerMetal() = default;
 EditorManagerMetal::~EditorManagerMetal() = default;
 void EditorManagerMetal::InitializeImGui()
 {
-    ImGui_ImplGlfw_InitForOther(MainWnd()->DesktopWindow(), true);
+    auto* window = (__bridge NSWindow*)MainWnd()->NativeHandle();
+    if (!ImGui_ImplOSX_Init(window.contentView))
+        TMSG("ImGui Cocoa initialization failed");
+    imgui_text_responder_ = (__bridge void*)window.firstResponder;
+    [window makeFirstResponder:window.contentView];
     if (!ImGui_ImplMetal_Init((__bridge id<MTLDevice>)metal::NativeDevice(Renderer().Device())))
         TMSG("ImGui Metal initialization failed");
 }
 void EditorManagerMetal::ShutdownImGui()
 {
     ImGui_ImplMetal_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    auto* window = (__bridge NSWindow*)MainWnd()->NativeHandle();
+    [window makeFirstResponder:window.contentView];
+    imgui_text_responder_ = nullptr;
+    ImGui_ImplOSX_Shutdown();
 }
 void EditorManagerMetal::NewImGuiFrame() const
 {
@@ -32,7 +40,13 @@ void EditorManagerMetal::NewImGuiFrame() const
     auto *tex = Renderer().CurrentSwapchainTexture();
     desc.colorAttachments[0].texture = (__bridge id<MTLTexture>)metal::TextureHandle(tex);
     ImGui_ImplMetal_NewFrame(desc);
-    ImGui_ImplGlfw_NewFrame();
+    auto* window = (__bridge NSWindow*)MainWnd()->NativeHandle();
+    // Only the UI that owns text input should be the Cocoa IME responder.
+    NSResponder* responder = ImGui::GetIO().WantTextInput && imgui_text_responder_
+        ? (__bridge NSResponder*)imgui_text_responder_ : window.contentView;
+    if (window.firstResponder != responder)
+        [window makeFirstResponder:responder];
+    ImGui_ImplOSX_NewFrame(window.contentView);
 }
 void EditorManagerMetal::RenderImGuiDrawData(ImDrawData *data) const
 {

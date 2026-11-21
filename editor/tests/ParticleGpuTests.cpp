@@ -10,7 +10,6 @@
 #include <world/ParticleSystem.h>
 #include <world/SceneNode.h>
 #include "DesktopGpuTestBackend.h"
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -323,11 +322,8 @@ int main(int argc, char** argv)
         ctx.ResLoaderInstance().AddPath("../../assets");
         {
             App app; app.Create();
-            if (app.MainWnd()->DesktopWindow())
-            {
-                Require((glfwShowWindow(app.MainWnd()->DesktopWindow()), true), "Cannot show GPU probe window");
-                Require((glfwPollEvents(), true), "Cannot sync GPU probe window");
-            }
+            app.MainWnd()->SetVisible(true);
+            Window::PumpEvents();
             Test(argc > 2 && std::string_view(argv[2]) == "--write-previews");
         }
     }

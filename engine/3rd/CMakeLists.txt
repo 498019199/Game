@@ -24,17 +24,6 @@ add_subdirectory(scope-lite)
 add_subdirectory(vorbis)
 add_subdirectory(tracy)
 
-include(FetchContent)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-# The core, editor, and input plugin must share one GLFW event queue.
-set(GLFW_LIBRARY_TYPE SHARED)
-FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.4 GIT_SHALLOW TRUE)
-FetchContent_MakeAvailable(glfw)
-target_compile_definitions(glfw INTERFACE GLFW_INCLUDE_NONE)
-
 if(ZENGINE_PLATFORM_DARWIN)
     add_subdirectory(shader_tools)
 endif()

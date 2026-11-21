@@ -41,6 +41,8 @@ set_target_properties(ZENGINE_editor PROPERTIES
 
 if(MSVC)
     target_compile_options(ZENGINE_editor PRIVATE /std:c++20)
+elseif(APPLE)
+    target_compile_options(ZENGINE_editor PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
 endif()
 
 add_dependencies(ZENGINE_editor ZENGINE_game ${ZENGINE_DESKTOP_RENDERER})
@@ -56,7 +58,6 @@ target_link_libraries(ZENGINE_editor
         ZENGINE_InputEngine_InputDesktop
         imgui
         editor_imguizmo
-        glfw
         ZENGINE_RmlUiHeaders)
 
 if(WIN32)
@@ -75,7 +76,7 @@ endif()
 
 if(WIN32 OR ZENGINE_PLATFORM_DARWIN)
     add_executable(ZENGINE_particle_gpu_tests EXCLUDE_FROM_ALL tests/ParticleGpuTests.cpp)
-    target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER} glfw)
+    target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER})
     if(WIN32)
         target_link_libraries(ZENGINE_particle_gpu_tests PRIVATE ZENGINE_Render_D3D11)
     endif()
@@ -85,7 +86,7 @@ if(WIN32 OR ZENGINE_PLATFORM_DARWIN)
         FOLDER "test")
 
     add_executable(ZENGINE_material_gpu_tests EXCLUDE_FROM_ALL tests/MaterialGpuTests.cpp)
-    target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER} glfw)
+    target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common ${ZENGINE_DESKTOP_RENDERER})
     if(WIN32)
         target_link_libraries(ZENGINE_material_gpu_tests PRIVATE ZENGINE_Render_D3D11 dbghelp)
     endif()

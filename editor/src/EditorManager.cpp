@@ -4,9 +4,6 @@
 #include <editor/EditorMaterialPreview.h>
 #include <cstdio>
 #include <optional>
-#ifdef ZENGINE_PLATFORM_DARWIN
-#include <GLFW/glfw3.h>
-#endif
 #include <editor/EditorConsolePanel.h>
 #include <editor/EditorHierarchyPanel.h>
 #include <editor/EditorMainBarPanel.h>
@@ -88,7 +85,7 @@ void EditorManager::OnCreate()
 
     // 高 DPI / 4K：默认字体与样式按未缩放像素设计，需与 HWND 的 DPI 一致放大
 #ifdef ZENGINE_PLATFORM_DARWIN
-    // GLFW/ImGui use logical points on macOS; the backend already applies the
+    // Cocoa and ImGui use logical points on macOS; the backend already applies the
     // Retina framebuffer scale. Scaling the layout again clips whole panels.
     float const imgui_dpi_scale = 1.0f;
 #else
@@ -144,10 +141,10 @@ void EditorManager::OnResize(uint32_t width, uint32_t height)
     // depth bindings and shared camera while the scene update thread is active.
     std::lock_guard<std::mutex> lock(Context::Instance().WorldInstance().MutexForUpdate());
 #ifdef ZENGINE_PLATFORM_DARWIN
-    int logical_width = 0, logical_height = 0;
-    glfwGetWindowSize(MainWnd()->DesktopWindow(), &logical_width, &logical_height);
-    if (logical_width > 0 && logical_height > 0) {
-        width = static_cast<uint32_t>(logical_width); height = static_cast<uint32_t>(logical_height);
+    if (MainWnd()->Width() && MainWnd()->Height())
+    {
+        width = MainWnd()->Width();
+        height = MainWnd()->Height();
     }
 #endif
     setting_.ResizeClient(width, height);

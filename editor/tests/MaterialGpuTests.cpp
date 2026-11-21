@@ -9,7 +9,6 @@
 #include <render/RenderLayout.h>
 #include <render/FrameBuffer.h>
 #include "DesktopGpuTestBackend.h"
-#include <GLFW/glfw3.h>
 #include <iostream>
 #include <array>
 #include <cmath>
@@ -179,8 +178,8 @@ int main(int argc, char** argv)
 #else
             // Metal needs an available drawable for EndFrame to submit the GPU
             // command buffer. This bounded probe owns only its own small window.
-            Require((glfwShowWindow(app.MainWnd()->DesktopWindow()), true), "Cannot show GPU probe window");
-            Require((glfwPollEvents(), true), "Cannot sync GPU probe window");
+            app.MainWnd()->SetVisible(true);
+            Window::PumpEvents();
 #endif
             Test();
         }

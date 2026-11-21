@@ -15,7 +15,6 @@
 #include <windows.h>
 #else
 #include <editor/EditorManagerMetal.h>
-#include <GLFW/glfw3.h>
 #endif
 
 using namespace EditorWorker;
@@ -121,17 +120,9 @@ int main(int argc, char** argv)
     uint32_t const screenResolutionX = To96DpiUnits(available_area.right - available_area.left, dpi_x);
     uint32_t const screenResolutionY = To96DpiUnits(available_area.bottom - available_area.top, dpi_y);
 #else
-    Window::InitializeDesktop();
-    auto* display = glfwGetPrimaryMonitor();
-    int x=0, y=0, w=0, h=0;
-    if (display) {
-        glfwGetMonitorWorkarea(display, &x, &y, &w, &h);
-        if (config.graphics_cfg.full_screen) {
-            if (auto mode=glfwGetVideoMode(display)) { w=mode->width; h=mode->height; }
-        }
-    }
-    uint32_t const screenResolutionX = w>0 ? static_cast<uint32_t>(w) : editorWidth;
-    uint32_t const screenResolutionY = h>0 ? static_cast<uint32_t>(h) : editorHeight;
+    auto const display = Window::PrimaryDisplaySize(config.graphics_cfg.full_screen);
+    uint32_t const screenResolutionX = display.x() > 0 ? static_cast<uint32_t>(display.x()) : editorWidth;
+    uint32_t const screenResolutionY = display.y() > 0 ? static_cast<uint32_t>(display.y()) : editorHeight;
 #endif
 
     if (config.graphics_cfg.full_screen)
@@ -187,11 +178,7 @@ int main(int argc, char** argv)
     if (smoke_material.empty() && !smoke_resize) app->Run();
     else {
         // Bounded rendering tests. Scene bindings change only in memory; no asset writes.
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-        ::ShowWindow(app->MainWnd()->GetHWND(), SW_HIDE);
-#else
-        glfwHideWindow(app->MainWnd()->DesktopWindow());
-#endif
+        app->MainWnd()->SetVisible(false);
         try {
             if (!smoke_material.empty()) app->SelectMaterialDocument(app->Materials().Open(smoke_material));
 #if defined(ZENGINE_PLATFORM_WINDOWS_DESKTOP) || defined(ZENGINE_PLATFORM_DARWIN)

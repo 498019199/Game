@@ -11,6 +11,8 @@ class EditorManagerMetal final : public EditorManager
     ~EditorManagerMetal() override;
 
   private:
+    void* imgui_text_responder_{};
+
     void InitializeImGui() override;
     void ShutdownImGui() override;
     void NewImGuiFrame() const override;

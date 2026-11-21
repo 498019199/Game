@@ -4,7 +4,9 @@
 #include <D3D12Texture.h>
 #include <D3D12Interop.h>
 #include <imgui_impl_dx12.h>
-#include <imgui_impl_glfw.h>
+#include <imgui_impl_win32.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
 namespace EditorWorker
 {
@@ -18,7 +20,9 @@ EditorManagerD3D12::~EditorManagerD3D12() = default;
 void EditorManagerD3D12::InitializeImGui()
 {
     auto d = Renderer().Device();
-    ImGui_ImplGlfw_InitForOther(MainWnd()->DesktopWindow(), true);
+    if (!ImGui_ImplWin32_Init(MainWnd()->GetHWND()))
+        TMSG("ImGui Win32 initialization failed");
+    MainWnd()->SetNativeMessageHandler(ImGui_ImplWin32_WndProcHandler);
     ImGui_ImplDX12_InitInfo info{};
     info.Device = static_cast<ID3D12Device *>(d3d12::NativeDevice(d));
     info.CommandQueue = d3d12::NativeQueue(d);
@@ -56,12 +60,13 @@ void EditorManagerD3D12::ShutdownImGui()
 {
     d3d12::WaitForIdle(Renderer().Device());
     ImGui_ImplDX12_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+    MainWnd()->SetNativeMessageHandler(nullptr);
+    ImGui_ImplWin32_Shutdown();
 }
 void EditorManagerD3D12::NewImGuiFrame() const
 {
     ImGui_ImplDX12_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplWin32_NewFrame();
 }
 void EditorManagerD3D12::RenderImGuiDrawData(ImDrawData *data) const
 {

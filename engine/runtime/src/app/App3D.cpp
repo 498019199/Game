@@ -87,20 +87,8 @@ void App3D::Suspend()
 	
 void App3D::Quit()
 {
-    if (!OnCloseRequested()) return;
-#ifdef ZENGINE_PLATFORM_WINDOWS
-#ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
-    ::PostQuitMessage(0);
-#endif
-#else
-	// Match the non-Windows Run() loop (while (!main_wnd_->Closed())).
-	// Do not call exit(): that tears down ThreadPool while detached workers
-	// still lock mutexes and crashes (mutex lock after destroy).
-	if (main_wnd_)
-	{
-		main_wnd_->Closed(true);
-	}
-#endif
+    if (OnCloseRequested() && main_wnd_)
+        main_wnd_->Closed(true);
 }
 
 void App3D::Destroy()
