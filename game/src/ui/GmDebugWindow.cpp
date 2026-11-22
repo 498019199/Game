@@ -12,12 +12,8 @@
 #include <render/Mesh.h>
 #include <world/SceneNode.h>
 
-#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
-#include <GameSession.h>
-#else
 #include <charconv>
 #include <sstream>
-#endif
 
 using namespace RenderWorker;
 
@@ -141,20 +137,6 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
     if (command.empty()) return;
     LogInfo() << "[GM] " << command << std::endl;
     AppendLog(std::string("> ") + std::string(command));
-#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
-    Gameplay::Protocol::Request request;
-    request.mutable_gm()->set_command(std::string(command));
-    auto response = GameContext::Instance().GameplayInstance().Call(std::move(request));
-    if (response.status() != Gameplay::Protocol::ERROR_CODE_OK)
-    {
-        AppendLog(response.error());
-        return;
-    }
-    if (response.clear_log() && document_)
-        Context::Instance().UIManagerInstance().SetInnerRml(document_, "gm_log", "");
-    if (response.has_npc()) CreateNpc(response.npc().id());
-    else if (!response.message().empty()) AppendLog(response.message());
-#else
     std::istringstream input{std::string(command)};
     std::string name;
     if (!(input >> name)) return;
@@ -177,7 +159,6 @@ void GmDebugWindow::ExecuteCommand(std::string_view command)
     }
     else
         AppendLog("unknown: " + std::string(command));
-#endif
 }
 
 //createnpc 100000

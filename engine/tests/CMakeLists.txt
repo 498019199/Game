@@ -27,4 +27,5 @@ target_link_libraries(Tests
 		gtest
 )
 
+target_compile_definitions(Tests PRIVATE ZENGINE_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/bin")
 target_precompile_headers(Tests PRIVATE <base/ZEngine.h>)

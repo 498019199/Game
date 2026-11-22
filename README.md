@@ -62,16 +62,12 @@ gm
 
 - `engine/cmake/config/`：编译器选项和平台识别。
 - `engine/cmake/dependencies/`：第三方源码获取、版本切换和补丁工具；库自身的构建入口仍在 `engine/3rd/`。
-- `gameplay/cmake/config/`：.NET SDK、宿主包和输出目录。
-- `gameplay/cmake/dependencies/`：Protobuf/Abseil 获取与第三方警告隔离。
-- `gameplay/cmake/targets/`：协议生成、托管发布、原生宿主/客户端和测试目标，按依赖顺序加载。
-- `gameplay/cmake/EngineIntegration.cmake`：原生 game 接入 C# 的入口。
 
 `include()` 保留调用模块的源码/构建目录作用域；入口使用绝对脚本路径，各 target 的名称、输出位置和已有构建命令保持不变。
 
 ## CMake 依赖约定
 
-- 引擎第三方源码、固定版本和构建配置集中维护在 `engine/3rd`；可独立构建的 gameplay 通过自身 `cmake/dependencies` 管理 Protobuf/Abseil。各模块链接已有 target，不重复下载同一个库。
+- 引擎第三方源码、固定版本和构建配置集中维护在 `engine/3rd`。各模块链接已有 target，不重复下载同一个库。
 - 模块通过 `target_link_libraries` 声明直接依赖；公共头文件路径由所属 target 的 `PUBLIC` include 传递，不手写其他模块的源码路径。
 - 公共头文件需要的依赖使用 `PUBLIC`；仅实现使用的依赖和可执行程序的依赖使用 `PRIVATE`。预编译头由各 target 自行选择，不向下游传播。
 - RmlUi 的静态运行库由 `ZENGINE_core` 持有。只使用类型和枚举的模块依赖 `ZENGINE_RmlUiHeaders`，实际 UI 操作通过 `UIManager` 调用，避免多个动态库各自包含 RmlUi 运行时。
@@ -93,7 +89,9 @@ gm
 - **编译 Editor**按 `Ctrl+Shift+B`。要编译 Game，在命令面板执行 `Tasks: Run Task`，选择 `CMake: Build Game (Debug)`。
 - **断点调试**在 `editor/main.cpp` 或 `editor/game_main.cpp` 的可执行代码行设置断点。在「运行和调试」选择 `vscode-editor` 或 `vscode-game`，按 `F5`。VS Code 会先编译相应的 Debug 目标，再从 `zengine/bin/win_x64` 启动。
 
-默认构建使用 C++，NPC 配置来自 `zengine/assets/config/npc.json`，GM 控制台支持 `help`、`clear` 和 `/createnpc <id>`。需要 C# 战斗、技能及 `/gas` 时，可用 `-DZENGINE_ENABLE_MANAGED_GAMEPLAY=ON` 配置 CMake，此模式需要 .NET 10 SDK。
+项目使用 C++，NPC 配置来自 `zengine/assets/config/npc.json`，GM 控制台支持 `help`、`clear` 和 `/createnpc <id>`。构建和运行无需 .NET SDK 或托管运行时。
+
+如果安装了 C# / C# Dev Kit 扩展，在此工作区的 `.vscode/settings.json` 中设置 `"dotnet.defaultSolution": "disable"`，然后执行 **Developer: Reload Window**。这会停止自动加载第三方源码自带的旧 .NET 示例工程；FreeImage、zlib 的这些示例不属于当前 C++ 构建。此工作区同时设置 `"csharp.suppressDotnetInstallWarning": true`，关闭不再需要的 .NET SDK 提示。
 
 ## macOS Editor 与 RmlUi 验证
 

@@ -11,7 +11,7 @@ public:
 	TestApp()
 		:App3D("Tests")
 	{
-		Context::Instance().ResLoaderInstance().AddPath("../../tests/bin");
+		Context::Instance().ResLoaderInstance().AddPath(ZENGINE_TEST_DATA_DIR);
 	}
 	
     ~TestApp()
@@ -60,10 +60,7 @@ int main(int argc, char** argv)
 	AddGlobalTestEnvironment(new RenderWorker::TestEnvironment);
 
     int ret_val = RUN_ALL_TESTS();
-	if (ret_val != 0)
-	{
-		[[maybe_unused]] int ch = getchar();
-	}
+
 
 	return ret_val;
 }

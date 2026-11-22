@@ -5,6 +5,9 @@
     //"git.showInlineOpenFileAction": false,
     // 禁用 Git 相关的状态通知
    // "gitlens.enabled": false,
+    // This workspace builds C++; do not load vendor .NET sample projects.
+    "dotnet.defaultSolution": "disable",
+    "csharp.suppressDotnetInstallWarning": true,
     "cmake.sourceDirectory": "${workspaceFolder}",
     "files.associations": {
     "*.mat": "json",

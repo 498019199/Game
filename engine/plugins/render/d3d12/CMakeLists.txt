@@ -46,6 +46,16 @@ set_target_properties(ZENGINE_Render_D3D12 PROPERTIES
 )
 target_link_libraries(ZENGINE_Render_D3D12 PUBLIC ZENGINE_core PRIVATE ZENGINE_common d3d12 dxgi d3dcompiler)
 
+# The editor and GPU probes import native D3D12 interop symbols before main().
+# Keep the plugin copy for dynamic loading and stage the same DLL beside the apps.
+if(ZENGINE_PREFERRED_LIB_TYPE STREQUAL "SHARED")
+    add_custom_command(TARGET ZENGINE_Render_D3D12 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:ZENGINE_Render_D3D12>" "${ZENGINE_BIN_DIR}"
+        COMMENT "Stage D3D12 runtime beside desktop applications"
+        VERBATIM)
+endif()
+
 # dxcapi.h from Windows SDK (um)
 if(DEFINED CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
 	set(_ZENGINE_WINSDK_VER "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
@@ -70,5 +80,10 @@ if(EXISTS "${_ZENGINE_DXC_REDIST}/dxcompiler.dll")
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${_ZENGINE_DXC_REDIST}/dxil.dll"
 			"$<TARGET_FILE_DIR:ZENGINE_Render_D3D12>/dxil.dll"
-		COMMENT "Copy DXC runtime next to ZENGINE_Render_D3D12")
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${_ZENGINE_DXC_REDIST}/dxcompiler.dll"
+            "${_ZENGINE_DXC_REDIST}/dxil.dll"
+            "${ZENGINE_BIN_DIR}"
+		COMMENT "Copy DXC runtime next to ZENGINE_Render_D3D12"
+        VERBATIM)
 endif()

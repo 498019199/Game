@@ -41,11 +41,6 @@ target_link_libraries(ZENGINE_game
 # Choose a PCH locally; linking core does not impose it on consumers.
 target_precompile_headers(ZENGINE_game PRIVATE <base/ZEngine.h>)
 
-if(ZENGINE_ENABLE_MANAGED_GAMEPLAY)
-    target_compile_definitions(ZENGINE_game PUBLIC ZENGINE_ENABLE_MANAGED_GAMEPLAY)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/../gameplay/cmake/EngineIntegration.cmake")
-endif()
-
 if(ZENGINE_IS_DEV_PLATFORM)
     add_subdirectory(tool)
 endif()

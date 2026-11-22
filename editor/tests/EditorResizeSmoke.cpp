@@ -8,18 +8,11 @@
 #include <cmath>
 #include <chrono>
 #include <thread>
-#ifdef _MSC_VER
-#include <crtdbg.h>
-#endif
 
 namespace EditorWorker
 {
 void EditorManager::RunResizeSmokeTest()
 {
-#ifdef _MSC_VER
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
-    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-#endif
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
     auto const hwnd = MainWnd()->GetHWND();
 #else

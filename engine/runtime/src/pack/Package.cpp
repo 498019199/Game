@@ -120,6 +120,7 @@ namespace RenderWorker
 	}
 
     Package::Package(ResIdentifierPtr const & archive_is, std::string_view password)
+        : archive_is_(archive_is), password_(password)
     {
         COMMON_ASSERT(archive_is);
 

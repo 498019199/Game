@@ -1,10 +1,5 @@
 #include <manager/DataManager.h>
 
-#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
-#include <game/GameContext.h>
-#include <GameSession.h>
-#endif
-
 #include <base/ZEngine.h>
 #include <common/JsonDom.h>
 #include <common/Log.h>
@@ -129,14 +124,6 @@ bool DataManager::LoadNpcConfig()
             npc_entries_.push_back(NpcConfigEntry{id, std::string(prefab_path)});
     };
 
-#ifdef ZENGINE_ENABLE_MANAGED_GAMEPLAY
-    Gameplay::Protocol::Request request;
-    request.mutable_npc_catalog();
-    auto response = GameContext::Instance().GameplayInstance().Call(std::move(request));
-    if (response.status() != Gameplay::Protocol::ERROR_CODE_OK) return false;
-    for (auto const& definition : response.npc_catalog())
-        cache_npc(definition.id(), definition.prefab());
-#else
     using CommonWorker::JsonValueType;
     constexpr std::string_view npc_config = "config/npc.json";
     if (!LoadConfig(npc_config)) return false;
@@ -155,7 +142,6 @@ bool DataManager::LoadNpcConfig()
         else if (id->Type() == JsonValueType::UInt && std::in_range<int32_t>(id->ValueUInt()))
             cache_npc(static_cast<int32_t>(id->ValueUInt()), prefab->ValueString());
     }
-#endif
     return true;
 }
 

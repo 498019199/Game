@@ -19,14 +19,14 @@ TEST(ResLoaderTest, AddDelPath)
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
 	EXPECT_TRUE(res_loader.Locate("Test.txt").empty());
-	res_loader.AddPath("../../tests/bin/resloader");
+	res_loader.AddPath(ZENGINE_TEST_DATA_DIR "/resloader");
 	EXPECT_FALSE(res_loader.Locate("Test.txt").empty());
 
 	auto res = res_loader.Open("Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.DelPath("../../tests/bin/resloader");
+	res_loader.DelPath(ZENGINE_TEST_DATA_DIR "/resloader");
 	EXPECT_TRUE(res_loader.Locate("Test.txt").empty());
 }
 
@@ -34,14 +34,14 @@ TEST(ResLoaderTest, MountUnmountPath)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
-	res_loader.Mount("ResLoaderTestData", "../../tests/bin/resloader");
+	res_loader.Mount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader");
 	EXPECT_FALSE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 
 	auto res = res_loader.Open("ResLoaderTestData/Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.Unmount("ResLoaderTestData", "../../tests/bin/resloader");
+	res_loader.Unmount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader");
 	EXPECT_TRUE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 }
 
@@ -49,14 +49,14 @@ TEST(ResLoaderTest, MountUnmount7zPath)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
-	res_loader.Mount("ResLoaderTestData", "../../tests/bin/resloader/Test.7z");
+	res_loader.Mount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/Test.7z");
 	EXPECT_FALSE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 
 	auto res = res_loader.Open("ResLoaderTestData/Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.Unmount("ResLoaderTestData", "../../tests/bin/resloader/Test.7z");
+	res_loader.Unmount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/Test.7z");
 	EXPECT_TRUE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 }
 
@@ -64,14 +64,14 @@ TEST(ResLoaderTest, MountUnmountInside7zPath)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
-	res_loader.Mount("ResLoaderTestData", "../../tests/bin/resloader/Test.7z/ResLoader");
+	res_loader.Mount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/Test.7z/ResLoader");
 	EXPECT_FALSE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 
 	auto res = res_loader.Open("ResLoaderTestData/Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.Unmount("ResLoaderTestData", "../../tests/bin/resloader/Test.7z/ResLoader");
+	res_loader.Unmount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/Test.7z/ResLoader");
 	EXPECT_TRUE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 }
 
@@ -79,14 +79,14 @@ TEST(ResLoaderTest, MountUnmountEncrypt7zPath)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
-	res_loader.Mount("ResLoaderTestData", "../../tests/bin/resloader/TestPassword.7z|1234");
+	res_loader.Mount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/TestPassword.7z|1234");
 	EXPECT_FALSE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 
 	auto res = res_loader.Open("ResLoaderTestData/Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.Unmount("ResLoaderTestData", "../../tests/bin/resloader/TestPassword.7z|1234");
+	res_loader.Unmount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/TestPassword.7z|1234");
 	EXPECT_TRUE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 }
 
@@ -94,13 +94,13 @@ TEST(ResLoaderTest, MountUnmountInsideEncrypt7zPath)
 {
 	auto& res_loader = Context::Instance().ResLoaderInstance();
 
-	res_loader.Mount("ResLoaderTestData", "../../tests/bin/resloader/TestPassword.7z|1234/ResLoader");
+	res_loader.Mount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/TestPassword.7z|1234/ResLoader");
 	EXPECT_FALSE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 
 	auto res = res_loader.Open("ResLoaderTestData/Test.txt");
-	EXPECT_TRUE(res);
+	ASSERT_TRUE(res);
 	EXPECT_EQ(ReadWholeFile(res), sanity_string);
 
-	res_loader.Unmount("ResLoaderTestData", "../../tests/bin/resloader/TestPassword.7z|1234/ResLoader");
+	res_loader.Unmount("ResLoaderTestData", ZENGINE_TEST_DATA_DIR "/resloader/TestPassword.7z|1234/ResLoader");
 	EXPECT_TRUE(res_loader.Locate("ResLoaderTestData/Test.txt").empty());
 }

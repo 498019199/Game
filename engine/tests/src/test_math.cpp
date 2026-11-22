@@ -38,12 +38,15 @@ TEST(MathTest, VectorOperater)
 
 	v = float3(1.f, 2.f, 3.f);
 	EXPECT_EQ(float3(1.f, 2.f, 3.f), v);
-	EXPECT_EQ(float3(5.f, 10.f, 15.f), 3.f * v);
+	EXPECT_EQ(float3(3.f, 6.f, 9.f), 3.f * v);
 	EXPECT_EQ(float3(5, 10, 15), v * 5);
 
 	// /
 	v = float3(1.f, 2.f, 3.f);
-	EXPECT_EQ(float3(0.333333f, 0.666667f, 1.000000f), (v / 3.f));
+    auto const quotient = v / 3.f;
+    EXPECT_FLOAT_EQ(1.f / 3.f, quotient.x());
+    EXPECT_FLOAT_EQ(2.f / 3.f, quotient.y());
+    EXPECT_FLOAT_EQ(1.f, quotient.z());
 
 	// ==
 	iv = { 1,2,3 };
@@ -73,7 +76,7 @@ TEST(MathTest, VectorOperater)
 	ss << std::setiosflags(std::ios::fixed) 
 		<< std::setprecision(2) 
 		<< MathWorker::Angle(float3(1,2,3), float3(3,3,3)) ;
-	EXPECT_LT(0, ss.str().compare("22.21"));
+	EXPECT_EQ("22.21", ss.str());
 }
 
 TEST(MathTest, NormalizeFloat2)

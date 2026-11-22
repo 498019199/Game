@@ -8,6 +8,9 @@
 #include <game/GameContext.h>
 #include <filesystem>
 #include <iostream>
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
 
 #ifdef ZENGINE_PLATFORM_WINDOWS_DESKTOP
 #include <editor/EditorManagerD3D11.h>
@@ -74,6 +77,14 @@ int main(int argc, char** argv)
         else if (arg == "--smoke-material-binding") smoke_material_binding = true;
         else { std::cerr << "Unknown argument: " << arg << std::endl; return 2; }
     }
+#ifdef _MSC_VER
+    if (smoke_resize || smoke_material_binding || !smoke_material.empty())
+    {
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+        _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+        _set_error_mode(_OUT_TO_STDERR);
+    }
+#endif
     if (!backend.empty() && backend != DesktopRendererName
 #ifdef _WIN32
         && backend != "D3D11"
