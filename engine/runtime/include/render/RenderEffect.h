@@ -1,6 +1,6 @@
 #pragma once
 #include <base/ZEngine.h>
-#include <common/XMLDom.h>
+#include <common/ResIdentifier.h>
 
 #include <render/GraphicsBuffer.h>
 #include <render/RenderDeviceCaps.h>
@@ -14,6 +14,12 @@ namespace RenderWorker
 {
 using namespace CommonWorker;
 
+struct EffectDesc;
+struct EffectParameterDesc;
+struct EffectStructDesc;
+struct TechniqueDesc;
+struct PassDesc;
+class EffectLoadingDesc;
 class RenderTechnique;
 class RenderEffectStructType;
 class RenderEffect;
@@ -239,9 +245,6 @@ public:
     RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept;
     RenderEffectAnnotation& operator=(RenderEffectAnnotation&& rhs) noexcept;
 
-#if ZENGINE_IS_DEV_PLATFORM
-    void Load(RenderEffect const& effect, XMLNode const& node);
-#endif
 
     void StreamIn(RenderEffect const& effect, ResIdentifier& res);
 #if ZENGINE_IS_DEV_PLATFORM
@@ -276,7 +279,7 @@ class ZENGINE_CORE_API RenderShaderFragment final
 {
 public:
 #if ZENGINE_IS_DEV_PLATFORM
-    void Load(XMLNode const& node);
+    void LoadSource(std::string const& source);
 #endif
 
     void StreamIn(ResIdentifier& res);
@@ -309,9 +312,6 @@ private:
 class ZENGINE_CORE_API RenderShaderGraphNode final
 {
 public:
-#if ZENGINE_IS_DEV_PLATFORM
-    void Load(XMLNode const& node);
-#endif
 
     void StreamIn(ResIdentifier& res);
 #if ZENGINE_IS_DEV_PLATFORM
@@ -369,7 +369,7 @@ public:
     RenderEffectStructType& operator=(RenderEffectStructType&& rhs) noexcept;
 
 #if ZENGINE_IS_DEV_PLATFORM
-    void Load(RenderEffect const& effect, XMLNode const& node);
+    void Load(EffectStructDesc const& desc);
 #endif
 
     void StreamIn(ResIdentifier& res);
@@ -523,7 +523,7 @@ public:
     RenderEffectParameter& operator=(RenderEffectParameter && rhs) noexcept;
 
 #if ZENGINE_IS_DEV_PLATFORM
-    void Load(RenderEffect const& effect, XMLNode const& node);
+    void Load(RenderEffect const& effect, EffectParameterDesc const& desc);
 #endif
 
     void StreamIn(RenderEffect const& effect, ResIdentifier& res);
@@ -647,7 +647,7 @@ class ZENGINE_CORE_API RenderEffect final
 public:
     RenderEffect();
 
-    void Load(std::span<std::string const> names);
+    void Load(EffectDesc const& desc);
 #if ZENGINE_IS_DEV_PLATFORM
     void CompileShaders();
 #endif
@@ -729,21 +729,13 @@ public:
 #endif
     
 private:
+    friend class EffectLoadingDesc;
+    void LoadDescription(EffectDesc const& desc, std::string const& source_text);
     bool StreamIn(ResIdentifier& source);
 #if ZENGINE_IS_DEV_PLATFORM
     void StreamOut(std::ostream& os) const;
 #endif
 
-#if ZENGINE_IS_DEV_PLATFORM
-    void PreprocessIncludes(XMLNode& root, std::vector<std::string>& include_names);
-    void RecursiveIncludeNode(XMLNode const& root, std::vector<std::string>& include_names) const;
-
-    XMLNode ResolveInheritTechNode(XMLNode& root, XMLNode const* tech_node);
-    void ResolveOverrideTechs(XMLNode& root);
-
-    void Load(XMLNode const& root);
-    bool LoadFromShaderLab(ResIdentifier& source);
-#endif
 
 private:
     struct Immutable final
@@ -757,6 +749,9 @@ private:
 
         std::string kfx_name;
         bool need_compile;
+        bool description_based = false;
+        uint64_t description_hash = 0;
+        uint64_t source_hash = 0;
 #endif
 
         std::vector<RenderEffectStructType> struct_types;
@@ -793,7 +788,7 @@ public:
     RenderTechnique& operator=(RenderTechnique&& rhs) noexcept;
 
 #if ZENGINE_IS_DEV_PLATFORM
-    void Load(RenderEffect& effect, XMLNode const& node, uint32_t tech_index);
+    void Load(RenderEffect& effect, TechniqueDesc const& desc, uint32_t tech_index);
     void CompileShaders(RenderEffect& effect, uint32_t tech_index);
 #endif
     void CreateHwShaders(RenderEffect& effect, uint32_t tech_index);
@@ -884,8 +879,7 @@ public:
     RenderPass();
 
 #if ZENGINE_IS_DEV_PLATFORM
-    void Load(RenderEffect& effect, XMLNode const& node, uint32_t tech_index, uint32_t pass_index, RenderPass const* inherit_pass);
-    void Load(RenderEffect& effect, uint32_t tech_index, uint32_t pass_index, RenderPass const* inherit_pass);
+    void Load(RenderEffect& effect, PassDesc const& desc, uint32_t tech_index, uint32_t pass_index);
     void CompileShaders(RenderEffect& effect, uint32_t tech_index, uint32_t pass_index);
 #endif
     void CreateHwShaders(RenderEffect& effect, uint32_t tech_index, uint32_t pass_index);
@@ -945,10 +939,9 @@ private:
     bool is_validate_;
 };
 
+ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffect(EffectDesc const& desc);
 ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_names);
-ZENGINE_CORE_API RenderEffectPtr SyncLoadRenderEffects(std::span<std::string const> effect_names);
 ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffect(std::string_view effect_name);
-ZENGINE_CORE_API RenderEffectPtr ASyncLoadRenderEffects(std::span<std::string const> effect_names);
 
 // When shader reflection did not BindToCBuffer (e.g. Metal without DXBC reflect),
 // bind with a known HLSL packing offset so Predefined*CBuffer can still initialize.

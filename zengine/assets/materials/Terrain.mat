@@ -1,6 +1,6 @@
 {
     "Type": "Forward",
-    "Shader": "shaders/TerrainBlend2Layer.shader",
+    "Shader": "TerrainBlend2Layer",
     "Float":
     [
         {

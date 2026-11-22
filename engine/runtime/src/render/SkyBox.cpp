@@ -13,7 +13,7 @@ namespace RenderWorker
 		RenderFactory& rf = context.RenderFactoryInstance();
 
 			// ShaderLab Lite test path 
-			RenderEffectPtr effect = SyncLoadRenderEffect("SkyBox.shader");
+			RenderEffectPtr effect = SyncLoadRenderEffect("SkyBox");
 			// if (context.DeferredRenderingLayerValid())
 			// {
 			// 	effect_attrs_ |= EA_SpecialShading;

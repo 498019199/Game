@@ -4,7 +4,7 @@
 		{
 			"type" : "model",
 			"models": "models/chaos_knight/chaos_knight_econ.fbx",
-			"render_effect": "Data2ShaderFx.shader",
+			"render_effect": "Data2ShaderFx",
 			"render_technique": "Data2ShaderFxTech",
 			"parts": {
 				"base": {

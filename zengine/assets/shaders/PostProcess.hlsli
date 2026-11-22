@@ -1,10 +1,5 @@
-Shader "Lib/PostProcess"
-{
-    Include "util.shader"
+// Parameters, resources and pipeline state are declared by the C++ effect.
 
-    Float4x4 pp_mvp
-
-    HLSLPROGRAM
 float2 TexCoordFromPos(float4 pos)
 {
 	float2 tex = pos.xy / 2;
@@ -38,6 +33,4 @@ void VolPostProcessVS(float4 pos : POSITION,
 	oPos = mul(pos, pp_mvp);
 
 	oScreenTc = EncodeSSTexcoord(oPos);
-}
-    ENDHLSL
 }

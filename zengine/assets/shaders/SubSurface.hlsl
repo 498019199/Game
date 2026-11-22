@@ -1,51 +1,6 @@
-Shader "SubSurface"
-{
-    Include "Lighting.shader"
-    Include "util.shader"
-    Include "Quaternion.shader"
-    Include "Material.shader"
-    Include "Mesh.shader"
+// Parameters, resources and pipeline state are declared by the C++ effect.
 
-    Float4x4 worldviewproj semantic="WORLDVIEWPROJECTION"
-    Float3 eye_pos
-    Float3 light_pos
-    Float3 light_color
-    Float3 light_falloff
-    Float3 extinction_coefficient
-    Float material_thickness
-    Float sigma_t
-    Float2 far_plane
-    Float2 near_q
-
-    Texture2D back_face_depth_tex
-
-    Sampler linear_sampler
-    {
-        State filtering = min_mag_mip_linear
-        State address_u = wrap
-        State address_v = wrap
-    }
-
-    Sampler point_sampler
-    {
-        State filtering = min_mag_mip_point
-        State address_u = clamp
-        State address_v = clamp
-    }
-
-    SubShader
-    {
-        Pass
-        {
-            Name "BackFaceDepthTechWODepthTexture"
-            Cull Front
-            ZTest Greater
-
-            HLSLPROGRAM
-            #pragma vertex BackFaceDepthVS
-            #pragma fragment BackFaceDepthPS
-
-            void BackFaceDepthVS(float2 tex0 : TEXCOORD0,
+void BackFaceDepthVS(float2 tex0 : TEXCOORD0,
                         float4 pos : POSITION,
                         out float oDepth : TEXCOORD0,
                         out float4 oPos : SV_Position)
@@ -59,30 +14,12 @@ Shader "SubSurface"
             {
                 return WriteAFloat(depth, far_plane.y);
             }
-            ENDHLSL
-        }
 
-        Pass
-        {
-            Name "BackFaceDepthTech"
-            Cull Front
-            ZTest Greater
-            State color_write_mask = 0
 
-            HLSLPROGRAM
-            #pragma vertex BackFaceDepthVS
-            #pragma fragment BackFaceDepthPS
-            ENDHLSL
-        }
 
-        Pass
-        {
-            Name "SubSurfaceTech"
-            Cull Back
 
-            HLSLPROGRAM
-            #pragma vertex SubSurfaceVS
-            #pragma fragment SubSurfacePS
+
+
 
             void SubSurfaceVS(float2 tex0 : TEXCOORD0,
                         float4 pos : POSITION,
@@ -178,19 +115,3 @@ Shader "SubSurface"
 
                 return float4(clr.rgb * light_color, 1);
             }
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "SubSurfaceTechWODepthTexture"
-            Cull Back
-            Macro NO_DEPTH_TEXTURE = 1
-
-            HLSLPROGRAM
-            #pragma vertex SubSurfaceVS
-            #pragma fragment SubSurfacePS
-            ENDHLSL
-        }
-    }
-}

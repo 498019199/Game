@@ -4,7 +4,7 @@
 		{
 			"type" : "model",
 			"models": "models/ancient_apparition/ancient_apparition_econ.fbx",
-			"render_effect": "Data2ShaderFx.shader",
+			"render_effect": "Data2ShaderFx",
 			"render_technique": "Data2ShaderFxTech",
 			"parts": {
 				"base": {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <render/Renderable.h>
+#include <render/ParticleEffect.h>
 #include <world/ParticleSystem.h>
 
 namespace RenderWorker
@@ -36,14 +37,7 @@ private:
     void EnsureCapacity(uint32_t count);
 
     std::shared_ptr<ParticleSystem> system_;
-    RenderTechnique* alpha_technique_ = nullptr;
-    RenderTechnique* additive_technique_ = nullptr;
-    RenderTechnique* distortion_technique_ = nullptr;
-    RenderEffectParameter* view_projection_ = nullptr;
-    RenderEffectParameter* particle_style_ = nullptr;
-    RenderEffectParameter* particle_glow_ = nullptr;
-    RenderEffectParameter* particle_refraction_ = nullptr;
-    RenderEffectParameter* scene_color_ = nullptr;
+    ParticleEffect particle_effect_;
     TexturePtr scene_color_snapshot_;
     GraphicsBufferPtr vertices_buffer_;
     uint32_t capacity_ = 0;

@@ -1,8 +1,5 @@
-Shader "Lib/Lighting"
-{
-    Macro MAX_SHININESS = 8192.0f
+// Parameters, resources and pipeline state are declared by the C++ effect.
 
-    HLSLPROGRAM
 float DirectionalLighting(float3 light_dir, float3 normal)
 {
 	return dot(-light_dir, normal);
@@ -16,7 +13,7 @@ float PointLighting(float3 light_pos, float3 pos, float3 normal)
 float SpotLighting(float3 light_pos, float3 light_dir, float2 cos_cone, float3 pos)
 {
 	// cos_cone is (cos_outer_cone, cos_inner_cone)
-	
+
 	float3 v = normalize(pos - light_pos);
 	float cos_direction = dot(v, light_dir);
 
@@ -179,6 +176,4 @@ float Shininess2Glossiness(float shininess)
 float Glossiness2Shininess(float glossiness)
 {
 	return pow(MAX_SHININESS, glossiness);
-}
-    ENDHLSL
 }

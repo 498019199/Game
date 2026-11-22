@@ -67,7 +67,7 @@ struct MeshData
 	std::string model_path;
 	// Shared material ball applied to all mesh parts (UE MIC path or engine name).
 	std::string material;
-	// Optional RenderEffect / Technique override (e.g. SimpleAlbedoNormal.shader / SimpleAlbedoNormalTech).
+	// Optional RenderEffect / Technique override (e.g. SimpleAlbedoNormal / SimpleAlbedoNormalTech).
 	std::string render_effect;
 	std::string render_technique;
 	MeshTextures textures;

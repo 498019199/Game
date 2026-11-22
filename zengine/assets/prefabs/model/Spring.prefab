@@ -4,7 +4,7 @@
 		{
 			"type" : "model",
 			"path": "models/Spring.obj",
-			"render_effect": "SimpleAlbedoNormal.shader",
+			"render_effect": "SimpleAlbedoNormal",
 			"render_technique": "SimpleAlbedoNormalTech"
 		}
 	]

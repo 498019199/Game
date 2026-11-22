@@ -1,6 +1,5 @@
-Shader "Lib/Quaternion"
-{
-    HLSLPROGRAM
+// Parameters, resources and pipeline state are declared by the C++ effect.
+
 float4 conjugate_quat(float4 rhs)
 {
 	return float4(-rhs.xyz, rhs.w);
@@ -84,7 +83,7 @@ void quat_to_axis_angle(out float3 vec, out float ang, float4 quat)
 
 	ang = tw + tw;
 	vec = quat.xyz;
-	
+
 	float stw = sin(tw);
 	if (stw != 0)
 	{
@@ -119,7 +118,7 @@ float4 slerp(float4 lhs, float4 rhs, float s)
 		dir = -1;
 		cosom = -cosom;
 	}
-	
+
 	// make sure they are different enough to avoid a divide by 0
 	if (cosom < 1 - 1e-6f)
 	{
@@ -193,7 +192,7 @@ float4 mat4_to_quat(float4x4 mat)
 float4x4 quat_to_mat4(float4 quat)
 {
 	float3 xyz2 = quat.xyz + quat.xyz;
-			  
+
 	float3 c0 = quat.x * xyz2;
 	float3 c1 = quat.yyz * xyz2.yzz;
 	float3 c2 = quat.w * xyz2;
@@ -217,7 +216,7 @@ float4 bary_centric_quat(float4 q1, float4 q2, float4 q3, float f, float g)
 	{
 		ret = q1;
 	}
-	
+
 	return ret;
 }
 
@@ -270,6 +269,4 @@ float4x4 udq_to_matrix(float4 ndp, float4 dp)
 	m /= len2;
 
 	return m;
-}
-    ENDHLSL
 }

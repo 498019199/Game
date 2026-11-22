@@ -23,20 +23,7 @@ ParticleRenderable::ParticleRenderable(std::shared_ptr<ParticleSystem> system)
 {
     if (!system_) throw std::invalid_argument("ParticleRenderable requires a ParticleSystem");
 
-    effect_ = SyncLoadRenderEffect("Particle.shader");
-    if (!effect_) throw std::runtime_error("Unable to load Particle.shader");
-    alpha_technique_ = effect_->TechniqueByName("ParticleAlphaTech");
-    additive_technique_ = effect_->TechniqueByName("ParticleAdditiveTech");
-    distortion_technique_ = effect_->TechniqueByName("ParticleDistortionTech");
-    view_projection_ = effect_->ParameterByName("particle_view_projection");
-    particle_style_ = effect_->ParameterByName("particle_style");
-    particle_glow_ = effect_->ParameterByName("particle_glow");
-    particle_refraction_ = effect_->ParameterByName("particle_refraction");
-    scene_color_ = effect_->ParameterByName("particle_scene_color");
-    if (!alpha_technique_ || !additive_technique_ || !distortion_technique_ || !view_projection_ ||
-        !particle_style_ || !particle_glow_ || !particle_refraction_ || !scene_color_ ||
-        !alpha_technique_->Validate() || !additive_technique_->Validate() || !distortion_technique_->Validate())
-        throw std::runtime_error("Particle.shader has an invalid technique or missing parameter");
+    effect_ = particle_effect_.Instance();
 
     technique_ = this->GetRenderTechnique();
     effect_attrs_ = EA_SimpleForward | EA_TransparencyFront;
@@ -53,8 +40,7 @@ ParticleRenderable::ParticleRenderable(std::shared_ptr<ParticleSystem> system)
 
 RenderTechnique* ParticleRenderable::GetRenderTechnique() const
 {
-    if (system_->Settings().blend == ParticleBlendMode::Distortion) return distortion_technique_;
-    return system_->Settings().blend == ParticleBlendMode::Additive ? additive_technique_ : alpha_technique_;
+    return particle_effect_.Technique(system_->Settings().blend);
 }
 
 bool ParticleRenderable::EmitterVisible() const
@@ -127,9 +113,7 @@ void ParticleRenderable::OnRenderBegin()
         // No stale snapshot is ever drawn after a failed/minimized capture.
         // Zero displacement is a true no-op, including framebuffer alpha.
         if (settings.distortion_strength <= 0.f || !re.CaptureCurrentColor(scene_color_snapshot_)) return;
-        *scene_color_ = scene_color_snapshot_;
-        *particle_refraction_ = float4(1.f / scene_color_snapshot_->Width(0),
-            1.f / scene_color_snapshot_->Height(0), settings.distortion_strength, 0.f);
+        particle_effect_.SetRefraction(scene_color_snapshot_, settings.distortion_strength);
     }
     draw_particles_.clear();
     draw_particles_.reserve(particles.size());
@@ -219,8 +203,8 @@ void ParticleRenderable::OnRenderBegin()
     }
     layout.NumVertices(static_cast<uint32_t>(vertices_.size()));
     layout.NumIndices(static_cast<uint32_t>(draw_particles_.size() * 6));
-    *view_projection_ = camera.ViewProjMatrix();
-    *particle_style_ = additive ? 1.0f : 0.0f;
-    *particle_glow_ = settings.glow_strength;
+    particle_effect_.SetViewProjection(camera.ViewProjMatrix());
+    particle_effect_.SetMode(settings.blend);
+    particle_effect_.SetGlow(settings.glow_strength);
 }
 }

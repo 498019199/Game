@@ -21,7 +21,7 @@ struct VertexPosNormalColor
 
 RenderableBox::  RenderableBox(float width, float height, float depth, const Color & color)
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
 	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
 
     float w2 = width / 2, h2 = height / 2, d2 = depth / 2;
@@ -118,7 +118,7 @@ RenderableBox::  RenderableBox(float width, float height, float depth, const Col
 
 RenderableSphere::RenderableSphere(float radius, int levels, int slices, const Color & color)
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
 	technique_ = simple_forward_tech_ = effect_->TechniqueByName("PredefinedCBuffersNoopTech");
 
     uint32_t vertexCount = 2 + (levels - 1) * (slices + 1);
@@ -239,7 +239,7 @@ RenderableSphere::RenderableSphere(float radius, int levels, int slices, const C
 RenderableCameraFrustum::RenderableCameraFrustum(CameraPtr const& camera)
     : Renderable(L"CameraFrustum"), camera_(camera)
 {
-    effect_ = SyncLoadRenderEffect("CameraFrustum.shader");
+    effect_ = SyncLoadRenderEffect("CameraFrustum");
     technique_ = simple_forward_tech_ = effect_->TechniqueByName("CameraFrustum");
     effect_attrs_ |= EA_SimpleForward;
 
@@ -418,7 +418,7 @@ RenderablePlane::RenderablePlane(float length, float width,
 TerrainRenderable::TerrainRenderable(TexturePtr const & height_map, TexturePtr const & normal_map)
     : RenderablePlane(4, 4, 64, 64, true, false)
 {
-    effect_ = SyncLoadRenderEffect("Terrain.shader");
+    effect_ = SyncLoadRenderEffect("Terrain");
     technique_ = effect_->TechniqueByName("Terrain");
     *(effect_->ParameterByName("grass_tex")) = ASyncLoadTexture("grass.dds", EAH_GPU_Read | EAH_Immutable);
     *(effect_->ParameterByName("height_map_tex")) = height_map;

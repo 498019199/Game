@@ -1,8 +1,5 @@
-Shader "Lib/DeferredRenderingUtil"
-{
-    Include "Lighting.shader"
+// Parameters, resources and pipeline state are declared by the C++ effect.
 
-    HLSLPROGRAM
 void StoreGBuffer(float3 normal, float3 albedo, float2 metalness_glossiness, float2 motion_vec, float occlusion,
 			out float4 rt0, out float4 rt1, out float4 rt2)
 {
@@ -78,6 +75,4 @@ float3 NearestDepthUpsampling(float2 tc, float4 z_half, float z_full, float2 l1_
 	}
 
 	return float3(nearest_tc, all(dist_z < threshold) ? 1 : -1);
-}
-    ENDHLSL
 }

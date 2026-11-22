@@ -151,3 +151,43 @@ cd zengine/bin/darwin_arm64
 ```
 
 GPU 测试检查火焰、烟雾、火花和爆炸的实际像素，覆盖深度遮挡、透明粒子不写深度、缓冲扩容、世界空间、速度拖尾、发光、闪烁、背景折射，以及画面缓存的尺寸变化与复用；预览图写入系统临时目录。烟雾在单个发射器内按深度排序，多个交叠发射器尚未进行全局逐粒子排序。
+
+
+## C++ 效果与 HLSL
+
+所有内置效果使用 `EffectDesc` 创建，每个效果由一个 C++ 类提供 `Describe()`。
+`BuiltInEffects.h` 注册 14 个稳定效果 ID，例如 `SkyBox`、`GBuffer`、`Particle`。
+`SyncLoadRenderEffect("SkyBox")` 从注册表加载，新增或动态组合的效果也可以直接调用 `SyncLoadRenderEffect(desc)`。
+效果参数、Technique、Pass、采样器和渲染状态由 C++ 描述；原 `.shader` 文件及 ShaderLab/XML 效果解析器已移除。
+材质参数和场景数据保持独立，引用内置效果时使用效果 ID。
+
+GPU 算法保存在 `zengine/assets/shaders/*.hlsl`，共享算法保存在 `.hlsli`。
+参数和资源声明由描述生成，不在 HLSL 中重复声明。
+`shader_files` 按依赖顺序列出完整源文件集合，加载器负责合并；不使用独立的 `#include` 预处理器。
+共享材质、网格和相机的常量缓冲由 C++ 辅助函数组合，保持既有 CPU 绑定布局。
+
+描述支持标量、整数/浮点向量、4×4 矩阵、数组、结构体、2D/Cube 纹理、采样器，
+以及效果、Technique、Pass 三层宏。默认数值为零，单个矩阵为单位矩阵；
+内置效果显式保留原有默认值，包括旧效果使用的零矩阵。
+`ParticleEffect` 提供矩阵、混合模式、发光和折射的类型化接口，
+每个发射器持有独立参数，编译后的 Shader 可复用。`ParticleRenderable` 负责几何和渲染队列。
+
+描述、后端或任意源文件内容改变，都会使下次加载使用新的编译结果；已有实例不会自动热更新。
+缓存命名为 `<效果ID>.effect.<描述指纹>.<后端>.kfx`，D3D11 和 D3D12 均支持缓存重载。
+发布到不支持运行时编译的平台时，需要随资源分发对应的烘焙缓存。
+设备不支持的阶段/Shader Model 会跳过对应 Technique；效果必须至少有一个可用 Technique。
+
+Windows 示例（在 `zengine/bin/win_x64` 目录运行）：
+
+```powershell
+.\ZENGINE_shader_bake.exe --factory D3D12 --assets-dir ../../assets/shaders --all-effects --force
+.\ZENGINE_shader_bake.exe --factory D3D11 --assets-dir ../../assets/shaders --all-effects --force
+.\ZENGINE_shader_bake.exe --factory D3D12 --assets-dir ../../assets/shaders --effect Particle
+.\ZENGINE_editor_tests_vc143.exe --gtest_filter=EffectDescription.*:BuiltInEffects.*
+.\ZENGINE_particle_gpu_tests_vc143.exe D3D12
+.\ZENGINE_particle_gpu_tests_vc143.exe D3D11
+```
+
+不加 `--force` 再烘焙可以验证磁盘缓存复用。粒子 GPU 测试覆盖实例参数隔离、编译结果共享、
+缓存重载，以及保持文件时间戳不变时 HLSL 内容变化仍能使缓存失效。
+内置效果测试检查常量缓冲布局、结构体数组、材质默认值、继承的渲染状态及宏作用域。

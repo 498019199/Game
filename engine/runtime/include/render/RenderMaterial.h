@@ -1,5 +1,6 @@
 #pragma once
 
+#include <common/XMLDom.h>
 #include <render/RenderEffect.h>
 #include <render/RenderView.h>
 #include <filesystem>
@@ -46,7 +47,7 @@ public:
 
     void Template(std::string_view name);
     std::string const& Template() const { return template_; }
-    std::string_view EffectName() const { return template_ == "EditorLitV1" ? "EditorLitV1.shader" : "SimpleAlbedoNormal.shader"; }
+    std::string_view EffectName() const { return template_ == "EditorLitV1" ? "EditorLitV1" : "SimpleAlbedoNormal"; }
     std::string_view TechniqueName() const { return template_ == "EditorLitV1" ? "EditorLitV1Tech" : "SimpleAlbedoNormalTech"; }
     void Albedo(const float4& value);
 	const float4&  Albedo() const;

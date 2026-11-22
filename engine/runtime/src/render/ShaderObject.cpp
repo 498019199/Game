@@ -335,7 +335,7 @@ void ShaderObject::LinkShaders(RenderEffect& effect)
 
 			if (hlsl_shader_text.empty())
 			{
-				LogError() << "HLSL source is empty. Check ResLoader path for the .shader and its Includes." << std::endl;
+				LogError() << "HLSL source is empty. Check ResLoader paths for the effect HLSL sources." << std::endl;
 			}
 
 			if (!err_msg.empty())

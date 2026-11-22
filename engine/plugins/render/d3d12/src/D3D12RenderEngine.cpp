@@ -34,7 +34,7 @@ D3D12RenderEngine::D3D12RenderEngine()
 {
 	native_shader_platform_name_ = "d3d_12";
 	native_shader_fourcc_ = MakeFourCC<'D', 'X', 'B', 'C'>::value;
-	native_shader_version_ = 6;
+	native_shader_version_ = 7; // Includes serialized shader bytecode and reflection metadata.
 }
 
 D3D12RenderEngine::~D3D12RenderEngine()

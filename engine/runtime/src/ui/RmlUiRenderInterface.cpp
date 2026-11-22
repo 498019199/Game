@@ -64,10 +64,10 @@ bool RmlUiRenderInterfaceD3D11::BuildPipeline()
 		return false;
 	}
 
-	effect_ = SyncLoadRenderEffect("RmlUi.shader");
+	effect_ = SyncLoadRenderEffect("RmlUi");
 	if (!effect_)
 	{
-		LogError() << "RmlUiRenderInterface: failed to load RmlUi.shader." << std::endl;
+		LogError() << "RmlUiRenderInterface: failed to load RmlUi." << std::endl;
 		return false;
 	}
 
@@ -77,7 +77,7 @@ bool RmlUiRenderInterfaceD3D11::BuildPipeline()
 	rml_tex_ep_ = effect_->ParameterByName("rml_tex");
 	if (!tech_ || !tech_scissor_ || !transform_ep_ || !rml_tex_ep_)
 	{
-		LogError() << "RmlUiRenderInterface: missing technique or parameters in RmlUi.shader." << std::endl;
+		LogError() << "RmlUiRenderInterface: missing technique or parameters in RmlUi." << std::endl;
 		return false;
 	}
 	if (!tech_->Validate() || !tech_scissor_->Validate())

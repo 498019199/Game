@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -560,15 +561,177 @@ void D3D12ShaderStageObject::FillCBufferIndices(RenderEffect const& effect)
 	}
 }
 
-void D3D12ShaderStageObject::StreamIn([[maybe_unused]] const RenderEffect& effect,
-	[[maybe_unused]] const std::array<uint32_t, ShaderStageNum>& shader_desc_ids, [[maybe_unused]] ResIdentifier& res)
+void D3D12ShaderStageObject::StreamIn(const RenderEffect& effect,
+	const std::array<uint32_t, ShaderStageNum>& shader_desc_ids, ResIdentifier& res)
 {
+	ReleaseGpuShader();
 	is_validate_ = false;
 	hw_res_ready_ = false;
+	shader_code_.clear();
+	shader_desc_ = {};
+	cbuff_indices_.clear();
+
+	// Consume the entire stage block before interpreting it. A rejected block
+	// must not leave the next shader stage reading from the middle of this one.
+	constexpr uint32_t max_block_size = 64 * 1024 * 1024;
+	uint32_t block_size = 0;
+	res.read(&block_size, sizeof(block_size));
+	if (!res) return;
+	block_size = LE2Native(block_size);
+	if (block_size > max_block_size)
+	{
+		res.input_stream().ignore(static_cast<std::streamsize>(block_size));
+		return;
+	}
+	std::string block(block_size, '\0');
+	res.read(block.data(), block.size());
+	if (!res || block.empty()) return;
+
+	size_t cursor = 0;
+	auto take = [&](size_t count) -> std::string_view {
+		if (count > block.size() - cursor) throw std::runtime_error("truncated stage block");
+		auto const bytes = std::string_view(block).substr(cursor, count);
+		cursor += count;
+		return bytes;
+	};
+	auto read_uint = [&]() {
+		uint32_t value;
+		auto const bytes = take(sizeof(value));
+		std::memcpy(&value, bytes.data(), sizeof(value));
+		return LE2Native(value);
+	};
+	auto read_bounded = [&](uint32_t limit) {
+		auto const value = read_uint();
+		if (value > limit) throw std::runtime_error("stage metadata value " + std::to_string(value) + " exceeds " + std::to_string(limit));
+		return value;
+	};
+	auto read_text = [&]() { return std::string(take(read_bounded(65535))); };
+
+	try
+	{
+		if (read_uint() != 1 || read_uint() != std::to_underlying(stage_)) return;
+		if (stage_ != ShaderStage::Vertex && stage_ != ShaderStage::Pixel) return;
+		auto const format = read_uint();
+		if (format != d3d12::SHADERFORMAT_DXIL && format != d3d12::SHADERFORMAT_DXBC) return;
+		auto& re = checked_cast<D3D12RenderEngine&>(Context::Instance().RenderFactoryInstance().RenderEngineInstance());
+		auto const supported = re.Device() ? d3d12::GetShaderFormats(re.Device()) : d3d12::SHADERFORMAT_DXIL;
+		if (!(format & supported)) return;
+		auto const entry = read_text();
+		auto const profile = read_text();
+		auto const shader_id = shader_desc_ids[std::to_underlying(stage_)];
+		if (entry != effect.GetShaderDesc(shader_id).func_name || profile != GetShaderProfile(effect, shader_id)) return;
+
+		D3D12ShaderDesc description;
+		description.num_samplers = static_cast<uint16_t>(read_bounded(65535));
+		description.num_srvs = static_cast<uint16_t>(read_bounded(65535));
+		description.num_uavs = static_cast<uint16_t>(read_bounded(65535));
+		description.num_uniform_buffers = static_cast<uint16_t>(read_bounded(65535));
+		description.cb_desc.resize(read_bounded(255));
+		for (auto& buffer : description.cb_desc)
+		{
+			buffer.name = read_text();
+			buffer.name_hash = HashValue(buffer.name);
+			buffer.size = read_bounded(65536);
+			buffer.bind_point = static_cast<uint16_t>(read_bounded(65535));
+			buffer.var_desc.resize(read_bounded(4096));
+			for (auto& variable : buffer.var_desc)
+			{
+				variable.name = read_text();
+				variable.start_offset = read_uint();
+				variable.type = static_cast<uint8_t>(read_bounded(255));
+				// Struct reflection may encode aggregate columns (e.g. CameraInfo has 73),
+				// so preserve the full stored byte rather than applying vector dimensions.
+				variable.rows = static_cast<uint8_t>(read_bounded(255));
+				variable.columns = static_cast<uint8_t>(read_bounded(255));
+				variable.elements = static_cast<uint16_t>(read_bounded(65535));
+				if (variable.start_offset >= buffer.size) return;
+			}
+		}
+		description.res_desc.resize(read_bounded(4096));
+		for (auto& resource : description.res_desc)
+		{
+			resource.name = read_text();
+			resource.type = static_cast<uint8_t>(read_bounded(255));
+			resource.bind_point = static_cast<uint16_t>(read_bounded(65535));
+		}
+		auto const code = take(read_bounded(max_block_size));
+		if (cursor != block.size() || code.size() < 4 || code.substr(0, 4) != "DXBC") return;
+
+		shader_code_.assign(code.begin(), code.end());
+		shader_format_ = format;
+		entry_point_ = entry;
+		shader_profile_ = profile;
+		shader_desc_ = std::move(description);
+		FillCBufferIndices(effect);
+		if (std::find(cbuff_indices_.begin(), cbuff_indices_.end(), uint8_t(0xFF)) != cbuff_indices_.end())
+		{
+			shader_code_.clear();
+			shader_desc_ = {};
+			cbuff_indices_.clear();
+			return;
+		}
+		is_validate_ = true;
+	}
+	catch (std::runtime_error const& error)
+	{
+		LogWarn() << "[D3D12] Rejected shader cache: " << error.what() << std::endl;
+	}
 }
 
-void D3D12ShaderStageObject::StreamOut([[maybe_unused]] std::ostream& os)
+void D3D12ShaderStageObject::StreamOut(std::ostream& os)
 {
+	std::string block;
+	auto write_uint = [&](uint32_t value) {
+		value = Native2LE(value);
+		block.append(reinterpret_cast<char const*>(&value), sizeof(value));
+	};
+	auto write_text = [&](std::string const& value) {
+		write_uint(static_cast<uint32_t>(value.size()));
+		block.append(value);
+	};
+	write_uint(1); // Stage block format, independent of the containing KFX format.
+	write_uint(std::to_underlying(stage_));
+	write_uint(shader_format_);
+	write_text(entry_point_);
+	write_text(shader_profile_);
+	write_uint(shader_desc_.num_samplers);
+	write_uint(shader_desc_.num_srvs);
+	write_uint(shader_desc_.num_uavs);
+	write_uint(shader_desc_.num_uniform_buffers);
+	write_uint(static_cast<uint32_t>(shader_desc_.cb_desc.size()));
+	for (auto const& buffer : shader_desc_.cb_desc)
+	{
+		write_text(buffer.name);
+		write_uint(buffer.size);
+		write_uint(buffer.bind_point);
+		write_uint(static_cast<uint32_t>(buffer.var_desc.size()));
+		for (auto const& variable : buffer.var_desc)
+		{
+			write_text(variable.name);
+			write_uint(variable.start_offset);
+			write_uint(variable.type);
+			write_uint(variable.rows);
+			write_uint(variable.columns);
+			write_uint(variable.elements);
+		}
+	}
+	write_uint(static_cast<uint32_t>(shader_desc_.res_desc.size()));
+	for (auto const& resource : shader_desc_.res_desc)
+	{
+		write_text(resource.name);
+		write_uint(resource.type);
+		write_uint(resource.bind_point);
+	}
+	write_uint(static_cast<uint32_t>(shader_code_.size()));
+	if (!shader_code_.empty()) block.append(reinterpret_cast<char const*>(shader_code_.data()), shader_code_.size());
+	if (block.size() > 64 * 1024 * 1024)
+	{
+		os.setstate(std::ios::failbit);
+		return;
+	}
+	auto const block_size = Native2LE(static_cast<uint32_t>(block.size()));
+	os.write(reinterpret_cast<char const*>(&block_size), sizeof(block_size));
+	os.write(block.data(), static_cast<std::streamsize>(block.size()));
 }
 
 void D3D12ShaderStageObject::CompileShader(const RenderEffect& effect, const RenderTechnique& tech,

@@ -1311,14 +1311,14 @@ void SaveRenderMaterial(RenderMaterialPtr const& mtl, std::string const& mtlml_n
 
 PredefinedMaterialCBuffer::PredefinedMaterialCBuffer()
 {
-		effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+		effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
 		predefined_cbuffer_ = effect_->CBufferByName("klayge_material");
 		if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 112)
 		{
 			predefined_cbuffer_->Resize(112);
 		}
 
-		// HLSL packing for klayge_material (see Material.shader).
+		// HLSL packing for klayge_material (see the built-in material parameters).
 		albedo_clr_offset_ = EnsureParameterCBufferOffset(*effect_, "albedo_clr", "klayge_material", 0, 4);
 	metalness_glossiness_factor_offset_ =
 		EnsureParameterCBufferOffset(*effect_, "metalness_glossiness_factor", "klayge_material", 16, 4);

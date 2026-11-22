@@ -1,5 +1,6 @@
 #include <common/Thread.h>
 #include <base/ZEngine.h>
+#include <common/XMLDom.h>
 #include <common/DllLoader.h>
 
 #include <base/ResLoader.h>

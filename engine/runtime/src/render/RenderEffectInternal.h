@@ -8,7 +8,6 @@
 #include <render/RenderStateObject.h>
 
 #include <common/ResIdentifier.h>
-#include <common/XMLDom.h>
 
 #include <memory>
 #include <ostream>
@@ -17,31 +16,17 @@
 
 namespace RenderWorker
 {
+enum class EffectParameterType;
 namespace detail
 {
+inline constexpr uint32_t EffectDescCacheMagic = 0x31584645; // EFX1
+uint64_t EffectSourceFingerprint(std::string_view source);
+std::string ReadEffectShaderSource(EffectDesc const& desc);
 #if ZENGINE_IS_DEV_PLATFORM
-RenderEffectDataType TypeFromName(std::string_view name);
+RenderEffectDataType EffectType(EffectParameterType type);
+std::unique_ptr<RenderVariable> CreateVariable(RenderEffect const& effect, EffectParameterDesc const& parameter);
 std::string_view TypeNameFromCode(RenderEffectDataType type);
 
-ShadeMode ShadeModeFromName(std::string_view name);
-CompareFunction CompareFunctionFromName(std::string_view name);
-CullMode CullModeFromName(std::string_view name);
-PolygonMode PolygonModeFromName(std::string_view name);
-AlphaBlendFactor AlphaBlendFactorFromName(std::string_view name);
-BlendOperation BlendOperationFromName(std::string_view name);
-StencilOperation StencilOperationFromName(std::string_view name);
-TexFilterOp TexFilterOpFromName(std::string_view name);
-TexAddressingMode TexAddressingModeFromName(std::string_view name);
-LogicOperation LogicOperationFromName(std::string_view name);
-
-int RetrieveIndex(CommonWorker::XMLNode const& node);
-std::string RetrieveProfile(CommonWorker::XMLNode const& node);
-std::string RetrieveFuncName(CommonWorker::XMLNode const& node);
-
-void LoadVersion(CommonWorker::XMLNode const& node, ShaderModel& ver);
-
-std::unique_ptr<RenderVariable> LoadVariable(
-	RenderEffect const& effect, CommonWorker::XMLNode const& node, RenderEffectDataType type, uint32_t array_size);
 void StreamOutVariable(std::ostream& os, RenderVariable const& var);
 #endif
 

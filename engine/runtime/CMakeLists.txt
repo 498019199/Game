@@ -69,11 +69,13 @@ set(RENDER_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/Mesh.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/Query.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/Renderable.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/render/EffectDesc.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/render/BuiltInEffects.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/render/ParticleEffect.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/ParticleRenderable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderableHelper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderDeviceCaps.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderEffect.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/render/ShaderLabLite.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderFactory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/render/RenderLayout.h
@@ -98,11 +100,14 @@ set(RENDER_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/Mesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/Query.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/Renderable.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/render/EffectDesc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/render/BuiltInEffects.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/render/EffectDescRuntime.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/render/ParticleEffect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/ParticleRenderable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderDeviceCaps.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderEffect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderVariable.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/render/ShaderLabLite.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderEngine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/render/RenderLayout.cpp

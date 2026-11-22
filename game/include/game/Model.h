@@ -33,7 +33,7 @@ protected:
 	void DoBuildMeshInfo(RenderWorker::RenderModel const& model) override;
 
 private:
-	std::string active_effect_name_ = "SimpleAlbedoNormal.shader";
+	std::string active_effect_name_ = "SimpleAlbedoNormal";
 	bool depth_texture_support_;
 };
 

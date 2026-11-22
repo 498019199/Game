@@ -2,7 +2,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #include <base/ZEngine.h>
-#include <base/ResLoader.h>
 
 #include <render/RenderFactory.h>
 #include <render/RenderStateObject.h>
@@ -10,17 +9,16 @@
 #include <render/ShaderObject.h>
 #include <render/Texture.h>
 
-#include <charconv>
 #include <cstring>
-#include <filesystem>
-#include <fstream>
 #include <iterator>
 #include <variant>
+#include <stdexcept>
+#include <type_traits>
 
 #include <render/RenderEffect.h>
+#include <render/EffectDesc.h>
 #include "RenderEffectInternal.h"
 
-#include <common/Log.h>
 
 namespace RenderWorker
 {
@@ -98,22 +96,6 @@ using namespace CommonWorker;
 		return MakeSpan(types);
 	}
 
-	RenderEffectDataType TypeFromName(std::string_view name)
-	{
-		auto const types = GetTypeDefines();
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < types.size(); ++ i)
-		{
-			if (types[i].second == name_hash)
-			{
-				return static_cast<RenderEffectDataType>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid type name");
-	}
-
 	std::string_view TypeNameFromCode(RenderEffectDataType type)
 	{
 		auto const types = GetTypeDefines();
@@ -125,310 +107,10 @@ using namespace CommonWorker;
 		ZENGINE_UNREACHABLE("Invalid type");
 	}
 
-	ShadeMode ShadeModeFromName(std::string_view name)
-	{
-		static size_t constexpr sms_hash[] =
-		{
-			CtHash("flat"),
-			CtHash("gouraud")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(sms_hash); ++ i)
-		{
-			if (sms_hash[i] == name_hash)
-			{
-				return static_cast<ShadeMode>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid ShadeMode name");
-	}
-
-	CompareFunction CompareFunctionFromName(std::string_view name)
-	{
-		static size_t constexpr cfs_hash[] =
-		{
-			CtHash("always_fail"),
-			CtHash("always_pass"),
-			CtHash("less"),
-			CtHash("less_equal"),
-			CtHash("equal"),
-			CtHash("not_equal"),
-			CtHash("greater_equal"),
-			CtHash("greater")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(cfs_hash); ++ i)
-		{
-			if (cfs_hash[i] == name_hash)
-			{
-				return static_cast<CompareFunction>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid CompareFunction name");
-	}
-
-	CullMode CullModeFromName(std::string_view name)
-	{
-		static size_t constexpr cms_hash[] =
-		{
-			CtHash("none"),
-			CtHash("front"),
-			CtHash("back")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(cms_hash); ++ i)
-		{
-			if (cms_hash[i] == name_hash)
-			{
-				return static_cast<CullMode>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid CullMode name");
-	}
-
-	PolygonMode PolygonModeFromName(std::string_view name)
-	{
-		static size_t constexpr pms_hash[] =
-		{
-			CtHash("point"),
-			CtHash("line"),
-			CtHash("fill")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(pms_hash); ++ i)
-		{
-			if (pms_hash[i] == name_hash)
-			{
-				return static_cast<PolygonMode>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid PolygonMode name");
-	}
-
-	AlphaBlendFactor AlphaBlendFactorFromName(std::string_view name)
-	{
-		static size_t constexpr abfs_hash[] =
-		{
-			CtHash("zero"),
-			CtHash("one"),
-			CtHash("src_alpha"),
-			CtHash("dst_alpha"),
-			CtHash("inv_src_alpha"),
-			CtHash("inv_dst_alpha"),
-			CtHash("src_color"),
-			CtHash("dst_color"),
-			CtHash("inv_src_color"),
-			CtHash("inv_dst_color"),
-			CtHash("src_alpha_sat"),
-			CtHash("blend_factor"),
-			CtHash("inv_blend_factor"),
-			CtHash("src1_alpha"),
-			CtHash("inv_src1_alpha"),
-			CtHash("src1_color"),
-			CtHash("inv_src1_color")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(abfs_hash); ++ i)
-		{
-			if (abfs_hash[i] == name_hash)
-			{
-				return static_cast<AlphaBlendFactor>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid AlphaBlendFactor name");
-	}
-
-	BlendOperation BlendOperationFromName(std::string_view name)
-	{
-		static size_t constexpr bops_hash[] =
-		{
-			CtHash("add"),
-			CtHash("sub"),
-			CtHash("rev_sub"),
-			CtHash("min"),
-			CtHash("max")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(bops_hash); ++ i)
-		{
-			if (bops_hash[i] == name_hash)
-			{
-				return static_cast<BlendOperation>(i + 1);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid BlendOperation name");
-	}
-
-	StencilOperation StencilOperationFromName(std::string_view name)
-	{
-		static size_t constexpr sops_hash[] =
-		{
-			CtHash("keep"),
-			CtHash("zero"),
-			CtHash("replace"),
-			CtHash("incr"),
-			CtHash("decr"),
-			CtHash("invert"),
-			CtHash("incr_wrap"),
-			CtHash("decr_wrap")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(sops_hash); ++ i)
-		{
-			if (sops_hash[i] == name_hash)
-			{
-				return static_cast<StencilOperation>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid StencilOperation name");
-	}
-
-	TexFilterOp TexFilterOpFromName(std::string_view name)
-	{
-		static size_t constexpr tfs_hash[] =
-		{
-			CtHash("min_mag_mip_point"),
-			CtHash("min_mag_point_mip_linear"),
-			CtHash("min_point_mag_linear_mip_point"),
-			CtHash("min_point_mag_mip_linear"),
-			CtHash("min_linear_mag_mip_point"),
-			CtHash("min_linear_mag_point_mip_linear"),
-			CtHash("min_mag_linear_mip_point"),
-			CtHash("min_mag_mip_linear")
-		};
-
-		int cmp;
-		std::string_view f;
-		if (0 == name.find("cmp_"))
-		{
-			cmp = 1;
-			f = name.substr(4);
-		}
-		else
-		{
-			cmp = 0;
-			f = name;
-		}
-		size_t const f_hash = HashValue(std::move(f));
-		for (uint32_t i = 0; i < std::size(tfs_hash); ++ i)
-		{
-			if (tfs_hash[i] == f_hash)
-			{
-				return static_cast<TexFilterOp>((cmp << 4) + i);
-			}
-		}
-		if (CtHash("anisotropic") == f_hash)
-		{
-			return static_cast<TexFilterOp>((cmp << 4) + TFO_Anisotropic);
-		}
-
-		ZENGINE_UNREACHABLE("Invalid TexFilterOp name");
-	}
-
-	TexAddressingMode TexAddressingModeFromName(std::string_view name)
-	{
-		static size_t constexpr tams_hash[] =
-		{
-			CtHash("wrap"),
-			CtHash("mirror"),
-			CtHash("clamp"),
-			CtHash("border")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(tams_hash); ++ i)
-		{
-			if (tams_hash[i] == name_hash)
-			{
-				return static_cast<TexAddressingMode>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid TexAddressingMode name");
-	}
-
-	LogicOperation LogicOperationFromName(std::string_view name)
-	{
-		static size_t constexpr lops_hash[] =
-		{
-			CtHash("clear"),
-			CtHash("set"),
-			CtHash("copy"),
-			CtHash("copy_inverted"),
-			CtHash("noop"),
-			CtHash("invert"),
-			CtHash("and"),
-			CtHash("nand"),
-			CtHash("or"),
-			CtHash("nor"),
-			CtHash("xor"),
-			CtHash("equiv"),
-			CtHash("and_reverse"),
-			CtHash("and_inverted"),
-			CtHash("or_reverse"),
-			CtHash("or_inverted")
-		};
-
-		size_t const name_hash = HashValue(std::move(name));
-		for (uint32_t i = 0; i < std::size(lops_hash); ++ i)
-		{
-			if (lops_hash[i] == name_hash)
-			{
-				return static_cast<LogicOperation>(i);
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Invalid LogicOperation name");
-	}
-
-	int RetrieveIndex(XMLNode const & node)
-	{
-		int index = 0;
-		if (const XMLAttribute* attr = node.Attrib("index"))
-		{
-			index = attr->ValueInt();
-		}
-		return index;
-	}
-
-	std::string RetrieveProfile(XMLNode const & node)
-	{
-		if (const XMLAttribute* attr = node.Attrib("profile"))
-		{
-			return std::string(attr->ValueString());
-		}
-		else
-		{
-			return "auto";
-		}
-	}
-
-	std::string RetrieveFuncName(XMLNode const & node)
-	{
-		std::string_view value = node.Attrib("value")->ValueString();
-		return std::string(value.substr(0, value.find("(")));
-	}
 #endif
 	class RenderVariableIOable : public RenderVariable
 	{
 	public:
-#if ZENGINE_IS_DEV_PLATFORM
-		virtual void Load(RenderEffect const& effect, XMLNode const& node, uint32_t array_size) = 0;
-#endif
 
 		virtual void StreamIn(RenderEffect const& effect, ResIdentifier& res) = 0;
 
@@ -589,18 +271,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			bool tmp = false;
-			if (auto attr = node.Attrib("value"))
-			{
-				tmp = attr->ValueBool();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			bool tmp;
@@ -633,18 +303,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<uint32_t>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			uint32_t tmp = 0;
-			if (auto attr = node.Attrib("value"))
-			{
-				tmp = attr->ValueUInt();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -680,18 +338,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			int32_t tmp = 0;
-			if (auto attr = node.Attrib("value"))
-			{
-				tmp = attr->ValueInt();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			int32_t tmp;
@@ -726,18 +372,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			float tmp = 0;
-			if (auto attr = node.Attrib("value"))
-			{
-				tmp = attr->ValueFloat();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			float tmp;
@@ -771,22 +405,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<uint2>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			uint2 tmp(0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -829,26 +447,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			uint3 tmp(0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint3 tmp;
@@ -889,30 +487,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<uint4>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			uint4 tmp(0, 0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			if (auto attr = node.Attrib("w"))
-			{
-				tmp.y() = attr->ValueUInt();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -955,22 +529,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			int2 tmp(0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueInt();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			int2 tmp;
@@ -1011,26 +569,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<int3>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			int3 tmp(0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.z() = attr->ValueInt();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1073,30 +611,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			int4 tmp(0, 0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.z() = attr->ValueInt();
-			}
-			if (auto attr = node.Attrib("w"))
-			{
-				tmp.z() = attr->ValueInt();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			int4 tmp;
@@ -1137,22 +651,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<float2>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			float2 tmp(0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueFloat();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1195,26 +693,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			float3 tmp(0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.z() = attr->ValueFloat();
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			float3 tmp;
@@ -1255,30 +733,6 @@ using namespace CommonWorker;
 			: RenderVariableConcrete<float4>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			float4 tmp(0, 0, 0, 0);
-			if (auto attr = node.Attrib("x"))
-			{
-				tmp.x() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("y"))
-			{
-				tmp.y() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("z"))
-			{
-				tmp.z() = attr->ValueFloat();
-			}
-			if (auto attr = node.Attrib("w"))
-			{
-				tmp.w() = attr->ValueFloat();
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1339,25 +793,6 @@ using namespace CommonWorker;
 			return ret;
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			float4x4 tmp(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-			for (int y = 0; y < 4; ++y)
-			{
-				for (int x = 0; x < 4; ++x)
-				{
-					auto attr = node.Attrib(std::string("_") + static_cast<char>('0' + y) + static_cast<char>('0' + x));
-					if (attr)
-					{
-						tmp[y * 4 + x] = attr->ValueFloat();
-					}
-				}
-			}
-			*this = tmp;
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			float4x4 tmp;
@@ -1407,85 +842,6 @@ using namespace CommonWorker;
 	class RenderVariableSampler final : public RenderVariableConcrete<SamplerStateObjectPtr>
 	{
 	public:
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			SamplerStateDesc desc;
-			for (const XMLNode* state_node = node.FirstNode("state"); state_node; state_node = state_node->NextSibling("state"))
-			{
-				size_t const name_hash = HashValue(state_node->Attrib("name")->ValueString());
-
-				const XMLAttribute* value_attr = state_node->Attrib("value");
-				std::string_view value_str;
-				if (value_attr)
-				{
-					value_str = value_attr->ValueString();
-				}
-
-				if (CtHash("filtering") == name_hash)
-				{
-					desc.filter = TexFilterOpFromName(value_str);
-				}
-				else if (CtHash("address_u") == name_hash)
-				{
-					desc.addr_mode_u = TexAddressingModeFromName(value_str);
-				}
-				else if (CtHash("address_v") == name_hash)
-				{
-					desc.addr_mode_v = TexAddressingModeFromName(value_str);
-				}
-				else if (CtHash("address_w") == name_hash)
-				{
-					desc.addr_mode_w = TexAddressingModeFromName(value_str);
-				}
-				else if (CtHash("max_anisotropy") == name_hash)
-				{
-					desc.max_anisotropy = static_cast<uint8_t>(value_attr->ValueUInt());
-				}
-				else if (CtHash("min_lod") == name_hash)
-				{
-					desc.min_lod = value_attr->ValueFloat();
-				}
-				else if (CtHash("max_lod") == name_hash)
-				{
-					desc.max_lod = value_attr->ValueFloat();
-				}
-				else if (CtHash("mip_map_lod_bias") == name_hash)
-				{
-					desc.mip_map_lod_bias = value_attr->ValueFloat();
-				}
-				else if (CtHash("cmp_func") == name_hash)
-				{
-					desc.cmp_func = CompareFunctionFromName(value_str);
-				}
-				else if (CtHash("border_clr") == name_hash)
-				{
-					if (auto attr = state_node->Attrib("r"))
-					{
-						desc.border_clr.r() = attr->ValueFloat();
-					}
-					if (auto attr = state_node->Attrib("g"))
-					{
-						desc.border_clr.g() = attr->ValueFloat();
-					}
-					if (auto attr = state_node->Attrib("b"))
-					{
-						desc.border_clr.b() = attr->ValueFloat();
-					}
-					if (auto attr = state_node->Attrib("a"))
-					{
-						desc.border_clr.a() = attr->ValueFloat();
-					}
-				}
-				else
-				{
-					ZENGINE_UNREACHABLE("Invalid sampler state name");
-				}
-			}
-
-			*this = Context::Instance().RenderFactoryInstance().MakeSamplerStateObject(desc);
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1541,17 +897,6 @@ using namespace CommonWorker;
 	class RenderVariableString final : public RenderVariableConcrete<std::string>
 	{
 	public:
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			std::string tmp;
-			if (auto attr = node.Attrib("value"))
-			{
-				tmp = std::string(attr->ValueString());
-			}
-			*this = tmp;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1579,15 +924,6 @@ using namespace CommonWorker;
 	class RenderVariableShader final : public RenderVariableConcrete<ShaderDesc>
 	{
 	public:
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			ShaderDesc desc;
-			desc.profile = RetrieveProfile(node);
-			desc.func_name = RetrieveFuncName(node);
-			*this = desc;
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -1724,31 +1060,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<bool> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						if (index < strs.size())
-						{
-							strs[index] = StringUtil::Trim(strs[index]);
-							init_val[index] = (strs[index] == "true") || (strs[index] == "1");
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -1861,31 +1172,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<uint32_t> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						if (index < strs.size())
-						{
-							strs[index] = StringUtil::Trim(strs[index]);
-							init_val[index] = std::stoul(std::string(strs[index]));
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -1939,31 +1225,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<int32_t>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<int32_t> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						if (index < strs.size())
-						{
-							strs[index] = StringUtil::Trim(strs[index]);
-							init_val[index] = std::stol(std::string(strs[index]));
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2019,31 +1280,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<float> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						if (index < strs.size())
-						{
-							strs[index] = StringUtil::Trim(strs[index]);
-							init_val[index] = std::stof(std::string(strs[index]));
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -2097,35 +1333,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<uint2>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<uint2> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stoul(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2189,35 +1396,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<uint3> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stoul(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -2279,35 +1457,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<uint4>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<uint4> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stoul(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2371,35 +1520,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<int2> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stol(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -2461,35 +1581,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<int3>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<int3> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stol(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2553,35 +1644,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<int4> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stol(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -2643,35 +1705,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<float2>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<float2> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stof(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2735,35 +1768,6 @@ using namespace CommonWorker;
 		{
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<float3> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stof(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			uint32_t len;
@@ -2825,35 +1829,6 @@ using namespace CommonWorker;
 			: RenderVariableArray<float4>(in_cbuff)
 		{
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<float4> init_val(std::min(array_size, static_cast<uint32_t>(strs.size())), 0);
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stof(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -2941,36 +1916,6 @@ using namespace CommonWorker;
 			}
 			return ret;
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, uint32_t array_size) override
-		{
-			if (const XMLNode* value_node = node.FirstNode("value"))
-			{
-				value_node = value_node->FirstNode();
-				if (value_node && (XMLNodeType::CData == value_node->Type()))
-				{
-					std::string_view const value_str = value_node->ValueString();
-					std::vector<std::string_view> strs = StringUtil::Split(value_str, StringUtil::EqualTo(','));
-					std::vector<float4x4> init_val(std::min(array_size, static_cast<uint32_t>((strs.size() + 15) / 16)),
-						float4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-					size_t const dim = init_val[0].size();
-					for (size_t index = 0; index < init_val.size(); ++index)
-					{
-						for (size_t j = 0; j < dim; ++j)
-						{
-							if (index * dim + j < strs.size())
-							{
-								strs[index * dim + j] = StringUtil::Trim(strs[index * dim + j]);
-								init_val[index][j] = std::stof(std::string(strs[index * dim + j]));
-							}
-						}
-					}
-					*this = init_val;
-				}
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -3100,34 +2045,6 @@ using namespace CommonWorker;
 			return ret;
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			*this = TexturePtr();
-
-			std::string elem_type;
-			if (auto attr = node.Attrib("elem_type"))
-			{
-				elem_type = std::string(attr->ValueString());
-			}
-			else
-			{
-				elem_type = "float4";
-			}
-
-			std::string sample_count;
-			if (auto attr = node.Attrib("sample_count"))
-			{
-				sample_count = std::string(attr->ValueString());
-				*this = elem_type + ", " + sample_count;
-			}
-			else
-			{
-				*this = elem_type;
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			*this = TexturePtr();
@@ -3228,22 +2145,6 @@ using namespace CommonWorker;
 			*ret = elem_type;
 			return ret;
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			*this = UnorderedAccessViewPtr();
-
-			if (auto attr = node.Attrib("elem_type"))
-			{
-				*this = std::string(attr->ValueString());
-			}
-			else
-			{
-				*this = std::string("float4");
-			}
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
@@ -3346,22 +2247,6 @@ using namespace CommonWorker;
 			return ret;
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			*this = ShaderResourceViewPtr();
-
-			if (auto attr = node.Attrib("elem_type"))
-			{
-				*this = std::string(attr->ValueString());
-			}
-			else
-			{
-				*this = std::string("float4");
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			*this = ShaderResourceViewPtr();
@@ -3434,22 +2319,6 @@ using namespace CommonWorker;
 			return ret;
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			*this = UnorderedAccessViewPtr();
-
-			if (auto attr = node.Attrib("elem_type"))
-			{
-				*this = std::string(attr->ValueString());
-			}
-			else
-			{
-				*this = std::string("float4");
-			}
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, ResIdentifier& res) override
 		{
 			*this = UnorderedAccessViewPtr();
@@ -3519,14 +2388,6 @@ using namespace CommonWorker;
 			return ret;
 		}
 
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] XMLNode const& node,
-			[[maybe_unused]] uint32_t array_size) override
-		{
-			*this = ShaderResourceViewPtr();
-		}
-#endif
-
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] ResIdentifier& res) override
 		{
 			*this = ShaderResourceViewPtr();
@@ -3568,14 +2429,6 @@ using namespace CommonWorker;
 			*ret = val;
 			return ret;
 		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		void Load([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] XMLNode const& node,
-			[[maybe_unused]] uint32_t array_size) override
-		{
-			*this = UnorderedAccessViewPtr();
-		}
-#endif
 
 		void StreamIn([[maybe_unused]] RenderEffect const& effect, [[maybe_unused]] ResIdentifier& res) override
 		{
@@ -3631,11 +2484,12 @@ using namespace CommonWorker;
 		}
 
 #if ZENGINE_IS_DEV_PLATFORM
-		void Load(RenderEffect const& effect, XMLNode const& node, [[maybe_unused]] uint32_t array_size) override
-		{
-			struct_type_ = effect.StructTypeByName(node.Attrib("type")->ValueString());
-			COMMON_ASSERT(struct_type_);
-		}
+        void Initialize(RenderEffect const& effect, std::string_view type)
+        {
+            struct_type_ = effect.StructTypeByName(type);
+            if (!struct_type_) throw std::invalid_argument("Unknown EffectDesc struct: " + std::string(type));
+        }
+
 #endif
 
 		void StreamIn(RenderEffect const& effect, ResIdentifier& res) override
@@ -3754,7 +2608,7 @@ using namespace CommonWorker;
 		case REDT_uint2:
 			if (is_array)
 			{
-				ret = MakeUniquePtr<RenderVariableInt2Array>();
+				ret = MakeUniquePtr<RenderVariableUInt2Array>();
 			}
 			else
 			{
@@ -3765,7 +2619,7 @@ using namespace CommonWorker;
 		case REDT_uint3:
 			if (is_array)
 			{
-				ret = MakeUniquePtr<RenderVariableInt3Array>();
+				ret = MakeUniquePtr<RenderVariableUInt3Array>();
 			}
 			else
 			{
@@ -3776,7 +2630,7 @@ using namespace CommonWorker;
 		case REDT_uint4:
 			if (is_array)
 			{
-				ret = MakeUniquePtr<RenderVariableInt4Array>();
+				ret = MakeUniquePtr<RenderVariableUInt4Array>();
 			}
 			else
 			{
@@ -3896,13 +2750,58 @@ using namespace CommonWorker;
 	}
 
 #if ZENGINE_IS_DEV_PLATFORM
-	std::unique_ptr<RenderVariable> LoadVariable(
-		RenderEffect const& effect, XMLNode const& node, RenderEffectDataType type, uint32_t array_size)
-	{
-		auto ret = RenderVariableFactory(type, array_size != 0);
-		ret->Load(effect, node, array_size);
-		return ret;
-	}
+    template <typename T>
+    void InitializeVariable(RenderVariable& variable, T const& value, uint32_t array_size)
+    {
+        if (array_size == 0)
+            variable = value;
+        else if constexpr (std::is_same_v<T, bool>)
+            variable = std::vector<uint32_t>(array_size, value ? 1U : 0U);
+        else
+            variable = std::vector<T>(array_size, value);
+    }
+
+    std::unique_ptr<RenderVariable> CreateVariable(RenderEffect const& effect, EffectParameterDesc const& parameter)
+    {
+        auto const type = EffectType(parameter.type);
+        auto value = RenderVariableFactory(type, parameter.array_size != 0);
+        switch (type)
+        {
+        case REDT_bool: InitializeVariable(*value, false, parameter.array_size); break;
+        case REDT_uint: InitializeVariable(*value, uint32_t(0), parameter.array_size); break;
+        case REDT_int: InitializeVariable(*value, int32_t(0), parameter.array_size); break;
+        case REDT_float: InitializeVariable(*value, 0.f, parameter.array_size); break;
+        case REDT_uint2: InitializeVariable(*value, uint2(0, 0), parameter.array_size); break;
+        case REDT_uint3: InitializeVariable(*value, uint3(0, 0, 0), parameter.array_size); break;
+        case REDT_uint4: InitializeVariable(*value, uint4(0, 0, 0, 0), parameter.array_size); break;
+        case REDT_int2: InitializeVariable(*value, int2(0, 0), parameter.array_size); break;
+        case REDT_int3: InitializeVariable(*value, int3(0, 0, 0), parameter.array_size); break;
+        case REDT_int4: InitializeVariable(*value, int4(0, 0, 0, 0), parameter.array_size); break;
+        case REDT_float2: InitializeVariable(*value, float2(0, 0), parameter.array_size); break;
+        case REDT_float3: InitializeVariable(*value, float3(0, 0, 0), parameter.array_size); break;
+        case REDT_float4: InitializeVariable(*value, float4(0, 0, 0, 0), parameter.array_size); break;
+        case REDT_float4x4:
+            InitializeVariable(*value, parameter.array_size ? float4x4::Zero() : float4x4::Identity(), parameter.array_size);
+            break;
+        case REDT_struct:
+            checked_cast<RenderVariableStruct*>(value.get())->Initialize(effect, parameter.struct_type);
+            break;
+        case REDT_texture2D:
+        case REDT_textureCUBE:
+            *value = TexturePtr();
+            *value = std::string("float4");
+            break;
+        case REDT_sampler: break; // Created from SamplerStateDesc by the caller.
+        default: ZENGINE_UNREACHABLE("Unsupported EffectDesc parameter");
+        }
+        std::visit([&](auto const& initial)
+        {
+            if constexpr (!std::is_same_v<std::decay_t<decltype(initial)>, std::monostate>)
+                *value = initial;
+        }, parameter.initial_value);
+        return value;
+    }
+
 #endif
 
 	std::unique_ptr<RenderVariable> StreamInVariable(
@@ -3919,42 +2818,6 @@ using namespace CommonWorker;
 		checked_cast<RenderVariableIOable const&>(var).StreamOut(os);
 	}
 
-	void LoadVersion(XMLNode const& node, ShaderModel& ver)
-	{
-		uint32_t major_ver = 0;
-		uint32_t minor_ver = 0;
-		if (const XMLAttribute* attr = node.Attrib("major_version"))
-		{
-			major_ver = attr->ValueUInt();
-			if (const XMLAttribute* minor_attr = node.Attrib("minor_version"))
-			{
-				minor_ver = minor_attr->ValueUInt();
-			}
-		}
-		else
-		{
-			if (const XMLAttribute* version_attr = node.Attrib("version"))
-			{
-				const std::string_view version_str = version_attr->ValueString();
-				const size_t dot_pos = version_str.find('.');
-				if (dot_pos == std::string_view::npos)
-				{
-					version_attr->TryConvertValue(major_ver);
-				}
-				else
-				{
-					char const* beg = version_str.data();
-					if ((std::from_chars(beg, beg + dot_pos, major_ver).ec == std::errc()) &&
-						(std::from_chars(beg + dot_pos + 1, beg + version_str.size(), minor_ver).ec == std::errc()))
-					{
-						ver = ShaderModel(static_cast<uint8_t>(major_ver), static_cast<uint8_t>(minor_ver));
-					}
-				}
-			}
-		}
-
-		ver = ShaderModel(static_cast<uint8_t>(major_ver), static_cast<uint8_t>(minor_ver));
-	}
 #endif
 } // namespace detail
 

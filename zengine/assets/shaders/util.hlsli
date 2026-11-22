@@ -1,7 +1,5 @@
-Shader "Lib/Util"
-{
-    // Converted from util.fxml — HLSL helper library (no Pass).
-    HLSLPROGRAM
+// Parameters, resources and pipeline state are declared by the C++ effect.
+
 float get_x_channel(float4 v)
 {
 #ifdef KLAYGE_BC4_AS_G
@@ -42,7 +40,7 @@ float4 decode_hdr_yc(float y, float4 c)
 	float Y = exp2(y * 65536 / 2048 - 16);
 	float2 C = get_xy_channel(c);
 	C *= C;
-	
+
 	return float4(Y * float3(C.g, (1.0f - C.g - C.r), C.r) / float3(0.2126f, 0.7152f, 0.0722f), y >= 1e-6f);
 }
 
@@ -362,6 +360,3 @@ uint4 reverse(uint4 v)
 	return (v >> 16) | (v << 16);
 }
 #endif
-		
-    ENDHLSL
-}

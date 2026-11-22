@@ -19,8 +19,6 @@ using namespace RenderWorker;
 // 在Project面板中屏蔽的文件类型
 std::unordered_set<std::string> ignoreExtensions = 
 { 
-    // 生成的HLSL代码
-    ".hlsl",
     // 预编译的D3D12 Shader
     ".fxc",
     // 生成的GLSL代码
@@ -37,7 +35,8 @@ EditorProjectPanel::EditorProjectPanel()
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".rtmat",    AssetType::RayTracingMaterial));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".prefab",   AssetType::Prefab            ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".lua",      AssetType::Script            ));
-    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".shader",   AssetType::Shader            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".hlsl",     AssetType::Shader            ));
+    ext_type_map_.insert(std::make_pair<std::string, AssetType>(".hlsli",    AssetType::Shader            ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".dxr",      AssetType::RayTracingShader  ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".vkr",      AssetType::RayTracingShader  ));
     ext_type_map_.insert(std::make_pair<std::string, AssetType>(".png",      AssetType::Texture           ));

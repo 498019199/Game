@@ -67,6 +67,7 @@ endif()
 add_executable(ZENGINE_editor_tests EXCLUDE_FROM_ALL
     tests/EditorGizmoTests.cpp tests/EditorRegressionTests.cpp tests/MaterialSerializationTests.cpp $<$<PLATFORM_ID:Darwin>:tests/CoreAudioTests.cpp>
     tests/EditorMaterialDocumentTests.cpp tests/SceneMaterialTests.cpp tests/ParticleSystemTests.cpp tests/SceneParticleTests.cpp
+    tests/EffectDescTests.cpp tests/BuiltInEffectTests.cpp
     src/EditorMaterialService.cpp src/EditorSetting.cpp)
 target_link_libraries(ZENGINE_editor_tests PRIVATE ZENGINE_game ZENGINE_core ZENGINE_common gtest imgui editor_imguizmo)
 add_dependencies(ZENGINE_editor_tests ZENGINE_AudioDataSource_OggVorbis ZENGINE_InputEngine_InputDesktop)

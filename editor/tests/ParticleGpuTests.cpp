@@ -11,6 +11,8 @@
 #include <world/SceneNode.h>
 #include "DesktopGpuTestBackend.h"
 #include <algorithm>
+#include <chrono>
+#include <iterator>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
@@ -104,6 +106,114 @@ void WritePreview(char const* name, std::vector<uint8_t> const& pixels)
     Require(out.good(), "Could not save particle preview");
     std::cout << "Preview: " << path.string() << std::endl;
 }
+void TestEffectInstancesAndCache()
+{
+    ParticleEffect first;
+    first.SetGlow(0.25f);
+    ParticleEffect second;
+    Require(first.Instance() != second.Instance(), "Particle effects shared mutable instances");
+    Require(first.Instance()->CBufferByIndex(0) != second.Instance()->CBufferByIndex(0), "Particle effects shared mutable buffers");
+    auto const& first_program = first.Technique(ParticleBlendMode::Alpha)->Pass(0).GetShaderObject(*first.Instance());
+    auto const& second_program = second.Technique(ParticleBlendMode::Alpha)->Pass(0).GetShaderObject(*second.Instance());
+    Require(first_program->Stage(ShaderStage::Vertex) == second_program->Stage(ShaderStage::Vertex),
+        "Identical ParticleEffect descriptions did not reuse compiled shaders");
+    float value = -1;
+    second.Instance()->ParameterByName("particle_glow")->Value(value);
+    Require(value == 0, "New particle instance inherited another emitter's parameters");
+    second.SetGlow(1.5f);
+    first.Instance()->ParameterByName("particle_glow")->Value(value);
+    Require(value == 0.25f, "Changing one emitter overwrote another emitter's glow");
+    first.SetMode(ParticleBlendMode::Additive);
+    second.SetMode(ParticleBlendMode::Distortion);
+    first.Instance()->ParameterByName("particle_style")->Value(value);
+    Require(value == 1, "Changing one emitter overwrote another emitter's mode");
+    auto& rf = Context::Instance().RenderFactoryInstance();
+    auto texture = rf.MakeTexture2D(4, 8, 1, 1, EF_ABGR8, 1, 0, EAH_GPU_Read);
+    first.SetRefraction(texture, 12);
+    second.SetRefraction(nullptr, 0);
+    TexturePtr binding;
+    first.Instance()->ParameterByName("particle_scene_color")->Value(binding);
+    Require(binding == texture, "Changing one emitter overwrote another emitter's texture");
+    float4 refraction;
+    first.Instance()->ParameterByName("particle_refraction")->Value(refraction);
+    Require(refraction == float4(0.25f, 0.125f, 12, 0), "Typed refraction binding has wrong dimensions or strength");
+    for (auto mode : {ParticleBlendMode::Alpha, ParticleBlendMode::Additive, ParticleBlendMode::Distortion})
+        Require(first.Technique(mode)->Validate(), "Particle mode did not create a valid GPU pipeline");
+
+#if ZENGINE_IS_DEV_PLATFORM
+    // Reload a real compiled cache without ResLoader's in-memory shortcut.
+    auto const description = ParticleEffect::Describe();
+    auto const platform = rf.RenderEngineInstance().NativeShaderPlatformName();
+    auto const source_path = Context::Instance().ResLoaderInstance().Locate(description.shader_files.front());
+    auto const cache_path = std::filesystem::path(source_path).parent_path() / description.CacheName(platform);
+    auto const cache_time = std::filesystem::last_write_time(cache_path);
+    RenderEffect from_disk;
+    from_disk.Load(description); from_disk.CompileShaders(); from_disk.CreateHwShaders();
+    Require(from_disk.HWResourceReady() && from_disk.TechniqueByIndex(0)->Validate(), "Baked EffectDesc failed to load");
+    Require(std::filesystem::last_write_time(cache_path) == cache_time, "Unchanged EffectDesc was recompiled instead of reading its cache");
+
+    // Change an HLSL dependency while preserving its timestamp. Content must
+    // invalidate both the in-memory effect and its on-disk compiled cache.
+    auto const temp = std::filesystem::temp_directory_path() /
+        ("zengine-effect-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    Require(std::filesystem::create_directory(temp), "Could not create effect cache test directory");
+    auto remove_temp = CommonWorker::Defer([&] { std::error_code ec; std::filesystem::remove_all(temp, ec); });
+    auto const helper = temp / "Color.hlsli";
+    auto const shader = temp / "Probe.hlsl";
+    auto write = [](auto const& path, std::string_view text)
+    {
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out << text;
+        Require(out.good(), "Could not write test HLSL source");
+    };
+    auto read = [](auto const& path)
+    {
+        std::ifstream in(path, std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    };
+    write(helper, "float4 ProbeColor() { return float4(1, 0, 0, 1); }\n");
+    write(shader, "float4 ProbeVS(float4 pos : POSITION) : SV_Position { return pos; }\n"
+        "float4 ProbePS() : SV_Target { return ProbeColor(); }\n");
+    EffectDesc probe;
+    probe.name = "EffectCacheProbe";
+    probe.shader_files = {helper.generic_string(), shader.generic_string()};
+    PassDesc pass;
+    pass.name = "Main";
+    pass.entry_points[std::to_underlying(ShaderStage::Vertex)] = "ProbeVS";
+    pass.entry_points[std::to_underlying(ShaderStage::Pixel)] = "ProbePS";
+    probe.techniques.push_back({"Probe", ShaderModel(0, 0), {pass}});
+    auto old_effect = SyncLoadRenderEffect(probe);
+    Require(old_effect->TechniqueByIndex(0)->Validate(), "Initial cache probe shader failed");
+    auto const probe_cache = temp / probe.CacheName(platform);
+    auto const old_cache = read(probe_cache);
+    auto const original_time = std::filesystem::last_write_time(helper);
+    write(helper, "float4 ProbeColor() { return float4(0, 1, 0, 1); }\n");
+    std::filesystem::last_write_time(helper, original_time);
+    auto new_effect = SyncLoadRenderEffect(probe);
+    Require(new_effect->TechniqueByIndex(0)->Validate(), "Modified cache probe shader failed");
+    Require(old_effect->TechniqueByIndex(0) != new_effect->TechniqueByIndex(0), "Changed HLSL reused a stale in-memory description");
+    Require(old_cache != read(probe_cache), "Changed HLSL dependency did not invalidate compiled cache");
+    auto const& old_ps = old_effect->TechniqueByIndex(0)->Pass(0).GetShaderObject(*old_effect)->Stage(ShaderStage::Pixel);
+    auto const& new_ps = new_effect->TechniqueByIndex(0)->Pass(0).GetShaderObject(*new_effect)->Stage(ShaderStage::Pixel);
+    Require(old_ps != new_ps, "Changed HLSL reused the old shader object");
+    auto const updated_cache_time = std::filesystem::last_write_time(probe_cache);
+    RenderEffect reloaded;
+    reloaded.Load(probe); reloaded.CompileShaders(); reloaded.CreateHwShaders();
+    Require(std::filesystem::last_write_time(probe_cache) == updated_cache_time,
+        "Effect cache beside an absolute HLSL path was not reused");
+    Require(reloaded.TechniqueByIndex(0)->Validate(), "Updated compiled cache could not be reloaded");
+
+    auto missing = probe;
+    missing.shader_files = {(temp / "missing.hlsl").generic_string()};
+    bool missing_rejected = false;
+    try { (void)SyncLoadRenderEffect(missing); }
+    catch (std::runtime_error const&) { missing_rejected = true; }
+    Require(missing_rejected, "Missing HLSL source was silently accepted");
+#endif
+    std::cout << "PASS: typed particle bindings, instance isolation, shared shaders and content-based cache invalidation" << std::endl;
+}
+
+
 void Test(bool write_previews)
 {
     auto& rf = Context::Instance().RenderFactoryInstance(); auto& re = rf.RenderEngineInstance();
@@ -324,6 +434,7 @@ int main(int argc, char** argv)
             App app; app.Create();
             app.MainWnd()->SetVisible(true);
             Window::PumpEvents();
+            TestEffectInstancesAndCache();
             Test(argc > 2 && std::string_view(argv[2]) == "--write-previews");
         }
     }

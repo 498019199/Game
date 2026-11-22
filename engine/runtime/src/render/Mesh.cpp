@@ -2314,7 +2314,7 @@ struct NodeInfo
 	RenderableLightSourceProxy::RenderableLightSourceProxy(std::wstring_view name)
 		: StaticMesh(name)
 	{
-		auto effect = SyncLoadRenderEffect("LightSourceProxy.shader");
+		auto effect = SyncLoadRenderEffect("LightSourceProxy");
 		this->Technique(effect, effect->TechniqueByName("LightSourceProxy"));
 		effect_attrs_ |= EA_SimpleForward;
 
@@ -2371,7 +2371,7 @@ struct NodeInfo
 	RenderableCameraProxy::RenderableCameraProxy(std::wstring_view name)
 		: StaticMesh(name)
 	{
-		auto effect = SyncLoadRenderEffect("CameraProxy.shader");
+		auto effect = SyncLoadRenderEffect("CameraProxy");
 		this->Technique(effect, effect->TechniqueByName("CameraProxy"));
 		effect_attrs_ |= EA_SimpleForward;
 
@@ -2466,7 +2466,7 @@ struct NodeInfo
 
 	PredefinedMeshCBuffer::PredefinedMeshCBuffer()
 	{
-			effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+			effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
 			predefined_cbuffer_ = effect_->CBufferByName("klayge_mesh");
 			if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 48)
 			{
@@ -2508,7 +2508,7 @@ struct NodeInfo
 
 	PredefinedModelCBuffer::PredefinedModelCBuffer()
 	{
-			effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+			effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
 			predefined_cbuffer_ = effect_->CBufferByName("klayge_model");
 			if (predefined_cbuffer_ && predefined_cbuffer_->Size() < 128)
 			{

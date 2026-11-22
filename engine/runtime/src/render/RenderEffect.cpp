@@ -12,14 +12,13 @@
 
 #include <charconv>
 #include <cstring>
-#include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <mutex>
-#include <variant>
 
 #include <render/RenderEffect.h>
-#include <render/ShaderLabLite.h>
+#include <render/EffectDesc.h>
+#include <stdexcept>
+#include <render/BuiltInEffects.h>
 #include "RenderEffectInternal.h"
 
 #include <common/Log.h>
@@ -30,44 +29,6 @@ namespace
 	using namespace RenderWorker;
 
 	uint32_t const KFX_VERSION = 0x0151;
-
-	// Platform-specific kfx: Foo.d3d_11_0.kfx / Foo.d3d_12.kfx / Foo.metal_spirv.kfx
-	// Legacy Foo.kfx kept as fallback for load only.
-	std::string PlatformKfxFileName(std::string const& connected_name, std::string_view platform_name)
-	{
-		return connected_name + "." + std::string(platform_name) + ".kfx";
-	}
-
-	std::string ResolveKfxPathForLoad(ResLoader& res_loader, std::filesystem::path const& first_directory,
-		std::string const& connected_name, std::string_view platform_name)
-	{
-		std::string const platform_file = PlatformKfxFileName(connected_name, platform_name);
-		std::string located = res_loader.Locate(platform_file);
-		if (!located.empty())
-		{
-			return located;
-		}
-
-		std::filesystem::path const platform_path = first_directory / platform_file;
-		std::error_code ec;
-		if (std::filesystem::exists(platform_path, ec))
-		{
-			return platform_path.string();
-		}
-
-		located = res_loader.Locate(connected_name + ".kfx");
-		if (!located.empty())
-		{
-			return located;
-		}
-		return (first_directory / (connected_name + ".kfx")).string();
-	}
-
-	std::string ResolveKfxPathForWrite(std::filesystem::path const& first_directory, std::string const& connected_name,
-		std::string_view platform_name)
-	{
-		return (first_directory / PlatformKfxFileName(connected_name, platform_name)).string();
-	}
 }
 
 namespace RenderWorker
@@ -78,15 +39,6 @@ using namespace detail;
 	RenderEffectAnnotation::RenderEffectAnnotation() = default;
 	RenderEffectAnnotation::RenderEffectAnnotation(RenderEffectAnnotation&& rhs) noexcept = default;
 	RenderEffectAnnotation& RenderEffectAnnotation::operator=(RenderEffectAnnotation&& rhs) noexcept = default;
-
-#if ZENGINE_IS_DEV_PLATFORM
-	void RenderEffectAnnotation::Load(RenderEffect const& effect, XMLNode const& node)
-	{
-		type_ = TypeFromName(node.Attrib("type")->ValueString());
-		name_ = std::string(node.Attrib("name")->ValueString());
-		var_ = LoadVariable(effect, node, type_, 0);
-	}
-#endif
 
 	void RenderEffectAnnotation::StreamIn(RenderEffect const& effect, ResIdentifier& res)
 	{
@@ -106,44 +58,9 @@ using namespace detail;
 	}
 #endif
 
-
 	RenderEffectStructType::RenderEffectStructType() = default;
 	RenderEffectStructType::RenderEffectStructType(RenderEffectStructType&& rhs) noexcept = default;
 	RenderEffectStructType& RenderEffectStructType::operator = (RenderEffectStructType && rhs) noexcept = default;
-
-#if ZENGINE_IS_DEV_PLATFORM
-	void RenderEffectStructType::Load(RenderEffect const& effect, XMLNode const& node)
-	{
-		name_ = std::string(node.Attrib("name")->ValueString());
-		name_hash_ = HashValue(name_);
-
-		for (const XMLNode* member_node = node.FirstNode("member"); member_node; member_node = member_node->NextSibling("member"))
-		{
-			RenderEffectDataType member_type;
-			auto member_type_name = member_node->Attrib("type")->ValueString();
-			if (effect.StructTypeByName(member_type_name) != nullptr)
-			{
-				member_type = REDT_struct;
-			}
-			else
-			{
-				member_type = TypeFromName(member_type_name);
-				member_type_name = "";
-			}
-
-			auto member_name = member_node->Attrib("name")->ValueString();
-
-			std::string member_array_size;
-			if (auto attr = member_node->Attrib("array_size"))
-			{
-				member_array_size = std::string(attr->ValueString());
-			}
-			
-			members_.emplace_back(StrcutMemberType{
-				member_type, std::string(member_type_name), std::string(member_name), MakeUniquePtr<std::string>(member_array_size)});
-		}
-	}
-#endif
 
 	void RenderEffectStructType::StreamIn(ResIdentifier& res)
 	{
@@ -223,173 +140,8 @@ using namespace detail;
 		return members_[index].array_size.get();
 	}
 
-
 	RenderEffect::Immutable::Immutable() = default;
 	RenderEffect::RenderEffect() = default;
-
-		void RenderEffect::Load(std::span<std::string const> names)
-		{
-			if (!immutable_)
-			{
-				immutable_ = MakeSharedPtr<Immutable>();
-			}
-
-			auto& res_loader = Context::Instance().ResLoaderInstance();
-			bool const is_shader_lab = (std::filesystem::path(names[0]).extension() == ".shader");
-			std::string const located = res_loader.Locate(*names.begin());
-			std::filesystem::path first_path(located.empty() ? names[0] : located);
-			std::filesystem::path first_directory = first_path.parent_path();
-
-			std::string connected_name;
-			for (size_t i = 0; i < names.size(); ++i)
-			{
-				connected_name += std::filesystem::path(names[i]).stem().string();
-				if (i != names.size() - 1)
-				{
-					connected_name += '+';
-				}
-			}
-
-			std::string_view platform_name =
-				Context::Instance().RenderFactoryInstance().RenderEngineInstance().NativeShaderPlatformName();
-			if (platform_name.empty())
-			{
-				platform_name = "unknown";
-			}
-			std::string const kfx_name =
-				ResolveKfxPathForLoad(res_loader, first_directory, connected_name, platform_name);
-			std::string const kfx_write_name =
-				ResolveKfxPathForWrite(first_directory, connected_name, platform_name);
-
-			immutable_->res_name = (first_directory / (connected_name + (is_shader_lab ? ".shader" : ".fxml"))).string();
-			immutable_->res_name_hash = HashValue(immutable_->res_name);
-#if ZENGINE_IS_DEV_PLATFORM
-			immutable_->timestamp = 0;
-			for (auto const& name : names)
-			{
-				ResIdentifierPtr source = res_loader.Open(name);
-				if (source)
-				{
-					immutable_->timestamp = std::max(immutable_->timestamp, source->Timestamp());
-
-					if (!is_shader_lab)
-					{
-						XMLNode root = LoadXml(*source);
-
-						std::vector<std::string> include_names;
-						this->RecursiveIncludeNode(root, include_names);
-
-						for (auto const& include_name : include_names)
-						{
-							immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp(include_name));
-						}
-					}
-					else
-					{
-						// Common ShaderLab Lite includes (best-effort timestamp).
-						immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp("ModelCamera.shader"));
-						immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp("Mesh.shader"));
-						immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp("util.shader"));
-						immutable_->timestamp = std::max(immutable_->timestamp, res_loader.Timestamp("Material.shader"));
-					}
-				}
-			}
-#endif
-
-#if ZENGINE_IS_DEV_PLATFORM
-			immutable_->need_compile = false;
-#endif
-			ResIdentifierPtr kfx_source = res_loader.Open(kfx_name);
-			if (!kfx_source || !this->StreamIn(*kfx_source))
-			{
-#if ZENGINE_IS_DEV_PLATFORM
-				params_.clear();
-				cbuffers_.clear();
-				shader_objs_.clear();
-
-				immutable_->macros.clear();
-				immutable_->struct_types.clear();
-				immutable_->shader_frags.clear();
-				immutable_->hlsl_shader.clear();
-				immutable_->techniques.clear();
-				immutable_->shader_graph_nodes.clear();
-
-				immutable_->shader_descs.resize(1);
-
-				ResIdentifierPtr main_source = res_loader.Open(names[0]);
-				if (main_source)
-				{
-					if (is_shader_lab)
-					{
-						if (!this->LoadFromShaderLab(*main_source))
-						{
-							LogError() << "Failed to load ShaderLab Lite: " << names[0] << std::endl;
-							return;
-						}
-					}
-					else
-					{
-						std::vector<std::string> include_names;
-						XMLNode root = LoadXml(*main_source);
-						PreprocessIncludes(root, include_names);
-
-						for (size_t i = 1; i < names.size(); ++i)
-						{
-							ResIdentifierPtr source = res_loader.Open(names[i]);
-							if (source)
-							{
-								XMLNode frag_root = LoadXml(*source);
-
-								this->PreprocessIncludes(frag_root, include_names);
-
-								for (auto* frag_node = frag_root.FirstNode(); frag_node; frag_node = frag_node->NextSibling())
-								{
-									root.AppendNode(*frag_node);
-								}
-							}
-						}
-
-						this->ResolveOverrideTechs(root);
-
-						this->Load(root);
-					}
-
-					immutable_->kfx_name = kfx_write_name;
-					immutable_->need_compile = true;
-				}
-#endif
-			}
-#if ZENGINE_IS_DEV_PLATFORM
-			else
-			{
-				// Keep write path platform-specific even when an existing kfx loaded
-				// (recompile after source change should not overwrite a mismatched name).
-				immutable_->kfx_name = kfx_write_name;
-			}
-#endif
-		}
-
-#if ZENGINE_IS_DEV_PLATFORM
-		bool RenderEffect::LoadFromShaderLab(ResIdentifier& source)
-		{
-			std::istream& is = source.input_stream();
-			std::string text((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
-
-			XMLNode root(XMLNodeType::Element, "effect");
-			std::string error;
-			if (!ParseShaderLabLite(text, root, &error))
-			{
-				LogError() << error << std::endl;
-				return false;
-			}
-
-			std::vector<std::string> include_names;
-			this->PreprocessIncludes(root, include_names);
-			this->ResolveOverrideTechs(root);
-			this->Load(root);
-			return true;
-		}
-#endif
 
 #if ZENGINE_IS_DEV_PLATFORM
 	void RenderEffect::CompileShaders()
@@ -403,7 +155,23 @@ using namespace detail;
 				++tech_index;
 			}
 
+            if (immutable_->description_based)
+            {
+                for (auto const& shader : shader_objs_)
+                    for (uint32_t stage = 0; stage < ShaderStageNum; ++stage)
+                        if (auto const& object = shader->Stage(static_cast<ShaderStage>(stage)); object && !object->Validate())
+                            throw std::runtime_error("EffectDesc shader compilation failed: " + immutable_->res_name);
+            }
 			std::ofstream ofs(immutable_->kfx_name.c_str(), std::ios_base::binary | std::ios_base::out);
+            if (immutable_->description_based)
+            {
+                auto const magic = Native2LE(detail::EffectDescCacheMagic);
+                auto const description_hash = Native2LE(immutable_->description_hash);
+                auto const source_hash = Native2LE(immutable_->source_hash);
+                ofs.write(reinterpret_cast<char const*>(&magic), sizeof(magic));
+                ofs.write(reinterpret_cast<char const*>(&description_hash), sizeof(description_hash));
+                ofs.write(reinterpret_cast<char const*>(&source_hash), sizeof(source_hash));
+            }
 			this->StreamOut(ofs);
 			LogInfo() << "Wrote kfx " << immutable_->kfx_name << std::endl;
 		}
@@ -597,7 +365,7 @@ using namespace detail;
 		cbuffers_[index] = cbuff;
 	}
 
-	
+
 
 	RenderEffectStructType* RenderEffect::StructTypeByName(std::string_view name) const noexcept
 	{
@@ -693,364 +461,6 @@ using namespace detail;
 		COMMON_ASSERT(n < shader_objs_.size());
 		return shader_objs_[n];
 	}
-
-#if ZENGINE_IS_DEV_PLATFORM
-	namespace
-	{
-		bool LoadIncludeAsEffectRoot(std::string const& include_name, XMLNode& out_root, std::string* error)
-		{
-			auto& res_loader = Context::Instance().ResLoaderInstance();
-			ResIdentifierPtr source = res_loader.Open(include_name);
-			if (!source)
-			{
-				if (error)
-				{
-					*error = "Could not open include: " + include_name;
-				}
-				return false;
-			}
-
-			std::filesystem::path const ext = std::filesystem::path(include_name).extension();
-			if (ext == ".shader")
-			{
-				std::istream& is = source->input_stream();
-				std::string text((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
-				out_root = XMLNode(XMLNodeType::Element, "effect");
-				return ParseShaderLabLite(text, out_root, error);
-			}
-
-			out_root = LoadXml(*source);
-			return true;
-		}
-	}
-
-	void RenderEffect::PreprocessIncludes(XMLNode& root, std::vector<std::string>& include_names)
-	{
-		for (const XMLNode* node = root.FirstNode("include"); node; node = root.FirstNode("include"))
-		{
-			const XMLAttribute* attr = node->Attrib("name");
-			COMMON_ASSERT(attr);
-
-			const std::string include_name = std::string(attr->ValueString());
-
-			uint32_t node_index = root.FindChildNodeIndex(*node);
-			root.RemoveNode(*node);
-
-			auto iter = std::find(include_names.begin(), include_names.end(), include_name);
-			if (iter == include_names.end())
-			{
-				XMLNode include_root(XMLNodeType::Element, "effect");
-				std::string error;
-				if (!LoadIncludeAsEffectRoot(include_name, include_root, &error))
-				{
-					LogError() << error << std::endl;
-				}
-				else
-				{
-					// Nested includes inside the included root (e.g. .fxml wrapper → .shader).
-					this->PreprocessIncludes(include_root, include_names);
-
-					for (const XMLNode* child_node = include_root.FirstNode(); child_node; child_node = child_node->NextSibling())
-					{
-						if (XMLNodeType::Element == child_node->Type())
-						{
-							root.InsertAt(node_index, *child_node);
-							++node_index;
-						}
-					}
-				}
-
-				include_names.push_back(include_name);
-			}
-		}
-	}
-
-	void RenderEffect::RecursiveIncludeNode(XMLNode const& root, std::vector<std::string>& include_names) const
-	{
-		for (const XMLNode* node = root.FirstNode("include"); node; node = node->NextSibling("include"))
-		{
-			const XMLAttribute* attr = node->Attrib("name");
-			COMMON_ASSERT(attr);
-
-			const std::string include_name = std::string(attr->ValueString());
-
-			XMLNode include_root(XMLNodeType::Element, "effect");
-			std::string error;
-			if (LoadIncludeAsEffectRoot(include_name, include_root, &error))
-			{
-				this->RecursiveIncludeNode(include_root, include_names);
-			}
-
-			bool found = false;
-			for (size_t i = 0; i < include_names.size(); ++ i)
-			{
-				if (include_name == include_names[i])
-				{
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-			{
-				include_names.emplace_back(include_name);
-			}
-		}
-	}
-
-	XMLNode RenderEffect::ResolveInheritTechNode(XMLNode& root, const XMLNode* tech_node)
-	{
-		auto inherit_attr = tech_node->Attrib("inherit");
-		if (!inherit_attr)
-		{
-			return *tech_node;
-		}
-
-		auto const tech_name = tech_node->Attrib("name")->ValueString();
-
-		auto const inherit_name = inherit_attr->ValueString();
-		COMMON_ASSERT(inherit_name != tech_name);
-
-		for (auto* node = root.FirstNode("technique"); node; node = node->NextSibling("technique"))
-		{
-			auto const parent_tech_name = node->Attrib("name")->ValueString();
-			if (parent_tech_name == inherit_name)
-			{
-				XMLNode new_tech_node = this->ResolveInheritTechNode(root, node);
-
-				for (auto* tech_anno_node = tech_node->FirstNode("annotation"); tech_anno_node;
-					tech_anno_node = tech_anno_node->NextSibling("annotation"))
-				{
-					new_tech_node.AppendNode(*tech_anno_node);
-				}
-				for (auto* tech_macro_node = tech_node->FirstNode("macro"); tech_macro_node;
-					tech_macro_node = tech_macro_node->NextSibling("macro"))
-				{
-					new_tech_node.AppendNode(*tech_macro_node);
-				}
-				for (auto* pass_node = tech_node->FirstNode("pass"); pass_node; pass_node = pass_node->NextSibling("pass"))
-				{
-					auto const pass_name = pass_node->Attrib("name")->ValueString();
-
-					bool found_pass = false;
-					for (auto* new_pass_node = new_tech_node.FirstNode("pass"); new_pass_node;
-						new_pass_node = new_pass_node->NextSibling("pass"))
-					{
-						auto const parent_pass_name = new_pass_node->Attrib("name")->ValueString();
-
-						if (pass_name == parent_pass_name)
-						{
-							for (auto pass_anno_node = pass_node->FirstNode("annotation"); pass_anno_node;
-								pass_anno_node = pass_anno_node->NextSibling("annotation"))
-							{
-								new_pass_node->AppendNode(*pass_anno_node);
-							}
-							for (auto pass_macro_node = pass_node->FirstNode("macro"); pass_macro_node;
-								pass_macro_node = pass_macro_node->NextSibling("macro"))
-							{
-								new_pass_node->AppendNode(*pass_macro_node);
-							}
-							for (auto pass_state_node = pass_node->FirstNode("state"); pass_state_node;
-								pass_state_node = pass_state_node->NextSibling("state"))
-							{
-								new_pass_node->AppendNode(*pass_state_node);
-							}
-
-							found_pass = true;
-							break;
-						}
-					}
-
-					if (!found_pass)
-					{
-						new_tech_node.AppendNode(*pass_node);
-					}
-				}
-
-				new_tech_node.Attrib("name")->Value(tech_name);
-
-				return new_tech_node;
-			}
-		}
-
-		ZENGINE_UNREACHABLE("Inherit from non-exist tech");
-	}
-
-	void RenderEffect::ResolveOverrideTechs(XMLNode& root)
-	{
-		std::vector<XMLNode*> tech_nodes;
-		for (XMLNode* node = root.FirstNode("technique"); node; node = node->NextSibling("technique"))
-		{
-			tech_nodes.push_back(node);
-		}
-
-		for (auto const & node : tech_nodes)
-		{
-			auto override_attr = node->Attrib("override");
-			if (override_attr)
-			{
-				auto override_tech_name = override_attr->ValueString();
-				for (auto* overrided_node : tech_nodes)
-				{
-					auto name = overrided_node->Attrib("name")->ValueString();
-					if (override_tech_name == name)
-					{
-						auto new_node = this->ResolveInheritTechNode(root, node);
-						new_node.Attrib("name")->Value(name);
-						if (auto attr = new_node.Attrib("override"))
-						{
-							new_node.RemoveAttrib(*attr);
-						}
-
-						new_node.Parent(overrided_node->Parent());
-						*overrided_node = new_node;
-
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	void RenderEffect::Load(XMLNode const& root)
-	{
-		for (const XMLNode* macro_node = root.FirstNode("macro"); macro_node; macro_node = macro_node->NextSibling("macro"))
-		{
-			immutable_->macros.emplace_back(macro_node->Attrib("name")->ValueString(), macro_node->Attrib("value")->ValueString());
-		}
-
-		for (const XMLNode* node = root.FirstNode("struct"); node; node = node->NextSibling("struct"))
-		{
-			auto& struct_type = immutable_->struct_types.emplace_back();
-			struct_type.Load(*this, *node);
-		}
-
-		std::vector<const XMLNode*> parameter_nodes;
-		for (const XMLNode* node = root.FirstNode(); node; node = node->NextSibling())
-		{
-			if ("parameter" == node->Name())
-			{
-				parameter_nodes.push_back(node);
-			}
-			else if ("cbuffer" == node->Name())
-			{
-				for (const XMLNode* sub_node = node->FirstNode("parameter"); sub_node; sub_node = sub_node->NextSibling("parameter"))
-				{
-					parameter_nodes.push_back(sub_node);
-				}
-			}
-		}
-
-		for (uint32_t param_index = 0; param_index < parameter_nodes.size(); ++ param_index)
-		{
-			XMLNode const& node = *parameter_nodes[param_index];
-
-			RenderEffectDataType type = REDT_count;
-			auto type_name = node.Attrib("type")->ValueString();
-			for (auto const& struct_type : immutable_->struct_types)
-			{
-				if (type_name == struct_type.Name())
-				{
-					type = REDT_struct;
-					break;
-				}
-			}
-			if (type == REDT_count)
-			{
-				type = TypeFromName(type_name);
-			}
-			if ((type != REDT_sampler)
-				&& (type != REDT_texture1D) && (type != REDT_texture2D) && (type != REDT_texture2DMS) && (type != REDT_texture3D)
-				&& (type != REDT_textureCUBE)
-				&& (type != REDT_texture1DArray) && (type != REDT_texture2DArray) && (type != REDT_texture2DMSArray)
-				&& (type != REDT_texture3DArray) && (type != REDT_textureCUBEArray)
-				&& (type != REDT_buffer) && (type != REDT_structured_buffer)
-				&& (type != REDT_byte_address_buffer) && (type != REDT_rw_buffer)
-				&& (type != REDT_rw_structured_buffer) && (type != REDT_rw_texture1D)
-				&& (type != REDT_rw_texture2D) && (type != REDT_rw_texture3D)
-				&& (type != REDT_rw_texture1DArray) && (type != REDT_rw_texture2DArray)
-				&& (type != REDT_rw_byte_address_buffer) && (type != REDT_append_structured_buffer)
-				&& (type != REDT_consume_structured_buffer)
-				&& (type != REDT_rasterizer_ordered_buffer) && (type != REDT_rasterizer_ordered_byte_address_buffer)
-				&& (type != REDT_rasterizer_ordered_structured_buffer)
-				&& (type != REDT_rasterizer_ordered_texture1D) && (type != REDT_rasterizer_ordered_texture1DArray)
-				&& (type != REDT_rasterizer_ordered_texture2D) && (type != REDT_rasterizer_ordered_texture2DArray)
-				&& (type != REDT_rasterizer_ordered_texture3D))
-			{
-				RenderEffectConstantBuffer* cbuff = nullptr;
-				const XMLNode* parent_node = node.Parent();
-				std::string const cbuff_name = std::string(parent_node->AttribString("name", "global_cb"));
-				size_t const cbuff_name_hash = RtHash(cbuff_name.c_str());
-
-				bool found = false;
-				for (size_t i = 0; i < cbuffers_.size(); ++ i)
-				{
-					if (cbuffers_[i]->NameHash() == cbuff_name_hash)
-					{
-						cbuff = cbuffers_[i].get();
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-				{
-					cbuff = cbuffers_.emplace_back(MakeSharedPtr<RenderEffectConstantBuffer>(*this)).get();
-					cbuff->Load(cbuff_name);
-				}
-				COMMON_ASSERT(cbuff);
-
-				cbuff->AddParameter(param_index);
-			}
-
-			auto& param = params_.emplace_back();
-			param.Load(*this, node);
-		}
-
-		for (const XMLNode* shader_graph_nodes_node = root.FirstNode("shader_graph_nodes"); shader_graph_nodes_node;
-			 shader_graph_nodes_node = shader_graph_nodes_node->NextSibling("shader_graph_nodes"))
-		{
-			for (const XMLNode* shader_node = shader_graph_nodes_node->FirstNode("node"); shader_node;
-				 shader_node = shader_node->NextSibling("node"))
-			{
-				auto name_attr = shader_node->Attrib("name");
-				COMMON_ASSERT(name_attr);
-
-				size_t const node_name_hash = HashValue(name_attr->ValueString());
-				bool found = false;
-				for (auto& gn : immutable_->shader_graph_nodes)
-				{
-					if (node_name_hash == gn.NameHash())
-					{
-						gn.Load(*shader_node);
-						found = true;
-						break;
-					}
-				}
-
-				if (!found)
-				{
-					auto& node = immutable_->shader_graph_nodes.emplace_back();
-					node.Load(*shader_node);
-				}
-			}
-		}
-
-		for (const XMLNode* shader_node = root.FirstNode("shader"); shader_node; shader_node = shader_node->NextSibling("shader"))
-		{
-			auto& frag = immutable_->shader_frags.emplace_back();
-			frag.Load(*shader_node);
-		}
-
-		this->GenHLSLShaderText();
-
-		uint32_t index = 0;
-		for (const XMLNode* node = root.FirstNode("technique"); node; node = node->NextSibling("technique"), ++index)
-		{
-			auto& tech = immutable_->techniques.emplace_back();
-			tech.Load(*this, *node, index);
-		}
-	}
-#endif
 
 	bool RenderEffect::StreamIn(ResIdentifier& source)
 	{
@@ -1753,179 +1163,16 @@ using namespace detail;
 	}
 #endif
 
-
 	RenderTechnique::RenderTechnique() = default;
 	RenderTechnique::RenderTechnique(RenderTechnique&& rhs) noexcept = default;
 	RenderTechnique& RenderTechnique::operator=(RenderTechnique&& rhs) noexcept = default;
 
 #if ZENGINE_IS_DEV_PLATFORM
-	void RenderTechnique::Load(RenderEffect& effect, XMLNode const& node, uint32_t tech_index)
-	{
-		name_ = std::string(node.Attrib("name")->ValueString());
-		name_hash_ = HashValue(name_);
-
-		RenderTechnique* parent_tech = nullptr;
-		if (const XMLAttribute* inherit_attr = node.Attrib("inherit"))
-		{
-			std::string_view const inherit = inherit_attr->ValueString();
-			COMMON_ASSERT(inherit != name_);
-
-			parent_tech = effect.TechniqueByName(inherit);
-			COMMON_ASSERT(parent_tech);
-		}
-
-		ver_ = parent_tech ? parent_tech->Version() : ShaderModel(0, 0);
-		LoadVersion(node, ver_);
-
-		RenderEngine& render_eng = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
-		const auto& caps = render_eng.DeviceCaps();
-		if (ver_ > caps.max_shader_model)
-		{
-			is_validate_ = false;
-			return;
-		}
-
-		if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		{
-			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-			if (parent_tech && parent_tech->annotations_)
-			{
-				*annotations_ = *parent_tech->annotations_;
-			}
-			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-			{
-				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
-				annotations_->push_back(annotation);
-
-				annotation->Load(effect, *anno_node);
-			}
-		}
-		else if (parent_tech)
-		{
-			annotations_ = parent_tech->annotations_;
-		}
-
-		if (const XMLNode* macro_node = node.FirstNode("macro"))
-		{
-			macros_ = MakeSharedPtr<std::remove_reference<decltype(*macros_)>::type>();
-			if (parent_tech && parent_tech->macros_)
-			{
-				*macros_ = *parent_tech->macros_;
-			}
-			for (; macro_node; macro_node = macro_node->NextSibling("macro"))
-			{
-				std::string_view const name = macro_node->Attrib("name")->ValueString();
-				std::string_view const value = macro_node->Attrib("value")->ValueString();
-				bool found = false;
-				for (size_t i = 0; i < macros_->size(); ++ i)
-				{
-					if ((*macros_)[i].first == name)
-					{
-						(*macros_)[i].second = std::string(value);
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-				{
-					macros_->emplace_back(name, value);
-				}
-			}
-		}
-		else if (parent_tech)
-		{
-			macros_ = parent_tech->macros_;
-		}
-
-		if (!node.FirstNode("pass") && parent_tech)
-		{
-			is_validate_ = parent_tech->is_validate_;
-			has_discard_ = parent_tech->has_discard_;
-			has_tessellation_ = parent_tech->has_tessellation_;
-			transparent_ = parent_tech->transparent_;
-			weight_ = parent_tech->weight_;
-
-			if (macros_ == parent_tech->macros_)
-			{
-				passes_ = parent_tech->passes_;
-			}
-			else
-			{
-				for (uint32_t index = 0; index < parent_tech->passes_.size(); ++ index)
-				{
-					auto& pass = *passes_.emplace_back(MakeSharedPtr<RenderPass>());
-
-					auto inherit_pass = parent_tech->passes_[index].get();
-
-					pass.Load(effect, tech_index, index, inherit_pass);
-					is_validate_ &= pass.Validate();
-				}
-			}
-		}
-		else
-		{
-			is_validate_ = true;
-
-			has_discard_ = false;
-			has_tessellation_ = false;
-			transparent_ = false;
-			if (parent_tech)
-			{
-				weight_ = parent_tech->Weight();
-			}
-			else
-			{
-				weight_ = 1;
-			}
-		
-			uint32_t index = 0;
-			for (const XMLNode* pass_node = node.FirstNode("pass"); pass_node; pass_node = pass_node->NextSibling("pass"), ++ index)
-			{
-				auto& pass = *passes_.emplace_back(MakeSharedPtr<RenderPass>());
-
-				RenderPass* inherit_pass = nullptr;
-				if (parent_tech && (index < parent_tech->passes_.size()))
-				{
-					inherit_pass = parent_tech->passes_[index].get();
-				}
-
-				pass.Load(effect, *pass_node, tech_index, index, inherit_pass);
-
-				is_validate_ &= pass.Validate();
-
-				for (const XMLNode* state_node = pass_node->FirstNode("state"); state_node; state_node = state_node->NextSibling("state"))
-				{
-					++ weight_;
-
-					std::string_view const state_name = state_node->Attrib("name")->ValueString();
-					if ("blend_enable" == state_name)
-					{
-						if (state_node->Attrib("value")->ValueBool())
-						{
-							transparent_ = true;
-						}
-					}
-				}
-
-				auto const& shader_obj = *pass.GetShaderObject(effect);
-				if (auto const* ps_stage = shader_obj.Stage(ShaderStage::Pixel).get())
-				{
-					has_discard_ |= ps_stage->HasDiscard();
-				}
-				has_tessellation_ |= !!shader_obj.Stage(ShaderStage::Hull);
-			}
-			if (transparent_)
-			{
-				weight_ += 10000;
-			}
-		}
-	}
-
 	void RenderTechnique::CompileShaders(RenderEffect& effect, uint32_t tech_index)
 	{
 		RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 		const auto& caps = re.DeviceCaps();
-		if (ver_ > caps.max_shader_model)
+		if (passes_.empty() || ver_ > caps.max_shader_model)
 		{
 			is_validate_ = false;
 			return;
@@ -1944,7 +1191,7 @@ using namespace detail;
 	{
 		RenderEngine& re = Context::Instance().RenderFactoryInstance().RenderEngineInstance();
 		const auto& caps = re.DeviceCaps();
-		if (ver_ > caps.max_shader_model)
+		if (passes_.empty() || ver_ > caps.max_shader_model)
 		{
 			is_validate_ = false;
 			return;
@@ -1975,6 +1222,10 @@ using namespace detail;
 
 	bool RenderTechnique::StreamIn(RenderEffect& effect, ResIdentifier& res, uint32_t tech_index)
 	{
+		// Empty records represent backend-unsupported techniques, not corrupt caches.
+		is_validate_ = false;
+		has_discard_ = false;
+		has_tessellation_ = false;
 		name_ = ReadShortString(res);
 		name_hash_ = HashValue(name_);
 
@@ -1990,7 +1241,7 @@ using namespace detail;
 			{
 				RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
 				(*annotations_)[i] = annotation;
-				
+
 				annotation->StreamIn(effect, res);
 			}
 		}
@@ -2117,534 +1368,9 @@ using namespace detail;
 		return hw_res_ready;
 	}
 
-
 	RenderPass::RenderPass() = default;
 
 #if ZENGINE_IS_DEV_PLATFORM
-	void RenderPass::Load(
-		RenderEffect& effect, XMLNode const& node, uint32_t tech_index, uint32_t pass_index, RenderPass const* inherit_pass)
-	{
-		name_ = std::string(node.Attrib("name")->ValueString());
-		name_hash_ = HashValue(name_);
-
-		if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		{
-			annotations_ = MakeSharedPtr<std::remove_reference<decltype(*annotations_)>::type>();
-			if (inherit_pass && inherit_pass->annotations_)
-			{
-				*annotations_ = *inherit_pass->annotations_;
-			}
-			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-			{
-				auto& annotation = *annotations_->emplace_back(MakeSharedPtr<RenderEffectAnnotation>());
-				annotation.Load(effect, *anno_node);
-			}
-		}
-		else if (inherit_pass)
-		{
-			annotations_ = inherit_pass->annotations_;
-		}
-
-		if (const XMLNode* macro_node = node.FirstNode("macro"))
-		{
-			macros_ = MakeSharedPtr<std::remove_reference<decltype(*macros_)>::type>();
-			if (inherit_pass && inherit_pass->macros_)
-			{
-				*macros_ = *inherit_pass->macros_;
-			}
-			for (; macro_node; macro_node = macro_node->NextSibling("macro"))
-			{
-				std::string_view const name = macro_node->Attrib("name")->ValueString();
-				std::string_view const value = macro_node->Attrib("value")->ValueString();
-				bool found = false;
-				for (size_t i = 0; i < macros_->size(); ++ i)
-				{
-					if ((*macros_)[i].first == name)
-					{
-						(*macros_)[i].second = std::string(value);
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-				{
-					macros_->emplace_back(name, value);
-				}
-			}
-		}
-		else if (inherit_pass)
-		{ 
-			macros_ = inherit_pass->macros_;
-		}
-
-		uint64_t macros_hash;
-		{
-			RenderTechnique* tech = effect.TechniqueByIndex(tech_index);
-
-			size_t hash_val = 0;
-			for (uint32_t i = 0; i < tech->NumMacros(); ++ i)
-			{
-				std::pair<std::string, std::string> const & name_value = tech->MacroByIndex(i);
-				HashRange(hash_val, name_value.first.begin(), name_value.first.end());
-				HashRange(hash_val, name_value.second.begin(), name_value.second.end());
-			}
-			for (uint32_t i = 0; i < this->NumMacros(); ++ i)
-			{
-				std::pair<std::string, std::string> const & name_value = this->MacroByIndex(i);
-				HashRange(hash_val, name_value.first.begin(), name_value.first.end());
-				HashRange(hash_val, name_value.second.begin(), name_value.second.end());
-			}
-			macros_hash = static_cast<uint64_t>(hash_val);
-		}
-
-		RasterizerStateDesc rs_desc;
-		DepthStencilStateDesc dss_desc;
-		BlendStateDesc bs_desc;
-		shader_obj_index_ = effect.AddShaderObject();
-
-		shader_desc_ids_.fill(0);
-
-		if (inherit_pass)
-		{
-			rs_desc = inherit_pass->render_state_obj_->GetRasterizerStateDesc();
-			dss_desc = inherit_pass->render_state_obj_->GetDepthStencilStateDesc();
-			bs_desc = inherit_pass->render_state_obj_->GetBlendStateDesc();
-			shader_desc_ids_ = inherit_pass->shader_desc_ids_;
-		}
-
-		for (const XMLNode* state_node = node.FirstNode("state"); state_node; state_node = state_node->NextSibling("state"))
-		{
-			size_t const state_name_hash = HashValue(state_node->Attrib("name")->ValueString());
-
-			const XMLAttribute* value_attr = state_node->Attrib("value");
-			std::string_view value_str;
-			if (value_attr)
-			{
-				value_str = value_attr->ValueString();
-			}
-
-			if (CtHash("polygon_mode") == state_name_hash)
-			{
-				rs_desc.polygon_mode = PolygonModeFromName(value_str);
-			}
-			else if (CtHash("shade_mode") == state_name_hash)
-			{
-				rs_desc.shade_mode = ShadeModeFromName(value_str);
-			}
-			else if (CtHash("cull_mode") == state_name_hash)
-			{
-				rs_desc.cull_mode = CullModeFromName(value_str);
-			}
-			else if (CtHash("front_face_ccw") == state_name_hash)
-			{
-				rs_desc.front_face_ccw = value_attr->ValueBool();
-			}
-			else if (CtHash("polygon_offset_factor") == state_name_hash)
-			{
-				rs_desc.polygon_offset_factor = value_attr->ValueFloat();
-			}
-			else if (CtHash("polygon_offset_units") == state_name_hash)
-			{
-				rs_desc.polygon_offset_units = value_attr->ValueFloat();
-			}
-			else if (CtHash("depth_clip_enable") == state_name_hash)
-			{
-				rs_desc.depth_clip_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("scissor_enable") == state_name_hash)
-			{
-				rs_desc.scissor_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("multisample_enable") == state_name_hash)
-			{
-				rs_desc.multisample_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("alpha_to_coverage_enable") == state_name_hash)
-			{
-				bs_desc.alpha_to_coverage_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("independent_blend_enable") == state_name_hash)
-			{
-				bs_desc.independent_blend_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("blend_enable") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.blend_enable[index] = value_attr->ValueBool();
-			}
-			else if (CtHash("logic_op_enable") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.logic_op_enable[index] = value_attr->ValueBool();
-			}
-			else if (CtHash("blend_op") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.blend_op[index] = BlendOperationFromName(value_str);
-			}
-			else if (CtHash("src_blend") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.src_blend[index] = AlphaBlendFactorFromName(value_str);
-			}
-			else if (CtHash("dest_blend") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.dest_blend[index] = AlphaBlendFactorFromName(value_str);
-			}
-			else if (CtHash("blend_op_alpha") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.blend_op_alpha[index] = BlendOperationFromName(value_str);
-			}
-			else if (CtHash("src_blend_alpha") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.src_blend_alpha[index] = AlphaBlendFactorFromName(value_str);
-			}
-			else if (CtHash("dest_blend_alpha") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.dest_blend_alpha[index] = AlphaBlendFactorFromName(value_str);
-			}
-			else if (CtHash("logic_op") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.logic_op[index] = LogicOperationFromName(value_str);
-			}
-			else if (CtHash("color_write_mask") == state_name_hash)
-			{
-				int index = RetrieveIndex(*state_node);
-				bs_desc.color_write_mask[index] = static_cast<uint8_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("blend_factor") == state_name_hash)
-			{
-				if (const XMLAttribute* attr = state_node->Attrib("r"))
-				{
-					bs_desc.blend_factor.r() = attr->ValueFloat();
-				}
-				if (const XMLAttribute* attr = state_node->Attrib("g"))
-				{
-					bs_desc.blend_factor.g() = attr->ValueFloat();
-				}
-				if (const XMLAttribute* attr = state_node->Attrib("b"))
-				{
-					bs_desc.blend_factor.b() = attr->ValueFloat();
-				}
-				if (const XMLAttribute* attr = state_node->Attrib("a"))
-				{
-					bs_desc.blend_factor.a() = attr->ValueFloat();
-				}
-			}
-			else if (CtHash("sample_mask") == state_name_hash)
-			{
-				bs_desc.sample_mask = value_attr->ValueUInt();
-			}
-			else if (CtHash("depth_enable") == state_name_hash)
-			{
-				dss_desc.depth_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("depth_write_mask") == state_name_hash)
-			{
-				dss_desc.depth_write_mask = value_attr->ValueBool();
-			}
-			else if (CtHash("depth_func") == state_name_hash)
-			{
-				dss_desc.depth_func = CompareFunctionFromName(value_str);
-			}
-			else if (CtHash("front_stencil_enable") == state_name_hash)
-			{
-				dss_desc.front_stencil_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("front_stencil_func") == state_name_hash)
-			{
-				dss_desc.front_stencil_func = CompareFunctionFromName(value_str);
-			}
-			else if (CtHash("front_stencil_ref") == state_name_hash)
-			{
-				dss_desc.front_stencil_ref = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("front_stencil_read_mask") == state_name_hash)
-			{
-				dss_desc.front_stencil_read_mask = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("front_stencil_write_mask") == state_name_hash)
-			{
-				dss_desc.front_stencil_write_mask = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("front_stencil_fail") == state_name_hash)
-			{
-				dss_desc.front_stencil_fail = StencilOperationFromName(value_str);
-			}
-			else if (CtHash("front_stencil_depth_fail") == state_name_hash)
-			{
-				dss_desc.front_stencil_depth_fail = StencilOperationFromName(value_str);
-			}
-			else if (CtHash("front_stencil_pass") == state_name_hash)
-			{
-				dss_desc.front_stencil_pass = StencilOperationFromName(value_str);
-			}
-			else if (CtHash("back_stencil_enable") == state_name_hash)
-			{
-				dss_desc.back_stencil_enable = value_attr->ValueBool();
-			}
-			else if (CtHash("back_stencil_func") == state_name_hash)
-			{
-				dss_desc.back_stencil_func = CompareFunctionFromName(value_str);
-			}
-			else if (CtHash("back_stencil_ref") == state_name_hash)
-			{
-				dss_desc.back_stencil_ref = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("back_stencil_read_mask") == state_name_hash)
-			{
-				dss_desc.back_stencil_read_mask = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("back_stencil_write_mask") == state_name_hash)
-			{
-				dss_desc.back_stencil_write_mask = static_cast<uint16_t>(value_attr->ValueUInt());
-			}
-			else if (CtHash("back_stencil_fail") == state_name_hash)
-			{
-				dss_desc.back_stencil_fail = StencilOperationFromName(value_str);
-			}
-			else if (CtHash("back_stencil_depth_fail") == state_name_hash)
-			{
-				dss_desc.back_stencil_depth_fail = StencilOperationFromName(value_str);
-			}
-			else if (CtHash("back_stencil_pass") == state_name_hash)
-			{
-				dss_desc.back_stencil_pass = StencilOperationFromName(value_str);
-			}
-			else if ((CtHash("vertex_shader") == state_name_hash) || (CtHash("pixel_shader") == state_name_hash)
-				|| (CtHash("geometry_shader") == state_name_hash) || (CtHash("compute_shader") == state_name_hash)
-				|| (CtHash("hull_shader") == state_name_hash) || (CtHash("domain_shader") == state_name_hash))
-			{
-				ShaderStage stage;
-				if (CtHash("vertex_shader") == state_name_hash)
-				{
-					stage = ShaderStage::Vertex;
-				}
-				else if (CtHash("pixel_shader") == state_name_hash)
-				{
-					stage = ShaderStage::Pixel;
-				}
-				else if (CtHash("geometry_shader") == state_name_hash)
-				{
-					stage = ShaderStage::Geometry;
-				}
-				else if (CtHash("compute_shader") == state_name_hash)
-				{
-					stage = ShaderStage::Compute;
-				}
-				else if (CtHash("hull_shader") == state_name_hash)
-				{
-					stage = ShaderStage::Hull;
-				}
-				else
-				{
-					COMMON_ASSERT(CtHash("domain_shader") == state_name_hash);
-					stage = ShaderStage::Domain;
-				}
-
-				ShaderDesc sd;
-				sd.profile = RetrieveProfile(*state_node);
-				sd.func_name = RetrieveFuncName(*state_node);
-				sd.macros_hash = macros_hash;
-
-				if ((ShaderStage::Vertex == stage) || (ShaderStage::Geometry == stage))
-				{
-					if (const XMLNode* so_node = state_node->FirstNode("stream_output"))
-					{
-						for (const XMLNode* entry_node = so_node->FirstNode("entry"); entry_node; entry_node = entry_node->NextSibling("entry"))
-						{
-							auto& decl = sd.so_decl.emplace_back();
-
-							size_t const usage_str_hash = HashValue(entry_node->Attrib("usage")->ValueString());
-							if (const XMLAttribute* attr = entry_node->Attrib("usage_index"))
-							{
-								decl.usage_index = static_cast<uint8_t>(attr->ValueInt());
-							}
-							else
-							{
-								decl.usage_index = 0;
-							}
-
-							if ((CtHash("POSITION") == usage_str_hash) || (CtHash("SV_Position") == usage_str_hash))
-							{
-								decl.usage = VEU_Position;
-							}
-							else if (CtHash("NORMAL") == usage_str_hash)
-							{
-								decl.usage = VEU_Normal;
-							}
-							else if (CtHash("COLOR") == usage_str_hash)
-							{
-								if (0 == decl.usage_index)
-								{
-									decl.usage = VEU_Diffuse;
-								}
-								else
-								{
-									decl.usage = VEU_Specular;
-								}
-							}
-							else if (CtHash("BLENDWEIGHT") == usage_str_hash)
-							{
-								decl.usage = VEU_BlendWeight;
-							}
-							else if (CtHash("BLENDINDICES") == usage_str_hash)
-							{
-								decl.usage = VEU_BlendIndex;
-							}
-							else if (CtHash("TEXCOORD") == usage_str_hash)
-							{
-								decl.usage = VEU_TextureCoord;
-							}
-							else if (CtHash("TANGENT") == usage_str_hash)
-							{
-								decl.usage = VEU_Tangent;
-							}
-							else if (CtHash("BINORMAL") == usage_str_hash)
-							{
-								decl.usage = VEU_Binormal;
-							}
-							else
-							{
-								ZENGINE_UNREACHABLE("Invalid usage");
-							}
-
-							std::string component_str;
-							if (const XMLAttribute* attr = entry_node->Attrib("component"))
-							{
-								component_str = std::string(attr->ValueString());
-							}
-							else
-							{
-								component_str = "xyzw";
-							}
-							decl.start_component = static_cast<uint8_t>(component_str[0] - 'x');
-							decl.component_count = static_cast<uint8_t>(std::min(static_cast<size_t>(4), component_str.size()));
-
-							if (const XMLAttribute* attr = entry_node->Attrib("slot"))
-							{
-								decl.slot = static_cast<uint8_t>(attr->ValueInt());
-							}
-							else
-							{
-								decl.slot = 0;
-							}
-						}
-					}
-				}
-
-				shader_desc_ids_[std::to_underlying(stage)] = effect.AddShaderDesc(sd);
-			}
-			else
-			{
-				ZENGINE_UNREACHABLE("Invalid state name");
-			}
-		}
-
-		auto& rf = Context::Instance().RenderFactoryInstance();
-		render_state_obj_ = rf.MakeRenderStateObject(rs_desc, dss_desc, bs_desc);
-
-		auto const & shader_obj = this->GetShaderObject(effect);
-
-		for (uint32_t stage_index = 0; stage_index < ShaderStageNum; ++stage_index)
-		{
-			ShaderDesc& sd = effect.GetShaderDesc(shader_desc_ids_[stage_index]);
-			if (!sd.func_name.empty())
-			{
-				ShaderStage const stage = static_cast<ShaderStage>(stage_index);
-				ShaderStageObjectPtr shader_stage;
-				if (sd.tech_pass_type == 0xFFFFFFFF)
-				{
-					shader_stage = rf.MakeShaderStageObject(stage);
-					sd.tech_pass_type = (tech_index << 16) + (pass_index << 8) + stage_index;
-				}
-				else
-				{
-					auto const& tech = *effect.TechniqueByIndex(sd.tech_pass_type >> 16);
-					auto const& pass = tech.Pass((sd.tech_pass_type >> 8) & 0xFF);
-					shader_stage = pass.GetShaderObject(effect)->Stage(stage);
-				}
-
-				shader_obj->AttachStage(stage, shader_stage);
-			}
-		}
-	}
-
-	void RenderPass::Load(RenderEffect& effect, uint32_t tech_index, uint32_t pass_index, RenderPass const * inherit_pass)
-	{
-		COMMON_ASSERT(inherit_pass);
-
-		name_ = inherit_pass->name_;
-		annotations_ = inherit_pass->annotations_;
-		macros_ = inherit_pass->macros_;
-
-		uint64_t macros_hash;
-		{
-			auto const & tech = *effect.TechniqueByIndex(tech_index);
-
-			size_t hash_val = 0;
-			for (uint32_t i = 0; i < tech.NumMacros(); ++ i)
-			{
-				std::pair<std::string, std::string> const & name_value = tech.MacroByIndex(i);
-				HashRange(hash_val, name_value.first.begin(), name_value.first.end());
-				HashRange(hash_val, name_value.second.begin(), name_value.second.end());
-			}
-			for (uint32_t i = 0; i < this->NumMacros(); ++ i)
-			{
-				std::pair<std::string, std::string> const & name_value = this->MacroByIndex(i);
-				HashRange(hash_val, name_value.first.begin(), name_value.first.end());
-				HashRange(hash_val, name_value.second.begin(), name_value.second.end());
-			}
-			macros_hash = static_cast<uint64_t>(hash_val);
-		}
-
-		shader_obj_index_ = effect.AddShaderObject();
-		auto const & shader_obj = this->GetShaderObject(effect);
-
-		shader_desc_ids_.fill(0);
-
-		render_state_obj_ = inherit_pass->render_state_obj_;
-
-		for (uint32_t stage_index = 0; stage_index < ShaderStageNum; ++stage_index)
-		{
-			ShaderDesc sd = effect.GetShaderDesc(inherit_pass->shader_desc_ids_[stage_index]);
-			if (!sd.func_name.empty())
-			{
-				sd.macros_hash = macros_hash;
-				sd.tech_pass_type = (tech_index << 16) + (pass_index << 8) + stage_index;
-				shader_desc_ids_[stage_index] = effect.AddShaderDesc(sd);
-			}
-		}
-
-		for (uint32_t stage_index = 0; stage_index < ShaderStageNum; ++stage_index)
-		{
-			ShaderDesc const& sd = effect.GetShaderDesc(shader_desc_ids_[stage_index]);
-			if (!sd.func_name.empty())
-			{
-				ShaderStage const stage = static_cast<ShaderStage>(stage_index);
-				ShaderStageObjectPtr shader_stage;
-				if (sd.tech_pass_type == (tech_index << 16) + (pass_index << 8) + stage_index)
-				{
-					auto& rf = Context::Instance().RenderFactoryInstance();
-					shader_stage = rf.MakeShaderStageObject(stage);
-				}
-				else
-				{
-					auto const& tech = *effect.TechniqueByIndex(sd.tech_pass_type >> 16);
-					auto const& pass = tech.Pass((sd.tech_pass_type >> 8) & 0xFF);
-					shader_stage = pass.GetShaderObject(effect)->Stage(stage);
-				}
-
-				shader_obj->AttachStage(stage, shader_stage);
-			}
-		}
-	}
-
 	void RenderPass::CompileShaders(RenderEffect& effect, uint32_t tech_index, uint32_t pass_index)
 	{
 		auto const & shader_obj = this->GetShaderObject(effect);
@@ -2744,7 +1470,7 @@ using namespace detail;
 		rs_desc.cull_mode = LE2Native(rs_desc.cull_mode);
 		rs_desc.polygon_offset_factor = LE2Native(rs_desc.polygon_offset_factor);
 		rs_desc.polygon_offset_units = LE2Native(rs_desc.polygon_offset_units);
-		
+
 		res.read(&dss_desc, sizeof(dss_desc));
 		dss_desc.depth_func = LE2Native(dss_desc.depth_func);
 		dss_desc.front_stencil_func = LE2Native(dss_desc.front_stencil_func);
@@ -2777,7 +1503,7 @@ using namespace detail;
 			bs_desc.src_blend_alpha[i] = LE2Native(bs_desc.src_blend_alpha[i]);
 			bs_desc.dest_blend_alpha[i] = LE2Native(bs_desc.dest_blend_alpha[i]);
 		}
-		
+
 		render_state_obj_ = rf.MakeRenderStateObject(rs_desc, dss_desc, bs_desc);
 
 		res.read(&shader_desc_ids_[0], shader_desc_ids_.size() * sizeof(shader_desc_ids_[0]));
@@ -2845,7 +1571,7 @@ using namespace detail;
 		{
 			RenderEffectAnnotationPtr annotation = MakeSharedPtr<RenderEffectAnnotation>();
 			(*annotations_)[i] = annotation;
-				
+
 			annotation->StreamOut(os);
 		}
 
@@ -2875,7 +1601,7 @@ using namespace detail;
 		rs_desc.polygon_offset_factor = Native2LE(rs_desc.polygon_offset_factor);
 		rs_desc.polygon_offset_units = Native2LE(rs_desc.polygon_offset_units);
 		os.write(reinterpret_cast<char const *>(&rs_desc), sizeof(rs_desc));
-		
+
 		dss_desc.depth_func = Native2LE(dss_desc.depth_func);
 		dss_desc.front_stencil_func = Native2LE(dss_desc.front_stencil_func);
 		dss_desc.front_stencil_ref = Native2LE(dss_desc.front_stencil_ref);
@@ -2906,7 +1632,7 @@ using namespace detail;
 			bs_desc.blend_op_alpha[i] = Native2LE(bs_desc.blend_op_alpha[i]);
 			bs_desc.src_blend_alpha[i] = Native2LE(bs_desc.src_blend_alpha[i]);
 			bs_desc.dest_blend_alpha[i] = Native2LE(bs_desc.dest_blend_alpha[i]);
-		}		
+		}
 		os.write(reinterpret_cast<char const *>(&bs_desc), sizeof(bs_desc));
 
 		for (uint32_t i = 0; i < shader_desc_ids_.size(); ++ i)
@@ -2954,7 +1680,7 @@ using namespace detail;
 		return (*macros_)[n];
 	}
 
-	
+
 	RenderEffectConstantBuffer::Immutable::Immutable() = default;
 
 	RenderEffectConstantBuffer::RenderEffectConstantBuffer(RenderEffect& effect) : effect_(effect)
@@ -3116,69 +1842,11 @@ using namespace detail;
 		buff_.resize(buff->Size());
 	}
 
-
 	RenderEffectParameter::Immutable::Immutable() = default;
 
 	RenderEffectParameter::RenderEffectParameter() = default;
 	RenderEffectParameter::RenderEffectParameter(RenderEffectParameter&& rhs) noexcept = default;
 	RenderEffectParameter& RenderEffectParameter::operator=(RenderEffectParameter&& rhs) noexcept = default;
-
-#if ZENGINE_IS_DEV_PLATFORM
-	void RenderEffectParameter::Load(RenderEffect const& effect, XMLNode const& node)
-	{
-		if (!immutable_)
-		{
-			immutable_ = MakeSharedPtr<Immutable>();
-		}
-
-		auto type_name = node.Attrib("type")->ValueString();
-		auto* struct_type = effect.StructTypeByName(type_name);
-		if (struct_type)
-		{
-			immutable_->type = REDT_struct;
-		}
-		else
-		{
-			immutable_->type = TypeFromName(type_name);
-		}
-
-		immutable_->name = std::string(node.Attrib("name")->ValueString());
-		immutable_->name_hash = HashValue(immutable_->name);
-
-		if (const XMLAttribute* attr = node.Attrib("semantic"))
-		{
-			immutable_->semantic = std::string(attr->ValueString());
-			immutable_->semantic_hash = HashValue(immutable_->semantic);
-		}
-
-		uint32_t as;
-		if (const XMLAttribute* attr = node.Attrib("array_size"))
-		{
-			immutable_->array_size = MakeUniquePtr<std::string>(attr->ValueString());
-
-			if (!attr->TryConvertValue(as))
-			{
-				as = 1;  // dummy array size
-			}
-		}
-		else
-		{
-			as = 0;
-		}
-		var_ = LoadVariable(effect, node, immutable_->type, as);
-
-		if (const XMLNode* anno_node = node.FirstNode("annotation"))
-		{
-			immutable_->annotations = MakeUniquePtr<std::remove_reference<decltype(*immutable_->annotations)>::type>();
-			for (; anno_node; anno_node = anno_node->NextSibling("annotation"))
-			{
-				auto& anno = immutable_->annotations->emplace_back();
-				anno.Load(effect, *anno_node);
-				this->ProcessAnnotation(anno);
-			}
-		}
-	}
-#endif
 
 	void RenderEffectParameter::StreamIn(RenderEffect const& effect, ResIdentifier& res)
 	{
@@ -3257,7 +1925,7 @@ using namespace detail;
 			{
 				*var_ = SyncLoadTexture(val, EAH_GPU_Read | EAH_Immutable);
 			}
-		}	
+		}
 	}
 
 #if ZENGINE_IS_DEV_PLATFORM
@@ -3360,54 +2028,6 @@ RenderEffectConstantBuffer& RenderEffectParameter::CBuffer() const
 	return *var_->CBuffer();
 }
 
-
-#if ZENGINE_IS_DEV_PLATFORM
-void RenderShaderFragment::Load(XMLNode const& node)
-{
-	stage_ = ShaderStage::NumStages;
-	if (const XMLAttribute* attr = node.Attrib("type"))
-	{
-		size_t const type_str_hash = HashValue(attr->ValueString());
-		if (CtHash("vertex_shader") == type_str_hash)
-		{
-			stage_ = ShaderStage::Vertex;
-		}
-		else if (CtHash("pixel_shader") == type_str_hash)
-		{
-			stage_ = ShaderStage::Pixel;
-		}
-		else if (CtHash("geometry_shader") == type_str_hash)
-		{
-			stage_ = ShaderStage::Geometry;
-		}
-		else if (CtHash("compute_shader") == type_str_hash)
-		{
-			stage_ = ShaderStage::Compute;
-		}
-		else if (CtHash("hull_shader") == type_str_hash)
-		{
-			stage_ = ShaderStage::Hull;
-		}
-		else
-		{
-			COMMON_ASSERT(CtHash("domain_shader") == type_str_hash);
-			stage_ = ShaderStage::Domain;
-		}
-	}
-	
-	ver_ = ShaderModel(0, 0);
-	LoadVersion(node, ver_);
-
-	for (const XMLNode* shader_text_node = node.FirstNode(); shader_text_node; shader_text_node = shader_text_node->NextSibling())
-	{
-		if ((XMLNodeType::Comment == shader_text_node->Type()) || (XMLNodeType::CData == shader_text_node->Type()))
-		{
-			str_ += std::string(shader_text_node->ValueString());
-		}
-	}
-}
-#endif
-
 void RenderShaderFragment::StreamIn(ResIdentifier& res)
 {
 	uint32_t tmp;
@@ -3434,51 +2054,6 @@ void RenderShaderFragment::StreamOut(std::ostream& os) const
 	tmp = Native2LE(len);
 	os.write(reinterpret_cast<char const *>(&tmp), sizeof(tmp));
 	os.write(&str_[0], len * sizeof(str_[0]));
-}
-#endif
-
-
-#if ZENGINE_IS_DEV_PLATFORM
-void RenderShaderGraphNode::Load(XMLNode const& node)
-{
-	const XMLAttribute* attr = node.Attrib("name");
-	COMMON_ASSERT(attr);
-
-	if (!name_.empty())
-	{
-		COMMON_ASSERT(name_ == std::string(attr->ValueString()));
-	}
-	else
-	{
-		name_ = std::string(attr->ValueString());
-		name_hash_ = HashValue(name_);
-
-		attr = node.Attrib("return");
-		if (attr)
-		{
-			return_type_ = std::string(attr->ValueString());
-		}
-		else
-		{
-			return_type_ = "void";
-		}
-
-		for (const XMLNode* param_node = node.FirstNode(); param_node; param_node = param_node->NextSibling())
-		{
-			const XMLAttribute* type_attr = param_node->Attrib("type");
-			const XMLAttribute* name_attr = param_node->Attrib("name");
-			COMMON_ASSERT(type_attr);
-			COMMON_ASSERT(name_attr);
-
-			params_.emplace_back(type_attr->ValueString(), name_attr->ValueString());
-		}
-	}
-
-	attr = node.Attrib("impl");
-	if (attr)
-	{
-		impl_ = std::string(attr->ValueString());
-	}
 }
 #endif
 
@@ -3516,7 +2091,7 @@ void RenderShaderGraphNode::StreamOut(std::ostream& os) const
 	}
 }
 #endif
-	
+
 std::pair<std::string, std::string> const& RenderShaderGraphNode::Parameter(uint32_t n) const noexcept
 {
 	COMMON_ASSERT(n < this->NumParameters());
@@ -3606,7 +2181,7 @@ std::string RenderShaderGraphNode::GenDefinitionCode() const
 class EffectLoadingDesc : public ResLoadingDesc
 {
 private:
-	struct EffectDesc
+	struct EffectResourceData
 	{
 		std::vector<std::string> res_name;
 
@@ -3615,11 +2190,14 @@ private:
 	};
 
 public:
-	explicit EffectLoadingDesc(std::span<std::string const> name)
-	{
-		effect_desc_.res_name = std::vector<std::string>(name.begin(), name.end());
-		effect_desc_.effect = MakeSharedPtr<RenderEffect>();
-	}
+    explicit EffectLoadingDesc(EffectDesc const& desc)
+        : definition_(MakeSharedPtr<EffectDesc>(desc)), description_source_(detail::ReadEffectShaderSource(desc))
+    {
+        auto const platform = Context::Instance().RenderFactoryInstance().RenderEngineInstance().NativeShaderPlatformName();
+        effect_desc_.res_name = {"EffectDesc", desc.CacheName(platform),
+            std::to_string(detail::EffectSourceFingerprint(description_source_))};
+        effect_desc_.effect = MakeSharedPtr<RenderEffect>();
+    }
 
 	uint64_t Type() const override
 	{
@@ -3633,7 +2211,7 @@ public:
 
 	std::shared_ptr<void> CreateResource() override
 	{
-		effect_desc_.effect->Load(effect_desc_.res_name);
+        effect_desc_.effect->LoadDescription(*definition_, description_source_);
 		return effect_desc_.effect;
 	}
 
@@ -3720,14 +2298,20 @@ private:
 	}
 
 private:
-	EffectDesc effect_desc_;
+	EffectResourceData effect_desc_;
+    std::shared_ptr<EffectDesc const> definition_;
+    std::string description_source_;
 	std::mutex main_thread_stage_mutex_;
 };
 
+    RenderEffectPtr SyncLoadRenderEffect(EffectDesc const& desc)
+    {
+        return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(MakeSharedPtr<EffectLoadingDesc>(desc));
+    }
+
 	RenderEffectPtr SyncLoadRenderEffect(std::string_view effect_name)
 	{
-		return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(
-			MakeSharedPtr<EffectLoadingDesc>(MakeSpan<1>(std::string(effect_name))));
+		return SyncLoadRenderEffect(DescribeBuiltInEffect(effect_name));
 	}
 
 		uint32_t EnsureParameterCBufferOffset(RenderEffect& effect, std::string_view param_name,
@@ -3766,19 +2350,10 @@ private:
 			return fallback_offset;
 		}
 
-	RenderEffectPtr SyncLoadRenderEffects(std::span<std::string const> effect_names)
-{
-	return Context::Instance().ResLoaderInstance().SyncQueryT<RenderEffect>(MakeSharedPtr<EffectLoadingDesc>(effect_names));
-}
-
 RenderEffectPtr ASyncLoadRenderEffect(std::string_view effect_name)
 {
 	return Context::Instance().ResLoaderInstance().ASyncQueryT<RenderEffect>(
-		MakeSharedPtr<EffectLoadingDesc>(MakeSpan<1>(std::string(effect_name))));
+		MakeSharedPtr<EffectLoadingDesc>(DescribeBuiltInEffect(effect_name)));
 }
 
-RenderEffectPtr ASyncLoadRenderEffects(std::span<std::string const> effect_names)
-{
-	return Context::Instance().ResLoaderInstance().ASyncQueryT<RenderEffect>(MakeSharedPtr<EffectLoadingDesc>(effect_names));
-}
 } // namespace RenderWorker

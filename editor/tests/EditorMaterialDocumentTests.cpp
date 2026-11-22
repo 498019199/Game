@@ -212,10 +212,10 @@ TEST_F(MaterialWorkflow, TemplateRoundTripAndWhitelist)
 {
     auto d = Create();
     auto m = LoadRenderMaterialFile(root / "assets/materials/Demo.mat", false);
-    EXPECT_EQ("EditorLitV1", m->Template()); EXPECT_EQ("EditorLitV1.shader", m->EffectName());
+    EXPECT_EQ("EditorLitV1", m->Template()); EXPECT_EQ("EditorLitV1", m->EffectName());
     EXPECT_EQ("EditorLitV1", m->Clone()->Template());
-    m->Template(""); EXPECT_EQ("SimpleAlbedoNormal.shader", m->EffectName());
-    EXPECT_THROW(m->Template("../custom.shader"), std::runtime_error);
+    m->Template(""); EXPECT_EQ("SimpleAlbedoNormal", m->EffectName());
+    EXPECT_THROW(m->Template("../custom"), std::runtime_error);
     Write("assets/unknown.mat", "<material template=\"Unknown\"/>");
     EXPECT_THROW(service->Open("unknown.mat"), std::runtime_error);
 }

@@ -201,7 +201,7 @@ void Camera::Active(RenderEffectConstantBuffer& camera_cbuffer, uint32_t index, 
 
 PredefinedCameraCBuffer::PredefinedCameraCBuffer()
 {
-    effect_ = SyncLoadRenderEffect("PredefinedCBuffers.shader");
+    effect_ = SyncLoadRenderEffect("PredefinedCBuffers");
     predefined_cbuffer_ = effect_->CBufferByName("klayge_camera");
     {
         uint32_t const min_size = 48 + 304 * 8 + 64 * 8;

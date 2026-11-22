@@ -11,7 +11,7 @@ using namespace CommonWorker;
 DetailedMesh::DetailedMesh(std::wstring_view name)
 	: StaticMesh(name)
 {
-	effect_ = SyncLoadRenderEffect("SimpleAlbedoNormal.shader");
+	effect_ = SyncLoadRenderEffect("SimpleAlbedoNormal");
 	technique_ = effect_->TechniqueByName("SimpleAlbedoNormalTech");
 }
 
